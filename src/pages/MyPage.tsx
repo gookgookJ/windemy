@@ -61,6 +61,24 @@ const MyPage = () => {
 
       if (error) throw error;
       setEnrollments(data || []);
+
+      // 각 강의의 세션 진행률도 가져오기
+      if (data && data.length > 0) {
+        const courseIds = data.map(enrollment => enrollment.course.id);
+        
+        const { data: sessionProgressData } = await supabase
+          .from('session_progress')
+          .select(`
+            session_id,
+            completed,
+            watched_duration_seconds,
+            course_sessions!inner(course_id, title, duration_minutes)
+          `)
+          .eq('user_id', user?.id)
+          .in('course_sessions.course_id', courseIds);
+
+        console.log('Session progress:', sessionProgressData);
+      }
     } catch (error) {
       console.error('Error fetching enrollments:', error);
     } finally {

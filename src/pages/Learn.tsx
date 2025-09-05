@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { PlayCircle, CheckCircle, Clock, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import '@/types/vimeo.d.ts';
 
 interface CourseSession {
   id: string;
@@ -33,6 +34,7 @@ const Learn = () => {
   const [progress, setProgress] = useState<SessionProgress[]>([]);
   const [enrollment, setEnrollment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [videoProgress, setVideoProgress] = useState<{ [key: string]: number }>({});
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -46,6 +48,44 @@ const Learn = () => {
       fetchCourseData();
     }
   }, [courseId, user]);
+
+  // Vimeo Player API 초기화
+  useEffect(() => {
+    if (currentSession && currentSession.video_url?.includes('vimeo.com')) {
+      loadVimeoAPI();
+    }
+  }, [currentSession]);
+
+  const loadVimeoAPI = () => {
+    if (window.Vimeo) {
+      initializeVimeoPlayer();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://player.vimeo.com/api/player.js';
+    script.onload = () => initializeVimeoPlayer();
+    document.head.appendChild(script);
+  };
+
+  const initializeVimeoPlayer = () => {
+    if (!currentSession || !window.Vimeo) return;
+
+    const iframe = document.getElementById(`vimeo-player-${currentSession.id}`);
+    if (!iframe) return;
+
+    const player = new window.Vimeo.Player(iframe);
+    
+    player.on('timeupdate', (data: any) => {
+      player.getDuration().then((duration: number) => {
+        handleVideoProgress(data.seconds, duration);
+      });
+    });
+
+    player.on('ended', () => {
+      markSessionComplete(currentSession.id);
+    });
+  };
 
   const fetchCourseData = async () => {
     try {
@@ -115,6 +155,43 @@ const Learn = () => {
     }
   };
 
+  const handleVideoProgress = async (currentTime: number, duration: number) => {
+    if (!currentSession || !user || duration === 0) return;
+
+    const progressPercent = Math.min((currentTime / duration) * 100, 100);
+    const watchedSeconds = Math.floor(currentTime);
+
+    // 로컬 상태 업데이트
+    setVideoProgress(prev => ({
+      ...prev,
+      [currentSession.id]: progressPercent
+    }));
+
+    // 80% 이상 시청하면 자동 완료 처리
+    if (progressPercent >= 80) {
+      const sessionProgress = getSessionProgress(currentSession.id);
+      if (!sessionProgress?.completed) {
+        markSessionComplete(currentSession.id);
+      }
+    }
+
+    // 진도 저장 (5초마다만 업데이트)
+    if (watchedSeconds % 5 === 0) {
+      try {
+        await supabase
+          .from('session_progress')
+          .upsert({
+            user_id: user.id,
+            session_id: currentSession.id,
+            watched_duration_seconds: watchedSeconds,
+            completed: progressPercent >= 80
+          });
+      } catch (error) {
+        console.error('Error saving progress:', error);
+      }
+    }
+  };
+
   const markSessionComplete = async (sessionId: string) => {
     try {
       const { error } = await supabase
@@ -144,9 +221,16 @@ const Learn = () => {
       });
 
       // 전체 진행률 계산 및 업데이트
-      const completedSessions = progress.filter(p => p.completed).length + 1;
+      const updatedProgress = progress.map(p => 
+        p.session_id === sessionId ? { ...p, completed: true } : p
+      );
+      if (!progress.find(p => p.session_id === sessionId)) {
+        updatedProgress.push({ session_id: sessionId, completed: true, watched_duration_seconds: 0 });
+      }
+      
+      const completedSessions = updatedProgress.filter(p => p.completed).length;
       const totalSessions = sessions.length;
-      const newProgress = (completedSessions / totalSessions) * 100;
+      const newProgress = Math.min((completedSessions / totalSessions) * 100, 100);
 
       await supabase
         .from('enrollments')
@@ -160,6 +244,13 @@ const Learn = () => {
         title: "완료",
         description: "세션이 완료되었습니다!"
       });
+
+      // 자동으로 다음 세션으로 이동
+      if (newProgress < 100) {
+        setTimeout(() => {
+          goToNextSession();
+        }, 1500);
+      }
     } catch (error) {
       console.error('Error marking session complete:', error);
       toast({
@@ -172,6 +263,10 @@ const Learn = () => {
 
   const getSessionProgress = (sessionId: string) => {
     return progress.find(p => p.session_id === sessionId);
+  };
+
+  const getVideoProgress = (sessionId: string) => {
+    return videoProgress[sessionId] || 0;
   };
 
   const goToNextSession = () => {
@@ -255,6 +350,16 @@ const Learn = () => {
                         <div className="flex items-center gap-2">
                           {isCompleted ? (
                             <CheckCircle className="h-4 w-4 text-green-600" />
+                          ) : isCurrent && getVideoProgress(session.id) > 0 ? (
+                            <div className="relative w-4 h-4">
+                              <div className="absolute inset-0 bg-muted rounded-full" />
+                              <div 
+                                className="absolute inset-0 bg-primary rounded-full origin-center"
+                                style={{
+                                  clipPath: `inset(0 ${100 - getVideoProgress(session.id)}% 0 0)`
+                                }}
+                              />
+                            </div>
                           ) : (
                             <PlayCircle className="h-4 w-4 text-muted-foreground" />
                           )}
@@ -268,7 +373,17 @@ const Learn = () => {
                         <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" />
                           <span>{session.duration_minutes}분</span>
+                          {isCurrent && getVideoProgress(session.id) > 0 && (
+                            <span className="ml-2 text-primary">
+                              • {Math.round(getVideoProgress(session.id))}% 시청
+                            </span>
+                          )}
                         </div>
+                        {isCurrent && getVideoProgress(session.id) > 0 && (
+                          <div className="mt-2">
+                            <Progress value={getVideoProgress(session.id)} className="h-1" />
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -291,19 +406,23 @@ const Learn = () => {
                   <div className="bg-black rounded-lg aspect-video flex items-center justify-center mb-6">
                     {currentSession.video_url ? (
                       currentSession.video_url.includes('vimeo.com') ? (
-                        <iframe
-                          src={`https://player.vimeo.com/video/${currentSession.video_url.split('/').pop()}?title=0&byline=0&portrait=0`}
-                          width="100%"
-                          height="100%"
-                          className="rounded-lg"
-                          allow="autoplay; fullscreen; picture-in-picture"
-                          allowFullScreen
-                        />
+                        <div className="w-full h-full relative">
+                          <iframe
+                            id={`vimeo-player-${currentSession.id}`}
+                            src={`https://player.vimeo.com/video/${currentSession.video_url.split('/').pop()}?title=0&byline=0&portrait=0&autoplay=0`}
+                            width="100%"
+                            height="100%"
+                            className="rounded-lg"
+                            allow="autoplay; fullscreen; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
                       ) : (
                         <video
                           controls
                           className="w-full h-full rounded-lg"
                           src={currentSession.video_url}
+                          onTimeUpdate={(e) => handleVideoProgress(e.currentTarget.currentTime, e.currentTarget.duration)}
                         />
                       )
                     ) : (
