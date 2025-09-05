@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Play, 
   Clock, 
@@ -25,6 +26,7 @@ import courseWebImg from "@/assets/course-web.jpg";
 const CourseDetail = () => {
   const [expandedSection, setExpandedSection] = useState<number | null>(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const navigate = useNavigate();
 
   const course = {
     title: "실무에 바로 적용하는 React.js 완전정복",
@@ -374,11 +376,11 @@ const CourseDetail = () => {
 
                 {/* Action Buttons */}
                 <div className="space-y-3">
-                  <Button variant="hero" size="lg" className="w-full">
+                  <Button variant="hero" size="lg" className="w-full" onClick={() => navigate('/auth')}>
                     <BookOpen className="w-5 h-5 mr-2" />
                     지금 수강하기
                   </Button>
-                  <Button variant="outline" size="lg" className="w-full">
+                  <Button variant="outline" size="lg" className="w-full" onClick={() => navigate('/cart')}>
                     장바구니 담기
                   </Button>
                 </div>

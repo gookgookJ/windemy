@@ -290,11 +290,22 @@ const Learn = () => {
                   {/* 비디오 플레이어 영역 */}
                   <div className="bg-black rounded-lg aspect-video flex items-center justify-center mb-6">
                     {currentSession.video_url ? (
-                      <video
-                        controls
-                        className="w-full h-full rounded-lg"
-                        src={currentSession.video_url}
-                      />
+                      currentSession.video_url.includes('vimeo.com') ? (
+                        <iframe
+                          src={`https://player.vimeo.com/video/${currentSession.video_url.split('/').pop()}?title=0&byline=0&portrait=0`}
+                          width="100%"
+                          height="100%"
+                          className="rounded-lg"
+                          allow="autoplay; fullscreen; picture-in-picture"
+                          allowFullScreen
+                        />
+                      ) : (
+                        <video
+                          controls
+                          className="w-full h-full rounded-lg"
+                          src={currentSession.video_url}
+                        />
+                      )
                     ) : (
                       <div className="text-white text-center">
                         <PlayCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
