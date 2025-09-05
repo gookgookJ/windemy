@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { 
   Play, 
   Clock, 
@@ -23,10 +23,19 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import courseWebImg from "@/assets/course-web.jpg";
 
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
 const CourseDetail = () => {
   const [expandedSection, setExpandedSection] = useState<number | null>(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
   const navigate = useNavigate();
+  const { id: courseId } = useParams();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const course = {
     title: "실무에 바로 적용하는 React.js 완전정복",
@@ -376,10 +385,28 @@ const CourseDetail = () => {
 
                 {/* Action Buttons */}
                 <div className="space-y-3">
-                  <Button variant="hero" size="lg" className="w-full" onClick={() => navigate('/auth')}>
-                    <BookOpen className="w-5 h-5 mr-2" />
-                    지금 수강하기
-                  </Button>
+                  {isEnrolled ? (
+                    <Button 
+                      variant="hero" 
+                      size="lg" 
+                      className="w-full"
+                      onClick={() => navigate(`/learn/${courseId}`)}
+                    >
+                      <BookOpen className="w-5 h-5 mr-2" />
+                      학습 계속하기
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="hero" 
+                      size="lg" 
+                      className="w-full"
+                      onClick={handleEnroll}
+                      disabled={enrolling}
+                    >
+                      <BookOpen className="w-5 h-5 mr-2" />
+                      {enrolling ? "등록 중..." : "지금 수강하기"}
+                    </Button>
+                  )}
                   <Button variant="outline" size="lg" className="w-full" onClick={() => navigate('/cart')}>
                     장바구니 담기
                   </Button>

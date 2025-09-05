@@ -68,7 +68,7 @@ const Learn = () => {
         .select('*')
         .eq('course_id', courseId)
         .eq('user_id', user?.id)
-        .single();
+        .maybeSingle();
 
       if (!enrollmentData) {
         navigate(`/course/${courseId}`);
