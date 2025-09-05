@@ -22,6 +22,7 @@ import { Progress } from "@/components/ui/progress";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import courseWebImg from "@/assets/course-web.jpg";
+import courseDetailLong from "@/assets/course-detail-long.jpg";
 
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -185,9 +186,9 @@ const CourseDetail = () => {
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-4 gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-3 space-y-8">
             {/* Course Header */}
             <div className="space-y-6">
               <div className="flex items-center gap-3 text-sm">
@@ -223,135 +224,112 @@ const CourseDetail = () => {
                   {course.level}
                 </Badge>
               </div>
-
-              {/* Tags */}
-              <div className="flex flex-wrap gap-2">
-                {course.tags.map((tag, index) => (
-                  <Badge key={index} variant="outline" className="text-primary border-primary">
-                    #{tag}
-                  </Badge>
-                ))}
-              </div>
             </div>
 
-            {/* Course Content Tabs */}
-            <Tabs defaultValue="curriculum" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="curriculum">커리큘럼</TabsTrigger>
-                <TabsTrigger value="overview">강의 소개</TabsTrigger>
-                <TabsTrigger value="instructor">강사 소개</TabsTrigger>
-                <TabsTrigger value="reviews">수강 후기</TabsTrigger>
-              </TabsList>
+            {/* Long Course Detail Image */}
+            <div className="w-full">
+              <img
+                src={courseDetailLong}
+                alt="강의 상세 내용"
+                className="w-full h-auto rounded-xl shadow-lg"
+              />
+            </div>
 
-              <TabsContent value="curriculum" className="space-y-4">
-                <div className="bg-muted/30 rounded-2xl p-6">
-                  <h3 className="text-xl font-bold mb-4">전체 커리큘럼</h3>
-                  <div className="space-y-3">
-                    {course.curriculum.map((section, index) => (
-                      <Card key={index} className="overflow-hidden">
-                        <div
-                          className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                          onClick={() => setExpandedSection(expandedSection === index ? null : index)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              {expandedSection === index ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                              <div>
-                                <h4 className="font-semibold">{section.title}</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  {section.lessonCount}개 레슨 • {section.duration}
-                                </p>
-                              </div>
+            {/* Course Content Sections */}
+            <div className="space-y-12">
+              {/* What You'll Learn */}
+              <section className="bg-muted/30 rounded-2xl p-8">
+                <h2 className="text-2xl font-bold mb-6">이 강의에서 배우는 것들</h2>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {course.whatYouWillLearn.map((item, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <CheckCircle className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Curriculum */}
+              <section>
+                <h2 className="text-2xl font-bold mb-6">커리큘럼</h2>
+                <div className="space-y-3">
+                  {course.curriculum.map((section, index) => (
+                    <Card key={index} className="overflow-hidden">
+                      <div
+                        className="p-6 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => setExpandedSection(expandedSection === index ? null : index)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {expandedSection === index ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                            <div>
+                              <h3 className="text-lg font-semibold">{section.title}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {section.lessonCount}개 레슨 • {section.duration}
+                              </p>
                             </div>
                           </div>
                         </div>
+                      </div>
 
-                        {expandedSection === index && (
-                          <CardContent className="pt-0">
-                            <div className="space-y-2">
-                              {section.lessons.map((lesson, lessonIndex) => (
-                                <div key={lessonIndex} className="flex items-center justify-between p-3 hover:bg-muted/30 rounded-lg">
-                                  <div className="flex items-center gap-3">
-                                    <Play className="w-4 h-4 text-muted-foreground" />
-                                    <span className="text-sm">{lesson.title}</span>
-                                    {lesson.isPreview && (
-                                      <Badge variant="outline" className="text-xs">
-                                        미리보기
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <span className="text-sm text-muted-foreground">{lesson.duration}</span>
+                      {expandedSection === index && (
+                        <CardContent className="pt-0">
+                          <div className="space-y-2">
+                            {section.lessons.map((lesson, lessonIndex) => (
+                              <div key={lessonIndex} className="flex items-center justify-between p-4 hover:bg-muted/30 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                  <Play className="w-4 h-4 text-muted-foreground" />
+                                  <span>{lesson.title}</span>
+                                  {lesson.isPreview && (
+                                    <Badge variant="outline" className="text-xs">
+                                      미리보기
+                                    </Badge>
+                                  )}
                                 </div>
-                              ))}
-                            </div>
-                          </CardContent>
-                        )}
-                      </Card>
-                    ))}
+                                <span className="text-sm text-muted-foreground">{lesson.duration}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              </section>
+
+              {/* Instructor */}
+              <section className="bg-card rounded-2xl p-8">
+                <h2 className="text-2xl font-bold mb-6">강사 소개</h2>
+                <div className="flex items-start gap-6">
+                  <div className="w-24 h-24 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-2xl">김</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold mb-2">{course.instructor}</h3>
+                    <p className="text-muted-foreground mb-6">{course.instructorBio}</p>
+                    <div className="grid grid-cols-3 gap-6 text-center">
+                      <div>
+                        <div className="text-2xl font-bold text-primary">25+</div>
+                        <div className="text-sm text-muted-foreground">강의 수</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-primary">50K+</div>
+                        <div className="text-sm text-muted-foreground">총 수강생</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-primary">4.9</div>
+                        <div className="text-sm text-muted-foreground">평균 평점</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </TabsContent>
+              </section>
 
-              <TabsContent value="overview">
-                <Card className="p-6">
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-xl font-bold mb-4">이 강의에서 배우는 것들</h3>
-                      <div className="grid gap-3">
-                        {course.whatYouWillLearn.map((item, index) => (
-                          <div key={index} className="flex items-start gap-3">
-                            <CheckCircle className="w-5 h-5 text-success mt-0.5" />
-                            <span>{item}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="text-xl font-bold mb-4">수강 요구사항</h3>
-                      <div className="grid gap-3">
-                        {course.requirements.map((item, index) => (
-                          <div key={index} className="flex items-start gap-3">
-                            <div className="w-2 h-2 bg-muted-foreground rounded-full mt-2.5" />
-                            <span>{item}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="instructor">
-                <Card className="p-6">
-                  <div className="flex items-start gap-6">
-                    <div className="w-20 h-20 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold text-2xl">김</span>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold mb-2">{course.instructor}</h3>
-                      <p className="text-muted-foreground mb-4">{course.instructorBio}</p>
-                      <div className="grid grid-cols-3 gap-6 text-center">
-                        <div>
-                          <div className="text-2xl font-bold text-primary">25+</div>
-                          <div className="text-sm text-muted-foreground">강의 수</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-primary">50K+</div>
-                          <div className="text-sm text-muted-foreground">총 수강생</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-primary">4.9</div>
-                          <div className="text-sm text-muted-foreground">평균 평점</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="reviews">
-                <div className="space-y-6">
+              {/* Reviews */}
+              <section>
+                <h2 className="text-2xl font-bold mb-6">수강 후기</h2>
+                <div className="space-y-4">
                   <Card className="p-6">
                     <div className="flex items-center gap-6 mb-6">
                       <div className="text-center">
@@ -378,141 +356,141 @@ const CourseDetail = () => {
                     </div>
                   </Card>
 
-                  <div className="space-y-4">
-                    {reviews.map((review, index) => (
-                      <Card key={index} className="p-6">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-                              <span className="font-medium">{review.name.charAt(0)}</span>
-                            </div>
-                            <div>
-                              <div className="font-medium">{review.name}</div>
-                              <div className="text-sm text-muted-foreground">{review.date}</div>
-                            </div>
+                  {reviews.map((review, index) => (
+                    <Card key={index} className="p-6">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                            <span className="font-medium">{review.name.charAt(0)}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            {[...Array(review.rating)].map((_, i) => (
-                              <Star key={i} className="w-4 h-4 text-warning fill-current" />
-                            ))}
+                          <div>
+                            <div className="font-medium">{review.name}</div>
+                            <div className="text-sm text-muted-foreground">{review.date}</div>
                           </div>
                         </div>
-                        <p className="text-muted-foreground">{review.content}</p>
-                      </Card>
-                    ))}
-                  </div>
+                        <div className="flex items-center gap-1">
+                          {[...Array(review.rating)].map((_, i) => (
+                            <Star key={i} className="w-4 h-4 text-warning fill-current" />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-muted-foreground">{review.content}</p>
+                    </Card>
+                  ))}
                 </div>
-              </TabsContent>
-            </Tabs>
+              </section>
+            </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Course Video Preview */}
-            <Card className="overflow-hidden">
-              <div className="relative">
-                <img
-                  src={course.thumbnail}
-                  alt={course.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                  <Button variant="hero" size="lg" className="rounded-full w-16 h-16">
-                    <Play className="w-6 h-6" />
-                  </Button>
+          {/* Fixed Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24 space-y-6">
+              {/* Course Video Preview */}
+              <Card className="overflow-hidden">
+                <div className="relative">
+                  <img
+                    src={course.thumbnail}
+                    alt={course.title}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <Button variant="hero" size="lg" className="rounded-full w-16 h-16">
+                      <Play className="w-6 h-6" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
 
-            {/* Purchase Card */}
-            <Card className="p-6 sticky top-24">
-              <div className="space-y-6">
-                {/* Price */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl font-bold text-primary">
-                      {course.price.toLocaleString()}원
-                    </span>
+              {/* Purchase Card */}
+              <Card className="p-6">
+                <div className="space-y-6">
+                  {/* Price */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl font-bold text-primary">
+                        {course.price.toLocaleString()}원
+                      </span>
+                      {course.originalPrice && (
+                        <Badge className="bg-destructive text-destructive-foreground">
+                          {discountRate}% 할인
+                        </Badge>
+                      )}
+                    </div>
                     {course.originalPrice && (
-                      <Badge className="bg-destructive text-destructive-foreground">
-                        {discountRate}% 할인
-                      </Badge>
+                      <span className="text-muted-foreground line-through">
+                        {course.originalPrice.toLocaleString()}원
+                      </span>
                     )}
                   </div>
-                  {course.originalPrice && (
-                    <span className="text-muted-foreground line-through">
-                      {course.originalPrice.toLocaleString()}원
-                    </span>
-                  )}
-                </div>
 
-                {/* Action Buttons */}
-                <div className="space-y-3">
-                  {isEnrolled ? (
-                    <Button 
-                      variant="hero" 
-                      size="lg" 
-                      className="w-full"
-                      onClick={() => navigate(`/learn/${courseId}`)}
-                    >
-                      <BookOpen className="w-5 h-5 mr-2" />
-                      학습 계속하기
+                  {/* Action Buttons */}
+                  <div className="space-y-3">
+                    {isEnrolled ? (
+                      <Button 
+                        variant="hero" 
+                        size="lg" 
+                        className="w-full"
+                        onClick={() => navigate(`/learn/${courseId}`)}
+                      >
+                        <BookOpen className="w-5 h-5 mr-2" />
+                        학습 계속하기
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="hero" 
+                        size="lg" 
+                        className="w-full"
+                        onClick={handleEnroll}
+                        disabled={enrolling}
+                      >
+                        <BookOpen className="w-5 h-5 mr-2" />
+                        {enrolling ? "등록 중..." : "지금 수강하기"}
+                      </Button>
+                    )}
+                    <Button variant="outline" size="lg" className="w-full" onClick={() => navigate('/cart')}>
+                      장바구니 담기
                     </Button>
-                  ) : (
-                    <Button 
-                      variant="hero" 
-                      size="lg" 
-                      className="w-full"
-                      onClick={handleEnroll}
-                      disabled={enrolling}
+                  </div>
+
+                  {/* Additional Actions */}
+                  <div className="flex gap-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setIsWishlisted(!isWishlisted)}
                     >
-                      <BookOpen className="w-5 h-5 mr-2" />
-                      {enrolling ? "등록 중..." : "지금 수강하기"}
+                      <Heart className={`w-4 h-4 mr-2 ${isWishlisted ? 'fill-current text-destructive' : ''}`} />
+                      찜하기
                     </Button>
-                  )}
-                  <Button variant="outline" size="lg" className="w-full" onClick={() => navigate('/cart')}>
-                    장바구니 담기
-                  </Button>
-                </div>
+                    <Button variant="ghost" size="sm" className="flex-1">
+                      <Share2 className="w-4 h-4 mr-2" />
+                      공유
+                    </Button>
+                  </div>
 
-                {/* Additional Actions */}
-                <div className="flex gap-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => setIsWishlisted(!isWishlisted)}
-                  >
-                    <Heart className={`w-4 h-4 mr-2 ${isWishlisted ? 'fill-current text-destructive' : ''}`} />
-                    찜하기
-                  </Button>
-                  <Button variant="ghost" size="sm" className="flex-1">
-                    <Share2 className="w-4 h-4 mr-2" />
-                    공유
-                  </Button>
-                </div>
-
-                {/* Course Features */}
-                <div className="border-t pt-6 space-y-3">
-                  <div className="flex items-center gap-3 text-sm">
-                    <Clock className="w-4 h-4 text-muted-foreground" />
-                    <span>총 {course.duration} 강의</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <Download className="w-4 h-4 text-muted-foreground" />
-                    <span>모바일/PC 다운로드</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <Award className="w-4 h-4 text-muted-foreground" />
-                    <span>수료증 발급</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <Users className="w-4 h-4 text-muted-foreground" />
-                    <span>평생 수강 가능</span>
+                  {/* Course Features */}
+                  <div className="border-t pt-6 space-y-3">
+                    <div className="flex items-center gap-3 text-sm">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span>총 {course.duration} 강의</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <Download className="w-4 h-4 text-muted-foreground" />
+                      <span>모바일/PC 다운로드</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <Award className="w-4 h-4 text-muted-foreground" />
+                      <span>수료증 발급</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <Users className="w-4 h-4 text-muted-foreground" />
+                      <span>평생 수강 가능</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
           </div>
         </div>
       </main>
