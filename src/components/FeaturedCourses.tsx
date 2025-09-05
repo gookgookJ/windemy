@@ -73,110 +73,122 @@ const FeaturedCourses = () => {
     { name: "비즈니스", count: 380, color: "from-orange-500 to-red-500" },
   ];
 
+  const recommendedCourses = [
+    {
+      id: 1,
+      title: "LV1.내집마련 내집마련 하기 위한 쌤의 알아야 할 A to Z",
+      instructor: "나나쌤의 내집마련 기초편",
+      rating: 4.97,
+      reviewCount: 82043,
+      level: "오리지널",
+      thumbnail: courseWebImg,
+      tags: ["부동산", "내집", "코프닉", "똘똘한", "부..."]
+    },
+    {
+      id: 2,
+      title: "미래까지 1초만! 불당관례에서 동률한 한줄 고르는 방법",
+      instructor: "미래까지 1초",
+      rating: 4.94,
+      reviewCount: 423,
+      level: "오리지널",
+      thumbnail: courseMarketingImg,
+      tags: ["멤버서울볼쳐", "똘똘한"]
+    },
+    {
+      id: 3,
+      title: "1억에서 10억, 신혼부부를 위한 신혼부부 서울 내집마련",
+      instructor: "신혼부부 서울",
+      rating: 4.94,
+      reviewCount: 423,
+      level: "오리지널",
+      thumbnail: courseWebImg,
+      tags: ["멤버서울볼쳐"]
+    },
+    {
+      id: 4,
+      title: "12차 왕리더 미국주식 초보를 위한 고도로, 기초부터 백만원까지",
+      instructor: "왕리더 미국주식",
+      rating: 4.94,
+      reviewCount: 423,
+      level: "오리지널",
+      thumbnail: courseMarketingImg,
+      tags: ["멤버서울볼쳐"]
+    }
+  ];
+
   return (
-    <section className="py-20 bg-gradient-to-b from-background to-muted/30">
+    <section className="py-16 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-16">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <TrendingUp className="w-6 h-6 text-primary" />
-            <span className="text-primary font-semibold">인기 강의</span>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+              지금 가장 주목받는 강의
+            </h2>
           </div>
-          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
-            지금 가장 인기 있는 강의들
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            실무 전문가들이 직접 제작한 고품질 강의로 여러분의 실력을 한 단계 업그레이드하세요
-          </p>
+          <button className="text-muted-foreground hover:text-foreground transition-colors">
+            더보기 →
+          </button>
         </div>
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          {categories.map((category, index) => (
-            <div
-              key={index}
-              className="group cursor-pointer p-6 rounded-2xl bg-white shadow-soft hover:shadow-strong transition-all duration-300 transform hover:-translate-y-1"
-            >
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${category.color} mb-4 flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                <span className="text-white font-bold text-xl">
-                  {category.name.charAt(0)}
-                </span>
+        {/* Featured Courses Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          {recommendedCourses.map((course, index) => (
+            <div key={course.id} className="group cursor-pointer">
+              <div className="relative mb-4">
+                <img
+                  src={course.thumbnail}
+                  alt={course.title}
+                  className="w-full h-48 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute top-3 right-3">
+                  <span className="bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 rounded">
+                    {course.level}
+                  </span>
+                </div>
+                <div className="absolute top-3 left-3">
+                  <span className="bg-white text-foreground text-sm font-bold px-2 py-1 rounded shadow-md">
+                    {index + 1}
+                  </span>
+                </div>
               </div>
-              <h3 className="font-bold text-foreground text-lg mb-2">{category.name}</h3>
-              <p className="text-muted-foreground text-sm">{category.count}개 강의</p>
+              
+              <div className="space-y-3">
+                <h3 className="font-bold text-foreground line-clamp-2 leading-tight text-sm">
+                  {course.title}
+                </h3>
+                
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-yellow-500">★</span>
+                  <span className="font-semibold">{course.rating}</span>
+                  <span className="text-muted-foreground">({course.reviewCount.toLocaleString()})</span>
+                </div>
+
+                <div className="flex flex-wrap gap-1">
+                  {course.tags.map((tag, tagIndex) => (
+                    <span
+                      key={tagIndex}
+                      className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Featured Courses Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          {featuredCourses.map((course) => (
-            <CourseCard key={course.id} {...course} />
-          ))}
-        </div>
-
-        {/* View All Button */}
-        <div className="text-center">
-          <Button variant="outline" size="lg" className="group border-2 hover:bg-primary hover:text-primary-foreground hover:border-primary">
-            전체 강의 보기
-            <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-          </Button>
-        </div>
-
-        {/* Success Stories */}
-        <div className="mt-20 bg-gradient-to-r from-primary-light to-secondary-light rounded-3xl p-8 lg:p-12">
-          <div className="text-center mb-12">
-            <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">
-              수강생들의 성공 스토리
-            </h3>
-            <p className="text-muted-foreground text-lg">
-              LearnHub에서 꿈을 이룬 수강생들의 이야기를 들어보세요
-            </p>
+        {/* Bottom Section */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              부동산부 인기강의
+            </h2>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                name: "김철수",
-                role: "프론트엔드 개발자 취업 성공",
-                story: "React 강의 수강 후 3개월 만에 원하던 IT 회사에 취업했어요!",
-                course: "React.js 완전정복",
-              },
-              {
-                name: "박영희",
-                role: "마케팅 팀장 승진",
-                story: "디지털 마케팅 강의로 실무 역량을 키워 팀장으로 승진했습니다.",
-                course: "디지털 마케팅 전략",
-              },
-              {
-                name: "이민수",
-                role: "창업 성공",
-                story: "비즈니스 강의를 통해 아이디어를 구체화하여 스타트업을 창업했어요!",
-                course: "비즈니스 전략 기획",
-              },
-            ].map((story, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-medium transition-all duration-300"
-              >
-                <div className="mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center mb-3">
-                    <span className="text-white font-bold">
-                      {story.name.charAt(0)}
-                    </span>
-                  </div>
-                  <h4 className="font-bold text-foreground">{story.name}</h4>
-                  <p className="text-primary text-sm font-medium">{story.role}</p>
-                </div>
-                <p className="text-muted-foreground mb-3 leading-relaxed">
-                  "{story.story}"
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  수강 강의: {story.course}
-                </p>
-              </div>
-            ))}
-          </div>
+          <button className="text-muted-foreground hover:text-foreground transition-colors">
+            내 결과는 인기강의 찾기 →
+          </button>
         </div>
       </div>
     </section>
