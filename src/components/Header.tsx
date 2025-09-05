@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Search, ShoppingCart, User, Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, profile, signOut, isAdmin } = useAuth();
 
   const navigationItems = [
     { name: "전체 강의", href: "/courses" },
@@ -22,23 +24,23 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center space-x-8">
-            <a href="/" className="flex items-center space-x-3">
+            <Link to="/" className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">L</span>
+                <span className="text-white font-bold text-xl">W</span>
               </div>
-              <span className="text-xl font-bold text-foreground">LearnHub</span>
-            </a>
+              <span className="text-xl font-bold text-foreground">Windly Academy</span>
+            </Link>
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex space-x-8">
               {navigationItems.map((item) => (
-                <a
+                <Link
                   key={item.name}
-                  href={item.href}
+                  to={item.href}
                   className="text-muted-foreground hover:text-primary transition-colors duration-200 font-medium"
                 >
                   {item.name}
-                </a>
+                </Link>
               ))}
             </nav>
           </div>
@@ -63,26 +65,41 @@ const Header = () => {
             </Button>
 
             {/* Cart */}
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="w-5 h-5" />
-              <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-secondary">
-                2
-              </Badge>
-            </Button>
+            <Link to="/cart">
+              <Button variant="ghost" size="icon" className="relative">
+                <ShoppingCart className="w-5 h-5" />
+              </Button>
+            </Link>
 
             {/* User Menu */}
-            {isLoggedIn ? (
-              <Button variant="ghost" size="icon">
-                <User className="w-5 h-5" />
-              </Button>
+            {user ? (
+              <div className="flex items-center space-x-2">
+                {isAdmin && (
+                  <Link to="/admin">
+                    <Badge variant="destructive" className="text-xs">관리자</Badge>
+                  </Link>
+                )}
+                <Link to="/my-page">
+                  <Button variant="ghost" size="icon">
+                    <User className="w-5 h-5" />
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="icon" onClick={signOut}>
+                  <LogOut className="w-5 h-5" />
+                </Button>
+              </div>
             ) : (
               <div className="hidden sm:flex items-center space-x-2">
-                <Button variant="ghost" size="sm">
-                  로그인
-                </Button>
-                <Button variant="default" size="sm">
-                  회원가입
-                </Button>
+                <Link to="/auth">
+                  <Button variant="ghost" size="sm">
+                    로그인
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button variant="default" size="sm">
+                    회원가입
+                  </Button>
+                </Link>
               </div>
             )}
 
@@ -117,24 +134,48 @@ const Header = () => {
               {/* Mobile Navigation */}
               <nav className="space-y-3">
                 {navigationItems.map((item) => (
-                  <a
+                  <Link
                     key={item.name}
-                    href={item.href}
+                    to={item.href}
                     className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
                   >
                     {item.name}
-                  </a>
+                  </Link>
                 ))}
+                <Link to="/cart" className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2">
+                  장바구니
+                </Link>
+                {user && (
+                  <Link to="/my-page" className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2">
+                    마이페이지
+                  </Link>
+                )}
+                {isAdmin && (
+                  <Link to="/admin" className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2">
+                    관리자
+                  </Link>
+                )}
               </nav>
 
               {/* Mobile Auth Buttons */}
-              {!isLoggedIn && (
+              {!user ? (
                 <div className="flex space-x-3 pt-4 border-t border-border sm:hidden">
-                  <Button variant="ghost" className="flex-1">
-                    로그인
-                  </Button>
-                  <Button variant="default" className="flex-1">
-                    회원가입
+                  <Link to="/auth" className="flex-1">
+                    <Button variant="ghost" className="w-full">
+                      로그인
+                    </Button>
+                  </Link>
+                  <Link to="/auth" className="flex-1">
+                    <Button variant="default" className="w-full">
+                      회원가입
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="pt-4 border-t border-border sm:hidden">
+                  <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    로그아웃
                   </Button>
                 </div>
               )}
