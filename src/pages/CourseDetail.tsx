@@ -37,6 +37,69 @@ const CourseDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  useEffect(() => {
+    if (user && courseId) {
+      checkEnrollment();
+    }
+  }, [user, courseId]);
+
+  const checkEnrollment = async () => {
+    if (!user || !courseId) return;
+    
+    try {
+      const { data } = await supabase
+        .from('enrollments')
+        .select('id')
+        .eq('course_id', courseId)
+        .eq('user_id', user.id)
+        .single();
+        
+      setIsEnrolled(!!data);
+    } catch (error) {
+      setIsEnrolled(false);
+    }
+  };
+
+  const handleEnroll = async () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    
+    if (!courseId) return;
+    
+    setEnrolling(true);
+    try {
+      const { error } = await supabase
+        .from('enrollments')
+        .insert({
+          user_id: user.id,
+          course_id: courseId,
+          progress: 0
+        });
+        
+      if (error) throw error;
+      
+      setIsEnrolled(true);
+      toast({
+        title: "수강 등록 완료",
+        description: "강의 학습을 시작하세요!",
+      });
+      
+      // 바로 학습 페이지로 이동
+      navigate(`/learn/${courseId}`);
+    } catch (error) {
+      console.error('Error enrolling:', error);
+      toast({
+        title: "등록 실패",
+        description: "수강 등록 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
   const course = {
     title: "실무에 바로 적용하는 React.js 완전정복",
     instructor: "김개발",

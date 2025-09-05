@@ -12,6 +12,7 @@ const Header = () => {
 
   const navigationItems = [
     { name: "전체 강의", href: "/courses" },
+    { name: "샘플 강의", href: "/course/550e8400-e29b-41d4-a716-446655440000" },
     { name: "개발/프로그래밍", href: "/courses/development" },
     { name: "마케팅", href: "/courses/marketing" },
     { name: "디자인", href: "/courses/design" },
