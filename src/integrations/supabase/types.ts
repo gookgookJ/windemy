@@ -432,6 +432,120 @@ export type Database = {
           },
         ]
       }
+      video_checkpoints: {
+        Row: {
+          checkpoint_time: number
+          id: string
+          is_natural: boolean | null
+          reached_at: string | null
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          checkpoint_time: number
+          id?: string
+          is_natural?: boolean | null
+          reached_at?: string | null
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          checkpoint_time?: number
+          id?: string
+          is_natural?: boolean | null
+          reached_at?: string | null
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_checkpoints_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "course_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_seek_events: {
+        Row: {
+          created_at: string | null
+          from_time: number
+          id: string
+          jump_amount: number
+          session_id: string
+          to_time: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          from_time: number
+          id?: string
+          jump_amount: number
+          session_id: string
+          to_time: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          from_time?: number
+          id?: string
+          jump_amount?: number
+          session_id?: string
+          to_time?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_seek_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "course_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_watch_segments: {
+        Row: {
+          created_at: string | null
+          duration: number
+          end_time: number
+          id: string
+          session_id: string
+          start_time: number
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          duration: number
+          end_time: number
+          id?: string
+          session_id: string
+          start_time: number
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          duration?: number
+          end_time?: number
+          id?: string
+          session_id?: string
+          start_time?: number
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_watch_segments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "course_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { PlayCircle, CheckCircle, Clock, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import '@/types/vimeo.d.ts';
+import { VideoProgressTracker } from '@/utils/VideoProgressTracker';
 
 interface CourseSession {
   id: string;
@@ -35,6 +36,7 @@ const Learn = () => {
   const [enrollment, setEnrollment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [videoProgress, setVideoProgress] = useState<{ [key: string]: number }>({});
+  const [progressTracker, setProgressTracker] = useState<VideoProgressTracker | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -53,8 +55,18 @@ const Learn = () => {
   useEffect(() => {
     if (currentSession && currentSession.video_url?.includes('vimeo.com')) {
       loadVimeoAPI();
+      
+      // VideoProgressTracker 초기화
+      if (user) {
+        const tracker = new VideoProgressTracker(
+          currentSession.id,
+          user.id,
+          currentSession.duration_minutes * 60
+        );
+        setProgressTracker(tracker);
+      }
     }
-  }, [currentSession]);
+  }, [currentSession, user]);
 
   const loadVimeoAPI = () => {
     if (window.Vimeo) {
@@ -69,21 +81,66 @@ const Learn = () => {
   };
 
   const initializeVimeoPlayer = () => {
-    if (!currentSession || !window.Vimeo) return;
+    if (!currentSession || !window.Vimeo || !progressTracker) return;
 
     const iframe = document.getElementById(`vimeo-player-${currentSession.id}`);
     if (!iframe) return;
 
     const player = new window.Vimeo.Player(iframe);
     
-    player.on('timeupdate', (data: any) => {
-      player.getDuration().then((duration: number) => {
-        handleVideoProgress(data.seconds, duration);
-      });
+    // 재생/일시정지 이벤트
+    player.on('play', (data: any) => {
+      player.getCurrentTime().then(time => progressTracker.onPlay(time));
     });
 
-    player.on('ended', () => {
-      markSessionComplete(currentSession.id);
+    player.on('pause', (data: any) => {
+      player.getCurrentTime().then(time => progressTracker.onPause(time));
+    });
+
+    // 시간 업데이트 이벤트
+    player.on('timeupdate', (data: any) => {
+      progressTracker.onTimeUpdate(data.seconds);
+      
+      // UI 업데이트
+      setVideoProgress(prev => ({
+        ...prev,
+        [currentSession.id]: progressTracker.getWatchedPercentage()
+      }));
+    });
+
+    // 점프 이벤트 감지
+    let lastTime = 0;
+    player.on('seeked', (data: any) => {
+      progressTracker.onSeeked(lastTime, data.seconds);
+      
+      // 의심스러운 점프 감지시 경고
+      if (data.seconds - lastTime > 30) {
+        toast({
+          title: "진도 조작 감지",
+          description: "영상을 건너뛰면 학습 시간에 반영되지 않습니다.",
+          variant: "destructive"
+        });
+      }
+    });
+
+    // 현재 시간 추적
+    player.on('timeupdate', (data: any) => {
+      lastTime = data.seconds;
+    });
+
+    // 영상 완료
+    player.on('ended', async () => {
+      await progressTracker.saveProgress();
+      
+      if (progressTracker.isValidForCompletion()) {
+        markSessionComplete(currentSession.id);
+      } else {
+        toast({
+          title: "학습 시간 부족",
+          description: "영상을 충분히 시청하지 않았습니다. 다시 시청해주세요.",
+          variant: "destructive"
+        });
+      }
     });
   };
 
@@ -193,20 +250,37 @@ const Learn = () => {
   };
 
   const markSessionComplete = async (sessionId: string) => {
+    if (!progressTracker || !user) return;
+
     try {
+      // 1. 백엔드 검증 수행
+      const { data: validation } = await supabase.functions.invoke('validate-progress', {
+        body: { sessionId, userId: user.id }
+      });
+
+      if (!validation.isValid) {
+        toast({
+          title: "학습 검증 실패",
+          description: `시청률: ${validation.watchedPercentage}%, 체크포인트: ${validation.checkpointScore}%`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // 2. 세션 완료 처리
       const { error } = await supabase
         .from('session_progress')
         .upsert({
-          user_id: user?.id,
+          user_id: user.id,
           session_id: sessionId,
           completed: true,
-          watched_duration_seconds: 0,
+          watched_duration_seconds: validation.totalWatchedTime,
           completed_at: new Date().toISOString()
         });
 
       if (error) throw error;
 
-      // 진행 상황 업데이트
+      // 3. 진행 상황 업데이트
       setProgress(prev => {
         const existing = prev.find(p => p.session_id === sessionId);
         if (existing) {
@@ -216,16 +290,16 @@ const Learn = () => {
               : p
           );
         } else {
-          return [...prev, { session_id: sessionId, completed: true, watched_duration_seconds: 0 }];
+          return [...prev, { session_id: sessionId, completed: true, watched_duration_seconds: validation.totalWatchedTime }];
         }
       });
 
-      // 전체 진행률 계산 및 업데이트
+      // 4. 전체 진행률 계산 및 업데이트
       const updatedProgress = progress.map(p => 
         p.session_id === sessionId ? { ...p, completed: true } : p
       );
       if (!progress.find(p => p.session_id === sessionId)) {
-        updatedProgress.push({ session_id: sessionId, completed: true, watched_duration_seconds: 0 });
+        updatedProgress.push({ session_id: sessionId, completed: true, watched_duration_seconds: validation.totalWatchedTime });
       }
       
       const completedSessions = updatedProgress.filter(p => p.completed).length;
@@ -241,11 +315,11 @@ const Learn = () => {
         .eq('id', enrollment.id);
 
       toast({
-        title: "완료",
-        description: "세션이 완료되었습니다!"
+        title: "세션 완료! 🎉",
+        description: `진정한 학습률: ${validation.watchedPercentage}%`,
       });
 
-      // 자동으로 다음 세션으로 이동
+      // 5. 자동으로 다음 세션으로 이동
       if (newProgress < 100) {
         setTimeout(() => {
           goToNextSession();

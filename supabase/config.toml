@@ -1,1 +1,4 @@
 project_id = "hzeoergmlzhdorhgzehz"
+
+[functions.validate-progress]
+verify_jwt = true
