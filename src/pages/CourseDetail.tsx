@@ -35,7 +35,7 @@ const CourseDetail = () => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<string>("basic");
+  const [selectedOption, setSelectedOption] = useState<string>("online");
   const navigate = useNavigate();
   const { id: courseId } = useParams();
   const { user } = useAuth();
@@ -152,7 +152,6 @@ const CourseDetail = () => {
         name: "오프라인 (소수정예 30명)",
         price: 2650000,
         originalPrice: 3500000,
-        status: "soldout",
         benefits: [
           "💰 수료 후 매출 천만원 보장",
           "🎁 신청만 해도 300만원 상당 혜택 제공",
@@ -470,6 +469,19 @@ const CourseDetail = () => {
                     </div>
                   </div>
 
+                  {/* Course Benefits */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground">포함 혜택</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2 text-sm">💰 수료 후 매출 천만원 보장</div>
+                      <div className="flex items-start gap-2 text-sm">🎁 신청만 해도 300만원 상당 혜택 제공</div>
+                      <div className="flex items-start gap-2 text-sm">💪 1:1로 케어하는 스파르타 학습 시스템</div>
+                      <div className="flex items-start gap-2 text-sm">📱 핸드폰 하나로 완전 자동화 시스템</div>
+                      <div className="flex items-start gap-2 text-sm">⚡ 하루 3시간 투자로 월 천만원 수익 보장</div>
+                      <div className="flex items-start gap-2 text-sm">🔒 평생 A/S 및 업데이트 지원</div>
+                    </div>
+                  </div>
+
                   {/* Course Options Selection */}
                   <div className="space-y-3">
                     <h3 className="text-sm font-medium text-muted-foreground">강의 구성</h3>
@@ -481,16 +493,13 @@ const CourseDetail = () => {
                             selectedOption === option.id 
                               ? 'border-primary bg-primary/5' 
                               : 'border-border hover:border-primary/50'
-                          } ${option.status === 'soldout' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          onClick={() => option.status !== 'soldout' && setSelectedOption(option.id)}
+                          }`}
+                          onClick={() => setSelectedOption(option.id)}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium">{option.name}</span>
-                                {option.status === 'soldout' && (
-                                  <Badge variant="destructive" className="text-xs">품절</Badge>
-                                )}
                               </div>
                             </div>
                             <div className="text-right">
@@ -504,18 +513,6 @@ const CourseDetail = () => {
                               )}
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Course Benefits */}
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-muted-foreground">포함 혜택</h3>
-                    <div className="space-y-2">
-                      {selectedCourse?.benefits.map((benefit, index) => (
-                        <div key={index} className="flex items-start gap-2 text-sm">
-                          <span>{benefit}</span>
                         </div>
                       ))}
                     </div>
@@ -554,7 +551,7 @@ const CourseDetail = () => {
                         className="w-full bg-primary hover:bg-primary/90"
                         onClick={() => navigate(`/learn/${courseId}`)}
                       >
-                        학습 계속하기
+                        강의 구매하기
                       </Button>
                     ) : (
                       <Button 
