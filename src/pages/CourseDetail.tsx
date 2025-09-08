@@ -231,7 +231,7 @@ const CourseDetail = () => {
         </div>
 
         {/* Hero Section */}
-        <div className="grid lg:grid-cols-4 gap-8 mb-12">
+        <div className="grid gap-8 mb-8 lg:[grid-template-columns:repeat(3,minmax(0,1fr))_383px]">
           {/* Left: Course Thumbnail */}
           <div className="lg:col-span-3">
             <div className="relative rounded-xl overflow-hidden shadow-lg">
@@ -248,43 +248,6 @@ const CourseDetail = () => {
             </div>
           </div>
 
-          {/* Section Navigation */}
-          <div className="mb-8">
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => scrollToSection('overview')}
-                className="whitespace-nowrap"
-              >
-                소개
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => scrollToSection('curriculum')}
-                className="whitespace-nowrap"
-              >
-                커리큘럼
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => scrollToSection('instructor')}
-                className="whitespace-nowrap"
-              >
-                크리에이터
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => scrollToSection('reviews')}
-                className="whitespace-nowrap"
-              >
-                후기 {course.reviewCount}
-              </Button>
-            </div>
-          </div>
 
           {/* Right: Purchase Card (Desktop) */}
           <div className="lg:col-span-1 hidden lg:block">
