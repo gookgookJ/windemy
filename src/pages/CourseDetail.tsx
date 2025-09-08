@@ -22,30 +22,163 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import courseWebImg from "@/assets/course-web.jpg";
 import courseDetailLong from "@/assets/course-detail-long.jpg";
-import heroThumbnail from "/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png";
 
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+interface CourseOption {
+  id: string;
+  name: string;
+  price: number;
+  original_price?: number;
+  benefits: string[];
+}
+
+interface CourseSession {
+  id: string;
+  title: string;
+  description?: string;
+  order_index: number;
+  duration_minutes: number;
+  is_preview: boolean;
+}
+
+interface CourseReview {
+  id: string;
+  user_id: string;
+  rating: number;
+  review_text?: string;
+  created_at: string;
+  profiles?: {
+    full_name?: string;
+  };
+}
+
+interface Course {
+  id: string;
+  title: string;
+  description?: string;
+  short_description?: string;
+  price: number;
+  instructor_id: string;
+  category_id: string;
+  level: string;
+  duration_hours: number;
+  rating: number;
+  total_students: number;
+  is_published: boolean;
+  what_you_will_learn?: string[];
+  requirements?: string[];
+  thumbnail_path?: string;
+  detail_image_path?: string;
+  profiles?: {
+    full_name?: string;
+  };
+  categories?: {
+    name: string;
+  };
+}
 
 const CourseDetail = () => {
   const [expandedSection, setExpandedSection] = useState<number | null>(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<string>("online");
+  const [selectedOption, setSelectedOption] = useState<string>("");
+  const [course, setCourse] = useState<Course | null>(null);
+  const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
+  const [courseSessions, setCourseSessions] = useState<CourseSession[]>([]);
+  const [courseReviews, setCourseReviews] = useState<CourseReview[]>([]);
+  const [loading, setLoading] = useState(true);
+  
   const navigate = useNavigate();
   const { id: courseId } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
+    if (courseId) {
+      fetchCourseData();
+    }
+  }, [courseId]);
+
+  useEffect(() => {
     if (user && courseId) {
       checkEnrollment();
     }
   }, [user, courseId]);
+
+  const fetchCourseData = async () => {
+    if (!courseId) return;
+    
+    setLoading(true);
+    try {
+      // Fetch course details
+      const { data: courseData, error: courseError } = await supabase
+        .from('courses')
+        .select(`
+          *,
+          profiles:instructor_id(full_name),
+          categories:category_id(name)
+        `)
+        .eq('id', courseId)
+        .single();
+
+      if (courseError) throw courseError;
+      setCourse(courseData);
+
+      // Fetch course options
+      const { data: optionsData, error: optionsError } = await supabase
+        .from('course_options')
+        .select('*')
+        .eq('course_id', courseId)
+        .order('price');
+
+      if (optionsError) throw optionsError;
+      setCourseOptions(optionsData || []);
+      
+      // Set first option as default
+      if (optionsData && optionsData.length > 0) {
+        setSelectedOption(optionsData[0].id);
+      }
+
+      // Fetch course sessions
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('course_sessions')
+        .select('*')
+        .eq('course_id', courseId)
+        .order('order_index');
+
+      if (sessionsError) throw sessionsError;
+      setCourseSessions(sessionsData || []);
+
+      // Fetch course reviews
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('course_reviews')
+        .select(`
+          *,
+          profiles:user_id(full_name)
+        `)
+        .eq('course_id', courseId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (reviewsError) throw reviewsError;
+      setCourseReviews(reviewsData || []);
+
+    } catch (error) {
+      console.error('Error fetching course data:', error);
+      toast({
+        title: "데이터 로딩 실패",
+        description: "강의 정보를 불러오는 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const checkEnrollment = async () => {
     if (!user || !courseId) return;
@@ -104,118 +237,10 @@ const CourseDetail = () => {
     }
   };
 
-  const course = {
-    title: "핸드폰 하나로 하루 3시간 일하며 월 순익 천만원 벌어가는 공동구매 중개의 정석",
-    instructor: "전민우",
-    instructorImage: "/placeholder-instructor.jpg",
-    instructorBio: "공동구매 중개 분야 10년차 전문가로, 수많은 성공 사례를 보유하고 있습니다.",
-    thumbnail: heroThumbnail,
-    basePrice: 2650000,
-    originalPrice: 3500000,
-    rating: 4.9,
-    reviewCount: 847,
-    duration: "120시간",
-    studentCount: 5420,
-    level: "초급",
-    category: "비즈니스/창업",
-    tags: ["공동구매", "중개업", "부업", "창업"],
-    description: "핸드폰 하나로 하루 3시간만 투자하여 월 순익 천만원을 만드는 공동구매 중개의 모든 노하우를 전수합니다.",
-    whatYouWillLearn: [
-      "공동구매 중개 시장 분석 및 진입 전략",
-      "수익성 높은 상품군 발굴 및 소싱 방법",
-      "효과적인 마케팅 및 고객 관리 시스템",
-      "리스크 관리 및 법적 이슈 대응",
-      "자동화 시스템 구축으로 시간 효율성 극대화",
-    ],
-    requirements: [
-      "스마트폰 사용 가능",
-      "기본적인 온라인 업무 처리 능력",
-      "성실한 학습 의지",
-    ],
-    options: [
-      {
-        id: "online",
-        name: "온라인 강의",
-        price: 1950000,
-        originalPrice: 2650000,
-        benefits: [
-          "💰 수료 후 매출 천만원 보장",
-          "🎁 신청만 해도 300만원 상당 혜택 제공",
-          "💪 1:1로 케어하는 스파르타 학습 시스템",
-          "📱 핸드폰 하나로 완전 자동화 시스템",
-          "⚡ 하루 3시간 투자로 월 천만원 수익 보장",
-          "🔒 평생 A/S 및 업데이트 지원"
-        ]
-      },
-      {
-        id: "offline",
-        name: "오프라인 (소수정예 30명)",
-        price: 3250000,
-        originalPrice: 4200000,
-        benefits: [
-          "💰 수료 후 매출 천만원 보장",
-          "🎁 신청만 해도 300만원 상당 혜택 제공",
-          "💪 1:1로 케어하는 스파르타 학습 시스템",
-          "📱 핸드폰 하나로 완전 자동화 시스템",
-          "⚡ 하루 3시간 투자로 월 천만원 수익 보장",
-          "🔒 평생 A/S 및 업데이트 지원",
-          "👥 오프라인 네트워킹 및 실습",
-          "🏆 현장 멘토링 및 즉석 피드백"
-        ]
-      }
-    ],
-    curriculum: [
-      {
-        title: "React 기초",
-        duration: "4시간 30분",
-        lessonCount: 12,
-        lessons: [
-          { title: "React 소개와 환경 설정", duration: "25분", isPreview: true },
-          { title: "컴포넌트 기본 개념", duration: "20분", isPreview: true },
-          { title: "JSX 문법 완전 정복", duration: "30분" },
-          { title: "Props와 State", duration: "35분" },
-        ]
-      },
-      {
-        title: "React Hooks",
-        duration: "6시간",
-        lessonCount: 15,
-        lessons: [
-          { title: "useState Hook", duration: "40분" },
-          { title: "useEffect Hook", duration: "45min" },
-          { title: "Custom Hooks 만들기", duration: "50분" },
-        ]
-      },
-      {
-        title: "상태 관리",
-        duration: "5시간",
-        lessonCount: 10,
-        lessons: [
-          { title: "Context API", duration: "35분" },
-          { title: "Redux 기초", duration: "60분" },
-          { title: "Redux Toolkit", duration: "55분" },
-        ]
-      }
-    ]
-  };
-
-  const reviews = [
-    {
-      name: "박학생",
-      rating: 5,
-      date: "2024.01.15",
-      content: "정말 체계적이고 실무에 도움이 되는 강의입니다. 특히 프로젝트 실습이 좋았어요!",
-    },
-    {
-      name: "김개발자",
-      rating: 5,
-      date: "2024.01.10",
-      content: "설명이 정말 명확하고 이해하기 쉽게 되어있네요. 추천합니다!",
-    }
-  ];
-
-  const selectedCourse = course.options.find(option => option.id === selectedOption);
-  const discountRate = selectedCourse ? Math.round(((selectedCourse.originalPrice - selectedCourse.price) / selectedCourse.originalPrice) * 100) : 0;
+  const selectedCourse = courseOptions.find(option => option.id === selectedOption);
+  const discountRate = selectedCourse && selectedCourse.original_price
+    ? Math.round(((selectedCourse.original_price - selectedCourse.price) / selectedCourse.original_price) * 100)
+    : 0;
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -224,6 +249,69 @@ const CourseDetail = () => {
     }
   };
 
+  // Group sessions by sections for display
+  const groupedSessions = courseSessions.reduce((groups: any[], session, index) => {
+    const groupIndex = Math.floor(index / 4); // Group every 4 sessions
+    if (!groups[groupIndex]) {
+      groups[groupIndex] = {
+        title: `섹션 ${groupIndex + 1}`,
+        duration: 0,
+        lessonCount: 0,
+        lessons: []
+      };
+    }
+    
+    groups[groupIndex].lessons.push({
+      title: session.title,
+      duration: `${session.duration_minutes}분`,
+      isPreview: session.is_preview
+    });
+    groups[groupIndex].duration += session.duration_minutes;
+    groups[groupIndex].lessonCount += 1;
+    
+    return groups;
+  }, []);
+
+  // Convert duration to hours and minutes
+  groupedSessions.forEach(group => {
+    const hours = Math.floor(group.duration / 60);
+    const minutes = group.duration % 60;
+    group.duration = hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">강의 정보를 불러오는 중...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">강의를 찾을 수 없습니다</h1>
+            <p className="text-muted-foreground mb-4">요청하신 강의가 존재하지 않거나 삭제되었습니다.</p>
+            <Button onClick={() => navigate('/courses')}>
+              강의 목록으로 돌아가기
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -231,9 +319,9 @@ const CourseDetail = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-3 text-sm mb-6">
-          <span className="text-primary font-medium">{course.category}</span>
+          <span className="text-primary font-medium">{course.categories?.name || "카테고리"}</span>
           <span className="text-muted-foreground">{">"}</span>
-          <span className="text-muted-foreground">React</span>
+          <span className="text-muted-foreground">{course.level}</span>
         </div>
 
         {/* Desktop Layout: 2-column structure with fixed widths */}
@@ -243,7 +331,7 @@ const CourseDetail = () => {
             {/* Thumbnail Section - Desktop: 757x426, Mobile: responsive */}
             <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
               <img
-                src={course.thumbnail}
+                src={course.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
                 alt={course.title}
                 className="w-[757px] h-[426px] object-cover"
               />
@@ -282,7 +370,7 @@ const CourseDetail = () => {
                   onClick={() => scrollToSection('reviews')}
                   className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center"
                 >
-                  후기 {course.reviewCount}
+                  후기 {courseReviews.length}
                 </Button>
               </div>
             </div>
@@ -292,7 +380,7 @@ const CourseDetail = () => {
               {/* Long Course Detail Image */}
               <div id="overview" className="w-[757px]">
                 <img
-                  src={courseDetailLong}
+                  src={course.detail_image_path || courseDetailLong}
                   alt="강의 상세 내용"
                   className="w-[757px] h-auto rounded-xl shadow-lg"
                 />
@@ -304,7 +392,7 @@ const CourseDetail = () => {
                 <section className="bg-muted/30 rounded-2xl p-8">
                   <h2 className="text-2xl font-bold mb-6">이 강의에서 배우는 것들</h2>
                   <div className="grid md:grid-cols-2 gap-4">
-                    {course.whatYouWillLearn.map((item, index) => (
+                    {(course.what_you_will_learn || []).map((item, index) => (
                       <div key={index} className="flex items-start gap-3">
                         <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
                         <span className="text-foreground">{item}</span>
@@ -317,7 +405,7 @@ const CourseDetail = () => {
                 <section id="curriculum">
                   <h2 className="text-2xl font-bold mb-6">커리큘럼</h2>
                   <div className="space-y-4">
-                    {course.curriculum.map((section, sectionIndex) => (
+                    {groupedSessions.map((section, sectionIndex) => (
                       <Card key={sectionIndex}>
                         <CardContent className="p-0">
                           <div 
@@ -346,7 +434,7 @@ const CourseDetail = () => {
                           
                           {expandedSection === sectionIndex && (
                             <div className="border-t border-border">
-                              {section.lessons.map((lesson, lessonIndex) => (
+                              {section.lessons.map((lesson: any, lessonIndex: number) => (
                                 <div key={lessonIndex} className="flex items-center justify-between p-4 border-b border-border last:border-b-0">
                                   <div className="flex items-center gap-3">
                                     <Play className="w-4 h-4 text-muted-foreground" />
@@ -374,12 +462,12 @@ const CourseDetail = () => {
                       <User className="w-10 h-10 text-muted-foreground" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-xl font-semibold mb-2">{course.instructor}</h3>
-                      <p className="text-muted-foreground mb-4">{course.instructorBio}</p>
+                      <h3 className="text-xl font-semibold mb-2">{course.profiles?.full_name || "강사"}</h3>
+                      <p className="text-muted-foreground mb-4">{course.description}</p>
                       <div className="flex items-center gap-4 text-sm">
                         <div className="flex items-center gap-1">
                           <Users className="w-4 h-4" />
-                          <span>{course.studentCount.toLocaleString()}명의 수강생</span>
+                          <span>{course.total_students.toLocaleString()}명의 수강생</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 text-yellow-400" />
@@ -394,7 +482,7 @@ const CourseDetail = () => {
                 <section id="reviews">
                   <h2 className="text-2xl font-bold mb-6">수강생 후기</h2>
                   <div className="space-y-6">
-                    {reviews.map((review, index) => (
+                    {courseReviews.map((review, index) => (
                       <Card key={index}>
                         <CardContent className="p-6">
                           <div className="flex items-start gap-4">
@@ -403,15 +491,17 @@ const CourseDetail = () => {
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
-                                <span className="font-medium">{review.name}</span>
+                                <span className="font-medium">{review.profiles?.full_name || "익명"}</span>
                                 <div className="flex items-center">
                                   {[...Array(review.rating)].map((_, i) => (
                                     <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
                                   ))}
                                 </div>
-                                <span className="text-sm text-muted-foreground">{review.date}</span>
+                                <span className="text-sm text-muted-foreground">
+                                  {new Date(review.created_at).toLocaleDateString()}
+                                </span>
                               </div>
-                              <p className="text-muted-foreground">{review.content}</p>
+                              <p className="text-muted-foreground">{review.review_text}</p>
                             </div>
                           </div>
                         </CardContent>
@@ -445,10 +535,10 @@ const CourseDetail = () => {
                         ))}
                       </div>
                       <span className="text-sm font-medium">{course.rating}</span>
-                      <span className="text-sm text-muted-foreground">({course.reviewCount.toLocaleString()}개 후기)</span>
+                      <span className="text-sm text-muted-foreground">({courseReviews.length}개 후기)</span>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {discountRate}% 할인가 {(selectedCourse?.originalPrice ?? 0).toLocaleString()}원
+                      {discountRate}% 할인가 {(selectedCourse?.original_price ?? 0).toLocaleString()}원
                     </div>
                   </div>
 
@@ -481,7 +571,7 @@ const CourseDetail = () => {
                   <div className="space-y-3">
                     <h3 className="text-sm font-medium text-muted-foreground">강의 구성</h3>
                     <div className="space-y-2">
-                      {course.options.map((option) => (
+                      {courseOptions.map((option) => (
                         <div 
                           key={option.id}
                           className={`p-3 border rounded-lg cursor-pointer transition-colors ${
@@ -501,9 +591,9 @@ const CourseDetail = () => {
                               <div className="font-bold text-primary">
                                 {option.price.toLocaleString()}원
                               </div>
-                              {option.originalPrice && (
+                              {option.original_price && (
                                 <div className="text-xs text-muted-foreground line-through">
-                                  {option.originalPrice.toLocaleString()}원
+                                  {option.original_price.toLocaleString()}원
                                 </div>
                               )}
                             </div>
@@ -535,7 +625,7 @@ const CourseDetail = () => {
                         <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current text-red-500' : 'text-muted-foreground'}`} />
                       </Button>
                       <span className="text-sm text-muted-foreground">
-                        {course.studentCount.toLocaleString()}
+                        {course.total_students.toLocaleString()}
                       </span>
                     </div>
                     
@@ -571,7 +661,7 @@ const CourseDetail = () => {
           {/* Mobile Thumbnail */}
           <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
             <img
-              src={course.thumbnail}
+              src={course.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
               alt={course.title}
               className="w-full aspect-video object-cover"
             />
@@ -601,14 +691,14 @@ const CourseDetail = () => {
                       {(selectedCourse?.price ?? 0).toLocaleString()}원
                     </div>
                     <div className="text-xs text-muted-foreground line-through">
-                      {(selectedCourse?.originalPrice ?? 0).toLocaleString()}원
+                      {(selectedCourse?.original_price ?? 0).toLocaleString()}원
                     </div>
                   </div>
                 </div>
 
                 {/* Mobile Options Selection */}
                 <div className="space-y-2">
-                  {course.options.map((option) => (
+                  {courseOptions.map((option) => (
                     <div 
                       key={option.id}
                       className={`p-3 border rounded-lg cursor-pointer transition-colors ${
@@ -676,7 +766,7 @@ const CourseDetail = () => {
             {/* Course Detail Image */}
             <div id="overview">
               <img
-                src={courseDetailLong}
+                src={course.detail_image_path || courseDetailLong}
                 alt="강의 상세 내용"
                 className="w-full h-auto rounded-xl shadow-lg"
               />
@@ -686,7 +776,7 @@ const CourseDetail = () => {
             <section className="bg-muted/30 rounded-2xl p-6">
               <h2 className="text-xl font-bold mb-4">이 강의에서 배우는 것들</h2>
               <div className="space-y-3">
-                {course.whatYouWillLearn.map((item, index) => (
+                {(course.what_you_will_learn || []).map((item, index) => (
                   <div key={index} className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
                     <span className="text-sm">{item}</span>
@@ -699,7 +789,7 @@ const CourseDetail = () => {
             <section id="curriculum">
               <h2 className="text-xl font-bold mb-4">커리큘럼</h2>
               <div className="space-y-3">
-                {course.curriculum.map((section, sectionIndex) => (
+                {groupedSessions.map((section, sectionIndex) => (
                   <Card key={sectionIndex}>
                     <CardContent className="p-0">
                       <div 
@@ -728,7 +818,7 @@ const CourseDetail = () => {
                       
                       {expandedSection === sectionIndex && (
                         <div className="border-t border-border">
-                          {section.lessons.map((lesson, lessonIndex) => (
+                          {section.lessons.map((lesson: any, lessonIndex: number) => (
                             <div key={lessonIndex} className="flex items-center justify-between p-3 border-b border-border last:border-b-0">
                               <div className="flex items-center gap-2">
                                 <Play className="w-3 h-3 text-muted-foreground" />
@@ -756,12 +846,12 @@ const CourseDetail = () => {
                   <User className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-2">{course.instructor}</h3>
-                  <p className="text-sm text-muted-foreground mb-3">{course.instructorBio}</p>
+                  <h3 className="text-lg font-semibold mb-2">{course.profiles?.full_name || "강사"}</h3>
+                  <p className="text-sm text-muted-foreground mb-3">{course.description}</p>
                   <div className="flex items-center gap-4 text-xs">
                     <div className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
-                      <span>{course.studentCount.toLocaleString()}명</span>
+                      <span>{course.total_students.toLocaleString()}명</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Star className="w-3 h-3 text-yellow-400" />
@@ -776,7 +866,7 @@ const CourseDetail = () => {
             <section id="reviews" className="mb-20">
               <h2 className="text-xl font-bold mb-4">수강생 후기</h2>
               <div className="space-y-4">
-                {reviews.map((review, index) => (
+                {courseReviews.map((review, index) => (
                   <Card key={index}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
@@ -785,15 +875,17 @@ const CourseDetail = () => {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="font-medium text-sm">{review.name}</span>
+                            <span className="font-medium text-sm">{review.profiles?.full_name || "익명"}</span>
                             <div className="flex items-center">
                               {[...Array(review.rating)].map((_, i) => (
                                 <Star key={i} className="w-3 h-3 text-yellow-400 fill-current" />
                               ))}
                             </div>
-                            <span className="text-xs text-muted-foreground">{review.date}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(review.created_at).toLocaleDateString()}
+                            </span>
                           </div>
-                          <p className="text-sm text-muted-foreground">{review.content}</p>
+                          <p className="text-sm text-muted-foreground">{review.review_text}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -824,9 +916,8 @@ const CourseDetail = () => {
             </Button>
           </div>
         </div>
-
       </main>
-
+      
       <Footer />
     </div>
   );
