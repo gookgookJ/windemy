@@ -254,14 +254,14 @@ const CourseDetail = () => {
               </div>
             </div>
 
-            {/* Sticky Navigation Bar */}
+            {/* Sticky Navigation Bar - Full width 4-column layout */}
             <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border mb-8">
-              <div className="flex gap-2 py-3 overflow-x-auto">
+              <div className="w-[757px] grid grid-cols-4 gap-0 py-3">
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => scrollToSection('overview')}
-                  className="whitespace-nowrap"
+                  className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center"
                 >
                   소개
                 </Button>
@@ -269,7 +269,7 @@ const CourseDetail = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={() => scrollToSection('curriculum')}
-                  className="whitespace-nowrap"
+                  className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center"
                 >
                   커리큘럼
                 </Button>
@@ -277,7 +277,7 @@ const CourseDetail = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={() => scrollToSection('instructor')}
-                  className="whitespace-nowrap"
+                  className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center"
                 >
                   크리에이터
                 </Button>
@@ -285,7 +285,7 @@ const CourseDetail = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={() => scrollToSection('reviews')}
-                  className="whitespace-nowrap"
+                  className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center"
                 >
                   후기 {course.reviewCount}
                 </Button>
