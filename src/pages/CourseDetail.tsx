@@ -639,7 +639,7 @@ const CourseDetail = () => {
                 <div className="space-y-2">
                   <div className="flex items-center gap-3">
                     <span className="text-3xl font-bold text-primary">
-                      {selectedCourse?.price.toLocaleString()}원
+                      {(selectedCourse?.price ?? 0).toLocaleString()}원
                     </span>
                     {course.originalPrice && (
                       <Badge className="bg-destructive text-destructive-foreground">

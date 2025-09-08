@@ -13,6 +13,7 @@ import MyPage from "./pages/MyPage";
 import Admin from "./pages/Admin";
 import Learn from "./pages/Learn";
 import NotFound from "./pages/NotFound";
+import CourseManagement from "./pages/CourseManagement";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/my-page" element={<MyPage />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/learn/:courseId" element={<Learn />} />
+            <Route path="/course-management" element={<CourseManagement />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
