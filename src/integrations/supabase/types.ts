@@ -74,6 +74,44 @@ export type Database = {
         }
         Relationships: []
       }
+      course_options: {
+        Row: {
+          benefits: string[] | null
+          course_id: string | null
+          created_at: string | null
+          id: string
+          name: string
+          original_price: number | null
+          price: number
+        }
+        Insert: {
+          benefits?: string[] | null
+          course_id?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          original_price?: number | null
+          price: number
+        }
+        Update: {
+          benefits?: string[] | null
+          course_id?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          original_price?: number | null
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_options_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_reviews: {
         Row: {
           course_id: string | null
@@ -124,6 +162,7 @@ export type Database = {
           duration_minutes: number | null
           id: string
           is_free: boolean | null
+          is_preview: boolean | null
           order_index: number
           title: string
           video_url: string | null
@@ -135,6 +174,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           is_free?: boolean | null
+          is_preview?: boolean | null
           order_index: number
           title: string
           video_url?: string | null
@@ -146,6 +186,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           is_free?: boolean | null
+          is_preview?: boolean | null
           order_index?: number
           title?: string
           video_url?: string | null
@@ -165,6 +206,7 @@ export type Database = {
           category_id: string | null
           created_at: string | null
           description: string | null
+          detail_image_path: string | null
           duration_hours: number | null
           id: string
           instructor_id: string | null
@@ -172,17 +214,21 @@ export type Database = {
           level: string | null
           price: number
           rating: number | null
+          requirements: string[] | null
           short_description: string | null
+          thumbnail_path: string | null
           thumbnail_url: string | null
           title: string
           total_students: number | null
           updated_at: string | null
           video_preview_url: string | null
+          what_you_will_learn: string[] | null
         }
         Insert: {
           category_id?: string | null
           created_at?: string | null
           description?: string | null
+          detail_image_path?: string | null
           duration_hours?: number | null
           id?: string
           instructor_id?: string | null
@@ -190,17 +236,21 @@ export type Database = {
           level?: string | null
           price?: number
           rating?: number | null
+          requirements?: string[] | null
           short_description?: string | null
+          thumbnail_path?: string | null
           thumbnail_url?: string | null
           title: string
           total_students?: number | null
           updated_at?: string | null
           video_preview_url?: string | null
+          what_you_will_learn?: string[] | null
         }
         Update: {
           category_id?: string | null
           created_at?: string | null
           description?: string | null
+          detail_image_path?: string | null
           duration_hours?: number | null
           id?: string
           instructor_id?: string | null
@@ -208,12 +258,15 @@ export type Database = {
           level?: string | null
           price?: number
           rating?: number | null
+          requirements?: string[] | null
           short_description?: string | null
+          thumbnail_path?: string | null
           thumbnail_url?: string | null
           title?: string
           total_students?: number | null
           updated_at?: string | null
           video_preview_url?: string | null
+          what_you_will_learn?: string[] | null
         }
         Relationships: [
           {
