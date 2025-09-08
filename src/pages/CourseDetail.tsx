@@ -289,7 +289,7 @@ const CourseDetail = () => {
           {/* Right: Purchase Card (Desktop) */}
           <div className="lg:col-span-1 hidden lg:block">
             <div className="sticky top-24">
-              <Card className="p-6 shadow-lg border border-border/50">
+              <Card className="shadow-lg border border-border/50" style={{ width: "383px" }}>
                 <div className="space-y-6">
                   {/* Course Title */}
                   <h1 className="text-xl font-bold leading-tight">
@@ -300,28 +300,18 @@ const CourseDetail = () => {
                   <div className="space-y-3">
                     <h3 className="text-sm font-medium text-muted-foreground">이 강의로 얻는 혜택</h3>
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="w-4 h-4 text-success" />
-                        <span>수료 후 즉시 적용 가능한 실무 기술</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="w-4 h-4 text-success" />
-                        <span>평생 무제한 강의 수강</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="w-4 h-4 text-success" />
-                        <span>수료증 발급</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="w-4 h-4 text-success" />
-                        <span>질의응답 게시판 이용</span>
-                      </div>
+                      {selectedCourse?.benefits.map((benefit, index) => (
+                        <div key={index} className="flex items-start gap-2 text-sm">
+                          <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                          <span>{benefit}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
                   {/* Course Options */}
                   <div className="space-y-4">
-                    <h3 className="text-sm font-medium">강의 구성</h3>
+                    <h3 className="text-sm font-medium">수강 옵션</h3>
                     <div className="space-y-3">
                       {course.options.map((option) => (
                         <div 
@@ -356,8 +346,44 @@ const CourseDetail = () => {
                     </div>
                   </div>
 
+                  {/* Total Price */}
+                  <div className="p-4 border-2 border-primary/20 rounded-lg bg-background">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">총 결제 금액</span>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-primary">
+                          {(selectedCourse?.price ?? 0).toLocaleString()}원
+                        </div>
+                        {selectedCourse?.originalPrice && (
+                          <div className="flex items-center gap-2 justify-end">
+                            <span className="text-sm text-muted-foreground line-through">
+                              {selectedCourse.originalPrice.toLocaleString()}원
+                            </span>
+                            <Badge variant="destructive" className="text-xs">
+                              {discountRate}% 할인
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Action Buttons */}
                   <div className="space-y-3">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-2"
+                        onClick={() => setIsWishlisted(!isWishlisted)}
+                      >
+                        <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current text-destructive' : 'text-muted-foreground'}`} />
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        {course.studentCount.toLocaleString()}명이 수강했어요
+                      </span>
+                    </div>
+                    
                     {isEnrolled ? (
                       <Button 
                         variant="default" 
@@ -377,29 +403,9 @@ const CourseDetail = () => {
                         disabled={enrolling}
                       >
                         <BookOpen className="w-5 h-5 mr-2" />
-                        {enrolling ? "등록 중..." : "지금 결제하기"}
+                        {enrolling ? "등록 중..." : "강의 구매하기"}
                       </Button>
                     )}
-                    <Button variant="outline" size="lg" className="w-full" onClick={() => navigate('/cart')}>
-                      장바구니 담기
-                    </Button>
-                  </div>
-
-                  {/* Course Info */}
-                  <div className="border-t pt-4 space-y-3">
-                    <div className="flex items-center gap-3 text-sm">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span>{course.rating}</span>
-                      <span className="text-muted-foreground">({course.reviewCount.toLocaleString()}개 후기)</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <Users className="w-4 h-4 text-muted-foreground" />
-                      <span>{course.studentCount.toLocaleString()}명이 수강했어요</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                      <span>총 {course.duration} 분량</span>
-                    </div>
                   </div>
                 </div>
               </Card>
@@ -439,6 +445,16 @@ const CourseDetail = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Total Price */}
+              <div className="p-4 border-2 border-primary/20 rounded-lg bg-background">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">총 결제 금액</span>
+                  <div className="text-2xl font-bold text-primary">
+                    {(selectedCourse?.price ?? 0).toLocaleString()}원
+                  </div>
+                </div>
+              </div>
               
               <div className="space-y-3">
                 {isEnrolled ? (
@@ -460,12 +476,9 @@ const CourseDetail = () => {
                     disabled={enrolling}
                   >
                     <BookOpen className="w-5 h-5 mr-2" />
-                    {enrolling ? "등록 중..." : "지금 결제하기"}
+                    {enrolling ? "등록 중..." : "강의 구매하기"}
                   </Button>
                 )}
-                <Button variant="outline" size="lg" className="w-full" onClick={() => navigate('/cart')}>
-                  장바구니 담기
-                </Button>
               </div>
             </div>
           </Card>
