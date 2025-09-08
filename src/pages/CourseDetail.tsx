@@ -255,7 +255,7 @@ const CourseDetail = () => {
             </div>
 
             {/* Sticky Navigation Bar - Full width 4-column layout */}
-            <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border mb-8">
+            <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm mb-8">
               <div className="w-[757px] grid grid-cols-4 gap-0 py-3">
                 <Button 
                   variant="outline" 
