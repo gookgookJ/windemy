@@ -56,7 +56,7 @@ interface CourseReview {
   };
 }
 
-interface Course {
+interface CourseData {
   id: string;
   title: string;
   description?: string;
@@ -87,7 +87,7 @@ const CourseDetail = () => {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string>("");
-  const [course, setCourse] = useState<Course | null>(null);
+  const [courseData, setCourseData] = useState<CourseData | null>(null);
   const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
   const [courseSessions, setCourseSessions] = useState<CourseSession[]>([]);
   const [courseReviews, setCourseReviews] = useState<CourseReview[]>([]);
@@ -116,7 +116,7 @@ const CourseDetail = () => {
     setLoading(true);
     try {
       // Fetch course details
-      const { data: courseData, error: courseError } = await supabase
+      const { data: course, error: courseError } = await supabase
         .from('courses')
         .select(`
           *,
@@ -127,7 +127,7 @@ const CourseDetail = () => {
         .single();
 
       if (courseError) throw courseError;
-      setCourse(courseData);
+      setCourseData(course);
 
       // Fetch course options
       const { data: optionsData, error: optionsError } = await supabase
@@ -294,7 +294,7 @@ const CourseDetail = () => {
     );
   }
 
-  if (!course) {
+  if (!courseData) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -319,9 +319,9 @@ const CourseDetail = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-3 text-sm mb-6">
-          <span className="text-primary font-medium">{course.categories?.name || "카테고리"}</span>
+          <span className="text-primary font-medium">{courseData.categories?.name || "카테고리"}</span>
           <span className="text-muted-foreground">{">"}</span>
-          <span className="text-muted-foreground">{course.level}</span>
+          <span className="text-muted-foreground">{courseData.level}</span>
         </div>
 
         {/* Desktop Layout: 2-column structure with fixed widths */}
@@ -331,8 +331,8 @@ const CourseDetail = () => {
             {/* Thumbnail Section - Desktop: 757x426, Mobile: responsive */}
             <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
               <img
-                src={course.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
-                alt={course.title}
+                src={courseData.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
+                alt={courseData.title}
                 className="w-[757px] h-[426px] object-cover"
               />
             </div>
@@ -380,7 +380,7 @@ const CourseDetail = () => {
               {/* Long Course Detail Image */}
               <div id="overview" className="w-[757px]">
                 <img
-                  src={course.detail_image_path || courseDetailLong}
+                  src={courseData.detail_image_path || courseDetailLong}
                   alt="강의 상세 내용"
                   className="w-[757px] h-auto rounded-xl shadow-lg"
                 />
@@ -392,7 +392,7 @@ const CourseDetail = () => {
                 <section className="bg-muted/30 rounded-2xl p-8">
                   <h2 className="text-2xl font-bold mb-6">이 강의에서 배우는 것들</h2>
                   <div className="grid md:grid-cols-2 gap-4">
-                    {(course.what_you_will_learn || []).map((item, index) => (
+                    {(courseData.what_you_will_learn || []).map((item, index) => (
                       <div key={index} className="flex items-start gap-3">
                         <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
                         <span className="text-foreground">{item}</span>
@@ -462,16 +462,16 @@ const CourseDetail = () => {
                       <User className="w-10 h-10 text-muted-foreground" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-xl font-semibold mb-2">{course.profiles?.full_name || "강사"}</h3>
-                      <p className="text-muted-foreground mb-4">{course.description}</p>
+                      <h3 className="text-xl font-semibold mb-2">{courseData.profiles?.full_name || "강사"}</h3>
+                      <p className="text-muted-foreground mb-4">{courseData.description}</p>
                       <div className="flex items-center gap-4 text-sm">
                         <div className="flex items-center gap-1">
                           <Users className="w-4 h-4" />
-                          <span>{course.total_students.toLocaleString()}명의 수강생</span>
+                          <span>{courseData.total_students.toLocaleString()}명의 수강생</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 text-yellow-400" />
-                          <span>{course.rating}점 평점</span>
+                          <span>{courseData.rating}점 평점</span>
                         </div>
                       </div>
                     </div>
@@ -520,7 +520,7 @@ const CourseDetail = () => {
                 <div className="space-y-6">
                   {/* Course Title */}
                   <h1 className="text-xl font-bold leading-tight">
-                    {course.title}
+                    {courseData.title}
                   </h1>
 
                   {/* Rating and Stats */}
@@ -530,11 +530,11 @@ const CourseDetail = () => {
                         {[...Array(5)].map((_, i) => (
                           <Star 
                             key={i} 
-                            className={`w-4 h-4 ${i < Math.floor(course.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                            className={`w-4 h-4 ${i < Math.floor(courseData.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
                           />
                         ))}
                       </div>
-                      <span className="text-sm font-medium">{course.rating}</span>
+                      <span className="text-sm font-medium">{courseData.rating}</span>
                       <span className="text-sm text-muted-foreground">({courseReviews.length}개 후기)</span>
                     </div>
                     <div className="text-sm text-muted-foreground">
@@ -625,7 +625,7 @@ const CourseDetail = () => {
                         <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current text-red-500' : 'text-muted-foreground'}`} />
                       </Button>
                       <span className="text-sm text-muted-foreground">
-                        {course.total_students.toLocaleString()}
+                        {courseData.total_students.toLocaleString()}
                       </span>
                     </div>
                     
@@ -661,8 +661,8 @@ const CourseDetail = () => {
           {/* Mobile Thumbnail */}
           <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
             <img
-              src={course.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
-              alt={course.title}
+              src={courseData.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
+              alt={courseData.title}
               className="w-full aspect-video object-cover"
             />
           </div>
@@ -671,7 +671,7 @@ const CourseDetail = () => {
           <Card className="mb-6 mx-4">
             <CardContent className="p-4">
               <div className="space-y-4">
-                <h1 className="text-lg font-bold leading-tight">{course.title}</h1>
+                <h1 className="text-lg font-bold leading-tight">{courseData.title}</h1>
                 
                 {/* Rating and Price */}
                 <div className="flex items-center justify-between">
@@ -680,11 +680,11 @@ const CourseDetail = () => {
                       {[...Array(5)].map((_, i) => (
                         <Star 
                           key={i} 
-                          className={`w-4 h-4 ${i < Math.floor(course.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                          className={`w-4 h-4 ${i < Math.floor(courseData.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
                         />
                       ))}
                     </div>
-                    <span className="text-sm font-medium">{course.rating}</span>
+                    <span className="text-sm font-medium">{courseData.rating}</span>
                   </div>
                   <div className="text-right">
                     <div className="text-xl font-bold text-primary">
@@ -766,7 +766,7 @@ const CourseDetail = () => {
             {/* Course Detail Image */}
             <div id="overview">
               <img
-                src={course.detail_image_path || courseDetailLong}
+                src={courseData.detail_image_path || courseDetailLong}
                 alt="강의 상세 내용"
                 className="w-full h-auto rounded-xl shadow-lg"
               />
@@ -776,7 +776,7 @@ const CourseDetail = () => {
             <section className="bg-muted/30 rounded-2xl p-6">
               <h2 className="text-xl font-bold mb-4">이 강의에서 배우는 것들</h2>
               <div className="space-y-3">
-                {(course.what_you_will_learn || []).map((item, index) => (
+                {(courseData.what_you_will_learn || []).map((item, index) => (
                   <div key={index} className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
                     <span className="text-sm">{item}</span>
@@ -846,16 +846,16 @@ const CourseDetail = () => {
                   <User className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-2">{course.profiles?.full_name || "강사"}</h3>
-                  <p className="text-sm text-muted-foreground mb-3">{course.description}</p>
+                  <h3 className="text-lg font-semibold mb-2">{courseData.profiles?.full_name || "강사"}</h3>
+                  <p className="text-sm text-muted-foreground mb-3">{courseData.description}</p>
                   <div className="flex items-center gap-4 text-xs">
                     <div className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
-                      <span>{course.total_students.toLocaleString()}명</span>
+                      <span>{courseData.total_students.toLocaleString()}명</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Star className="w-3 h-3 text-yellow-400" />
-                      <span>{course.rating}점</span>
+                      <span>{courseData.rating}점</span>
                     </div>
                   </div>
                 </div>
