@@ -12,7 +12,8 @@ import {
   Heart,
   ChevronDown,
   ChevronRight,
-  CheckCircle
+  CheckCircle,
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -224,17 +225,18 @@ const CourseDetail = () => {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-3 text-sm mb-8">
+        <div className="flex items-center gap-3 text-sm mb-6">
           <span className="text-primary font-medium">{course.category}</span>
           <span className="text-muted-foreground">{">"}</span>
           <span className="text-muted-foreground">React</span>
         </div>
 
-        {/* Hero Section */}
-        <div className="grid gap-8 mb-8 lg:[grid-template-columns:repeat(3,minmax(0,1fr))_383px]">
-          {/* Left: Course Thumbnail */}
-          <div className="lg:col-span-3">
-            <div className="relative rounded-xl overflow-hidden shadow-lg">
+        {/* Main Layout: 2-column structure similar to reference */}
+        <div className="flex gap-8">
+          {/* Left Column: Video and Content */}
+          <div className="flex-1 max-w-[calc(100%-383px-2rem)]">
+            {/* Video Section */}
+            <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
               <img
                 src={course.thumbnail}
                 alt={course.title}
@@ -246,104 +248,302 @@ const CourseDetail = () => {
                 </Button>
               </div>
             </div>
+
+            {/* Sticky Navigation Bar */}
+            <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border mb-8">
+              <div className="flex gap-2 py-3 overflow-x-auto">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => scrollToSection('overview')}
+                  className="whitespace-nowrap"
+                >
+                  소개
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => scrollToSection('curriculum')}
+                  className="whitespace-nowrap"
+                >
+                  커리큘럼
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => scrollToSection('instructor')}
+                  className="whitespace-nowrap"
+                >
+                  크리에이터
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => scrollToSection('reviews')}
+                  className="whitespace-nowrap"
+                >
+                  후기 {course.reviewCount}
+                </Button>
+              </div>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="space-y-8">
+              {/* Long Course Detail Image */}
+              <div id="overview" className="w-full">
+                <img
+                  src={courseDetailLong}
+                  alt="강의 상세 내용"
+                  className="w-full h-auto rounded-xl shadow-lg"
+                />
+              </div>
+
+              {/* Course Content Sections */}
+              <div className="space-y-12">
+                {/* What You'll Learn */}
+                <section className="bg-muted/30 rounded-2xl p-8">
+                  <h2 className="text-2xl font-bold mb-6">이 강의에서 배우는 것들</h2>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {course.whatYouWillLearn.map((item, index) => (
+                      <div key={index} className="flex items-start gap-3">
+                        <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
+                        <span className="text-foreground">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Curriculum */}
+                <section id="curriculum">
+                  <h2 className="text-2xl font-bold mb-6">커리큘럼</h2>
+                  <div className="space-y-4">
+                    {course.curriculum.map((section, sectionIndex) => (
+                      <Card key={sectionIndex}>
+                        <CardContent className="p-0">
+                          <div 
+                            className="flex items-center justify-between p-6 cursor-pointer hover:bg-muted/50 transition-colors"
+                            onClick={() => setExpandedSection(expandedSection === sectionIndex ? null : sectionIndex)}
+                          >
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-lg mb-1">{section.title}</h3>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  {section.duration}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <BookOpen className="w-4 h-4" />
+                                  {section.lessonCount}개 강의
+                                </span>
+                              </div>
+                            </div>
+                            {expandedSection === sectionIndex ? (
+                              <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                            ) : (
+                              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                            )}
+                          </div>
+                          
+                          {expandedSection === sectionIndex && (
+                            <div className="border-t border-border">
+                              {section.lessons.map((lesson, lessonIndex) => (
+                                <div key={lessonIndex} className="flex items-center justify-between p-4 border-b border-border last:border-b-0">
+                                  <div className="flex items-center gap-3">
+                                    <Play className="w-4 h-4 text-muted-foreground" />
+                                    <span className="text-sm">{lesson.title}</span>
+                                    {lesson.isPreview && (
+                                      <Badge variant="outline" className="text-xs">미리보기</Badge>
+                                    )}
+                                  </div>
+                                  <span className="text-sm text-muted-foreground">{lesson.duration}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Instructor */}
+                <section id="instructor" className="bg-muted/30 rounded-2xl p-8">
+                  <h2 className="text-2xl font-bold mb-6">강사 소개</h2>
+                  <div className="flex items-start gap-6">
+                    <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                      <User className="w-10 h-10 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold mb-2">{course.instructor}</h3>
+                      <p className="text-muted-foreground mb-4">{course.instructorBio}</p>
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1">
+                          <Users className="w-4 h-4" />
+                          <span>{course.studentCount.toLocaleString()}명의 수강생</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-400" />
+                          <span>{course.rating}점 평점</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Reviews */}
+                <section id="reviews">
+                  <h2 className="text-2xl font-bold mb-6">수강생 후기</h2>
+                  <div className="space-y-6">
+                    {reviews.map((review, index) => (
+                      <Card key={index}>
+                        <CardContent className="p-6">
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                              <User className="w-6 h-6 text-muted-foreground" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <span className="font-medium">{review.name}</span>
+                                <div className="flex items-center">
+                                  {[...Array(review.rating)].map((_, i) => (
+                                    <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                                  ))}
+                                </div>
+                                <span className="text-sm text-muted-foreground">{review.date}</span>
+                              </div>
+                              <p className="text-muted-foreground">{review.content}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
+              </div>
+            </div>
           </div>
 
-
-          {/* Right: Purchase Card (Desktop) */}
-          <div className="lg:col-span-1 hidden lg:block">
+          {/* Right Column: Fixed Purchase Card */}
+          <div className="hidden lg:block w-[383px] flex-shrink-0">
             <div className="sticky top-24">
-              <Card className="shadow-lg border border-border/50" style={{ width: "383px" }}>
+              <Card className="shadow-lg border border-border/50 p-6">
                 <div className="space-y-6">
                   {/* Course Title */}
                   <h1 className="text-xl font-bold leading-tight">
                     {course.title}
                   </h1>
 
-                  {/* Course Benefits */}
+                  {/* Rating and Stats */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-muted-foreground">이 강의로 얻는 혜택</h3>
-                    <div className="space-y-2">
-                      {selectedCourse?.benefits.map((benefit, index) => (
-                        <div key={index} className="flex items-start gap-2 text-sm">
-                          <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                          <span>{benefit}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Course Options */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium">수강 옵션</h3>
-                    <div className="space-y-3">
-                      {course.options.map((option) => (
-                        <div 
-                          key={option.id}
-                          className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                            selectedOption === option.id 
-                              ? 'border-primary bg-primary/5' 
-                              : 'border-border hover:bg-muted/30'
-                          }`}
-                          onClick={() => setSelectedOption(option.id)}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium text-sm">{option.name}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-primary">
-                                {option.price.toLocaleString()}원
-                              </span>
-                              {option.originalPrice && (
-                                <span className="text-xs text-muted-foreground line-through">
-                                  {option.originalPrice.toLocaleString()}원
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {option.originalPrice && (
-                            <div className="text-xs text-muted-foreground">
-                              {Math.round(((option.originalPrice - option.price) / option.originalPrice) * 100)}% 할인
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Total Price */}
-                  <div className="p-4 border-2 border-primary/20 rounded-lg bg-background">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">총 결제 금액</span>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-primary">
-                          {(selectedCourse?.price ?? 0).toLocaleString()}원
-                        </div>
-                        {selectedCourse?.originalPrice && (
-                          <div className="flex items-center gap-2 justify-end">
-                            <span className="text-sm text-muted-foreground line-through">
-                              {selectedCourse.originalPrice.toLocaleString()}원
-                            </span>
-                            <Badge variant="destructive" className="text-xs">
-                              {discountRate}% 할인
-                            </Badge>
-                          </div>
-                        )}
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star 
+                            key={i} 
+                            className={`w-4 h-4 ${i < Math.floor(course.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                          />
+                        ))}
                       </div>
+                      <span className="text-sm font-medium">{course.rating}</span>
+                      <span className="text-sm text-muted-foreground">({course.reviewCount.toLocaleString()}개 후기)</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {discountRate}% 할인가 {(selectedCourse?.originalPrice ?? 0).toLocaleString()}원
+                    </div>
+                  </div>
+
+                  {/* Course Price */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl font-bold text-primary">
+                        {(selectedCourse?.price ?? 0).toLocaleString()}원
+                      </span>
+                      <Badge variant="destructive" className="text-sm">
+                        2차 얼리버드
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Course Benefits Section */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground">수강 혜택</h3>
+                    <div className="p-4 bg-muted/30 rounded-lg">
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2 text-sm">
+                          <span className="font-medium">[선착순 50명]</span>
+                          <span>온라인 강의</span>
+                          <span className="ml-auto font-bold">{(selectedCourse?.price ?? 0).toLocaleString()}원</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          + 온라인 강의 + 라이브코칭
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          수강신청 가능 인원 : 40/강의, 라이브코칭,
+                          <br />
+                          강의자료 제공 등
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Special Offer */}
+                  <div className="p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-primary">선착순 할인가</span>
+                        <Badge variant="destructive" className="text-xs">
+                          선착순 2일가
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold">[선착순 300명] 온라인 강의</span>
+                        <span className="text-xl font-bold text-primary">
+                          {(selectedCourse?.price ?? 0).toLocaleString()}원
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        + 라이브코칭
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        라이브 코칭 일정 : 10/2 (화) 오후 7시 30분
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Single Option */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>온라인 강의 ONLY</span>
+                      <span className="font-bold">{Math.round((selectedCourse?.price ?? 0) * 0.87).toLocaleString()}원</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      강의(0) 오후 2시 오프라인 강의 런론
+                    </div>
+                  </div>
+
+                  {/* Final Price */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-medium">상품 금액</span>
+                      <span className="text-2xl font-bold text-primary">
+                        {(selectedCourse?.price ?? 0).toLocaleString()}원
+                      </span>
                     </div>
                   </div>
 
                   {/* Action Buttons */}
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
                         className="p-2"
                         onClick={() => setIsWishlisted(!isWishlisted)}
                       >
-                        <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current text-destructive' : 'text-muted-foreground'}`} />
+                        <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current text-red-500' : 'text-muted-foreground'}`} />
                       </Button>
                       <span className="text-sm text-muted-foreground">
-                        {course.studentCount.toLocaleString()}명이 수강했어요
+                        {course.studentCount.toLocaleString()}
                       </span>
                     </div>
                     
@@ -354,7 +554,6 @@ const CourseDetail = () => {
                         className="w-full bg-primary hover:bg-primary/90"
                         onClick={() => navigate(`/learn/${courseId}`)}
                       >
-                        <BookOpen className="w-5 h-5 mr-2" />
                         학습 계속하기
                       </Button>
                     ) : (
@@ -365,7 +564,6 @@ const CourseDetail = () => {
                         onClick={handleEnroll}
                         disabled={enrolling}
                       >
-                        <BookOpen className="w-5 h-5 mr-2" />
                         {enrolling ? "등록 중..." : "강의 구매하기"}
                       </Button>
                     )}
@@ -377,7 +575,7 @@ const CourseDetail = () => {
         </div>
 
         {/* Mobile Purchase Card */}
-        <div className="lg:hidden mb-8">
+        <div className="lg:hidden mt-8">
           <Card className="p-6">
             <div className="space-y-4">
               <h1 className="text-xl font-bold">{course.title}</h1>
@@ -445,259 +643,6 @@ const CourseDetail = () => {
               </div>
             </div>
           </Card>
-        </div>
-
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-8">
-
-            {/* Long Course Detail Image */}
-            <div id="overview" className="w-full">
-              <img
-                src={courseDetailLong}
-                alt="강의 상세 내용"
-                className="w-full h-auto rounded-xl shadow-lg"
-              />
-            </div>
-
-            {/* Course Content Sections */}
-            <div className="space-y-12">
-              {/* What You'll Learn */}
-              <section className="bg-muted/30 rounded-2xl p-8">
-                <h2 className="text-2xl font-bold mb-6">이 강의에서 배우는 것들</h2>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {course.whatYouWillLearn.map((item, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* Curriculum */}
-              <section id="curriculum">
-                <h2 className="text-2xl font-bold mb-6">커리큘럼</h2>
-                <div className="space-y-3">
-                  {course.curriculum.map((section, index) => (
-                    <Card key={index} className="overflow-hidden">
-                      <div
-                        className="p-6 cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => setExpandedSection(expandedSection === index ? null : index)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            {expandedSection === index ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                            <div>
-                              <h3 className="text-lg font-semibold">{section.title}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {section.lessonCount}개 레슨 • {section.duration}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {expandedSection === index && (
-                        <CardContent className="pt-0">
-                          <div className="space-y-2">
-                            {section.lessons.map((lesson, lessonIndex) => (
-                              <div key={lessonIndex} className="flex items-center justify-between p-4 hover:bg-muted/30 rounded-lg">
-                                <div className="flex items-center gap-3">
-                                  <Play className="w-4 h-4 text-muted-foreground" />
-                                  <span>{lesson.title}</span>
-                                  {lesson.isPreview && (
-                                    <Badge variant="outline" className="text-xs">
-                                      미리보기
-                                    </Badge>
-                                  )}
-                                </div>
-                                <span className="text-sm text-muted-foreground">{lesson.duration}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </CardContent>
-                      )}
-                    </Card>
-                  ))}
-                </div>
-              </section>
-
-              {/* Instructor */}
-              <section id="instructor" className="bg-card rounded-2xl p-8">
-                <h2 className="text-2xl font-bold mb-6">강사 소개</h2>
-                <div className="flex items-start gap-6">
-                  <div className="w-24 h-24 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-2xl">김</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2">{course.instructor}</h3>
-                    <p className="text-muted-foreground mb-6">{course.instructorBio}</p>
-                    <div className="grid grid-cols-3 gap-6 text-center">
-                      <div>
-                        <div className="text-2xl font-bold text-primary">25+</div>
-                        <div className="text-sm text-muted-foreground">강의 수</div>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-primary">50K+</div>
-                        <div className="text-sm text-muted-foreground">총 수강생</div>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-primary">4.9</div>
-                        <div className="text-sm text-muted-foreground">평균 평점</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* Reviews */}
-              <section id="reviews">
-                <h2 className="text-2xl font-bold mb-6">수강 후기</h2>
-                <div className="space-y-4">
-                  <Card className="p-6">
-                    <div className="flex items-center gap-6 mb-6">
-                      <div className="text-center">
-                        <div className="text-4xl font-bold text-primary">{course.rating}</div>
-                        <div className="flex items-center justify-center gap-1 my-2">
-                          {[...Array(5)].map((_, i) => (
-                            <Star key={i} className="w-4 h-4 text-warning fill-current" />
-                          ))}
-                        </div>
-                        <div className="text-sm text-muted-foreground">{course.reviewCount}개 리뷰</div>
-                      </div>
-                      <div className="flex-1">
-                        {[5, 4, 3, 2, 1].map((rating) => (
-                          <div key={rating} className="flex items-center gap-3 mb-2">
-                            <span className="text-sm w-3">{rating}</span>
-                            <Star className="w-4 h-4 text-warning fill-current" />
-                            <Progress value={rating === 5 ? 80 : rating === 4 ? 15 : 5} className="flex-1" />
-                            <span className="text-sm text-muted-foreground w-8">
-                              {rating === 5 ? '80%' : rating === 4 ? '15%' : '5%'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </Card>
-
-                  {reviews.map((review, index) => (
-                    <Card key={index} className="p-6">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-                            <span className="font-medium">{review.name.charAt(0)}</span>
-                          </div>
-                          <div>
-                            <div className="font-medium">{review.name}</div>
-                            <div className="text-sm text-muted-foreground">{review.date}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {[...Array(review.rating)].map((_, i) => (
-                            <Star key={i} className="w-4 h-4 text-warning fill-current" />
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-muted-foreground">{review.content}</p>
-                    </Card>
-                  ))}
-                </div>
-              </section>
-            </div>
-          </div>
-
-          {/* Mobile Purchase Card */}
-          <div className="lg:hidden lg:col-span-1">
-            <Card className="p-6 mb-8">
-              <div className="space-y-6">
-                {/* Price */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl font-bold text-primary">
-                      {(selectedCourse?.price ?? 0).toLocaleString()}원
-                    </span>
-                    {course.originalPrice && (
-                      <Badge className="bg-destructive text-destructive-foreground">
-                        {discountRate}% 할인
-                      </Badge>
-                    )}
-                  </div>
-                  {course.originalPrice && (
-                    <span className="text-muted-foreground line-through">
-                      {course.originalPrice.toLocaleString()}원
-                    </span>
-                  )}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="space-y-3">
-                  {isEnrolled ? (
-                    <Button 
-                      variant="hero" 
-                      size="lg" 
-                      className="w-full"
-                      onClick={() => navigate(`/learn/${courseId}`)}
-                    >
-                      <BookOpen className="w-5 h-5 mr-2" />
-                      학습 계속하기
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant="hero" 
-                      size="lg" 
-                      className="w-full"
-                      onClick={handleEnroll}
-                      disabled={enrolling}
-                    >
-                      <BookOpen className="w-5 h-5 mr-2" />
-                      {enrolling ? "등록 중..." : "지금 수강하기"}
-                    </Button>
-                  )}
-                  <Button variant="outline" size="lg" className="w-full" onClick={() => navigate('/cart')}>
-                    장바구니 담기
-                  </Button>
-                </div>
-
-                {/* Additional Actions */}
-                <div className="flex gap-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => setIsWishlisted(!isWishlisted)}
-                  >
-                    <Heart className={`w-4 h-4 mr-2 ${isWishlisted ? 'fill-current text-destructive' : ''}`} />
-                    찜하기
-                  </Button>
-                  <Button variant="ghost" size="sm" className="flex-1">
-                    <Share2 className="w-4 h-4 mr-2" />
-                    공유
-                  </Button>
-                </div>
-
-                {/* Course Features */}
-                <div className="border-t pt-6 space-y-3">
-                  <div className="flex items-center gap-3 text-sm">
-                    <Clock className="w-4 h-4 text-muted-foreground" />
-                    <span>총 {course.duration} 강의</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <Download className="w-4 h-4 text-muted-foreground" />
-                    <span>모바일/PC 다운로드</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <Award className="w-4 h-4 text-muted-foreground" />
-                    <span>수료증 발급</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <Users className="w-4 h-4 text-muted-foreground" />
-                    <span>평생 수강 가능</span>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
         </div>
       </main>
 
