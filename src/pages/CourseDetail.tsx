@@ -186,45 +186,194 @@ const CourseDetail = () => {
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-3 text-sm mb-8">
+          <span className="text-primary font-medium">{course.category}</span>
+          <span className="text-muted-foreground">{">"}</span>
+          <span className="text-muted-foreground">React</span>
+        </div>
+
+        {/* Hero Section */}
+        <div className="grid lg:grid-cols-4 gap-8 mb-12">
+          {/* Left: Course Hero Image */}
+          <div className="lg:col-span-3">
+            <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary to-secondary p-8 lg:p-12">
+              <div className="grid lg:grid-cols-2 gap-8 items-center">
+                {/* Course Info */}
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h1 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
+                      {course.title}
+                    </h1>
+                    <p className="text-xl text-white/90 leading-relaxed">
+                      {course.description}
+                    </p>
+                  </div>
+
+                  {/* Course Stats */}
+                  <div className="flex flex-wrap items-center gap-6 text-sm text-white/80">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                      <span className="font-medium text-white">{course.rating}</span>
+                      <span>({course.reviewCount.toLocaleString()}개 리뷰)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      <span>{course.studentCount.toLocaleString()}명 수강</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      <span>{course.duration}</span>
+                    </div>
+                    <Badge className="bg-white/20 text-white border-white/30">
+                      {course.level}
+                    </Badge>
+                  </div>
+
+                  {/* Action Buttons for Mobile */}
+                  <div className="lg:hidden space-y-3">
+                    {isEnrolled ? (
+                      <Button 
+                        variant="hero" 
+                        size="lg" 
+                        className="w-full bg-white text-primary hover:bg-white/90"
+                        onClick={() => navigate(`/learn/${courseId}`)}
+                      >
+                        <BookOpen className="w-5 h-5 mr-2" />
+                        학습 계속하기
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="hero" 
+                        size="lg" 
+                        className="w-full bg-white text-primary hover:bg-white/90"
+                        onClick={handleEnroll}
+                        disabled={enrolling}
+                      >
+                        <BookOpen className="w-5 h-5 mr-2" />
+                        {enrolling ? "등록 중..." : "지금 수강하기"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Course Thumbnail */}
+                <div className="relative">
+                  <div className="relative rounded-xl overflow-hidden shadow-2xl">
+                    <img
+                      src={course.thumbnail}
+                      alt={course.title}
+                      className="w-full h-64 lg:h-80 object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <Button variant="hero" size="lg" className="rounded-full w-16 h-16 bg-white/20 hover:bg-white/30">
+                        <Play className="w-6 h-6 text-white" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Purchase Card (Desktop) */}
+          <div className="lg:col-span-1 hidden lg:block">
+            <div className="sticky top-24">
+              <Card className="p-6">
+                <div className="space-y-6">
+                  {/* Price */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl font-bold text-primary">
+                        {course.price.toLocaleString()}원
+                      </span>
+                      {course.originalPrice && (
+                        <Badge className="bg-destructive text-destructive-foreground">
+                          {discountRate}% 할인
+                        </Badge>
+                      )}
+                    </div>
+                    {course.originalPrice && (
+                      <span className="text-muted-foreground line-through">
+                        {course.originalPrice.toLocaleString()}원
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-3">
+                    {isEnrolled ? (
+                      <Button 
+                        variant="hero" 
+                        size="lg" 
+                        className="w-full"
+                        onClick={() => navigate(`/learn/${courseId}`)}
+                      >
+                        <BookOpen className="w-5 h-5 mr-2" />
+                        학습 계속하기
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="hero" 
+                        size="lg" 
+                        className="w-full"
+                        onClick={handleEnroll}
+                        disabled={enrolling}
+                      >
+                        <BookOpen className="w-5 h-5 mr-2" />
+                        {enrolling ? "등록 중..." : "지금 수강하기"}
+                      </Button>
+                    )}
+                    <Button variant="outline" size="lg" className="w-full" onClick={() => navigate('/cart')}>
+                      장바구니 담기
+                    </Button>
+                  </div>
+
+                  {/* Additional Actions */}
+                  <div className="flex gap-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setIsWishlisted(!isWishlisted)}
+                    >
+                      <Heart className={`w-4 h-4 mr-2 ${isWishlisted ? 'fill-current text-destructive' : ''}`} />
+                      찜하기
+                    </Button>
+                    <Button variant="ghost" size="sm" className="flex-1">
+                      <Share2 className="w-4 h-4 mr-2" />
+                      공유
+                    </Button>
+                  </div>
+
+                  {/* Course Features */}
+                  <div className="border-t pt-6 space-y-3">
+                    <div className="flex items-center gap-3 text-sm">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span>총 {course.duration} 강의</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <Download className="w-4 h-4 text-muted-foreground" />
+                      <span>모바일/PC 다운로드</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <Award className="w-4 h-4 text-muted-foreground" />
+                      <span>수료증 발급</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <Users className="w-4 h-4 text-muted-foreground" />
+                      <span>평생 수강 가능</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-8">
-            {/* Course Header */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 text-sm">
-                <span className="text-primary font-medium">{course.category}</span>
-                <span className="text-muted-foreground">{">"}</span>
-                <span className="text-muted-foreground">React</span>
-              </div>
-
-              <h1 className="text-3xl lg:text-4xl font-bold text-foreground leading-tight">
-                {course.title}
-              </h1>
-
-              <p className="text-xl text-muted-foreground leading-relaxed">
-                {course.description}
-              </p>
-
-              {/* Course Stats */}
-              <div className="flex flex-wrap items-center gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-warning fill-current" />
-                  <span className="font-medium">{course.rating}</span>
-                  <span className="text-muted-foreground">({course.reviewCount.toLocaleString()}개 리뷰)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-muted-foreground" />
-                  <span>{course.studentCount.toLocaleString()}명 수강</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span>{course.duration}</span>
-                </div>
-                <Badge className="bg-level-intermediate text-white">
-                  {course.level}
-                </Badge>
-              </div>
-            </div>
 
             {/* Long Course Detail Image */}
             <div className="w-full">
@@ -382,115 +531,96 @@ const CourseDetail = () => {
             </div>
           </div>
 
-          {/* Fixed Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 space-y-6">
-              {/* Course Video Preview */}
-              <Card className="overflow-hidden">
-                <div className="relative">
-                  <img
-                    src={course.thumbnail}
-                    alt={course.title}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <Button variant="hero" size="lg" className="rounded-full w-16 h-16">
-                      <Play className="w-6 h-6" />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Purchase Card */}
-              <Card className="p-6">
-                <div className="space-y-6">
-                  {/* Price */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl font-bold text-primary">
-                        {course.price.toLocaleString()}원
-                      </span>
-                      {course.originalPrice && (
-                        <Badge className="bg-destructive text-destructive-foreground">
-                          {discountRate}% 할인
-                        </Badge>
-                      )}
-                    </div>
+          {/* Mobile Purchase Card */}
+          <div className="lg:hidden lg:col-span-1">
+            <Card className="p-6 mb-8">
+              <div className="space-y-6">
+                {/* Price */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl font-bold text-primary">
+                      {course.price.toLocaleString()}원
+                    </span>
                     {course.originalPrice && (
-                      <span className="text-muted-foreground line-through">
-                        {course.originalPrice.toLocaleString()}원
-                      </span>
+                      <Badge className="bg-destructive text-destructive-foreground">
+                        {discountRate}% 할인
+                      </Badge>
                     )}
                   </div>
+                  {course.originalPrice && (
+                    <span className="text-muted-foreground line-through">
+                      {course.originalPrice.toLocaleString()}원
+                    </span>
+                  )}
+                </div>
 
-                  {/* Action Buttons */}
-                  <div className="space-y-3">
-                    {isEnrolled ? (
-                      <Button 
-                        variant="hero" 
-                        size="lg" 
-                        className="w-full"
-                        onClick={() => navigate(`/learn/${courseId}`)}
-                      >
-                        <BookOpen className="w-5 h-5 mr-2" />
-                        학습 계속하기
-                      </Button>
-                    ) : (
-                      <Button 
-                        variant="hero" 
-                        size="lg" 
-                        className="w-full"
-                        onClick={handleEnroll}
-                        disabled={enrolling}
-                      >
-                        <BookOpen className="w-5 h-5 mr-2" />
-                        {enrolling ? "등록 중..." : "지금 수강하기"}
-                      </Button>
-                    )}
-                    <Button variant="outline" size="lg" className="w-full" onClick={() => navigate('/cart')}>
-                      장바구니 담기
-                    </Button>
-                  </div>
-
-                  {/* Additional Actions */}
-                  <div className="flex gap-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => setIsWishlisted(!isWishlisted)}
+                {/* Action Buttons */}
+                <div className="space-y-3">
+                  {isEnrolled ? (
+                    <Button 
+                      variant="hero" 
+                      size="lg" 
+                      className="w-full"
+                      onClick={() => navigate(`/learn/${courseId}`)}
                     >
-                      <Heart className={`w-4 h-4 mr-2 ${isWishlisted ? 'fill-current text-destructive' : ''}`} />
-                      찜하기
+                      <BookOpen className="w-5 h-5 mr-2" />
+                      학습 계속하기
                     </Button>
-                    <Button variant="ghost" size="sm" className="flex-1">
-                      <Share2 className="w-4 h-4 mr-2" />
-                      공유
+                  ) : (
+                    <Button 
+                      variant="hero" 
+                      size="lg" 
+                      className="w-full"
+                      onClick={handleEnroll}
+                      disabled={enrolling}
+                    >
+                      <BookOpen className="w-5 h-5 mr-2" />
+                      {enrolling ? "등록 중..." : "지금 수강하기"}
                     </Button>
-                  </div>
+                  )}
+                  <Button variant="outline" size="lg" className="w-full" onClick={() => navigate('/cart')}>
+                    장바구니 담기
+                  </Button>
+                </div>
 
-                  {/* Course Features */}
-                  <div className="border-t pt-6 space-y-3">
-                    <div className="flex items-center gap-3 text-sm">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                      <span>총 {course.duration} 강의</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <Download className="w-4 h-4 text-muted-foreground" />
-                      <span>모바일/PC 다운로드</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <Award className="w-4 h-4 text-muted-foreground" />
-                      <span>수료증 발급</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <Users className="w-4 h-4 text-muted-foreground" />
-                      <span>평생 수강 가능</span>
-                    </div>
+                {/* Additional Actions */}
+                <div className="flex gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setIsWishlisted(!isWishlisted)}
+                  >
+                    <Heart className={`w-4 h-4 mr-2 ${isWishlisted ? 'fill-current text-destructive' : ''}`} />
+                    찜하기
+                  </Button>
+                  <Button variant="ghost" size="sm" className="flex-1">
+                    <Share2 className="w-4 h-4 mr-2" />
+                    공유
+                  </Button>
+                </div>
+
+                {/* Course Features */}
+                <div className="border-t pt-6 space-y-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <span>총 {course.duration} 강의</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <Download className="w-4 h-4 text-muted-foreground" />
+                    <span>모바일/PC 다운로드</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <Award className="w-4 h-4 text-muted-foreground" />
+                    <span>수료증 발급</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <Users className="w-4 h-4 text-muted-foreground" />
+                    <span>평생 수강 가능</span>
                   </div>
                 </div>
-              </Card>
-            </div>
+              </div>
+            </Card>
           </div>
         </div>
       </main>
