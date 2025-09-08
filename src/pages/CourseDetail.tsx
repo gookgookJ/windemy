@@ -24,6 +24,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import courseWebImg from "@/assets/course-web.jpg";
 import courseDetailLong from "@/assets/course-detail-long.jpg";
+import heroThumbnail from "/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png";
 
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -104,58 +105,63 @@ const CourseDetail = () => {
   };
 
   const course = {
-    title: "실무에 바로 적용하는 React.js 완전정복",
-    instructor: "김개발",
+    title: "핸드폰 하나로 하루 3시간 일하며 월 순익 천만원 벌어가는 공동구매 중개의 정석",
+    instructor: "전민우",
     instructorImage: "/placeholder-instructor.jpg",
-    instructorBio: "현직 시니어 프론트엔드 개발자로 10년 이상의 실무 경험을 보유하고 있습니다.",
-    thumbnail: courseWebImg,
-    basePrice: 89000,
-    originalPrice: 120000,
+    instructorBio: "공동구매 중개 분야 10년차 전문가로, 수많은 성공 사례를 보유하고 있습니다.",
+    thumbnail: heroThumbnail,
+    basePrice: 2650000,
+    originalPrice: 3500000,
     rating: 4.9,
-    reviewCount: 1250,
-    duration: "32시간",
-    studentCount: 15000,
-    level: "중급",
-    category: "개발/프로그래밍",
-    tags: ["React", "JavaScript", "Frontend", "웹개발"],
-    description: "실무에서 바로 활용할 수 있는 React.js 기술을 체계적으로 학습합니다. 기초부터 고급 패턴까지 모든 것을 다룹니다.",
+    reviewCount: 847,
+    duration: "120시간",
+    studentCount: 5420,
+    level: "초급",
+    category: "비즈니스/창업",
+    tags: ["공동구매", "중개업", "부업", "창업"],
+    description: "핸드폰 하나로 하루 3시간만 투자하여 월 순익 천만원을 만드는 공동구매 중개의 모든 노하우를 전수합니다.",
     whatYouWillLearn: [
-      "React 기본 개념과 컴포넌트 설계",
-      "상태 관리와 생명주기 이해",
-      "React Hooks의 완전한 활용",
-      "성능 최적화 기법",
-      "실제 프로젝트 구현",
+      "공동구매 중개 시장 분석 및 진입 전략",
+      "수익성 높은 상품군 발굴 및 소싱 방법",
+      "효과적인 마케팅 및 고객 관리 시스템",
+      "리스크 관리 및 법적 이슈 대응",
+      "자동화 시스템 구축으로 시간 효율성 극대화",
     ],
     requirements: [
-      "JavaScript 기본 문법 이해",
-      "HTML/CSS 기초 지식",
-      "개발 환경 설정 가능",
+      "스마트폰 사용 가능",
+      "기본적인 온라인 업무 처리 능력",
+      "성실한 학습 의지",
     ],
     options: [
       {
-        id: "basic",
-        name: "온라인 강의 (기본)",
-        price: 89000,
-        originalPrice: 120000,
+        id: "online",
+        name: "온라인 강의",
+        price: 2650000,
+        originalPrice: 3500000,
         benefits: [
-          "수료 후 즉시 적용 가능한 실무 기술",
-          "평생 무제한 강의 수강",
-          "수료증 발급",
-          "질의응답 게시판 이용"
+          "💰 수료 후 매출 천만원 보장",
+          "🎁 신청만 해도 300만원 상당 혜택 제공",
+          "💪 1:1로 케어하는 스파르타 학습 시스템",
+          "📱 핸드폰 하나로 완전 자동화 시스템",
+          "⚡ 하루 3시간 투자로 월 천만원 수익 보장",
+          "🔒 평생 A/S 및 업데이트 지원"
         ]
       },
       {
-        id: "premium",
-        name: "온라인 강의 + 1:1 코칭",
-        price: 139000,
-        originalPrice: 180000,
+        id: "offline",
+        name: "오프라인 (소수정예 30명)",
+        price: 2650000,
+        originalPrice: 3500000,
+        status: "soldout",
         benefits: [
-          "수료 후 즉시 적용 가능한 실무 기술",
-          "평생 무제한 강의 수강",
-          "수료증 발급",
-          "질의응답 게시판 이용",
-          "1:1 코칭 세션 (3회)",
-          "개인 프로젝트 피드백"
+          "💰 수료 후 매출 천만원 보장",
+          "🎁 신청만 해도 300만원 상당 혜택 제공",
+          "💪 1:1로 케어하는 스파르타 학습 시스템",
+          "📱 핸드폰 하나로 완전 자동화 시스템",
+          "⚡ 하루 3시간 투자로 월 천만원 수익 보장",
+          "🔒 평생 A/S 및 업데이트 지원",
+          "👥 오프라인 네트워킹 및 실습",
+          "🏆 현장 멘토링 및 즉석 피드백"
         ]
       }
     ],
@@ -464,60 +470,54 @@ const CourseDetail = () => {
                     </div>
                   </div>
 
-                  {/* Course Benefits Section */}
+                  {/* Course Options Selection */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-muted-foreground">수강 혜택</h3>
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <div className="space-y-2">
-                        <div className="flex items-start gap-2 text-sm">
-                          <span className="font-medium">[선착순 50명]</span>
-                          <span>온라인 강의</span>
-                          <span className="ml-auto font-bold">{(selectedCourse?.price ?? 0).toLocaleString()}원</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          + 온라인 강의 + 라이브코칭
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          수강신청 가능 인원 : 40/강의, 라이브코칭,
-                          <br />
-                          강의자료 제공 등
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Special Offer */}
-                  <div className="p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
+                    <h3 className="text-sm font-medium text-muted-foreground">강의 구성</h3>
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-primary">선착순 할인가</span>
-                        <Badge variant="destructive" className="text-xs">
-                          선착순 2일가
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold">[선착순 300명] 온라인 강의</span>
-                        <span className="text-xl font-bold text-primary">
-                          {(selectedCourse?.price ?? 0).toLocaleString()}원
-                        </span>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        + 라이브코칭
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        라이브 코칭 일정 : 10/2 (화) 오후 7시 30분
-                      </div>
+                      {course.options.map((option) => (
+                        <div 
+                          key={option.id}
+                          className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                            selectedOption === option.id 
+                              ? 'border-primary bg-primary/5' 
+                              : 'border-border hover:border-primary/50'
+                          } ${option.status === 'soldout' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          onClick={() => option.status !== 'soldout' && setSelectedOption(option.id)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">{option.name}</span>
+                                {option.status === 'soldout' && (
+                                  <Badge variant="destructive" className="text-xs">품절</Badge>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-primary">
+                                {option.price.toLocaleString()}원
+                              </div>
+                              {option.originalPrice && (
+                                <div className="text-xs text-muted-foreground line-through">
+                                  {option.originalPrice.toLocaleString()}원
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Single Option */}
+                  {/* Course Benefits */}
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>온라인 강의 ONLY</span>
-                      <span className="font-bold">{Math.round((selectedCourse?.price ?? 0) * 0.87).toLocaleString()}원</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      강의(0) 오후 2시 오프라인 강의 런론
+                    <h3 className="text-sm font-medium text-muted-foreground">포함 혜택</h3>
+                    <div className="space-y-2">
+                      {selectedCourse?.benefits.map((benefit, index) => (
+                        <div key={index} className="flex items-start gap-2 text-sm">
+                          <span>{benefit}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
