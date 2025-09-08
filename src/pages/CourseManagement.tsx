@@ -41,18 +41,19 @@ const CourseManagement = () => {
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
+    if (authLoading) return; // 인증 상태 로딩 완료까지 대기
     if (!user) {
       navigate('/auth');
       return;
     }
     // 임시로 관리자 권한 체크 제거 - 테스트용
     // if (!isAdmin) {
-    //   navigate('/');
+    //   navigate('/')
     //   toast({
     //     title: "접근 권한 없음",
     //     description: "관리자 권한이 필요합니다.",
@@ -61,7 +62,7 @@ const CourseManagement = () => {
     //   return;
     // }
     fetchData();
-  }, [user, isAdmin, navigate]);
+  }, [user, isAdmin, navigate, authLoading]);
 
   const fetchData = async () => {
     try {

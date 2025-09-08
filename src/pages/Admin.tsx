@@ -42,11 +42,12 @@ const Admin = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
+    if (authLoading) return; // 인증 상태 로딩 완료까지 대기
     if (!user) {
       navigate('/auth');
       return;
@@ -62,7 +63,7 @@ const Admin = () => {
     //   return;
     // }
     fetchAdminData();
-  }, [user, isAdmin, navigate]);
+  }, [user, isAdmin, navigate, authLoading]);
 
   const fetchAdminData = async () => {
     try {
