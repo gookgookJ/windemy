@@ -136,8 +136,8 @@ const CourseDetail = () => {
       {
         id: "online",
         name: "온라인 강의",
-        price: 2650000,
-        originalPrice: 3500000,
+        price: 1950000,
+        originalPrice: 2650000,
         benefits: [
           "💰 수료 후 매출 천만원 보장",
           "🎁 신청만 해도 300만원 상당 혜택 제공",
@@ -150,8 +150,8 @@ const CourseDetail = () => {
       {
         id: "offline",
         name: "오프라인 (소수정예 30명)",
-        price: 2650000,
-        originalPrice: 3500000,
+        price: 3250000,
+        originalPrice: 4200000,
         benefits: [
           "💰 수료 후 매출 천만원 보장",
           "🎁 신청만 해도 300만원 상당 혜택 제공",
@@ -236,16 +236,16 @@ const CourseDetail = () => {
           <span className="text-muted-foreground">React</span>
         </div>
 
-        {/* Main Layout: 2-column structure similar to reference */}
-        <div className="flex gap-8">
-          {/* Left Column: Video and Content */}
-          <div className="flex-1 max-w-[calc(100%-383px-2rem)]">
-            {/* Video Section */}
+        {/* Main Layout: 2-column structure with fixed widths */}
+        <div className="flex gap-8 justify-center">
+          {/* Left Column: Video and Content - Fixed 757px width */}
+          <div className="w-[757px] flex-shrink-0">
+            {/* Video Section - 757x426 dimensions */}
             <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
               <img
                 src={course.thumbnail}
                 alt={course.title}
-                className="w-full h-64 lg:h-96 object-cover"
+                className="w-[757px] h-[426px] object-cover"
               />
               <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                 <Button variant="hero" size="lg" className="rounded-full w-16 h-16 bg-white/20 hover:bg-white/30">
@@ -292,14 +292,14 @@ const CourseDetail = () => {
               </div>
             </div>
 
-            {/* Main Content Area */}
-            <div className="space-y-8">
+            {/* Main Content Area - 757px width */}
+            <div className="w-[757px] space-y-8">
               {/* Long Course Detail Image */}
-              <div id="overview" className="w-full">
+              <div id="overview" className="w-[757px]">
                 <img
                   src={courseDetailLong}
                   alt="강의 상세 내용"
-                  className="w-full h-auto rounded-xl shadow-lg"
+                  className="w-[757px] h-auto rounded-xl shadow-lg"
                 />
               </div>
 
