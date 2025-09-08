@@ -33,6 +33,7 @@ const CourseDetail = () => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<string>("basic");
   const navigate = useNavigate();
   const { id: courseId } = useParams();
   const { user } = useAuth();
@@ -107,7 +108,7 @@ const CourseDetail = () => {
     instructorImage: "/placeholder-instructor.jpg",
     instructorBio: "현직 시니어 프론트엔드 개발자로 10년 이상의 실무 경험을 보유하고 있습니다.",
     thumbnail: courseWebImg,
-    price: 89000,
+    basePrice: 89000,
     originalPrice: 120000,
     rating: 4.9,
     reviewCount: 1250,
@@ -128,6 +129,34 @@ const CourseDetail = () => {
       "JavaScript 기본 문법 이해",
       "HTML/CSS 기초 지식",
       "개발 환경 설정 가능",
+    ],
+    options: [
+      {
+        id: "basic",
+        name: "온라인 강의 (기본)",
+        price: 89000,
+        originalPrice: 120000,
+        benefits: [
+          "수료 후 즉시 적용 가능한 실무 기술",
+          "평생 무제한 강의 수강",
+          "수료증 발급",
+          "질의응답 게시판 이용"
+        ]
+      },
+      {
+        id: "premium",
+        name: "온라인 강의 + 1:1 코칭",
+        price: 139000,
+        originalPrice: 180000,
+        benefits: [
+          "수료 후 즉시 적용 가능한 실무 기술",
+          "평생 무제한 강의 수강",
+          "수료증 발급",
+          "질의응답 게시판 이용",
+          "1:1 코칭 세션 (3회)",
+          "개인 프로젝트 피드백"
+        ]
+      }
     ],
     curriculum: [
       {
@@ -179,7 +208,15 @@ const CourseDetail = () => {
     }
   ];
 
-  const discountRate = Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100);
+  const selectedCourse = course.options.find(option => option.id === selectedOption);
+  const discountRate = selectedCourse ? Math.round(((selectedCourse.originalPrice - selectedCourse.price) / selectedCourse.originalPrice) * 100) : 0;
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -208,6 +245,44 @@ const CourseDetail = () => {
                   <Play className="w-6 h-6 text-white" />
                 </Button>
               </div>
+            </div>
+          </div>
+
+          {/* Section Navigation */}
+          <div className="mb-8">
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => scrollToSection('overview')}
+                className="whitespace-nowrap"
+              >
+                소개
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => scrollToSection('curriculum')}
+                className="whitespace-nowrap"
+              >
+                커리큘럼
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => scrollToSection('instructor')}
+                className="whitespace-nowrap"
+              >
+                크리에이터
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => scrollToSection('reviews')}
+                className="whitespace-nowrap"
+              >
+                후기 {course.reviewCount}
+              </Button>
             </div>
           </div>
 
@@ -245,39 +320,39 @@ const CourseDetail = () => {
                   </div>
 
                   {/* Course Options */}
-                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                  <div className="space-y-4">
                     <h3 className="text-sm font-medium">강의 구성</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>온라인 강의 (기본)</span>
-                        <span className="font-medium">{course.price.toLocaleString()}원</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">+ 1:1 코칭 세션 (3회)</span>
-                        <span className="text-muted-foreground line-through">50,000원</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Total Price */}
-                  <div className="space-y-2 p-4 bg-primary/5 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">총 결제 금액</span>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-primary">
-                          {course.price.toLocaleString()}원
-                        </div>
-                        {course.originalPrice && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground line-through">
-                              {course.originalPrice.toLocaleString()}원
-                            </span>
-                            <Badge variant="destructive" className="text-xs">
-                              {discountRate}% 할인
-                            </Badge>
+                    <div className="space-y-3">
+                      {course.options.map((option) => (
+                        <div 
+                          key={option.id}
+                          className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                            selectedOption === option.id 
+                              ? 'border-primary bg-primary/5' 
+                              : 'border-border hover:bg-muted/30'
+                          }`}
+                          onClick={() => setSelectedOption(option.id)}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-sm">{option.name}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-primary">
+                                {option.price.toLocaleString()}원
+                              </span>
+                              {option.originalPrice && (
+                                <span className="text-xs text-muted-foreground line-through">
+                                  {option.originalPrice.toLocaleString()}원
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        )}
-                      </div>
+                          {option.originalPrice && (
+                            <div className="text-xs text-muted-foreground">
+                              {Math.round(((option.originalPrice - option.price) / option.originalPrice) * 100)}% 할인
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -338,15 +413,31 @@ const CourseDetail = () => {
             <div className="space-y-4">
               <h1 className="text-xl font-bold">{course.title}</h1>
               
-              <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold text-primary">
-                  {course.price.toLocaleString()}원
-                </div>
-                {course.originalPrice && (
-                  <Badge variant="destructive">
-                    {discountRate}% 할인
-                  </Badge>
-                )}
+              {/* Mobile Options */}
+              <div className="space-y-3">
+                {course.options.map((option) => (
+                  <div 
+                    key={option.id}
+                    className={`p-3 border rounded-lg cursor-pointer ${
+                      selectedOption === option.id ? 'border-primary bg-primary/5' : 'border-border'
+                    }`}
+                    onClick={() => setSelectedOption(option.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{option.name}</span>
+                      <div className="text-right">
+                        <div className="font-bold text-primary">
+                          {option.price.toLocaleString()}원
+                        </div>
+                        {option.originalPrice && (
+                          <div className="text-xs text-muted-foreground line-through">
+                            {option.originalPrice.toLocaleString()}원
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
               
               <div className="space-y-3">
@@ -385,7 +476,7 @@ const CourseDetail = () => {
           <div className="lg:col-span-3 space-y-8">
 
             {/* Long Course Detail Image */}
-            <div className="w-full">
+            <div id="overview" className="w-full">
               <img
                 src={courseDetailLong}
                 alt="강의 상세 내용"
@@ -409,7 +500,7 @@ const CourseDetail = () => {
               </section>
 
               {/* Curriculum */}
-              <section>
+              <section id="curriculum">
                 <h2 className="text-2xl font-bold mb-6">커리큘럼</h2>
                 <div className="space-y-3">
                   {course.curriculum.map((section, index) => (
@@ -457,7 +548,7 @@ const CourseDetail = () => {
               </section>
 
               {/* Instructor */}
-              <section className="bg-card rounded-2xl p-8">
+              <section id="instructor" className="bg-card rounded-2xl p-8">
                 <h2 className="text-2xl font-bold mb-6">강사 소개</h2>
                 <div className="flex items-start gap-6">
                   <div className="w-24 h-24 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
@@ -485,7 +576,7 @@ const CourseDetail = () => {
               </section>
 
               {/* Reviews */}
-              <section>
+              <section id="reviews">
                 <h2 className="text-2xl font-bold mb-6">수강 후기</h2>
                 <div className="space-y-4">
                   <Card className="p-6">
@@ -548,7 +639,7 @@ const CourseDetail = () => {
                 <div className="space-y-2">
                   <div className="flex items-center gap-3">
                     <span className="text-3xl font-bold text-primary">
-                      {course.price.toLocaleString()}원
+                      {selectedCourse?.price.toLocaleString()}원
                     </span>
                     {course.originalPrice && (
                       <Badge className="bg-destructive text-destructive-foreground">

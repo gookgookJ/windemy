@@ -215,9 +215,10 @@ const Admin = () => {
           </div>
 
           <Tabs defaultValue="courses" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="courses">강의 관리</TabsTrigger>
               <TabsTrigger value="users">사용자 관리</TabsTrigger>
+              <TabsTrigger value="course-management">강의 생성/수정</TabsTrigger>
             </TabsList>
 
             <TabsContent value="courses" className="space-y-6">
@@ -292,6 +293,20 @@ const Admin = () => {
                       </div>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="course-management" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>강의 생성/수정</CardTitle>
+                  <CardDescription>새로운 강의를 만들거나 기존 강의를 수정하세요</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={() => navigate('/course-management')}>
+                    강의 관리 페이지로 이동
+                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>
