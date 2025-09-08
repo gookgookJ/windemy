@@ -236,22 +236,17 @@ const CourseDetail = () => {
           <span className="text-muted-foreground">React</span>
         </div>
 
-        {/* Main Layout: 2-column structure with fixed widths */}
-        <div className="flex gap-8 justify-center">
+        {/* Desktop Layout: 2-column structure with fixed widths */}
+        <div className="hidden lg:flex gap-8 justify-center">
           {/* Left Column: Video and Content - Fixed 757px width */}
           <div className="w-[757px] flex-shrink-0">
-            {/* Video Section - 757x426 dimensions */}
+            {/* Thumbnail Section - Desktop: 757x426, Mobile: responsive */}
             <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
               <img
                 src={course.thumbnail}
                 alt={course.title}
                 className="w-[757px] h-[426px] object-cover"
               />
-              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                <Button variant="hero" size="lg" className="rounded-full w-16 h-16 bg-white/20 hover:bg-white/30">
-                  <Play className="w-6 h-6 text-white" />
-                </Button>
-              </div>
             </div>
 
             {/* Sticky Navigation Bar - Full width 4-column layout */}
@@ -428,7 +423,7 @@ const CourseDetail = () => {
             </div>
           </div>
 
-          {/* Right Column: Fixed Purchase Card */}
+          {/* Right Column: Fixed Purchase Card - Desktop Only */}
           <div className="hidden lg:block w-[383px] flex-shrink-0">
             <div className="sticky top-24">
               <Card className="shadow-lg border border-border/50 p-6">
@@ -571,76 +566,265 @@ const CourseDetail = () => {
           </div>
         </div>
 
-        {/* Mobile Purchase Card */}
-        <div className="lg:hidden mt-8">
-          <Card className="p-6">
-            <div className="space-y-4">
-              <h1 className="text-xl font-bold">{course.title}</h1>
-              
-              {/* Mobile Options */}
-              <div className="space-y-3">
-                {course.options.map((option) => (
-                  <div 
-                    key={option.id}
-                    className={`p-3 border rounded-lg cursor-pointer ${
-                      selectedOption === option.id ? 'border-primary bg-primary/5' : 'border-border'
-                    }`}
-                    onClick={() => setSelectedOption(option.id)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{option.name}</span>
-                      <div className="text-right">
-                        <div className="font-bold text-primary">
-                          {option.price.toLocaleString()}원
-                        </div>
-                        {option.originalPrice && (
-                          <div className="text-xs text-muted-foreground line-through">
-                            {option.originalPrice.toLocaleString()}원
+        {/* Mobile/Tablet Layout */}
+        <div className="lg:hidden">
+          {/* Mobile Thumbnail */}
+          <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
+            <img
+              src={course.thumbnail}
+              alt={course.title}
+              className="w-full aspect-video object-cover"
+            />
+          </div>
+
+          {/* Mobile Condensed Payment Card */}
+          <Card className="mb-6 mx-4">
+            <CardContent className="p-4">
+              <div className="space-y-4">
+                <h1 className="text-lg font-bold leading-tight">{course.title}</h1>
+                
+                {/* Rating and Price */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star 
+                          key={i} 
+                          className={`w-4 h-4 ${i < Math.floor(course.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-medium">{course.rating}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-bold text-primary">
+                      {(selectedCourse?.price ?? 0).toLocaleString()}원
+                    </div>
+                    <div className="text-xs text-muted-foreground line-through">
+                      {(selectedCourse?.originalPrice ?? 0).toLocaleString()}원
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile Options Selection */}
+                <div className="space-y-2">
+                  {course.options.map((option) => (
+                    <div 
+                      key={option.id}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedOption === option.id 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                      onClick={() => setSelectedOption(option.id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{option.name}</span>
+                        <div className="text-right">
+                          <div className="font-bold text-primary text-sm">
+                            {option.price.toLocaleString()}원
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Mobile Content Navigation */}
+          <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm mb-8 mx-4">
+            <div className="grid grid-cols-4 gap-0 py-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => scrollToSection('overview')}
+                className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center text-xs"
+              >
+                소개
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => scrollToSection('curriculum')}
+                className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center text-xs"
+              >
+                커리큘럼
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => scrollToSection('instructor')}
+                className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center text-xs"
+              >
+                크리에이터
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => scrollToSection('reviews')}
+                className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center text-xs"
+              >
+                후기
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile Content */}
+          <div className="mx-4 space-y-8">
+            {/* Course Detail Image */}
+            <div id="overview">
+              <img
+                src={courseDetailLong}
+                alt="강의 상세 내용"
+                className="w-full h-auto rounded-xl shadow-lg"
+              />
+            </div>
+
+            {/* What You'll Learn */}
+            <section className="bg-muted/30 rounded-2xl p-6">
+              <h2 className="text-xl font-bold mb-4">이 강의에서 배우는 것들</h2>
+              <div className="space-y-3">
+                {course.whatYouWillLearn.map((item, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
+                    <span className="text-sm">{item}</span>
                   </div>
                 ))}
               </div>
+            </section>
 
-              {/* Total Price */}
-              <div className="p-4 border-2 border-primary/20 rounded-lg bg-background">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">총 결제 금액</span>
-                  <div className="text-2xl font-bold text-primary">
-                    {(selectedCourse?.price ?? 0).toLocaleString()}원
+            {/* Mobile Curriculum */}
+            <section id="curriculum">
+              <h2 className="text-xl font-bold mb-4">커리큘럼</h2>
+              <div className="space-y-3">
+                {course.curriculum.map((section, sectionIndex) => (
+                  <Card key={sectionIndex}>
+                    <CardContent className="p-0">
+                      <div 
+                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => setExpandedSection(expandedSection === sectionIndex ? null : sectionIndex)}
+                      >
+                        <div className="flex-1">
+                          <h3 className="font-semibold mb-1">{section.title}</h3>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {section.duration}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <BookOpen className="w-3 h-3" />
+                              {section.lessonCount}개 강의
+                            </span>
+                          </div>
+                        </div>
+                        {expandedSection === sectionIndex ? (
+                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </div>
+                      
+                      {expandedSection === sectionIndex && (
+                        <div className="border-t border-border">
+                          {section.lessons.map((lesson, lessonIndex) => (
+                            <div key={lessonIndex} className="flex items-center justify-between p-3 border-b border-border last:border-b-0">
+                              <div className="flex items-center gap-2">
+                                <Play className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs">{lesson.title}</span>
+                                {lesson.isPreview && (
+                                  <Badge variant="outline" className="text-xs">미리보기</Badge>
+                                )}
+                              </div>
+                              <span className="text-xs text-muted-foreground">{lesson.duration}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+
+            {/* Mobile Instructor */}
+            <section id="instructor" className="bg-muted/30 rounded-2xl p-6">
+              <h2 className="text-xl font-bold mb-4">강사 소개</h2>
+              <div className="flex items-start gap-4">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                  <User className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold mb-2">{course.instructor}</h3>
+                  <p className="text-sm text-muted-foreground mb-3">{course.instructorBio}</p>
+                  <div className="flex items-center gap-4 text-xs">
+                    <div className="flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      <span>{course.studentCount.toLocaleString()}명</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3 h-3 text-yellow-400" />
+                      <span>{course.rating}점</span>
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              <div className="space-y-3">
-                {isEnrolled ? (
-                  <Button 
-                    variant="default" 
-                    size="lg" 
-                    className="w-full"
-                    onClick={() => navigate(`/learn/${courseId}`)}
-                  >
-                    <BookOpen className="w-5 h-5 mr-2" />
-                    학습 계속하기
-                  </Button>
-                ) : (
-                  <Button 
-                    variant="default" 
-                    size="lg" 
-                    className="w-full"
-                    onClick={handleEnroll}
-                    disabled={enrolling}
-                  >
-                    <BookOpen className="w-5 h-5 mr-2" />
-                    {enrolling ? "등록 중..." : "강의 구매하기"}
-                  </Button>
-                )}
+            </section>
+
+            {/* Mobile Reviews */}
+            <section id="reviews" className="mb-20">
+              <h2 className="text-xl font-bold mb-4">수강생 후기</h2>
+              <div className="space-y-4">
+                {reviews.map((review, index) => (
+                  <Card key={index}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                          <User className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-medium text-sm">{review.name}</span>
+                            <div className="flex items-center">
+                              {[...Array(review.rating)].map((_, i) => (
+                                <Star key={i} className="w-3 h-3 text-yellow-400 fill-current" />
+                              ))}
+                            </div>
+                            <span className="text-xs text-muted-foreground">{review.date}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{review.content}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          </div>
+        </div>
+
+        {/* Mobile Fixed Bottom Purchase Bar */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 z-50">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <div className="text-sm text-muted-foreground">총 결제금액</div>
+              <div className="text-lg font-bold text-primary">
+                {(selectedCourse?.price ?? 0).toLocaleString()}원
               </div>
             </div>
-          </Card>
+            <Button 
+              variant="default" 
+              size="lg" 
+              className="bg-primary hover:bg-primary/90 px-8"
+              onClick={handleEnroll}
+              disabled={enrolling}
+            >
+              {enrolling ? "등록 중..." : "강의 구매하기"}
+            </Button>
+          </div>
         </div>
+
       </main>
 
       <Footer />
