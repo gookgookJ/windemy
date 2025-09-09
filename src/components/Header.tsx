@@ -40,13 +40,38 @@ const Header = () => {
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex space-x-8">
               {navigationItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className="text-muted-foreground hover:text-primary transition-colors duration-200 font-medium"
-                >
-                  {item.name}
-                </Link>
+                <div key={item.name} className="relative group">
+                  {item.submenu ? (
+                    <>
+                      <button className="text-muted-foreground hover:text-primary transition-colors duration-200 font-medium flex items-center gap-1">
+                        {item.name}
+                        <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        <div className="py-2">
+                          {item.submenu.map((subItem) => (
+                            <Link
+                              key={subItem.name}
+                              to={subItem.href}
+                              className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors duration-200"
+                            >
+                              {subItem.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <Link
+                      to={item.href}
+                      className="text-muted-foreground hover:text-primary transition-colors duration-200 font-medium"
+                    >
+                      {item.name}
+                    </Link>
+                  )}
+                </div>
               ))}
             </nav>
           </div>
@@ -140,13 +165,27 @@ const Header = () => {
               {/* Mobile Navigation */}
               <nav className="space-y-3">
                 {navigationItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
-                  >
-                    {item.name}
-                  </Link>
+                  <div key={item.name}>
+                    <Link
+                      to={item.href}
+                      className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
+                    >
+                      {item.name}
+                    </Link>
+                    {item.submenu && (
+                      <div className="ml-4 mt-2 space-y-2">
+                        {item.submenu.map((subItem) => (
+                          <Link
+                            key={subItem.name}
+                            to={subItem.href}
+                            className="block text-sm text-muted-foreground hover:text-primary transition-colors duration-200 py-1"
+                          >
+                            {subItem.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
                 <Link to="/cart" className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2">
                   장바구니
