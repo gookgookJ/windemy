@@ -29,14 +29,23 @@ interface CourseSession {
   id?: string;
   title: string;
   description: string;
-  content_type: 'video' | 'pdf' | 'quiz' | 'assignment' | 'live';
-  video_url?: string;
-  attachment_url?: string;
-  attachment_name?: string;
   order_index: number;
   duration_minutes: number;
-  is_free: boolean;
   is_preview: boolean;
+}
+
+interface CourseSection {
+  id?: string;
+  title: string;
+  sessions: CourseSession[];
+}
+
+interface CourseOption {
+  id?: string;
+  name: string;
+  price: number;
+  original_price?: number;
+  benefits: string[];
 }
 
 interface Course {
@@ -48,21 +57,15 @@ interface Course {
   video_preview_url: string;
   course_type: 'vod' | 'offline' | 'hybrid';
   price: number;
-  sale_price?: number;
   duration_hours: number;
-  access_period: 'unlimited' | 'limited';
-  access_days?: number;
   level: string;
   category_id: string;
-  tags: string[];
   what_you_will_learn: string[];
   requirements: string[];
-  sessions: CourseSession[];
+  sections: CourseSection[];
+  course_options: CourseOption[];
   is_published: boolean;
   instructor_id?: string;
-  seo_title: string;
-  seo_description: string;
-  seo_keywords: string[];
 }
 
 const AdminCourseCreate = () => {
@@ -75,20 +78,20 @@ const AdminCourseCreate = () => {
     video_preview_url: '',
     course_type: 'vod',
     price: 0,
-    sale_price: 0,
     duration_hours: 0,
-    access_period: 'unlimited',
-    access_days: 365,
     level: 'beginner',
     category_id: '',
-    tags: [],
     what_you_will_learn: [''],
     requirements: [''],
-    sessions: [],
-    is_published: false,
-    seo_title: '',
-    seo_description: '',
-    seo_keywords: []
+    sections: [],
+    course_options: [
+      {
+        name: '기본 패키지',
+        price: 0,
+        benefits: ['강의 평생 수강권', '모든 강의 자료 제공']
+      }
+    ],
+    is_published: false
   });
 
   const [categories, setCategories] = useState<any[]>([]);
@@ -104,8 +107,7 @@ const AdminCourseCreate = () => {
     { id: 1, name: '기본 정보', icon: BookOpen },
     { id: 2, name: '커리큘럼', icon: FileText },
     { id: 3, name: '판매 설정', icon: DollarSign },
-    { id: 4, name: '운영 설정', icon: Settings },
-    { id: 5, name: '확인 및 생성', icon: Save }
+    { id: 4, name: '확인 및 생성', icon: Save }
   ];
 
   useEffect(() => {
@@ -170,55 +172,147 @@ const AdminCourseCreate = () => {
     }));
   };
 
-  // 세션 관리 함수들
-  const addSession = () => {
-    const newSession: CourseSession = {
-      title: '',
-      description: '',
-      content_type: 'video',
-      order_index: course.sessions.length,
-      duration_minutes: 0,
-      is_free: false,
-      is_preview: false
+  // 섹션 관리 함수들
+  const addSection = () => {
+    const newSection: CourseSection = {
+      title: `섹션 ${course.sections.length + 1}`,
+      sessions: []
     };
     setCourse(prev => ({
       ...prev,
-      sessions: [...prev.sessions, newSession]
+      sections: [...prev.sections, newSection]
     }));
   };
 
-  const updateSession = (index: number, field: keyof CourseSession, value: any) => {
+  const updateSection = (index: number, field: keyof CourseSection, value: any) => {
     setCourse(prev => ({
       ...prev,
-      sessions: prev.sessions.map((session, i) => 
-        i === index ? { ...session, [field]: value } : session
+      sections: prev.sections.map((section, i) => 
+        i === index ? { ...section, [field]: value } : section
       )
     }));
   };
 
-  const removeSession = (index: number) => {
+  const removeSection = (index: number) => {
     setCourse(prev => ({
       ...prev,
-      sessions: prev.sessions.filter((_, i) => i !== index)
+      sections: prev.sections.filter((_, i) => i !== index)
     }));
   };
 
-  // 태그 관리 함수들
-  const addTag = (tag: string) => {
-    if (tag && !course.tags.includes(tag)) {
-      setCourse(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag]
-      }));
-    }
-  };
-
-  const removeTag = (tag: string) => {
+  // 세션 관리 함수들
+  const addSession = (sectionIndex: number) => {
+    const newSession: CourseSession = {
+      title: '',
+      description: '',
+      order_index: course.sections[sectionIndex].sessions.length,
+      duration_minutes: 0,
+      is_preview: false
+    };
     setCourse(prev => ({
       ...prev,
-      tags: prev.tags.filter(t => t !== tag)
+      sections: prev.sections.map((section, i) => 
+        i === sectionIndex 
+          ? { ...section, sessions: [...section.sessions, newSession] }
+          : section
+      )
     }));
   };
+
+  const updateSession = (sectionIndex: number, sessionIndex: number, field: keyof CourseSession, value: any) => {
+    setCourse(prev => ({
+      ...prev,
+      sections: prev.sections.map((section, i) => 
+        i === sectionIndex 
+          ? {
+              ...section,
+              sessions: section.sessions.map((session, j) =>
+                j === sessionIndex ? { ...session, [field]: value } : session
+              )
+            }
+          : section
+      )
+    }));
+  };
+
+  const removeSession = (sectionIndex: number, sessionIndex: number) => {
+    setCourse(prev => ({
+      ...prev,
+      sections: prev.sections.map((section, i) => 
+        i === sectionIndex 
+          ? { ...section, sessions: section.sessions.filter((_, j) => j !== sessionIndex) }
+          : section
+      )
+    }));
+  };
+
+  // 코스 옵션 관리 함수들
+  const addCourseOption = () => {
+    const newOption: CourseOption = {
+      name: '',
+      price: 0,
+      benefits: ['']
+    };
+    setCourse(prev => ({
+      ...prev,
+      course_options: [...prev.course_options, newOption]
+    }));
+  };
+
+  const updateCourseOption = (index: number, field: keyof CourseOption, value: any) => {
+    setCourse(prev => ({
+      ...prev,
+      course_options: prev.course_options.map((option, i) => 
+        i === index ? { ...option, [field]: value } : option
+      )
+    }));
+  };
+
+  const removeCourseOption = (index: number) => {
+    setCourse(prev => ({
+      ...prev,
+      course_options: prev.course_options.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addBenefit = (optionIndex: number) => {
+    setCourse(prev => ({
+      ...prev,
+      course_options: prev.course_options.map((option, i) => 
+        i === optionIndex 
+          ? { ...option, benefits: [...option.benefits, ''] }
+          : option
+      )
+    }));
+  };
+
+  const updateBenefit = (optionIndex: number, benefitIndex: number, value: string) => {
+    setCourse(prev => ({
+      ...prev,
+      course_options: prev.course_options.map((option, i) => 
+        i === optionIndex 
+          ? {
+              ...option,
+              benefits: option.benefits.map((benefit, j) => 
+                j === benefitIndex ? value : benefit
+              )
+            }
+          : option
+      )
+    }));
+  };
+
+  const removeBenefit = (optionIndex: number, benefitIndex: number) => {
+    setCourse(prev => ({
+      ...prev,
+      course_options: prev.course_options.map((option, i) => 
+        i === optionIndex 
+          ? { ...option, benefits: option.benefits.filter((_, j) => j !== benefitIndex) }
+          : option
+      )
+    }));
+  };
+
 
   // 단계 검증
   const validateStep = (step: number): boolean => {
@@ -226,12 +320,10 @@ const AdminCourseCreate = () => {
       case 1:
         return !!(course.title && course.description && course.category_id);
       case 2:
-        return course.sessions.length > 0 && course.sessions.every(s => s.title);
+        return course.sections.length > 0 && course.sections.every(s => s.title && s.sessions.length > 0);
       case 3:
-        return course.price >= 0;
+        return course.course_options.length > 0 && course.course_options.every(o => o.name && o.price >= 0);
       case 4:
-        return true;
-      case 5:
         return true;
       default:
         return false;
@@ -241,7 +333,7 @@ const AdminCourseCreate = () => {
   const nextStep = () => {
     if (validateStep(currentStep)) {
       setCompletedSteps(prev => [...new Set([...prev, currentStep])]);
-      setCurrentStep(prev => Math.min(prev + 1, 5));
+      setCurrentStep(prev => Math.min(prev + 1, 4));
     } else {
       toast({
         title: "필수 정보 누락",
@@ -284,26 +376,53 @@ const AdminCourseCreate = () => {
 
       if (courseError) throw courseError;
 
-      // 세션 저장
-      if (course.sessions.length > 0) {
-        const sessionsToInsert = course.sessions.map(session => ({
-          title: session.title,
-          description: session.description,
-          video_url: session.video_url,
-          attachment_url: session.attachment_url,
-          attachment_name: session.attachment_name,
-          order_index: session.order_index,
-          duration_minutes: session.duration_minutes,
-          is_preview: session.is_preview,
-          is_free: session.is_free,
-          course_id: savedCourse.id
-        }));
+      // 섹션과 세션 저장
+      if (course.sections.length > 0) {
+        let sessionOrderIndex = 0;
+        const sessionsToInsert: any[] = [];
+        
+        course.sections.forEach((section) => {
+          section.sessions.forEach((session) => {
+            sessionsToInsert.push({
+              title: session.title,
+              description: session.description,
+              order_index: sessionOrderIndex++,
+              duration_minutes: session.duration_minutes,
+              is_preview: session.is_preview,
+              is_free: false,
+              course_id: savedCourse.id
+            });
+          });
+        });
 
-        const { error: sessionsError } = await supabase
-          .from('course_sessions')
-          .insert(sessionsToInsert);
+        if (sessionsToInsert.length > 0) {
+          const { error: sessionsError } = await supabase
+            .from('course_sessions')
+            .insert(sessionsToInsert);
 
-        if (sessionsError) throw sessionsError;
+          if (sessionsError) throw sessionsError;
+        }
+      }
+
+      // 코스 옵션 저장
+      if (course.course_options.length > 0) {
+        const optionsToInsert = course.course_options
+          .filter(option => option.name.trim() && option.price >= 0)
+          .map(option => ({
+            course_id: savedCourse.id,
+            name: option.name,
+            price: option.price,
+            original_price: option.original_price,
+            benefits: option.benefits.filter(benefit => benefit.trim())
+          }));
+
+        if (optionsToInsert.length > 0) {
+          const { error: optionsError } = await supabase
+            .from('course_options')
+            .insert(optionsToInsert);
+
+          if (optionsError) throw optionsError;
+        }
       }
 
       // 상세 이미지 저장
@@ -345,9 +464,6 @@ const AdminCourseCreate = () => {
     }
   };
 
-  const discountRate = course.sale_price && course.price > 0 
-    ? Math.round(((course.price - course.sale_price) / course.price) * 100)
-    : 0;
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -550,70 +666,103 @@ const AdminCourseCreate = () => {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>커리큘럼</CardTitle>
+                <CardTitle>커리큘럼 구성</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {course.sessions.map((session, index) => (
-                    <Card key={index}>
-                      <CardContent className="p-4">
+                <div className="space-y-6">
+                  {course.sections.map((section, sectionIndex) => (
+                    <Card key={sectionIndex} className="border-2">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <Input
+                            value={section.title}
+                            onChange={(e) => updateSection(sectionIndex, 'title', e.target.value)}
+                            placeholder="섹션 제목을 입력하세요"
+                            className="text-lg font-medium bg-transparent border-none p-0 h-auto"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeSection(sectionIndex)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
                         <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-medium">강의 #{index + 1}</h4>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeSession(index)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
+                          {section.sessions.map((session, sessionIndex) => (
+                            <div key={sessionIndex} className="p-4 border rounded-lg bg-muted/30">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <h5 className="font-medium text-sm">강의 #{sessionIndex + 1}</h5>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => removeSession(sectionIndex, sessionIndex)}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
 
-                          <div>
-                            <Label>강의 제목</Label>
-                            <Input
-                              value={session.title}
-                              onChange={(e) => updateSession(index, 'title', e.target.value)}
-                              placeholder="강의 제목을 입력하세요"
-                            />
-                          </div>
+                                <div>
+                                  <Label className="text-sm">강의 제목</Label>
+                                  <Input
+                                    value={session.title}
+                                    onChange={(e) => updateSession(sectionIndex, sessionIndex, 'title', e.target.value)}
+                                    placeholder="강의 제목을 입력하세요"
+                                  />
+                                </div>
 
-                          <div>
-                            <Label>강의 설명</Label>
-                            <Textarea
-                              value={session.description}
-                              onChange={(e) => updateSession(index, 'description', e.target.value)}
-                              placeholder="강의에서 다룰 내용을 간단히 설명해주세요"
-                              rows={3}
-                            />
-                          </div>
+                                <div>
+                                  <Label className="text-sm">강의 설명</Label>
+                                  <Textarea
+                                    value={session.description}
+                                    onChange={(e) => updateSession(sectionIndex, sessionIndex, 'description', e.target.value)}
+                                    placeholder="강의에서 다룰 내용을 간단히 설명해주세요"
+                                    rows={2}
+                                  />
+                                </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <Label>예상 학습 시간 (분)</Label>
-                              <Input
-                                type="number"
-                                value={session.duration_minutes}
-                                onChange={(e) => updateSession(index, 'duration_minutes', parseInt(e.target.value) || 0)}
-                                placeholder="30"
-                              />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <Label className="text-sm">예상 학습 시간 (분)</Label>
+                                    <Input
+                                      type="number"
+                                      value={session.duration_minutes}
+                                      onChange={(e) => updateSession(sectionIndex, sessionIndex, 'duration_minutes', parseInt(e.target.value) || 0)}
+                                      placeholder="30"
+                                    />
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Switch
+                                      checked={session.is_preview}
+                                      onCheckedChange={(checked) => updateSession(sectionIndex, sessionIndex, 'is_preview', checked)}
+                                    />
+                                    <Label className="text-sm">미리보기 허용</Label>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <Switch
-                                checked={session.is_preview}
-                                onCheckedChange={(checked) => updateSession(index, 'is_preview', checked)}
-                              />
-                              <Label>미리보기 허용</Label>
-                            </div>
-                          </div>
+                          ))}
+                          
+                          <Button 
+                            onClick={() => addSession(sectionIndex)} 
+                            variant="outline" 
+                            size="sm"
+                            className="w-full"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            강의 추가
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
                   ))}
                   
-                  <Button onClick={addSession} className="w-full">
+                  <Button onClick={addSection} className="w-full">
                     <Plus className="w-4 h-4 mr-2" />
-                    새 강의 추가
+                    새 섹션 추가
                   </Button>
                 </div>
               </CardContent>
@@ -626,141 +775,117 @@ const AdminCourseCreate = () => {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>가격 설정</CardTitle>
+                <CardTitle>판매 옵션 설정</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="price">정가 (원)</Label>
-                    <Input
-                      id="price"
-                      type="text"
-                      inputMode="numeric"
-                      value={priceInput}
-                      onChange={(e) => {
-                        const onlyDigits = e.target.value.replace(/[^\d]/g, '');
-                        setPriceInput(onlyDigits);
-                      }}
-                      onBlur={() =>
-                        setCourse((prev) => ({
-                          ...prev,
-                          price: priceInput === '' ? 0 : parseInt(priceInput, 10),
-                        }))
-                      }
-                      placeholder="정가를 입력하세요"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="sale_price">할인가 (원)</Label>
-                    <Input
-                      id="sale_price"
-                      type="number"
-                      value={course.sale_price || ''}
-                      onChange={(e) => setCourse(prev => ({ ...prev, sale_price: parseInt(e.target.value) || undefined }))}
-                      placeholder="할인가 (선택사항)"
-                    />
-                  </div>
-                </div>
+              <CardContent className="space-y-6">
+                {course.course_options.map((option, optionIndex) => (
+                  <Card key={optionIndex} className="border-2">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium">옵션 #{optionIndex + 1}</h4>
+                        {course.course_options.length > 1 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeCourseOption(optionIndex)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>옵션 이름</Label>
+                        <Input
+                          value={option.name}
+                          onChange={(e) => updateCourseOption(optionIndex, 'name', e.target.value)}
+                          placeholder="예: 기본 패키지, 프리미엄 패키지"
+                        />
+                      </div>
 
-                {discountRate > 0 && (
-                  <div className="p-4 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground">할인율: <span className="font-bold text-success">{discountRate}%</span></p>
-                  </div>
-                )}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>정가 (원)</Label>
+                          <Input
+                            type="number"
+                            value={option.price}
+                            onChange={(e) => updateCourseOption(optionIndex, 'price', parseInt(e.target.value) || 0)}
+                            placeholder="정가를 입력하세요"
+                          />
+                        </div>
+                        <div>
+                          <Label>원가 (원) - 선택사항</Label>
+                          <Input
+                            type="number"
+                            value={option.original_price || ''}
+                            onChange={(e) => updateCourseOption(optionIndex, 'original_price', e.target.value ? parseInt(e.target.value) : undefined)}
+                            placeholder="할인 표시용 원가"
+                          />
+                        </div>
+                      </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="duration_hours">총 강의 시간 (시간)</Label>
-                    <Input
-                      id="duration_hours"
-                      type="number"
-                      value={course.duration_hours}
-                      onChange={(e) => setCourse(prev => ({ ...prev, duration_hours: parseInt(e.target.value) || 0 }))}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="access_period">수강 기간</Label>
-                    <Select value={course.access_period} onValueChange={(value: 'unlimited' | 'limited') => setCourse(prev => ({ ...prev, access_period: value }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unlimited">무제한</SelectItem>
-                        <SelectItem value="limited">제한</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                      <div>
+                        <Label>포함 혜택</Label>
+                        <div className="space-y-2">
+                          {option.benefits.map((benefit, benefitIndex) => (
+                            <div key={benefitIndex} className="flex gap-2">
+                              <Input
+                                value={benefit}
+                                onChange={(e) => updateBenefit(optionIndex, benefitIndex, e.target.value)}
+                                placeholder="포함 혜택을 입력하세요 (예: 평생 수강권, 1:1 피드백)"
+                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeBenefit(optionIndex, benefitIndex)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addBenefit(optionIndex)}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            혜택 추가
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                
+                <Button onClick={addCourseOption} className="w-full">
+                  <Plus className="w-4 h-4 mr-2" />
+                  새 판매 옵션 추가
+                </Button>
 
-                {course.access_period === 'limited' && (
-                  <div>
-                    <Label htmlFor="access_days">수강 가능 일수</Label>
-                    <Input
-                      id="access_days"
-                      type="number"
-                      value={course.access_days || 365}
-                      onChange={(e) => setCourse(prev => ({ ...prev, access_days: parseInt(e.target.value) || 365 }))}
-                      placeholder="365"
-                    />
-                  </div>
-                )}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>기본 정보</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="duration_hours">총 강의 시간 (시간)</Label>
+                      <Input
+                        id="duration_hours"
+                        type="number"
+                        value={course.duration_hours}
+                        onChange={(e) => setCourse(prev => ({ ...prev, duration_hours: parseInt(e.target.value) || 0 }))}
+                        placeholder="0"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
               </CardContent>
             </Card>
           </div>
         );
 
       case 4:
-        return (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>공개 설정</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={course.is_published}
-                    onCheckedChange={(checked) => setCourse(prev => ({ ...prev, is_published: checked }))}
-                  />
-                  <Label>즉시 공개</Label>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  체크하면 강의가 즉시 공개됩니다. 체크하지 않으면 비공개 상태로 저장됩니다.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>SEO 설정</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="seo_title">SEO 제목</Label>
-                  <Input
-                    id="seo_title"
-                    value={course.seo_title}
-                    onChange={(e) => setCourse(prev => ({ ...prev, seo_title: e.target.value }))}
-                    placeholder="검색 엔진에 표시될 제목"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="seo_description">SEO 설명</Label>
-                  <Textarea
-                    id="seo_description"
-                    value={course.seo_description}
-                    onChange={(e) => setCourse(prev => ({ ...prev, seo_description: e.target.value }))}
-                    placeholder="검색 엔진에 표시될 설명"
-                    rows={3}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
-
-      case 5:
         return (
           <div className="space-y-6">
             <Card>
@@ -778,16 +903,18 @@ const AdminCourseCreate = () => {
                   <div>
                     <h4 className="font-semibold">가격 정보</h4>
                     <p className="text-sm text-muted-foreground">정가: {course.price.toLocaleString()}원</p>
-                    {course.sale_price && (
-                      <p className="text-sm text-muted-foreground">할인가: {course.sale_price.toLocaleString()}원</p>
-                    )}
                     <p className="text-sm text-muted-foreground">총 강의 시간: {course.duration_hours}시간</p>
                   </div>
                 </div>
                 
                 <div>
                   <h4 className="font-semibold">커리큘럼</h4>
-                  <p className="text-sm text-muted-foreground">총 {course.sessions.length}개 강의</p>
+                  <p className="text-sm text-muted-foreground">총 {course.sections.length}개 섹션, {course.sections.reduce((total, section) => total + section.sessions.length, 0)}개 강의</p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold">판매 옵션</h4>
+                  <p className="text-sm text-muted-foreground">총 {course.course_options.length}개 옵션</p>
                 </div>
 
                 <div>
@@ -895,7 +1022,7 @@ const AdminCourseCreate = () => {
             이전
           </Button>
           
-          {currentStep < 5 ? (
+          {currentStep < 4 ? (
             <Button onClick={nextStep}>
               다음
               <ChevronRight className="w-4 h-4 ml-2" />
