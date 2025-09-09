@@ -241,10 +241,6 @@ export const AdminCourses = () => {
                         <h3 className="font-semibold text-lg truncate">{course.title}</h3>
                         <Badge 
                           variant={course.is_published ? "default" : "secondary"}
-                          className={course.is_published ? 
-                            "bg-green-500 text-white hover:bg-green-600" : 
-                            "bg-gray-400 text-white hover:bg-gray-500"
-                          }
                         >
                           {course.is_published ? "🟢 공개중" : "🔒 비공개"}
                         </Badge>
@@ -257,15 +253,15 @@ export const AdminCourses = () => {
                         <span>생성일: {new Date(course.created_at).toLocaleDateString()}</span>
                       </div>
                       <div className="flex items-center gap-6 text-sm">
-                        <div className="flex items-center gap-1 text-blue-600">
+                        <div className="flex items-center gap-1 text-muted-foreground">
                           <Users className="h-4 w-4" />
                           <span className="font-medium">{course.total_students}명 수강</span>
                         </div>
-                        <div className="flex items-center gap-1 text-green-600">
+                        <div className="flex items-center gap-1 text-muted-foreground">
                           <DollarSign className="h-4 w-4" />
                           <span className="font-medium">{course.price.toLocaleString()}원</span>
                         </div>
-                        <div className="flex items-center gap-1 text-orange-600">
+                        <div className="flex items-center gap-1 text-muted-foreground">
                           <Clock className="h-4 w-4" />
                           <span className="font-medium">{course.duration_hours}시간</span>
                         </div>
@@ -297,13 +293,9 @@ export const AdminCourses = () => {
                     
                     <div className="flex items-center gap-3">
                       <Button
-                        variant={course.is_published ? "secondary" : "default"}
+                        variant={course.is_published ? "outline" : "default"}
                         size="sm"
                         onClick={() => toggleCoursePublication(course.id, course.is_published)}
-                        className={course.is_published ? 
-                          "bg-orange-500 text-white hover:bg-orange-600 border-0" : 
-                          "bg-green-500 text-white hover:bg-green-600 border-0"
-                        }
                       >
                         {course.is_published ? (
                           <>
