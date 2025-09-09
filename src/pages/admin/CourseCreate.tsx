@@ -303,6 +303,23 @@ const AdminCourseCreate = () => {
         if (sessionsError) throw sessionsError;
       }
 
+      // 상세 이미지 저장
+      if (course.detail_images && course.detail_images.length > 0) {
+        const imagesToInsert = course.detail_images.map(img => ({
+          course_id: savedCourse.id,
+          image_url: img.image_url,
+          image_name: img.image_name,
+          order_index: img.order_index ?? 0,
+          section_title: img.section_title || null
+        }));
+
+        const { error: imagesError } = await supabase
+          .from('course_detail_images')
+          .insert(imagesToInsert);
+
+        if (imagesError) throw imagesError;
+      }
+
       // 로컬스토리지 비우기
       localStorage.removeItem('draft_course');
 
