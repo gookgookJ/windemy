@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { Upload, X, GripVertical, Plus, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, ArrowUp, ArrowDown, Plus, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -103,12 +102,19 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
     onImagesChange(updatedImages);
   };
 
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
+  const moveImage = (id: string, direction: 'up' | 'down') => {
+    const currentIndex = images.findIndex(img => img.id === id);
+    if (
+      (direction === 'up' && currentIndex === 0) ||
+      (direction === 'down' && currentIndex === images.length - 1)
+    ) {
+      return;
+    }
 
-    const reorderedImages = Array.from(images);
-    const [reorderedItem] = reorderedImages.splice(result.source.index, 1);
-    reorderedImages.splice(result.destination.index, 0, reorderedItem);
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    const reorderedImages = [...images];
+    const [movedItem] = reorderedImages.splice(currentIndex, 1);
+    reorderedImages.splice(newIndex, 0, movedItem);
 
     // 순서 업데이트
     const updatedImages = reorderedImages.map((img, index) => ({
@@ -188,85 +194,78 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
 
       {/* 이미지 목록 */}
       {images.length > 0 && (
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="images">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="space-y-3"
-              >
-                {images.map((image, index) => (
-                  <Draggable key={image.id} draggableId={image.id} index={index}>
-                    {(provided, snapshot) => (
-                      <Card
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={`transition-shadow ${
-                          snapshot.isDragging ? 'shadow-lg' : ''
-                        }`}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-4">
-                            {/* 드래그 핸들 */}
-                            <div
-                              {...provided.dragHandleProps}
-                              className="mt-2 cursor-grab active:cursor-grabbing"
-                            >
-                              <GripVertical className="w-5 h-5 text-muted-foreground" />
-                            </div>
+        <div className="space-y-3">
+          {images.map((image, index) => (
+            <Card key={image.id} className="transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-4">
+                  {/* 순서 조정 버튼 */}
+                  <div className="flex flex-col gap-1 mt-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => moveImage(image.id, 'up')}
+                      disabled={index === 0}
+                      className="h-6 w-6 p-0"
+                    >
+                      <ArrowUp className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => moveImage(image.id, 'down')}
+                      disabled={index === images.length - 1}
+                      className="h-6 w-6 p-0"
+                    >
+                      <ArrowDown className="w-3 h-3" />
+                    </Button>
+                  </div>
 
-                            {/* 이미지 미리보기 */}
-                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                              <img
-                                src={image.image_url}
-                                alt={image.image_name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
+                  {/* 이미지 미리보기 */}
+                  <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                    <img
+                      src={image.image_url}
+                      alt={image.image_name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
 
-                            {/* 정보 입력 */}
-                            <div className="flex-1 space-y-3">
-                              <div>
-                                <Label className="text-xs text-muted-foreground">
-                                  파일명: {image.image_name}
-                                </Label>
-                              </div>
-                              
-                              <div>
-                                <Label htmlFor={`section-${image.id}`} className="text-sm">
-                                  섹션 제목
-                                </Label>
-                                <Input
-                                  id={`section-${image.id}`}
-                                  value={image.section_title}
-                                  onChange={(e) => updateSectionTitle(image.id, e.target.value)}
-                                  placeholder="이 이미지가 설명하는 섹션의 제목을 입력하세요"
-                                  className="mt-1"
-                                />
-                              </div>
-                            </div>
+                  {/* 정보 입력 */}
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">
+                        파일명: {image.image_name}
+                      </Label>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor={`section-${image.id}`} className="text-sm">
+                        섹션 제목
+                      </Label>
+                      <Input
+                        id={`section-${image.id}`}
+                        value={image.section_title}
+                        onChange={(e) => updateSectionTitle(image.id, e.target.value)}
+                        placeholder="이 이미지가 설명하는 섹션의 제목을 입력하세요"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
 
-                            {/* 삭제 버튼 */}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeImage(image.id)}
-                              className="text-destructive hover:text-destructive flex-shrink-0"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+                  {/* 삭제 버튼 */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeImage(image.id)}
+                    className="text-destructive hover:text-destructive flex-shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
       {images.length === 0 && (
