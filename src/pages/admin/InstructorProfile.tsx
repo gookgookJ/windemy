@@ -74,35 +74,24 @@ export const AdminInstructorProfile = () => {
     setSaving(true);
     try {
       if (isNewInstructor) {
-        // Create new instructor via auth signup
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email: profile.email,
-          password: `temp_${Date.now()}`, // Temporary password
-          email_confirm: true,
-          user_metadata: {
-            full_name: profile.full_name,
-            role: profile.role
-          }
-        });
-
-        if (authError) throw authError;
-
-        // Update profile with additional info
+        // For new instructors, we'll create a profile entry without user authentication
+        // The instructor can be invited to sign up later via email
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({
+          .insert({
+            id: crypto.randomUUID(), // Generate a random UUID for the profile
             full_name: profile.full_name,
+            email: profile.email,
             role: profile.role,
             instructor_bio: profile.instructor_bio,
             instructor_avatar_url: profile.instructor_avatar_url,
-          })
-          .eq('id', authData.user.id);
+          });
 
         if (profileError) throw profileError;
 
         toast({
           title: "성공",
-          description: "새 강사가 등록되었습니다."
+          description: "새 강사 프로필이 등록되었습니다. 해당 강사는 이메일로 초대를 받을 수 있습니다."
         });
       } else {
         // Update existing instructor
