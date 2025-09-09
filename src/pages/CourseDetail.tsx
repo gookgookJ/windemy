@@ -420,12 +420,12 @@ const CourseDetail = () => {
 
             {/* Sticky Navigation Bar - Full width 4-column layout */}
             <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm mb-8">
-              <div className="w-full max-w-[757px] grid grid-cols-4 gap-0 py-3 border border-border rounded-md overflow-hidden">
+              <div className="w-full max-w-[757px] grid grid-cols-4 gap-0 border border-border rounded-md overflow-hidden">
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => scrollToSection('overview')}
-                  className="rounded-none border-r border-border flex-1 justify-center border-t-0 border-b-0 border-l-0"
+                  className="rounded-none border-r border-border flex-1 justify-center border-t-0 border-b-0 border-l-0 h-10 text-sm"
                 >
                   강의 안내
                 </Button>
@@ -433,7 +433,7 @@ const CourseDetail = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={() => scrollToSection('curriculum')}
-                  className="rounded-none border-r border-border flex-1 justify-center border-t-0 border-b-0 border-l-0"
+                  className="rounded-none border-r border-border flex-1 justify-center border-t-0 border-b-0 border-l-0 h-10 text-sm"
                 >
                   커리큘럼
                 </Button>
@@ -441,7 +441,7 @@ const CourseDetail = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={() => scrollToSection('instructor')}
-                  className="rounded-none border-r border-border flex-1 justify-center border-t-0 border-b-0 border-l-0"
+                  className="rounded-none border-r border-border flex-1 justify-center border-t-0 border-b-0 border-l-0 h-10 text-sm"
                 >
                   강사 소개
                 </Button>
@@ -449,7 +449,7 @@ const CourseDetail = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={() => scrollToSection('reviews')}
-                  className="rounded-none flex-1 justify-center border-t-0 border-b-0 border-l-0 border-r-0"
+                  className="rounded-none flex-1 justify-center border-t-0 border-b-0 border-l-0 border-r-0 h-10 text-sm"
                 >
                   강의 후기
                 </Button>
@@ -466,8 +466,10 @@ const CourseDetail = () => {
               {/* Course Content Sections */}
               <div className="space-y-12">
                 {/* What You'll Learn */}
-                <section className="bg-muted/30 rounded-2xl p-8">
-                  <h2 className="text-2xl font-bold mb-6">이 강의에서 배우는 것들</h2>
+                <section id="overview" className="bg-muted/30 rounded-2xl p-8">
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-bold">이 강의에서 배우는 것들</h2>
+                  </div>
                   <div className="grid md:grid-cols-2 gap-4">
                     {(courseData.what_you_will_learn || []).map((item, index) => (
                       <div key={index} className="flex items-start gap-3">
@@ -480,7 +482,9 @@ const CourseDetail = () => {
 
                 {/* Curriculum */}
                 <section id="curriculum">
-                  <h2 className="text-2xl font-bold mb-6">커리큘럼</h2>
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-bold">커리큘럼</h2>
+                  </div>
                   <div className="space-y-4">
                     {sectionsToDisplay.map((section, sectionIndex) => (
                       <Card key={sectionIndex}>
@@ -533,7 +537,9 @@ const CourseDetail = () => {
 
                 {/* Instructor */}
                 <section id="instructor" className="bg-muted/30 rounded-2xl p-8">
-                  <h2 className="text-2xl font-bold mb-6">강사 소개</h2>
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-bold">강사 소개</h2>
+                  </div>
                   <div className="flex items-start gap-6">
                     <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {courseData.profiles?.instructor_avatar_url ? (
@@ -557,7 +563,9 @@ const CourseDetail = () => {
 
                 {/* Reviews */}
                 <section id="reviews">
-                  <h2 className="text-2xl font-bold mb-6">수강생 후기</h2>
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-bold">수강생 후기</h2>
+                  </div>
                   <div className="space-y-6">
                     {courseReviews.length > 0 ? (
                       courseReviews.map((review, index) => (
