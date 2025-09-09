@@ -569,35 +569,13 @@ const AdminCourseCreate = () => {
                             </Button>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <Label>강의 제목</Label>
-                              <Input
-                                value={session.title}
-                                onChange={(e) => updateSession(index, 'title', e.target.value)}
-                                placeholder="강의 제목"
-                              />
-                            </div>
-                            <div>
-                              <Label>콘텐츠 타입</Label>
-                              <Select 
-                                value={session.content_type} 
-                                onValueChange={(value: 'video' | 'pdf' | 'quiz' | 'assignment' | 'live') => 
-                                  updateSession(index, 'content_type', value)
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="video">동영상</SelectItem>
-                                  <SelectItem value="pdf">PDF 문서</SelectItem>
-                                  <SelectItem value="quiz">퀴즈</SelectItem>
-                                  <SelectItem value="assignment">과제</SelectItem>
-                                  <SelectItem value="live">라이브 세션</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
+                          <div>
+                            <Label>강의 제목</Label>
+                            <Input
+                              value={session.title}
+                              onChange={(e) => updateSession(index, 'title', e.target.value)}
+                              placeholder="강의 제목을 입력하세요"
+                            />
                           </div>
 
                           <div>
@@ -605,75 +583,29 @@ const AdminCourseCreate = () => {
                             <Textarea
                               value={session.description}
                               onChange={(e) => updateSession(index, 'description', e.target.value)}
-                              placeholder="강의 설명"
+                              placeholder="강의에서 다룰 내용을 간단히 설명해주세요"
                               rows={3}
                             />
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                              <Label>재생 시간 (분)</Label>
+                              <Label>예상 학습 시간 (분)</Label>
                               <Input
                                 type="number"
                                 value={session.duration_minutes}
                                 onChange={(e) => updateSession(index, 'duration_minutes', parseInt(e.target.value) || 0)}
-                                placeholder="0"
+                                placeholder="30"
                               />
                             </div>
-                            <div className="space-y-2">
-                              <div className="flex items-center space-x-2">
-                                <Switch
-                                  checked={session.is_preview}
-                                  onCheckedChange={(checked) => updateSession(index, 'is_preview', checked)}
-                                />
-                                <Label>미리보기 가능</Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Switch
-                                  checked={session.is_free}
-                                  onCheckedChange={(checked) => updateSession(index, 'is_free', checked)}
-                                />
-                                <Label>무료 공개</Label>
-                              </div>
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                checked={session.is_preview}
+                                onCheckedChange={(checked) => updateSession(index, 'is_preview', checked)}
+                              />
+                              <Label>미리보기 허용</Label>
                             </div>
                           </div>
-
-                          {/* 콘텐츠별 입력 필드 */}
-                          {session.content_type === 'video' ? (
-                            <div>
-                              <Label>Vimeo 동영상 URL</Label>
-                              <Input
-                                value={session.video_url || ''}
-                                onChange={(e) => updateSession(index, 'video_url', e.target.value)}
-                                placeholder="https://vimeo.com/..."
-                              />
-                            </div>
-                          ) : session.content_type === 'live' ? (
-                            <div>
-                              <Label>라이브 세션 링크</Label>
-                              <Input
-                                value={session.video_url || ''}
-                                onChange={(e) => updateSession(index, 'video_url', e.target.value)}
-                                placeholder="Zoom, Google Meet 등의 링크"
-                              />
-                            </div>
-                          ) : (
-                            <div className="space-y-4">
-                              <FileUpload
-                                bucket="course-files"
-                                path={`course-${Date.now()}`}
-                                accept={session.content_type === 'pdf' ? '.pdf' : '*/*'}
-                                maxSize={50}
-                                onUpload={(url, fileName) => {
-                                  updateSession(index, 'attachment_url', url);
-                                  updateSession(index, 'attachment_name', fileName);
-                                }}
-                                currentFile={session.attachment_url}
-                                label={`${session.content_type === 'pdf' ? 'PDF' : '과제'} 파일`}
-                                description={`${session.content_type === 'pdf' ? 'PDF 문서' : '과제 파일'}을 업로드하세요`}
-                              />
-                            </div>
-                          )}
                         </div>
                       </CardContent>
                     </Card>
