@@ -25,6 +25,8 @@ import Learn from "./pages/Learn";
 import NotFound from "./pages/NotFound";
 import CourseManagement from "./pages/CourseManagement";
 
+console.log('Debug React in App.tsx', React, typeof (React as any)?.useEffect);
+
 const queryClient = new QueryClient();
 
 const App = () => (
