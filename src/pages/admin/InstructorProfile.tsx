@@ -71,6 +71,26 @@ export const AdminInstructorProfile = () => {
   const handleSave = async () => {
     if (!profile) return;
 
+    // Client-side validation for new instructor
+    if (isNewInstructor) {
+      const email = (profile.email || '').trim();
+      const name = (profile.full_name || '').trim();
+      const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+      if (!name) {
+        toast({ title: '입력 필요', description: '강사명을 입력하세요.', variant: 'destructive' });
+        return;
+      }
+      if (!email) {
+        toast({ title: '입력 필요', description: '이메일을 입력하세요.', variant: 'destructive' });
+        return;
+      }
+      if (!isValidEmail) {
+        toast({ title: '유효하지 않은 이메일', description: '올바른 이메일 주소 형식으로 입력하세요.', variant: 'destructive' });
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       if (isNewInstructor) {
@@ -85,11 +105,17 @@ export const AdminInstructorProfile = () => {
           },
         });
 
-        if (error) throw error;
+        if (error) {
+          // Bubble up the clearer server message if present
+          throw new Error(error.message || '강사 생성에 실패했습니다.');
+        }
+        if (data && (data as any).error) {
+          throw new Error((data as any).error as string);
+        }
 
         toast({
-          title: "성공",
-          description: "새 강사에게 초대 메일을 발송하고 프로필을 생성했습니다."
+          title: '성공',
+          description: '새 강사에게 초대 메일을 발송하고 프로필을 생성했습니다.'
         });
       } else {
         // Update existing instructor
@@ -103,21 +129,21 @@ export const AdminInstructorProfile = () => {
           })
           .eq('id', id);
 
-        if (error) throw error;
+        if (error) throw new Error(error.message);
 
         toast({
-          title: "성공",
-          description: "강사 프로필이 저장되었습니다."
+          title: '성공',
+          description: '강사 프로필이 저장되었습니다.'
         });
       }
 
       navigate('/admin/instructors');
-    } catch (error) {
-      console.error('Error saving profile:', error);
+    } catch (err: any) {
+      console.error('Error saving profile:', err);
       toast({
-        title: "오류",
-        description: "프로필 저장에 실패했습니다.",
-        variant: "destructive"
+        title: '오류',
+        description: err?.message || '프로필 저장에 실패했습니다.',
+        variant: 'destructive'
       });
     } finally {
       setSaving(false);
@@ -172,7 +198,7 @@ export const AdminInstructorProfile = () => {
               <p className="text-muted-foreground">강의 상세페이지에 표시될 강사 정보를 관리합니다</p>
             </div>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving || (isNewInstructor && ((!profile.full_name?.trim()) || (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email || ''))))}>
             <Save className="h-4 w-4 mr-2" />
             {saving ? '저장 중...' : '저장'}
           </Button>

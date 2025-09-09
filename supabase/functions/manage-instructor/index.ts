@@ -87,10 +87,15 @@ serve(async (req) => {
 
       if (inviteError) {
         console.error("INVITE_ERROR", inviteError);
-        return new Response(JSON.stringify({ error: inviteError.message }), {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
+        const status = (inviteError as any).status === 400 || (inviteError as any).code === 'validation_failed' ? 400 : 500;
+        const message = (inviteError as any).code === 'validation_failed' ? 'Invalid email format' : inviteError.message;
+        return new Response(
+          JSON.stringify({ error: message, code: (inviteError as any).code || undefined }),
+          {
+            status,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
       }
 
       userId = inviteData.user?.id;
