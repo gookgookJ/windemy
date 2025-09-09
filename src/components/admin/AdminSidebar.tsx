@@ -44,13 +44,19 @@ const menuItems = [
     title: '강의 관리',
     url: '/admin/courses',
     icon: BookOpen,
-    group: 'main'
+    group: 'content'
   },
   {
     title: '강의 생성',
     url: '/admin/course-create',
     icon: PlusCircle,
-    group: 'main'
+    group: 'content'
+  },
+  {
+    title: '세션 관리',
+    url: '/admin/sessions',
+    icon: Calendar,
+    group: 'content'
   },
   {
     title: '주문 관리',
@@ -59,15 +65,27 @@ const menuItems = [
     group: 'main'
   },
   {
-    title: '보고서',
-    url: '/admin/reports',
+    title: '학습 분석',
+    url: '/admin/learning-analytics',
     icon: BarChart3,
     group: 'analytics'
   },
   {
-    title: '매출 분석',
-    url: '/admin/revenue',
-    icon: DollarSign,
+    title: '수강 통계',
+    url: '/admin/enrollment-stats',
+    icon: Users,
+    group: 'analytics'
+  },
+  {
+    title: '진도 모니터링',
+    url: '/admin/progress-monitoring',
+    icon: FileText,
+    group: 'analytics'
+  },
+  {
+    title: '보고서',
+    url: '/admin/reports',
+    icon: BarChart3,
     group: 'analytics'
   },
   {
@@ -116,7 +134,8 @@ const menuItems = [
 
 const groupLabels = {
   main: '주요 관리',
-  analytics: '분석 & 보고서',
+  content: '콘텐츠 관리',
+  analytics: '학습 분석',
   support: '고객 지원',
   marketing: '마케팅',
   system: '시스템 관리'

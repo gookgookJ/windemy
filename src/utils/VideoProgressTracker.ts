@@ -226,9 +226,100 @@ export class VideoProgressTracker {
   }
 
   async saveProgress() {
-    // 실제 구현에서는 supabase로 데이터 저장
-    const data = this.getProgressData();
-    console.log('Saving progress data:', data);
-    return data;
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    try {
+      // 시청 세그먼트 저장
+      if (this.watchSegments.length > 0) {
+        const segmentsToSave = this.watchSegments.map(segment => ({
+          user_id: this.userId,
+          session_id: this.sessionId,
+          start_time: segment.startTime,
+          end_time: segment.endTime,
+          duration: segment.duration,
+          weight: segment.weight
+        }));
+
+        const { error: segmentError } = await supabase
+          .from('video_watch_segments')
+          .insert(segmentsToSave);
+
+        if (segmentError) {
+          console.error('Error saving watch segments:', segmentError);
+        }
+      }
+
+      // 체크포인트 저장
+      const reachedCheckpoints = this.checkpoints.filter(cp => cp.reached);
+      if (reachedCheckpoints.length > 0) {
+        const checkpointsToSave = reachedCheckpoints.map(checkpoint => ({
+          user_id: this.userId,
+          session_id: this.sessionId,
+          checkpoint_time: checkpoint.time,
+          is_natural: checkpoint.isNatural
+        }));
+
+        const { error: checkpointError } = await supabase
+          .from('video_checkpoints')
+          .upsert(checkpointsToSave, {
+            onConflict: 'user_id,session_id,checkpoint_time'
+          });
+
+        if (checkpointError) {
+          console.error('Error saving checkpoints:', checkpointError);
+        }
+      }
+
+      // Seek 이벤트 저장
+      if (this.seekEvents.length > 0) {
+        const seekEventsToSave = this.seekEvents.map(event => ({
+          user_id: this.userId,
+          session_id: this.sessionId,
+          from_time: event.fromTime,
+          to_time: event.toTime,
+          jump_amount: event.jumpAmount
+        }));
+
+        const { error: seekError } = await supabase
+          .from('video_seek_events')
+          .insert(seekEventsToSave);
+
+        if (seekError) {
+          console.error('Error saving seek events:', seekError);
+        }
+      }
+
+      // 세션 진도 업데이트
+      const watchedPercentage = this.getWatchedPercentage();
+      const isCompleted = this.isValidForCompletion();
+      
+      const { error: progressError } = await supabase
+        .from('session_progress')
+        .upsert({
+          user_id: this.userId,
+          session_id: this.sessionId,
+          watched_duration_seconds: Math.round(this.getTotalWatchedTime()),
+          completed: isCompleted,
+          completed_at: isCompleted ? new Date().toISOString() : null
+        }, {
+          onConflict: 'user_id,session_id'
+        });
+
+      if (progressError) {
+        console.error('Error updating session progress:', progressError);
+      }
+
+      // 클리어 데이터 (중복 저장 방지)
+      this.watchSegments = [];
+      this.seekEvents = [];
+
+      const data = this.getProgressData();
+      console.log('Progress saved successfully:', data);
+      return data;
+      
+    } catch (error) {
+      console.error('Error saving progress:', error);
+      throw error;
+    }
   }
 }
