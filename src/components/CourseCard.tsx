@@ -2,6 +2,7 @@ import { Star, Clock, Users, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 interface CourseCardProps {
   id: string;
@@ -21,6 +22,7 @@ interface CourseCardProps {
 }
 
 const CourseCard = ({
+  id,
   title,
   instructor,
   thumbnail,
@@ -35,6 +37,7 @@ const CourseCard = ({
   isHot,
   isNew,
 }: CourseCardProps) => {
+  const navigate = useNavigate();
   const discountRate = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
 
   const levelConfig = {
@@ -80,7 +83,12 @@ const CourseCard = ({
 
         {/* Hover Overlay */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <Button variant="hero" size="lg" className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+          <Button 
+            variant="hero" 
+            size="lg" 
+            className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
+            onClick={() => navigate(`/course/${id}`)}
+          >
             강의 보기
           </Button>
         </div>
@@ -127,7 +135,12 @@ const CourseCard = ({
               </span>
             )}
           </div>
-          <Button variant="outline" size="sm" className="hover:border-primary hover:text-primary">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="hover:border-primary hover:text-primary"
+            onClick={() => navigate(`/course/${id}`)}
+          >
             <BookOpen className="w-4 h-4" />
           </Button>
         </div>

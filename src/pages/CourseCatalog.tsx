@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Filter, Search, Grid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,53 +6,110 @@ import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CourseCard from "@/components/CourseCard";
-import courseWebImg from "@/assets/course-web.jpg";
-import courseMarketingImg from "@/assets/course-marketing.jpg";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const CourseCatalog = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [courses, setCourses] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const courses = [
-    {
-      id: "1",
-      title: "실무에 바로 적용하는 React.js 완전정복",
-      instructor: "김개발",
-      thumbnail: courseWebImg,
-      price: 89000,
-      originalPrice: 120000,
-      rating: 4.9,
-      reviewCount: 1250,
-      duration: "32시간",
-      studentCount: 15000,
-      level: "intermediate" as const,
-      category: "개발/프로그래밍",
-      isHot: true,
-    },
-    {
-      id: "2",
-      title: "디지털 마케팅 전략과 실전 캠페인 기획",
-      instructor: "박마케터",
-      thumbnail: courseMarketingImg,
-      price: 75000,
-      originalPrice: 95000,
-      rating: 4.8,
-      reviewCount: 980,
-      duration: "24시간",
-      studentCount: 8500,
-      level: "beginner" as const,
-      category: "마케팅",
-      isNew: true,
-    },
-  ];
+  useEffect(() => {
+    fetchCourses();
+    fetchCategories();
+  }, []);
 
-  const categories = [
-    { id: "all", name: "전체", count: 2000 },
-    { id: "development", name: "개발/프로그래밍", count: 450 },
-    { id: "marketing", name: "마케팅", count: 320 },
-    { id: "design", name: "디자인", count: 280 },
-    { id: "business", name: "비즈니스", count: 380 },
-  ];
+  const fetchCourses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .select(`
+          *,
+          profiles:instructor_id(full_name),
+          categories:category_id(name),
+          course_reviews(rating)
+        `)
+        .eq('is_published', true);
+
+      if (error) throw error;
+
+      const coursesWithStats = data.map(course => ({
+        id: course.id,
+        title: course.title,
+        instructor: course.profiles?.full_name || 'Unknown',
+        thumbnail: course.thumbnail_url || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png',
+        price: course.price,
+        originalPrice: null, // You can add this to course_options if needed
+        rating: course.rating || 0,
+        reviewCount: course.course_reviews?.length || 0,
+        duration: `${course.duration_hours}시간`,
+        studentCount: course.total_students,
+        level: course.level as "beginner" | "intermediate" | "advanced",
+        category: course.categories?.name || '기타',
+        isHot: course.total_students > 1000,
+        isNew: new Date(course.created_at).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000, // 30일 이내
+      }));
+
+      setCourses(coursesWithStats);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+      toast({
+        title: "데이터 로딩 실패",
+        description: "강의 목록을 불러오는 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*');
+
+      if (error) throw error;
+
+      const categoriesWithCounts = [
+        { id: "all", name: "전체", count: courses.length },
+        ...data.map(cat => ({
+          id: cat.id,
+          name: cat.name,
+          count: courses.filter(course => course.category === cat.name).length
+        }))
+      ];
+
+      setCategories(categoriesWithCounts);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
+  const filteredCourses = selectedCategory === "all" 
+    ? courses 
+    : courses.filter(course => {
+        const category = categories.find(cat => cat.id === selectedCategory);
+        return category && course.category === category.name;
+      });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">강의 목록을 불러오는 중...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -124,7 +181,7 @@ const CourseCatalog = () => {
 
             {/* Course Grid */}
             <div className={`grid gap-6 ${viewMode === "grid" ? "md:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"}`}>
-              {courses.map((course) => (
+              {filteredCourses.map((course) => (
                 <CourseCard key={course.id} {...course} />
               ))}
             </div>
