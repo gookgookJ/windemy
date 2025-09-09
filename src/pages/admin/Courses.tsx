@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Eye, Edit, Users, DollarSign, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Filter, Eye, Edit, Users, DollarSign, Clock, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -92,6 +92,35 @@ export const AdminCourses = () => {
       toast({
         title: "오류",
         description: "강의 상태 변경에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteCourse = async (courseId: string, courseTitle: string) => {
+    if (!confirm(`정말로 "${courseTitle}" 강의를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('courses')
+        .delete()
+        .eq('id', courseId);
+
+      if (error) throw error;
+
+      setCourses(courses.filter(course => course.id !== courseId));
+
+      toast({
+        title: "성공",
+        description: "강의가 삭제되었습니다."
+      });
+    } catch (error) {
+      console.error('Error deleting course:', error);
+      toast({
+        title: "오류",
+        description: "강의 삭제에 실패했습니다.",
         variant: "destructive"
       });
     }
@@ -229,13 +258,21 @@ export const AdminCourses = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                      <Badge variant={getLevelBadgeVariant(course.level)}>
-                        {getLevelLabel(course.level)}
-                      </Badge>
-                      <Badge variant={course.is_published ? "default" : "secondary"}>
-                        {course.is_published ? "공개" : "비공개"}
-                      </Badge>
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={getLevelBadgeVariant(course.level)}>
+                          {getLevelLabel(course.level)}
+                        </Badge>
+                        <Badge 
+                          variant={course.is_published ? "default" : "secondary"}
+                          className={course.is_published ? 
+                            "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200" : 
+                            "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200"
+                          }
+                        >
+                          {course.is_published ? "🟢 공개" : "🔒 비공개"}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                   
@@ -257,21 +294,34 @@ export const AdminCourses = () => {
                       편집
                     </Button>
                     <Button
-                      variant={course.is_published ? "destructive" : "default"}
+                      variant={course.is_published ? "outline" : "default"}
                       size="sm"
                       onClick={() => toggleCoursePublication(course.id, course.is_published)}
+                      className={course.is_published ? 
+                        "text-orange-600 border-orange-300 hover:bg-orange-50 hover:text-orange-700" : 
+                        "text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700"
+                      }
                     >
                       {course.is_published ? (
                         <>
                           <XCircle className="h-4 w-4 mr-2" />
-                          비공개
+                          비공개로 변경
                         </>
                       ) : (
                         <>
                           <CheckCircle className="h-4 w-4 mr-2" />
-                          공개
+                          공개로 변경
                         </>
                       )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteCourse(course.id, course.title)}
+                      className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      삭제
                     </Button>
                   </div>
                 </div>
