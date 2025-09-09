@@ -9,10 +9,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Search, Filter, Plus } from 'lucide-react';
+import { Search, Filter, Plus, Loader2 } from 'lucide-react';
 import { SessionTable } from '@/components/admin/SessionTable';
 import { SessionEditModal } from '@/components/admin/SessionEditModal';
 import { SessionUploadModal } from '@/components/admin/SessionUploadModal';
+import { getVimeoVideoInfo, isValidVimeoUrl } from '@/utils/vimeoUtils';
 
 interface CourseSession {
   id: string;
@@ -52,6 +53,7 @@ export const SessionManagement = () => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<CourseSession | null>(null);
   const [uploadingSession, setUploadingSession] = useState<CourseSession | null>(null);
+  const [loadingVideoInfo, setLoadingVideoInfo] = useState(false);
   
   const [newSession, setNewSession] = useState({
     title: '',
@@ -197,6 +199,37 @@ export const SessionManagement = () => {
     });
   };
 
+  const handleVideoUrlChange = async (url: string) => {
+    setNewSession({ ...newSession, video_url: url });
+    
+    if (url && isValidVimeoUrl(url)) {
+      setLoadingVideoInfo(true);
+      try {
+        const videoInfo = await getVimeoVideoInfo(url);
+        if (videoInfo) {
+          setNewSession(prev => ({
+            ...prev,
+            duration_minutes: videoInfo.duration,
+            title: prev.title || videoInfo.title // 제목이 없을 때만 자동 설정
+          }));
+          toast({
+            title: "영상 정보 가져오기 완료",
+            description: `재생시간: ${videoInfo.duration}분`
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching video info:', error);
+        toast({
+          title: "알림",
+          description: "영상 정보를 가져올 수 없었습니다. 수동으로 입력해주세요.",
+          variant: "default"
+        });
+      } finally {
+        setLoadingVideoInfo(false);
+      }
+    }
+  };
+
   const handleEdit = (session: CourseSession) => {
     setEditingSession(session);
     setIsEditModalOpen(true);
@@ -297,22 +330,39 @@ export const SessionManagement = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="video_url">Vimeo 영상 URL</Label>
+                  <Label htmlFor="video_url">
+                    Vimeo 영상 URL
+                    {loadingVideoInfo && (
+                      <Loader2 className="inline h-4 w-4 ml-2 animate-spin" />
+                    )}
+                  </Label>
                   <Input
                     id="video_url"
                     value={newSession.video_url}
-                    onChange={(e) => setNewSession({ ...newSession, video_url: e.target.value })}
+                    onChange={(e) => handleVideoUrlChange(e.target.value)}
                     placeholder="https://vimeo.com/123456789"
+                    disabled={loadingVideoInfo}
                   />
+                  {loadingVideoInfo && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      영상 정보를 가져오는 중...
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <Label htmlFor="duration">재생 시간 (분)</Label>
+                  <Label htmlFor="duration">
+                    재생 시간 (분)
+                    {loadingVideoInfo && (
+                      <span className="text-xs text-muted-foreground ml-2">(자동 설정됨)</span>
+                    )}
+                  </Label>
                   <Input
                     id="duration"
                     type="number"
                     value={newSession.duration_minutes}
                     onChange={(e) => setNewSession({ ...newSession, duration_minutes: parseInt(e.target.value) || 0 })}
                     placeholder="60"
+                    disabled={loadingVideoInfo}
                   />
                 </div>
                 <div className="flex gap-4">

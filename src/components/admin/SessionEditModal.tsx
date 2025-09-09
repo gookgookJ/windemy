@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { getVimeoVideoInfo, isValidVimeoUrl } from '@/utils/vimeoUtils';
+import { Loader2 } from 'lucide-react';
 
 interface CourseSession {
   id: string;
@@ -37,6 +39,7 @@ export const SessionEditModal = ({ session, isOpen, onClose, onUpdate }: Session
     is_free: false,
     is_preview: false
   });
+  const [loadingVideoInfo, setLoadingVideoInfo] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -51,6 +54,37 @@ export const SessionEditModal = ({ session, isOpen, onClose, onUpdate }: Session
       });
     }
   }, [session]);
+
+  const handleVideoUrlChange = async (url: string) => {
+    setEditData({ ...editData, video_url: url });
+    
+    if (url && isValidVimeoUrl(url)) {
+      setLoadingVideoInfo(true);
+      try {
+        const videoInfo = await getVimeoVideoInfo(url);
+        if (videoInfo) {
+          setEditData(prev => ({
+            ...prev,
+            duration_minutes: videoInfo.duration,
+            title: prev.title || videoInfo.title // 제목이 없을 때만 자동 설정
+          }));
+          toast({
+            title: "영상 정보 가져오기 완료",
+            description: `재생시간: ${videoInfo.duration}분`
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching video info:', error);
+        toast({
+          title: "알림",
+          description: "영상 정보를 가져올 수 없었습니다. 수동으로 입력해주세요.",
+          variant: "default"
+        });
+      } finally {
+        setLoadingVideoInfo(false);
+      }
+    }
+  };
 
   const handleUpdate = async () => {
     if (!session || !editData.title) {
@@ -121,22 +155,39 @@ export const SessionEditModal = ({ session, isOpen, onClose, onUpdate }: Session
             />
           </div>
           <div>
-            <Label htmlFor="edit-video-url">Vimeo 영상 URL</Label>
+            <Label htmlFor="edit-video-url">
+              Vimeo 영상 URL
+              {loadingVideoInfo && (
+                <Loader2 className="inline h-4 w-4 ml-2 animate-spin" />
+              )}
+            </Label>
             <Input
               id="edit-video-url"
               value={editData.video_url}
-              onChange={(e) => setEditData({ ...editData, video_url: e.target.value })}
+              onChange={(e) => handleVideoUrlChange(e.target.value)}
               placeholder="https://vimeo.com/123456789"
+              disabled={loadingVideoInfo}
             />
+            {loadingVideoInfo && (
+              <p className="text-xs text-muted-foreground mt-1">
+                영상 정보를 가져오는 중...
+              </p>
+            )}
           </div>
           <div>
-            <Label htmlFor="edit-duration">재생 시간 (분)</Label>
+            <Label htmlFor="edit-duration">
+              재생 시간 (분)
+              {loadingVideoInfo && (
+                <span className="text-xs text-muted-foreground ml-2">(자동 설정됨)</span>
+              )}
+            </Label>
             <Input
               id="edit-duration"
               type="number"
               value={editData.duration_minutes}
               onChange={(e) => setEditData({ ...editData, duration_minutes: parseInt(e.target.value) || 0 })}
               placeholder="60"
+              disabled={loadingVideoInfo}
             />
           </div>
           <div className="flex gap-4">
