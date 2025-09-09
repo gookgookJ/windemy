@@ -34,6 +34,7 @@ interface CourseOption {
   name: string;
   price: number;
   features: string[];
+  tag?: string; // Add tag field for labels like "2차 얼리버드"
 }
 
 interface CurriculumSection {
@@ -63,6 +64,7 @@ interface Course {
   curriculum: CurriculumSection[];
   options: CourseOption[];
   images: DetailImage[];
+  thumbnail_url?: string; // Add thumbnail field
   category_id: string;
   is_published: boolean;
   meta_title?: string;
@@ -131,7 +133,8 @@ export const AdminCourseEdit = () => {
         id: option.id,
         name: option.name,
         price: option.price,
-        features: option.benefits || []
+        features: option.benefits || [],
+        tag: option.tag || ''
       }));
 
       const transformedImages: DetailImage[] = (data.course_detail_images || [])
@@ -159,9 +162,11 @@ export const AdminCourseEdit = () => {
           id: 'default',
           name: '기본 패키지',
           price: data.price || 0,
-          features: ['강의 평생 수강권', '모든 강의 자료 제공']
+          features: ['강의 평생 수강권', '모든 강의 자료 제공'],
+          tag: ''
         }],
         images: transformedImages,
+        thumbnail_url: data.thumbnail_url || data.thumbnail_path || '',
         category_id: data.category_id || '',
         is_published: data.is_published || false,
         meta_title: data.title || '',
@@ -215,6 +220,7 @@ export const AdminCourseEdit = () => {
           requirements: course.requirements,
           category_id: course.category_id,
           is_published: course.is_published,
+          thumbnail_url: course.thumbnail_url,
         })
         .eq('id', id);
 
@@ -287,7 +293,8 @@ export const AdminCourseEdit = () => {
           course_id: id,
           name: option.name,
           price: option.price,
-          benefits: option.features
+          benefits: option.features,
+          tag: option.tag || null
         }));
 
         const { error: optionsError } = await supabase
@@ -428,7 +435,8 @@ export const AdminCourseEdit = () => {
       id: Date.now().toString(),
       name: '새 옵션',
       price: 0,
-      features: ['새 혜택']
+      features: ['새 혜택'],
+      tag: ''
     };
     setCourse({
       ...course,
@@ -540,6 +548,35 @@ export const AdminCourseEdit = () => {
                   value={course.subtitle}
                   onChange={(e) => setCourse({ ...course, subtitle: e.target.value })}
                   placeholder="강의 부제목을 입력하세요"
+                />
+              </div>
+            </div>
+
+            {/* 썸네일 업로드 섹션 추가 */}
+            <div className="space-y-2">
+              <Label htmlFor="thumbnail">강의 썸네일</Label>
+              <div className="space-y-4">
+                {course.thumbnail_url && (
+                  <div className="flex items-center space-x-4">
+                    <img 
+                      src={course.thumbnail_url} 
+                      alt="Current thumbnail" 
+                      className="w-32 h-20 object-cover rounded border"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCourse({ ...course, thumbnail_url: '' })}
+                    >
+                      삭제
+                    </Button>
+                  </div>
+                )}
+                <Input
+                  id="thumbnail"
+                  value={course.thumbnail_url || ''}
+                  onChange={(e) => setCourse({ ...course, thumbnail_url: e.target.value })}
+                  placeholder="썸네일 이미지 URL을 입력하세요"
                 />
               </div>
             </div>
@@ -812,7 +849,7 @@ export const AdminCourseEdit = () => {
           <CardContent className="space-y-6">
             {course.options.map((option) => (
               <div key={option.id} className="border rounded-lg p-4 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>옵션명</Label>
                     <Input
@@ -823,22 +860,30 @@ export const AdminCourseEdit = () => {
                   </div>
                   <div className="space-y-2">
                     <Label>가격</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        value={option.price}
-                        onChange={(e) => updateOption(option.id, { price: Number(e.target.value) })}
-                        placeholder="0"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteOption(option.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Input
+                      type="number"
+                      value={option.price}
+                      onChange={(e) => updateOption(option.id, { price: Number(e.target.value) })}
+                      placeholder="0"
+                    />
                   </div>
+                  <div className="space-y-2">
+                    <Label>태그 (선택사항)</Label>
+                    <Input
+                      value={option.tag || ''}
+                      onChange={(e) => updateOption(option.id, { tag: e.target.value })}
+                      placeholder="예: 2차 얼리버드"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => deleteOption(option.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
 
                 <div className="space-y-2">

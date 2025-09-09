@@ -35,6 +35,7 @@ interface CourseOption {
   price: number;
   original_price?: number;
   benefits: string[];
+  tag?: string; // Add tag field
 }
 
 interface CourseSession {
@@ -92,6 +93,7 @@ const CourseDetail = () => {
   const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
   const [courseSessions, setCourseSessions] = useState<CourseSession[]>([]);
   const [courseReviews, setCourseReviews] = useState<CourseReview[]>([]);
+  const [groupedSections, setGroupedSections] = useState<any[]>([]); // Add state for sections
   const [loading, setLoading] = useState(true);
   
   const navigate = useNavigate();
@@ -157,7 +159,41 @@ const CourseDetail = () => {
 
       if (sectionsError) throw sectionsError;
 
-      // Transform sections data for UI
+      // Store sections data for proper display
+      const transformedSections = (sectionsData || []).map(section => ({
+        id: section.id,
+        title: section.title,
+        order_index: section.order_index,
+        duration: '',
+        lessonCount: 0,
+        lessons: (section.course_sessions || [])
+          .sort((a: any, b: any) => a.order_index - b.order_index)
+          .map((session: any) => {
+            return {
+              id: session.id,
+              title: session.title,
+              duration: `${session.duration_minutes}분`,
+              isPreview: session.is_preview
+            };
+          })
+      }));
+
+      // Calculate duration and lesson count for each section
+      transformedSections.forEach(section => {
+        section.lessonCount = section.lessons.length;
+        const totalMinutes = section.lessons.reduce((total, lesson) => {
+          const durationNum = parseInt(lesson.duration.replace('분', ''));
+          return total + durationNum;
+        }, 0);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        section.duration = hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
+      });
+
+      // Set the grouped sections for display
+      setGroupedSections(transformedSections);
+
+      // Also maintain the flat sessions list for compatibility
       const allSessions: CourseSession[] = [];
       (sectionsData || []).forEach(section => {
         (section.course_sessions || [])
@@ -271,36 +307,39 @@ const CourseDetail = () => {
     }
   };
 
-  // Group sessions by sections for display - use actual sections from database
-  const groupedSessions = courseSessions.reduce((groups: any[], session, index) => {
-    // For now, group every 4 sessions as a section until we implement proper section fetching
-    const groupIndex = Math.floor(index / 4);
-    if (!groups[groupIndex]) {
-      groups[groupIndex] = {
-        title: `섹션 ${groupIndex + 1}`,
-        duration: 0,
-        lessonCount: 0,
-        lessons: []
-      };
-    }
-    
-    groups[groupIndex].lessons.push({
-      title: session.title,
-      duration: `${session.duration_minutes}분`,
-      isPreview: session.is_preview
-    });
-    groups[groupIndex].duration += session.duration_minutes;
-    groups[groupIndex].lessonCount += 1;
-    
-    return groups;
-  }, []);
+  // Use the properly structured sections data instead of grouping sessions arbitrarily
+  const sectionsToDisplay = groupedSections.length > 0 ? groupedSections : 
+    // Fallback to old grouping method if no sections data
+    courseSessions.reduce((groups: any[], session, index) => {
+      const groupIndex = Math.floor(index / 4);
+      if (!groups[groupIndex]) {
+        groups[groupIndex] = {
+          title: `섹션 ${groupIndex + 1}`,
+          duration: 0,
+          lessonCount: 0,
+          lessons: []
+        };
+      }
+      
+      groups[groupIndex].lessons.push({
+        title: session.title,
+        duration: `${session.duration_minutes}분`,
+        isPreview: session.is_preview
+      });
+      groups[groupIndex].duration += session.duration_minutes;
+      groups[groupIndex].lessonCount += 1;
+      
+      return groups;
+    }, []);
 
-  // Convert duration to hours and minutes
-  groupedSessions.forEach(group => {
-    const hours = Math.floor(group.duration / 60);
-    const minutes = group.duration % 60;
-    group.duration = hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
-  });
+  // Convert duration to hours and minutes for fallback sections only
+  if (sectionsToDisplay.length > 0 && !groupedSections.length) {
+    sectionsToDisplay.forEach(group => {
+      const hours = Math.floor(group.duration / 60);
+      const minutes = group.duration % 60;
+      group.duration = hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
+    });
+  }
 
   if (loading) {
     return (
@@ -424,7 +463,7 @@ const CourseDetail = () => {
                 <section id="curriculum">
                   <h2 className="text-2xl font-bold mb-6">커리큘럼</h2>
                   <div className="space-y-4">
-                    {groupedSessions.map((section, sectionIndex) => (
+                    {sectionsToDisplay.map((section, sectionIndex) => (
                       <Card key={sectionIndex}>
                         <CardContent className="p-0">
                           <div 
@@ -775,7 +814,7 @@ const CourseDetail = () => {
             <section id="curriculum">
               <h2 className="text-xl font-bold mb-4">커리큘럼</h2>
               <div className="space-y-3">
-                {groupedSessions.map((section, sectionIndex) => (
+                {sectionsToDisplay.map((section, sectionIndex) => (
                   <Card key={sectionIndex}>
                     <CardContent className="p-0">
                       <div 

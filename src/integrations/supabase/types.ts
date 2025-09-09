@@ -280,6 +280,7 @@ export type Database = {
           name: string
           original_price: number | null
           price: number
+          tag: string | null
         }
         Insert: {
           benefits?: string[] | null
@@ -289,6 +290,7 @@ export type Database = {
           name: string
           original_price?: number | null
           price: number
+          tag?: string | null
         }
         Update: {
           benefits?: string[] | null
@@ -298,6 +300,7 @@ export type Database = {
           name?: string
           original_price?: number | null
           price?: number
+          tag?: string | null
         }
         Relationships: [
           {
