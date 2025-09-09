@@ -17,9 +17,10 @@ serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const SUPABASE_PUBLISHABLE_KEY = Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_PUBLISHABLE_KEY) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_ANON_KEY) {
+      console.error("ENV_MISSING", { hasUrl: !!SUPABASE_URL, hasService: !!SUPABASE_SERVICE_ROLE_KEY, hasAnon: !!SUPABASE_ANON_KEY });
       return new Response(
         JSON.stringify({ error: "Missing Supabase env configuration" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -28,13 +29,14 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization") ?? "";
 
-    // Verify caller is an admin
-    const supabaseUser = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    // Verify caller (must be admin)
+    const supabaseUser = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
 
     const { data: userData, error: userErr } = await supabaseUser.auth.getUser();
     if (userErr || !userData?.user) {
+      console.error("AUTH_ERROR", userErr);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -47,8 +49,17 @@ serve(async (req) => {
       .eq("id", userData.user.id)
       .maybeSingle();
 
-    if (roleErr || !roleRow || roleRow.role !== "admin") {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
+    if (roleErr || !roleRow) {
+      console.error("PROFILE_LOOKUP_ERROR", roleErr);
+      return new Response(JSON.stringify({ error: "Caller profile not found" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if (roleRow.role !== "admin") {
+      console.warn("FORBIDDEN_NON_ADMIN", { caller: userData.user.id, role: roleRow.role });
+      return new Response(JSON.stringify({ error: "Forbidden: admin only" }), {
         status: 403,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
@@ -69,18 +80,22 @@ serve(async (req) => {
     let userId: string | undefined = id;
 
     if (!userId && email) {
-      // Invite user by email (sends invite email if not existing)
+      // Invite user by email (creates user and sends invite if not existing)
       const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
         data: { full_name, role },
       });
+
       if (inviteError) {
+        console.error("INVITE_ERROR", inviteError);
         return new Response(JSON.stringify({ error: inviteError.message }), {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
       }
+
       userId = inviteData.user?.id;
       if (!userId) {
+        console.error("NO_USER_ID_AFTER_INVITE", inviteData);
         return new Response(JSON.stringify({ error: "Failed to create or fetch user" }), {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -88,7 +103,7 @@ serve(async (req) => {
       }
     }
 
-    // Upsert profile with provided fields
+    // Upsert profile with provided fields (service role bypasses RLS)
     const { error: upsertErr } = await supabaseAdmin
       .from("profiles")
       .upsert(
@@ -104,6 +119,7 @@ serve(async (req) => {
       );
 
     if (upsertErr) {
+      console.error("UPSERT_ERROR", upsertErr);
       return new Response(JSON.stringify({ error: upsertErr.message }), {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -115,6 +131,7 @@ serve(async (req) => {
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (e) {
+    console.error("UNHANDLED_ERROR", e);
     return new Response(JSON.stringify({ error: String(e) }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
