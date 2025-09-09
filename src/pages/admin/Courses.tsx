@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Eye, Edit, Users, DollarSign, Clock, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { Search, Filter, Eye, Edit, MoreHorizontal, CheckCircle, XCircle, Trash2, Plus } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface Course {
   id: string;
@@ -182,7 +184,8 @@ export const AdminCourses = () => {
             <h1 className="text-3xl font-bold text-foreground mb-2">강의 관리</h1>
             <p className="text-muted-foreground">등록된 강의들을 관리하고 승인/거부하세요</p>
           </div>
-          <Button onClick={() => navigate('/admin/course-create')}>
+          <Button onClick={() => navigate('/admin/course-create')} className="hover-scale">
+            <Plus className="h-4 w-4 mr-2" />
             새 강의 만들기
           </Button>
         </div>
@@ -226,109 +229,116 @@ export const AdminCourses = () => {
           </CardContent>
         </Card>
 
-        {/* 강의 목록 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>강의 목록 ({filteredCourses.length}개)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {filteredCourses.map((course) => (
-                <div key={course.id} className="p-6 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-lg truncate">{course.title}</h3>
-                        <Badge 
-                          variant={course.is_published ? "default" : "secondary"}
-                        >
-                          {course.is_published ? "🟢 공개중" : "🔒 비공개"}
-                        </Badge>
-                        <Badge variant={getLevelBadgeVariant(course.level)}>
-                          {getLevelLabel(course.level)}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                        <span className="font-medium">강사: {course.instructor?.full_name}</span>
-                        <span>생성일: {new Date(course.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-6 text-sm">
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Users className="h-4 w-4" />
-                          <span className="font-medium">{course.total_students}명 수강</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <DollarSign className="h-4 w-4" />
-                          <span className="font-medium">{course.price.toLocaleString()}원</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Clock className="h-4 w-4" />
-                          <span className="font-medium">{course.duration_hours}시간</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between gap-4 pt-4 border-t">
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/course/${course.id}`)}
-                        className="flex items-center gap-2"
-                      >
-                        <Eye className="h-4 w-4" />
-                        미리보기
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/admin/courses/edit/${course.id}`)}
-                        className="flex items-center gap-2"
-                      >
-                        <Edit className="h-4 w-4" />
-                        편집
-                      </Button>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant={course.is_published ? "outline" : "default"}
-                        size="sm"
-                        onClick={() => toggleCoursePublication(course.id, course.is_published)}
-                      >
-                        {course.is_published ? (
-                          <>
-                            <XCircle className="h-4 w-4 mr-2" />
-                            비공개로 변경
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            공개로 변경
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => deleteCourse(course.id, course.title)}
-                        className="flex items-center gap-2"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        삭제
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {filteredCourses.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  검색 조건에 맞는 강의가 없습니다.
-                </div>
-              )}
+        {/* 강의 목록 테이블 */}
+        <Card className="animate-fade-in">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xl">강의 목록</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">{filteredCourses.length}개의 강의</p>
             </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[40%]">강의명</TableHead>
+                  <TableHead className="w-[20%]">강사</TableHead>
+                  <TableHead className="w-[15%]">상태</TableHead>
+                  <TableHead className="w-[15%]">레벨</TableHead>
+                  <TableHead className="w-[15%]">생성일</TableHead>
+                  <TableHead className="w-[10%] text-right">작업</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCourses.map((course) => (
+                  <TableRow key={course.id} className="hover:bg-muted/30 transition-colors">
+                    <TableCell>
+                      <div className="font-medium text-base hover-scale cursor-pointer" 
+                           onClick={() => navigate(`/course/${course.id}`)}>
+                        {course.title}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-muted-foreground">
+                        {course.instructor?.full_name}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={course.is_published ? "default" : "secondary"}
+                        className={`transition-all ${course.is_published ? 
+                          "bg-primary text-primary-foreground" : 
+                          "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {course.is_published ? "공개" : "비공개"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getLevelBadgeVariant(course.level)} className="text-xs">
+                        {getLevelLabel(course.level)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(course.created_at).toLocaleDateString('ko-KR')}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover-scale">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => navigate(`/course/${course.id}`)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            미리보기
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/admin/courses/edit/${course.id}`)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            편집
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => toggleCoursePublication(course.id, course.is_published)}
+                          >
+                            {course.is_published ? (
+                              <>
+                                <XCircle className="mr-2 h-4 w-4" />
+                                비공개로 변경
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                공개로 변경
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => deleteCourse(course.id, course.title)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            삭제
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            
+            {filteredCourses.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="text-muted-foreground mb-4">
+                  <Search className="h-12 w-12 mx-auto mb-4" />
+                  <p className="text-lg font-medium">검색 결과가 없습니다</p>
+                  <p className="text-sm">다른 검색어를 입력하거나 필터를 조정해보세요</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
