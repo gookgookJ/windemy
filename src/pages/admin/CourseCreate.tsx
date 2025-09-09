@@ -387,29 +387,41 @@ const AdminCourseCreate = () => {
 
       // 섹션과 세션 저장
       if (course.sections.length > 0) {
-        let sessionOrderIndex = 0;
-        const sessionsToInsert: any[] = [];
-        
-        course.sections.forEach((section) => {
-          section.sessions.forEach((session) => {
-            sessionsToInsert.push({
+        for (let sectionIndex = 0; sectionIndex < course.sections.length; sectionIndex++) {
+          const section = course.sections[sectionIndex];
+          
+          // 섹션 저장
+          const { data: sectionData, error: sectionError } = await supabase
+            .from('course_sections')
+            .insert({
+              course_id: savedCourse.id,
+              title: section.title,
+              order_index: sectionIndex
+            })
+            .select()
+            .single();
+
+          if (sectionError) throw sectionError;
+
+          // 해당 섹션의 세션들 저장
+          if (section.sessions.length > 0) {
+            const sessionsToInsert = section.sessions.map((session, sessionIndex) => ({
+              course_id: savedCourse.id,
+              section_id: sectionData.id,
               title: session.title,
               description: session.description,
-              order_index: sessionOrderIndex++,
+              order_index: sessionIndex,
               duration_minutes: session.duration_minutes,
               is_preview: session.is_preview,
-              is_free: false,
-              course_id: savedCourse.id
-            });
-          });
-        });
+              is_free: false
+            }));
 
-        if (sessionsToInsert.length > 0) {
-          const { error: sessionsError } = await supabase
-            .from('course_sessions')
-            .insert(sessionsToInsert);
+            const { error: sessionsError } = await supabase
+              .from('course_sessions')
+              .insert(sessionsToInsert);
 
-          if (sessionsError) throw sessionsError;
+            if (sessionsError) throw sessionsError;
+          }
         }
       }
 

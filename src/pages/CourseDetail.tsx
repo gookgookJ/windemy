@@ -145,15 +145,36 @@ const CourseDetail = () => {
         setSelectedOption(optionsData[0].id);
       }
 
-      // Fetch course sessions
-      const { data: sessionsData, error: sessionsError } = await supabase
-        .from('course_sessions')
-        .select('*')
+      // Fetch course sections with sessions
+      const { data: sectionsData, error: sectionsError } = await supabase
+        .from('course_sections')
+        .select(`
+          *,
+          course_sessions(*)
+        `)
         .eq('course_id', courseId)
         .order('order_index');
 
-      if (sessionsError) throw sessionsError;
-      setCourseSessions(sessionsData || []);
+      if (sectionsError) throw sectionsError;
+
+      // Transform sections data for UI
+      const allSessions: CourseSession[] = [];
+      (sectionsData || []).forEach(section => {
+        (section.course_sessions || [])
+          .sort((a: any, b: any) => a.order_index - b.order_index)
+          .forEach((session: any) => {
+            allSessions.push({
+              id: session.id,
+              title: session.title,
+              description: session.description,
+              order_index: session.order_index,
+              duration_minutes: session.duration_minutes,
+              is_preview: session.is_preview
+            });
+          });
+      });
+
+      setCourseSessions(allSessions);
 
       // Fetch course reviews
       const { data: reviewsData, error: reviewsError } = await supabase
@@ -250,9 +271,10 @@ const CourseDetail = () => {
     }
   };
 
-  // Group sessions by sections for display
+  // Group sessions by sections for display - use actual sections from database
   const groupedSessions = courseSessions.reduce((groups: any[], session, index) => {
-    const groupIndex = Math.floor(index / 4); // Group every 4 sessions
+    // For now, group every 4 sessions as a section until we implement proper section fetching
+    const groupIndex = Math.floor(index / 4);
     if (!groups[groupIndex]) {
       groups[groupIndex] = {
         title: `섹션 ${groupIndex + 1}`,

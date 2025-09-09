@@ -351,6 +351,38 @@ export type Database = {
           },
         ]
       }
+      course_sections: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          id: string
+          order_index: number
+          title: string
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          order_index?: number
+          title: string
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          order_index?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_sections_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_sessions: {
         Row: {
           attachment_name: string | null
@@ -363,6 +395,7 @@ export type Database = {
           is_free: boolean | null
           is_preview: boolean | null
           order_index: number
+          section_id: string | null
           title: string
           video_url: string | null
         }
@@ -377,6 +410,7 @@ export type Database = {
           is_free?: boolean | null
           is_preview?: boolean | null
           order_index: number
+          section_id?: string | null
           title: string
           video_url?: string | null
         }
@@ -391,6 +425,7 @@ export type Database = {
           is_free?: boolean | null
           is_preview?: boolean | null
           order_index?: number
+          section_id?: string | null
           title?: string
           video_url?: string | null
         }
@@ -400,6 +435,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_sessions_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "course_sections"
             referencedColumns: ["id"]
           },
         ]

@@ -96,28 +96,72 @@ export const AdminCourseEdit = () => {
 
   const fetchCourse = async () => {
     try {
+      // Fetch course details with complete data
       const { data, error } = await supabase
         .from('courses')
-        .select('*')
+        .select(`
+          *,
+          course_options(*),
+          course_sections(*, course_sessions(*)),
+          course_detail_images(*)
+        `)
         .eq('id', id)
         .single();
 
       if (error) throw error;
       
       // Transform the data to match our Course interface using safe property access
+      const transformedCurriculum: CurriculumSection[] = (data.course_sections || [])
+        .sort((a: any, b: any) => a.order_index - b.order_index)
+        .map((section: any) => ({
+          id: section.id,
+          title: section.title,
+          sessions: (section.course_sessions || [])
+            .sort((a: any, b: any) => a.order_index - b.order_index)
+            .map((session: any) => ({
+              id: session.id,
+              title: session.title,
+              description: session.description || '',
+              duration: session.duration_minutes || 30,
+              isPreview: session.is_preview || false
+            }))
+        }));
+
+      const transformedOptions: CourseOption[] = (data.course_options || []).map((option: any) => ({
+        id: option.id,
+        name: option.name,
+        price: option.price,
+        features: option.benefits || []
+      }));
+
+      const transformedImages: DetailImage[] = (data.course_detail_images || [])
+        .sort((a: any, b: any) => a.order_index - b.order_index)
+        .map((img: any) => ({
+          id: img.id,
+          image_url: img.image_url,
+          image_name: img.image_name || 'Image',
+          section_title: img.section_title || '',
+          order_index: img.order_index || 0
+        }));
+
       const transformedData: Course = {
         id: data.id,
         title: data.title || '',
-        subtitle: data.title || '', // Using title as fallback for subtitle
+        subtitle: data.short_description || data.title || '',
         description: data.description || '',
         price: data.price || 0,
         level: data.level || 'beginner',
         duration_hours: data.duration_hours || 0,
         what_you_learn: data.what_you_will_learn || [],
         requirements: data.requirements || [],
-        curriculum: [], // Initialize empty, will be populated from actual data structure
-        options: [], // Initialize empty, will be populated from actual data structure
-        images: [], // Initialize empty, will be populated from actual data structure
+        curriculum: transformedCurriculum,
+        options: transformedOptions.length > 0 ? transformedOptions : [{
+          id: 'default',
+          name: '기본 패키지',
+          price: data.price || 0,
+          features: ['강의 평생 수강권', '모든 강의 자료 제공']
+        }],
+        images: transformedImages,
         category_id: data.category_id || '',
         is_published: data.is_published || false,
         meta_title: data.title || '',
@@ -157,29 +201,125 @@ export const AdminCourseEdit = () => {
 
     setSaving(true);
     try {
-      const { error } = await supabase
+      // Update course basic info
+      const { error: courseError } = await supabase
         .from('courses')
         .update({
           title: course.title,
-          subtitle: course.subtitle,
+          short_description: course.subtitle,
           description: course.description,
           price: course.price,
           level: course.level,
           duration_hours: course.duration_hours,
-          what_you_learn: course.what_you_learn,
+          what_you_will_learn: course.what_you_learn,
           requirements: course.requirements,
-          curriculum: course.curriculum,
-          options: course.options,
-          images: course.images,
           category_id: course.category_id,
           is_published: course.is_published,
-          meta_title: course.meta_title,
-          meta_description: course.meta_description,
-          meta_keywords: course.meta_keywords,
         })
         .eq('id', id);
 
-      if (error) throw error;
+      if (courseError) throw courseError;
+
+      // Update course sections and sessions
+      // First, delete existing sections and sessions
+      const { error: deleteSessionsError } = await supabase
+        .from('course_sessions')
+        .delete()
+        .eq('course_id', id);
+
+      if (deleteSessionsError) throw deleteSessionsError;
+
+      const { error: deleteSectionsError } = await supabase
+        .from('course_sections')
+        .delete()
+        .eq('course_id', id);
+
+      if (deleteSectionsError) throw deleteSectionsError;
+
+      // Insert new sections and sessions
+      if (course.curriculum.length > 0) {
+        for (let sectionIndex = 0; sectionIndex < course.curriculum.length; sectionIndex++) {
+          const section = course.curriculum[sectionIndex];
+          
+          const { data: sectionData, error: sectionError } = await supabase
+            .from('course_sections')
+            .insert({
+              course_id: id,
+              title: section.title,
+              order_index: sectionIndex
+            })
+            .select()
+            .single();
+
+          if (sectionError) throw sectionError;
+
+          // Insert sessions for this section
+          if (section.sessions.length > 0) {
+            const sessionsToInsert = section.sessions.map((session, sessionIndex) => ({
+              course_id: id,
+              section_id: sectionData.id,
+              title: session.title,
+              description: session.description,
+              order_index: sessionIndex,
+              duration_minutes: session.duration,
+              is_preview: session.isPreview
+            }));
+
+            const { error: sessionsError } = await supabase
+              .from('course_sessions')
+              .insert(sessionsToInsert);
+
+            if (sessionsError) throw sessionsError;
+          }
+        }
+      }
+
+      // Update course options
+      const { error: deleteOptionsError } = await supabase
+        .from('course_options')
+        .delete()
+        .eq('course_id', id);
+
+      if (deleteOptionsError) throw deleteOptionsError;
+
+      if (course.options.length > 0) {
+        const optionsToInsert = course.options.map(option => ({
+          course_id: id,
+          name: option.name,
+          price: option.price,
+          benefits: option.features
+        }));
+
+        const { error: optionsError } = await supabase
+          .from('course_options')
+          .insert(optionsToInsert);
+
+        if (optionsError) throw optionsError;
+      }
+
+      // Update course detail images
+      const { error: deleteImagesError } = await supabase
+        .from('course_detail_images')
+        .delete()
+        .eq('course_id', id);
+
+      if (deleteImagesError) throw deleteImagesError;
+
+      if (course.images.length > 0) {
+        const imagesToInsert = course.images.map(img => ({
+          course_id: id,
+          image_url: img.image_url,
+          image_name: img.image_name,
+          section_title: img.section_title,
+          order_index: img.order_index
+        }));
+
+        const { error: imagesError } = await supabase
+          .from('course_detail_images')
+          .insert(imagesToInsert);
+
+        if (imagesError) throw imagesError;
+      }
 
       toast({
         title: "성공",
