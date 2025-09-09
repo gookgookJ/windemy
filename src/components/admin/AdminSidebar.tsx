@@ -23,7 +23,8 @@ import {
   FileText,
   DollarSign,
   Calendar,
-  Shield
+  Shield,
+  Plus
 } from 'lucide-react';
 
 const menuItems = [
@@ -40,9 +41,15 @@ const menuItems = [
     group: 'main'
   },
   {
-    title: '코스 관리',
+    title: '강의 관리',
     url: '/admin/courses',
     icon: BookOpen,
+    group: 'main'
+  },
+  {
+    title: '강의 생성',
+    url: '/admin/course-create',
+    icon: Plus,
     group: 'main'
   },
   {
@@ -76,6 +83,12 @@ const menuItems = [
     group: 'support'
   },
   {
+    title: '쿠폰 관리',
+    url: '/admin/coupons',
+    icon: DollarSign,
+    group: 'marketing'
+  },
+  {
     title: '설정',
     url: '/admin/settings',
     icon: Settings,
@@ -86,6 +99,12 @@ const menuItems = [
     url: '/admin/permissions',
     icon: Shield,
     group: 'system'
+  },
+  {
+    title: '활동 로그',
+    url: '/admin/logs',
+    icon: FileText,
+    group: 'system'
   }
 ];
 
@@ -93,6 +112,7 @@ const groupLabels = {
   main: '주요 관리',
   analytics: '분석 & 보고서',
   support: '고객 지원',
+  marketing: '마케팅',
   system: '시스템 관리'
 };
 
