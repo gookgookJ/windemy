@@ -466,17 +466,19 @@ const CourseDetail = () => {
               {/* Course Content Sections */}
               <div className="space-y-12">
                 {/* What You'll Learn */}
-                <section id="overview" className="bg-muted/30 rounded-2xl p-8">
+                <section id="overview">
                   <div className="mb-6">
                     <h2 className="text-2xl font-bold">이 강의에서 배우는 것들</h2>
                   </div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {(courseData.what_you_will_learn || []).map((item, index) => (
-                      <div key={index} className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
-                        <span className="text-foreground">{item}</span>
-                      </div>
-                    ))}
+                  <div className="bg-muted/30 rounded-2xl p-8">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {(courseData.what_you_will_learn || []).map((item, index) => (
+                        <div key={index} className="flex items-start gap-3">
+                          <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
+                          <span className="text-foreground">{item}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </section>
 
@@ -536,27 +538,29 @@ const CourseDetail = () => {
                 </section>
 
                 {/* Instructor */}
-                <section id="instructor" className="bg-muted/30 rounded-2xl p-8">
+                <section id="instructor">
                   <div className="mb-6">
                     <h2 className="text-2xl font-bold">강사 소개</h2>
                   </div>
-                  <div className="flex items-start gap-6">
-                    <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {courseData.profiles?.instructor_avatar_url ? (
-                        <img 
-                          src={courseData.profiles.instructor_avatar_url}
-                          alt={courseData.profiles?.full_name || "강사"}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <User className="w-10 h-10 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold mb-2">{courseData.profiles?.full_name || "강사"}</h3>
-                      {courseData.profiles?.instructor_bio && (
-                        <p className="text-muted-foreground">{courseData.profiles.instructor_bio}</p>
-                      )}
+                  <div className="bg-muted/30 rounded-2xl p-8">
+                    <div className="flex items-start gap-6">
+                      <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {courseData.profiles?.instructor_avatar_url ? (
+                          <img 
+                            src={courseData.profiles.instructor_avatar_url}
+                            alt={courseData.profiles?.full_name || "강사"}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-10 h-10 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold mb-2">{courseData.profiles?.full_name || "강사"}</h3>
+                        {courseData.profiles?.instructor_bio && (
+                          <p className="text-muted-foreground">{courseData.profiles.instructor_bio}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </section>
