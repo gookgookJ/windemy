@@ -422,10 +422,18 @@ const CourseDetail = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
+                  onClick={() => scrollToSection('reviews')}
+                  className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center"
+                >
+                  강의 후기
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
                   onClick={() => scrollToSection('instructor')}
                   className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center"
                 >
-                  크리에이터
+                  강사 소개
                 </Button>
               </div>
             </div>
@@ -505,6 +513,44 @@ const CourseDetail = () => {
                   </div>
                 </section>
 
+                {/* Reviews */}
+                <section id="reviews">
+                  <h2 className="text-2xl font-bold mb-6">수강생 후기</h2>
+                  <div className="space-y-6">
+                    {courseReviews.length > 0 ? (
+                      courseReviews.map((review, index) => (
+                        <Card key={index}>
+                          <CardContent className="p-6">
+                            <div className="flex items-start gap-4">
+                              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                                <User className="w-6 h-6 text-muted-foreground" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <span className="font-medium">{review.profiles?.full_name || "익명"}</span>
+                                  <div className="flex items-center">
+                                    {[...Array(review.rating)].map((_, i) => (
+                                      <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                                    ))}
+                                  </div>
+                                  <span className="text-sm text-muted-foreground">
+                                    {new Date(review.created_at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className="text-muted-foreground">{review.review_text}</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p>아직 등록된 후기가 없습니다.</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
                 {/* Instructor */}
                 <section id="instructor" className="bg-muted/30 rounded-2xl p-8">
                   <h2 className="text-2xl font-bold mb-6">강사 소개</h2>
@@ -526,38 +572,6 @@ const CourseDetail = () => {
                         <p className="text-muted-foreground">{courseData.profiles.instructor_bio}</p>
                       )}
                     </div>
-                  </div>
-                </section>
-
-                {/* Reviews */}
-                <section id="reviews">
-                  <h2 className="text-2xl font-bold mb-6">수강생 후기</h2>
-                  <div className="space-y-6">
-                    {courseReviews.map((review, index) => (
-                      <Card key={index}>
-                        <CardContent className="p-6">
-                          <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                              <User className="w-6 h-6 text-muted-foreground" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <span className="font-medium">{review.profiles?.full_name || "익명"}</span>
-                                <div className="flex items-center">
-                                  {[...Array(review.rating)].map((_, i) => (
-                                    <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                                  ))}
-                                </div>
-                                <span className="text-sm text-muted-foreground">
-                                  {new Date(review.created_at).toLocaleDateString()}
-                                </span>
-                              </div>
-                              <p className="text-muted-foreground">{review.review_text}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
                   </div>
                 </section>
               </div>
