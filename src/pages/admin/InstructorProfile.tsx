@@ -266,19 +266,6 @@ export const AdminInstructorProfile = () => {
               />
             </div>
 
-            {/* Role */}
-            <div className="space-y-2">
-              <Label htmlFor="role">권한</Label>
-              <Select value={profile.role} onValueChange={(value) => setProfile({ ...profile, role: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="권한을 선택하세요" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="instructor">강사</SelectItem>
-                  <SelectItem value="admin">관리자</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
             {/* Bio */}
             <div className="space-y-2">
