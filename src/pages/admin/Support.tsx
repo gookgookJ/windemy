@@ -52,7 +52,11 @@ export const AdminSupport = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTickets(data || []);
+      const formattedData = data?.map(ticket => ({
+        ...ticket,
+        user: null as { full_name: string; email: string } | null
+      })) || [];
+      setTickets(formattedData);
     } catch (error) {
       console.error('Error fetching tickets:', error);
       toast({

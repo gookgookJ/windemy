@@ -24,7 +24,7 @@ import {
   DollarSign,
   Calendar,
   Shield,
-  Plus
+  PlusCircle
 } from 'lucide-react';
 
 const menuItems = [
@@ -49,7 +49,7 @@ const menuItems = [
   {
     title: '강의 생성',
     url: '/admin/course-create',
-    icon: Plus,
+    icon: PlusCircle,
     group: 'main'
   },
   {
