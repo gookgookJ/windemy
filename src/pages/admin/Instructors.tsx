@@ -15,7 +15,6 @@ interface Instructor {
   email: string;
   instructor_bio?: string;
   instructor_avatar_url?: string;
-  role: string;
   created_at: string;
 }
 
@@ -33,9 +32,8 @@ export const AdminInstructors = () => {
   const fetchInstructors = async () => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('instructors')
         .select('*')
-        .or('role.eq.admin,role.eq.instructor')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -67,7 +65,7 @@ export const AdminInstructors = () => {
 
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from('instructors')
         .delete()
         .eq('id', instructorId);
 
@@ -176,9 +174,7 @@ export const AdminInstructors = () => {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Badge variant={instructor.role === 'admin' ? 'default' : 'secondary'}>
-                        {instructor.role === 'admin' ? '관리자' : '강사'}
-                      </Badge>
+                      <Badge variant="secondary">강사</Badge>
                     </div>
                   </div>
                   

@@ -575,6 +575,36 @@ export type Database = {
           },
         ]
       }
+      instructors: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          instructor_avatar_url: string | null
+          instructor_bio: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          instructor_avatar_url?: string | null
+          instructor_bio?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          instructor_avatar_url?: string | null
+          instructor_bio?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           course_id: string | null

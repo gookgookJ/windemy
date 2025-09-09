@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { FileUpload } from '@/components/ui/file-upload';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +16,6 @@ interface InstructorProfile {
   id?: string;
   full_name: string;
   email: string;
-  role: string;
   instructor_bio?: string;
   instructor_avatar_url?: string;
 }
@@ -36,7 +35,6 @@ export const AdminInstructorProfile = () => {
       setProfile({
         full_name: '',
         email: '',
-        role: 'instructor',
         instructor_bio: '',
         instructor_avatar_url: ''
       });
@@ -49,10 +47,10 @@ export const AdminInstructorProfile = () => {
   const fetchProfile = async () => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('instructors')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setProfile(data);
@@ -94,24 +92,20 @@ export const AdminInstructorProfile = () => {
     setSaving(true);
     try {
       if (isNewInstructor) {
-        // Create instructor via secure edge function (uses service role)
-        const { data, error } = await supabase.functions.invoke('manage-instructor', {
-          body: {
+        // Create instructor (no auth user needed)
+        const { error } = await supabase
+          .from('instructors')
+          .insert({
             email: profile.email,
             full_name: profile.full_name,
-            role: profile.role,
             instructor_bio: profile.instructor_bio,
             instructor_avatar_url: profile.instructor_avatar_url,
-          },
-        });
+          });
 
         if (error) {
-          // Bubble up the clearer server message if present
           throw new Error(error.message || '강사 생성에 실패했습니다.');
         }
-        if (data && (data as any).error) {
-          throw new Error((data as any).error as string);
-        }
+
 
         toast({
           title: '성공',
@@ -120,10 +114,10 @@ export const AdminInstructorProfile = () => {
       } else {
         // Update existing instructor
         const { error } = await supabase
-          .from('profiles')
+          .from('instructors')
           .update({
             full_name: profile.full_name,
-            role: profile.role,
+            email: profile.email,
             instructor_bio: profile.instructor_bio,
             instructor_avatar_url: profile.instructor_avatar_url,
           })
@@ -269,14 +263,7 @@ export const AdminInstructorProfile = () => {
                 value={profile.email}
                 onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                 placeholder="이메일을 입력하세요"
-                disabled={!isNewInstructor}
-                className={!isNewInstructor ? "bg-muted" : ""}
               />
-              {!isNewInstructor && (
-                <p className="text-sm text-muted-foreground">
-                  기존 강사의 이메일은 변경할 수 없습니다.
-                </p>
-              )}
             </div>
 
             {/* Role */}
