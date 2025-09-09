@@ -420,38 +420,38 @@ const CourseDetail = () => {
 
             {/* Sticky Navigation Bar - Full width 4-column layout */}
             <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm mb-8">
-              <div className="w-[757px] grid grid-cols-4 gap-0 py-3">
+              <div className="w-full max-w-[757px] grid grid-cols-4 gap-0 py-3 border border-border rounded-md overflow-hidden">
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => scrollToSection('overview')}
-                  className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center"
+                  className="rounded-none border-r border-border flex-1 justify-center border-t-0 border-b-0 border-l-0"
                 >
-                  소개
+                  강의 안내
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => scrollToSection('curriculum')}
-                  className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center"
+                  className="rounded-none border-r border-border flex-1 justify-center border-t-0 border-b-0 border-l-0"
                 >
                   커리큘럼
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => scrollToSection('reviews')}
-                  className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center"
+                  onClick={() => scrollToSection('instructor')}
+                  className="rounded-none border-r border-border flex-1 justify-center border-t-0 border-b-0 border-l-0"
                 >
-                  강의 후기
+                  강사 소개
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => scrollToSection('instructor')}
-                  className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center"
+                  onClick={() => scrollToSection('reviews')}
+                  className="rounded-none flex-1 justify-center border-t-0 border-b-0 border-l-0 border-r-0"
                 >
-                  강사 소개
+                  강의 후기
                 </Button>
               </div>
             </div>
@@ -531,6 +531,30 @@ const CourseDetail = () => {
                   </div>
                 </section>
 
+                {/* Instructor */}
+                <section id="instructor" className="bg-muted/30 rounded-2xl p-8">
+                  <h2 className="text-2xl font-bold mb-6">강사 소개</h2>
+                  <div className="flex items-start gap-6">
+                    <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {courseData.profiles?.instructor_avatar_url ? (
+                        <img 
+                          src={courseData.profiles.instructor_avatar_url}
+                          alt={courseData.profiles?.full_name || "강사"}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-10 h-10 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold mb-2">{courseData.profiles?.full_name || "강사"}</h3>
+                      {courseData.profiles?.instructor_bio && (
+                        <p className="text-muted-foreground">{courseData.profiles.instructor_bio}</p>
+                      )}
+                    </div>
+                  </div>
+                </section>
+
                 {/* Reviews */}
                 <section id="reviews">
                   <h2 className="text-2xl font-bold mb-6">수강생 후기</h2>
@@ -566,30 +590,6 @@ const CourseDetail = () => {
                         <p>아직 등록된 후기가 없습니다.</p>
                       </div>
                     )}
-                  </div>
-                </section>
-
-                {/* Instructor */}
-                <section id="instructor" className="bg-muted/30 rounded-2xl p-8">
-                  <h2 className="text-2xl font-bold mb-6">강사 소개</h2>
-                  <div className="flex items-start gap-6">
-                    <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {courseData.profiles?.instructor_avatar_url ? (
-                        <img 
-                          src={courseData.profiles.instructor_avatar_url}
-                          alt={courseData.profiles?.full_name || "강사"}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <User className="w-10 h-10 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold mb-2">{courseData.profiles?.full_name || "강사"}</h3>
-                      {courseData.profiles?.instructor_bio && (
-                        <p className="text-muted-foreground">{courseData.profiles.instructor_bio}</p>
-                      )}
-                    </div>
                   </div>
                 </section>
               </div>
