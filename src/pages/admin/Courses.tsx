@@ -241,20 +241,19 @@ export const AdminCourses = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[40%]">강의명</TableHead>
-                  <TableHead className="w-[20%]">강사</TableHead>
-                  <TableHead className="w-[15%]">상태</TableHead>
-                  <TableHead className="w-[15%]">레벨</TableHead>
-                  <TableHead className="w-[15%]">생성일</TableHead>
-                  <TableHead className="w-[10%] text-right">작업</TableHead>
+                  <TableHead className="w-[35%]">강의명</TableHead>
+                  <TableHead className="w-[18%]">강사</TableHead>
+                  <TableHead className="w-[12%]">상태</TableHead>
+                  <TableHead className="w-[10%]">레벨</TableHead>
+                  <TableHead className="w-[12%]">생성일</TableHead>
+                  <TableHead className="w-[13%] text-right">작업</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredCourses.map((course) => (
                   <TableRow key={course.id} className="hover:bg-muted/30 transition-colors">
                     <TableCell>
-                      <div className="font-medium text-base hover-scale cursor-pointer" 
-                           onClick={() => navigate(`/course/${course.id}`)}>
+                      <div className="font-medium text-base max-w-[280px] truncate" title={course.title}>
                         {course.title}
                       </div>
                     </TableCell>
@@ -285,45 +284,58 @@ export const AdminCourses = () => {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover-scale">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem onClick={() => navigate(`/course/${course.id}`)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            미리보기
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate(`/admin/courses/edit/${course.id}`)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            편집
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => toggleCoursePublication(course.id, course.is_published)}
-                          >
-                            {course.is_published ? (
-                              <>
-                                <XCircle className="mr-2 h-4 w-4" />
-                                비공개로 변경
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                공개로 변경
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => deleteCourse(course.id, course.title)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            삭제
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => navigate(`/course/${course.id}`)}
+                          className="h-8 px-3 hover-scale"
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          미리보기
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => navigate(`/admin/courses/edit/${course.id}`)}
+                          className="h-8 px-3 hover-scale"
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          편집
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover-scale">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40 bg-background border shadow-lg z-50">
+                            <DropdownMenuItem 
+                              onClick={() => toggleCoursePublication(course.id, course.is_published)}
+                              className="cursor-pointer"
+                            >
+                              {course.is_published ? (
+                                <>
+                                  <XCircle className="mr-2 h-4 w-4" />
+                                  비공개 전환
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  공개 전환
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => deleteCourse(course.id, course.title)}
+                              className="text-destructive focus:text-destructive cursor-pointer"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              삭제
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
