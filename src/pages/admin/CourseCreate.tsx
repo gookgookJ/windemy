@@ -54,7 +54,6 @@ interface Course {
   description: string;
   thumbnail_url: string;
   detail_images: DetailImage[];
-  video_preview_url: string;
   course_type: 'vod' | 'offline' | 'hybrid';
   price: number;
   duration_hours: number;
@@ -78,7 +77,6 @@ const AdminCourseCreate = () => {
     description: '',
     thumbnail_url: '',
     detail_images: [],
-    video_preview_url: '',
     course_type: 'vod',
     price: 0,
     duration_hours: 0,
@@ -383,7 +381,6 @@ const AdminCourseCreate = () => {
         short_description: course.short_description,
         description: course.description,
         thumbnail_url: course.thumbnail_url,
-        video_preview_url: course.video_preview_url,
         price: course.price,
         duration_hours: course.duration_hours,
         level: course.level,
@@ -666,15 +663,6 @@ const AdminCourseCreate = () => {
                   maxSize={10}
                 />
 
-                <div>
-                  <Label htmlFor="video_preview_url">미리보기 동영상 URL (Vimeo)</Label>
-                  <Input
-                    id="video_preview_url"
-                    value={course.video_preview_url}
-                    onChange={(e) => setCourse(prev => ({ ...prev, video_preview_url: e.target.value }))}
-                    placeholder="https://vimeo.com/..."
-                  />
-                </div>
               </CardContent>
             </Card>
 
