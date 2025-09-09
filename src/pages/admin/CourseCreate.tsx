@@ -101,6 +101,7 @@ const AdminCourseCreate = () => {
   });
 
   const [categories, setCategories] = useState<any[]>([]);
+  const [instructors, setInstructors] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
@@ -119,6 +120,7 @@ const AdminCourseCreate = () => {
 
   useEffect(() => {
     fetchCategories();
+    fetchInstructors();
     
     // 자동 저장 로직
     const interval = setInterval(() => {
@@ -150,6 +152,21 @@ const AdminCourseCreate = () => {
       setCategories(data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+    }
+  };
+
+  const fetchInstructors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .or('role.eq.admin,role.eq.instructor')
+        .order('full_name');
+      
+      if (error) throw error;
+      setInstructors(data || []);
+    } catch (error) {
+      console.error('Error fetching instructors:', error);
     }
   };
 
@@ -374,7 +391,7 @@ const AdminCourseCreate = () => {
         what_you_will_learn: course.what_you_will_learn.filter(item => item.trim()),
         requirements: course.requirements.filter(item => item.trim()),
         is_published: !isDraft && course.is_published,
-        instructor_id: user?.id || null
+        instructor_id: course.category_id // Use selected instructor instead of current user
       };
 
       const { data: savedCourse, error: courseError } = await supabase

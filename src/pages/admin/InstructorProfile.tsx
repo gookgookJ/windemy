@@ -1,43 +1,57 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileUpload } from '@/components/ui/file-upload';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Save, User, Trash2 } from 'lucide-react';
+import { Save, User, Trash2, ArrowLeft } from 'lucide-react';
 
 interface InstructorProfile {
-  id: string;
+  id?: string;
   full_name: string;
   email: string;
+  role: string;
   instructor_bio?: string;
   instructor_avatar_url?: string;
 }
 
 export const AdminInstructorProfile = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<InstructorProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { user } = useAuth();
+  const [isNewInstructor, setIsNewInstructor] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
+    if (id === 'new') {
+      setIsNewInstructor(true);
+      setProfile({
+        full_name: '',
+        email: '',
+        role: 'instructor',
+        instructor_bio: '',
+        instructor_avatar_url: ''
+      });
+      setLoading(false);
+    } else if (id) {
       fetchProfile();
     }
-  }, [user]);
+  }, [id]);
 
   const fetchProfile = async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user?.id)
+        .eq('id', id)
         .single();
 
       if (error) throw error;
@@ -55,27 +69,64 @@ export const AdminInstructorProfile = () => {
   };
 
   const handleSave = async () => {
-    if (!profile || !user) return;
+    if (!profile) return;
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: profile.full_name,
-          instructor_bio: profile.instructor_bio,
-          instructor_avatar_url: profile.instructor_avatar_url,
-        })
-        .eq('id', user.id);
+      if (isNewInstructor) {
+        // Create new instructor via auth signup
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+          email: profile.email,
+          password: `temp_${Date.now()}`, // Temporary password
+          email_confirm: true,
+          user_metadata: {
+            full_name: profile.full_name,
+            role: profile.role
+          }
+        });
 
-      if (error) throw error;
+        if (authError) throw authError;
 
-      toast({
-        title: "성공",
-        description: "강사 프로필이 저장되었습니다."
-      });
+        // Update profile with additional info
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            full_name: profile.full_name,
+            role: profile.role,
+            instructor_bio: profile.instructor_bio,
+            instructor_avatar_url: profile.instructor_avatar_url,
+          })
+          .eq('id', authData.user.id);
+
+        if (profileError) throw profileError;
+
+        toast({
+          title: "성공",
+          description: "새 강사가 등록되었습니다."
+        });
+      } else {
+        // Update existing instructor
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            full_name: profile.full_name,
+            role: profile.role,
+            instructor_bio: profile.instructor_bio,
+            instructor_avatar_url: profile.instructor_avatar_url,
+          })
+          .eq('id', id);
+
+        if (error) throw error;
+
+        toast({
+          title: "성공",
+          description: "강사 프로필이 저장되었습니다."
+        });
+      }
+
+      navigate('/admin/instructors');
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error saving profile:', error);
       toast({
         title: "오류",
         description: "프로필 저장에 실패했습니다.",
@@ -104,6 +155,9 @@ export const AdminInstructorProfile = () => {
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="text-lg">프로필을 찾을 수 없습니다.</div>
+            <Button onClick={() => navigate('/admin/instructors')} className="mt-4">
+              강사 목록으로 돌아가기
+            </Button>
           </div>
         </div>
       </AdminLayout>
@@ -115,9 +169,21 @@ export const AdminInstructorProfile = () => {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">강사 프로필 관리</h1>
-            <p className="text-muted-foreground">강의 상세페이지에 표시될 강사 정보를 관리합니다</p>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/admin/instructors')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              목록으로
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">
+                {isNewInstructor ? '새 강사 등록' : '강사 프로필 편집'}
+              </h1>
+              <p className="text-muted-foreground">강의 상세페이지에 표시될 강사 정보를 관리합니다</p>
+            </div>
           </div>
           <Button onClick={handleSave} disabled={saving}>
             <Save className="h-4 w-4 mr-2" />
@@ -181,18 +247,37 @@ export const AdminInstructorProfile = () => {
               />
             </div>
 
-            {/* Email (Read-only) */}
+            {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">이메일</Label>
               <Input
                 id="email"
+                type="email"
                 value={profile.email}
-                disabled
-                className="bg-muted"
+                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                placeholder="이메일을 입력하세요"
+                disabled={!isNewInstructor}
+                className={!isNewInstructor ? "bg-muted" : ""}
               />
-              <p className="text-sm text-muted-foreground">
-                이메일은 변경할 수 없습니다.
-              </p>
+              {!isNewInstructor && (
+                <p className="text-sm text-muted-foreground">
+                  기존 강사의 이메일은 변경할 수 없습니다.
+                </p>
+              )}
+            </div>
+
+            {/* Role */}
+            <div className="space-y-2">
+              <Label htmlFor="role">권한</Label>
+              <Select value={profile.role} onValueChange={(value) => setProfile({ ...profile, role: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="권한을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="instructor">강사</SelectItem>
+                  <SelectItem value="admin">관리자</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Bio */}

@@ -65,8 +65,9 @@ interface Course {
   curriculum: CurriculumSection[];
   options: CourseOption[];
   images: DetailImage[];
-  thumbnail_url?: string; // Add thumbnail field
+  thumbnail_url?: string;
   category_id: string;
+  instructor_id: string; // Add instructor_id field
   is_published: boolean;
   meta_title?: string;
   meta_description?: string;
@@ -89,11 +90,13 @@ export const AdminCourseEdit = () => {
   const [saving, setSaving] = useState(false);
   const [course, setCourse] = useState<Course | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
+  const [instructors, setInstructors] = useState<any[]>([]);
 
   useEffect(() => {
     if (id) {
       fetchCourse();
       fetchCategories();
+      fetchInstructors();
     }
   }, [id]);
 
@@ -169,6 +172,7 @@ export const AdminCourseEdit = () => {
         images: transformedImages,
         thumbnail_url: data.thumbnail_url || data.thumbnail_path || '',
         category_id: data.category_id || '',
+        instructor_id: data.instructor_id || '',
         is_published: data.is_published || false,
         meta_title: data.title || '',
         meta_description: data.description || '',
@@ -202,6 +206,21 @@ export const AdminCourseEdit = () => {
     }
   };
 
+  const fetchInstructors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .or('role.eq.admin,role.eq.instructor')
+        .order('full_name');
+
+      if (error) throw error;
+      setInstructors(data || []);
+    } catch (error) {
+      console.error('Error fetching instructors:', error);
+    }
+  };
+
   const handleSave = async () => {
     if (!course) return;
 
@@ -220,6 +239,7 @@ export const AdminCourseEdit = () => {
           what_you_will_learn: course.what_you_learn,
           requirements: course.requirements,
           category_id: course.category_id,
+          instructor_id: course.instructor_id,
           is_published: course.is_published,
           thumbnail_url: course.thumbnail_url,
         })
@@ -630,20 +650,37 @@ export const AdminCourseEdit = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category">카테고리</Label>
-              <Select value={course.category_id} onValueChange={(value) => setCourse({ ...course, category_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="카테고리 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="category">카테고리</Label>
+                <Select value={course.category_id} onValueChange={(value) => setCourse({ ...course, category_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="카테고리 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="instructor">담당 강사</Label>
+                <Select value={course.instructor_id} onValueChange={(value) => setCourse({ ...course, instructor_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="강사 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {instructors.map((instructor) => (
+                      <SelectItem key={instructor.id} value={instructor.id}>
+                        {instructor.full_name} ({instructor.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="flex items-center space-x-2">

@@ -22,6 +22,7 @@ import AdminSupport from "./pages/admin/Support";
 import AdminReports from "./pages/admin/Reports";
 import AdminSettings from "./pages/admin/Settings";
 import AdminCourseEdit from "./pages/admin/CourseEdit";
+import AdminInstructors from "./pages/admin/Instructors";
 import AdminInstructorProfile from "./pages/admin/InstructorProfile";
 import Learn from "./pages/Learn";
 import NotFound from "./pages/NotFound";
@@ -55,7 +56,8 @@ const App = () => (
             <Route path="/admin/support" element={<AdminSupport />} />
             <Route path="/admin/reports" element={<AdminReports />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
-            <Route path="/admin/instructor-profile" element={<AdminInstructorProfile />} />
+            <Route path="/admin/instructors" element={<AdminInstructors />} />
+            <Route path="/admin/instructor-profile/:id" element={<AdminInstructorProfile />} />
             <Route path="/learn/:courseId" element={<Learn />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
