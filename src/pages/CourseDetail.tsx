@@ -520,24 +520,6 @@ const CourseDetail = () => {
                     {courseData.title}
                   </h1>
 
-                  {/* Rating and Stats */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            className={`w-4 h-4 ${i < Math.floor(courseData.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm font-medium">{courseData.rating}</span>
-                      <span className="text-sm text-muted-foreground">({courseReviews.length}개 후기)</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {discountRate}% 할인가 {(selectedCourse?.original_price ?? 0).toLocaleString()}원
-                    </div>
-                  </div>
 
                   {/* Course Price */}
                   <div className="space-y-2">
@@ -552,17 +534,19 @@ const CourseDetail = () => {
                   </div>
 
                   {/* Course Benefits */}
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-muted-foreground">포함 혜택</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-start gap-2 text-sm">💰 수료 후 매출 천만원 보장</div>
-                      <div className="flex items-start gap-2 text-sm">🎁 신청만 해도 300만원 상당 혜택 제공</div>
-                      <div className="flex items-start gap-2 text-sm">💪 1:1로 케어하는 스파르타 학습 시스템</div>
-                      <div className="flex items-start gap-2 text-sm">📱 핸드폰 하나로 완전 자동화 시스템</div>
-                      <div className="flex items-start gap-2 text-sm">⚡ 하루 3시간 투자로 월 천만원 수익 보장</div>
-                      <div className="flex items-start gap-2 text-sm">🔒 평생 A/S 및 업데이트 지원</div>
+                  {selectedCourse?.benefits && selectedCourse.benefits.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-medium text-muted-foreground">포함 혜택</h3>
+                      <div className="space-y-2">
+                        {selectedCourse.benefits.map((benefit, index) => (
+                          <div key={index} className="flex items-start gap-2 text-sm">
+                            <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                            {benefit}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Course Options Selection */}
                   <div className="space-y-3">
@@ -612,19 +596,6 @@ const CourseDetail = () => {
 
                   {/* Action Buttons */}
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="p-2"
-                        onClick={() => setIsWishlisted(!isWishlisted)}
-                      >
-                        <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current text-red-500' : 'text-muted-foreground'}`} />
-                      </Button>
-                      <span className="text-sm text-muted-foreground">
-                        {courseData.total_students.toLocaleString()}
-                      </span>
-                    </div>
                     
                     {isEnrolled ? (
                       <Button 

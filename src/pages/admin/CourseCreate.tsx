@@ -66,6 +66,9 @@ interface Course {
   course_options: CourseOption[];
   is_published: boolean;
   instructor_id?: string;
+  seo_title: string;
+  seo_description: string;
+  seo_keywords: string[];
 }
 
 const AdminCourseCreate = () => {
@@ -91,7 +94,10 @@ const AdminCourseCreate = () => {
         benefits: ['강의 평생 수강권', '모든 강의 자료 제공']
       }
     ],
-    is_published: false
+    is_published: false,
+    seo_title: '',
+    seo_description: '',
+    seo_keywords: []
   });
 
   const [categories, setCategories] = useState<any[]>([]);
@@ -107,7 +113,8 @@ const AdminCourseCreate = () => {
     { id: 1, name: '기본 정보', icon: BookOpen },
     { id: 2, name: '커리큘럼', icon: FileText },
     { id: 3, name: '판매 설정', icon: DollarSign },
-    { id: 4, name: '확인 및 생성', icon: Save }
+    { id: 4, name: '운영 설정', icon: Settings },
+    { id: 5, name: '확인 및 생성', icon: Save }
   ];
 
   useEffect(() => {
@@ -325,6 +332,8 @@ const AdminCourseCreate = () => {
         return course.course_options.length > 0 && course.course_options.every(o => o.name && o.price >= 0);
       case 4:
         return true;
+      case 5:
+        return true;
       default:
         return false;
     }
@@ -333,7 +342,7 @@ const AdminCourseCreate = () => {
   const nextStep = () => {
     if (validateStep(currentStep)) {
       setCompletedSteps(prev => [...new Set([...prev, currentStep])]);
-      setCurrentStep(prev => Math.min(prev + 1, 4));
+      setCurrentStep(prev => Math.min(prev + 1, 5));
     } else {
       toast({
         title: "필수 정보 누락",
@@ -666,7 +675,13 @@ const AdminCourseCreate = () => {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>커리큘럼 구성</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  커리큘럼 구성
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  상세페이지의 '커리큘럼' 섹션에 표시될 내용입니다. 섹션별로 강의를 구성하세요.
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
@@ -674,12 +689,15 @@ const AdminCourseCreate = () => {
                     <Card key={sectionIndex} className="border-2">
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
-                          <Input
-                            value={section.title}
-                            onChange={(e) => updateSection(sectionIndex, 'title', e.target.value)}
-                            placeholder="섹션 제목을 입력하세요"
-                            className="text-lg font-medium bg-transparent border-none p-0 h-auto"
-                          />
+                          <div className="flex-1">
+                            <Label className="text-sm font-medium">섹션 제목</Label>
+                            <Input
+                              value={section.title}
+                              onChange={(e) => updateSection(sectionIndex, 'title', e.target.value)}
+                              placeholder="섹션 제목을 입력하세요 (예: 기초편, 심화편)"
+                              className="mt-1"
+                            />
+                          </div>
                           <Button
                             variant="outline"
                             size="sm"
@@ -775,14 +793,20 @@ const AdminCourseCreate = () => {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>판매 옵션 설정</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5" />
+                  판매 옵션 설정
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  상세페이지의 고정 결제창 '강의 구성' 및 '포함 혜택' 영역에 표시될 내용입니다.
+                </p>
               </CardHeader>
               <CardContent className="space-y-6">
                 {course.course_options.map((option, optionIndex) => (
                   <Card key={optionIndex} className="border-2">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium">옵션 #{optionIndex + 1}</h4>
+                        <h4 className="font-medium">판매 옵션 #{optionIndex + 1}</h4>
                         {course.course_options.length > 1 && (
                           <Button
                             variant="outline"
@@ -826,7 +850,7 @@ const AdminCourseCreate = () => {
                       </div>
 
                       <div>
-                        <Label>포함 혜택</Label>
+                        <Label>포함 혜택 <span className="text-xs text-muted-foreground">(상세페이지 '포함 혜택' 섹션에 표시)</span></Label>
                         <div className="space-y-2">
                           {option.benefits.map((benefit, benefitIndex) => (
                             <div key={benefitIndex} className="flex gap-2">
@@ -886,6 +910,68 @@ const AdminCourseCreate = () => {
         );
 
       case 4:
+        return (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>공개 설정</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={course.is_published}
+                    onCheckedChange={(checked) => setCourse(prev => ({ ...prev, is_published: checked }))}
+                  />
+                  <Label>즉시 공개</Label>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  체크하면 강의가 즉시 공개됩니다. 체크하지 않으면 비공개 상태로 저장됩니다.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>SEO 설정</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="seo_title">SEO 제목</Label>
+                  <Input
+                    id="seo_title"
+                    value={course.seo_title}
+                    onChange={(e) => setCourse(prev => ({ ...prev, seo_title: e.target.value }))}
+                    placeholder="검색 엔진에 표시될 제목"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="seo_description">SEO 설명</Label>
+                  <Textarea
+                    id="seo_description"
+                    value={course.seo_description}
+                    onChange={(e) => setCourse(prev => ({ ...prev, seo_description: e.target.value }))}
+                    placeholder="검색 엔진에 표시될 설명"
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="seo_keywords">SEO 키워드 (쉼표로 구분)</Label>
+                  <Input
+                    id="seo_keywords"
+                    value={course.seo_keywords.join(', ')}
+                    onChange={(e) => setCourse(prev => ({ 
+                      ...prev, 
+                      seo_keywords: e.target.value.split(',').map(k => k.trim()).filter(k => k) 
+                    }))}
+                    placeholder="강의, 온라인교육, 프로그래밍"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case 5:
         return (
           <div className="space-y-6">
             <Card>
@@ -1022,7 +1108,7 @@ const AdminCourseCreate = () => {
             이전
           </Button>
           
-          {currentStep < 4 ? (
+          {currentStep < 5 ? (
             <Button onClick={nextStep}>
               다음
               <ChevronRight className="w-4 h-4 ml-2" />
