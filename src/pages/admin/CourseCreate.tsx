@@ -926,9 +926,7 @@ export const AdminCourseCreate = () => {
       default:
         return null;
     }
-};
-
-export default AdminCourseCreate;
+  };
 
   return (
     <AdminLayout>
@@ -1010,3 +1008,5 @@ export default AdminCourseCreate;
     </AdminLayout>
   );
 };
+
+export default AdminCourseCreate;
