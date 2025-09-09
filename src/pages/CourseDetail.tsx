@@ -77,6 +77,8 @@ interface CourseData {
   detail_image_path?: string;
   profiles?: {
     full_name?: string;
+    instructor_bio?: string;
+    instructor_avatar_url?: string;
   };
   categories?: {
     name: string;
@@ -118,12 +120,12 @@ const CourseDetail = () => {
     
     setLoading(true);
     try {
-      // Fetch course details
+      // Fetch course details with instructor info
       const { data: course, error: courseError } = await supabase
         .from('courses')
         .select(`
           *,
-          profiles:instructor_id(full_name),
+          profiles:instructor_id(full_name, instructor_bio, instructor_avatar_url),
           categories:category_id(name)
         `)
         .eq('id', courseId)
@@ -211,20 +213,6 @@ const CourseDetail = () => {
       });
 
       setCourseSessions(allSessions);
-
-      // Fetch course reviews
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('course_reviews')
-        .select(`
-          *,
-          profiles:user_id(full_name)
-        `)
-        .eq('course_id', courseId)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (reviewsError) throw reviewsError;
-      setCourseReviews(reviewsData || []);
 
     } catch (error) {
       console.error('Error fetching course data:', error);
@@ -426,14 +414,6 @@ const CourseDetail = () => {
                 >
                   크리에이터
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => scrollToSection('reviews')}
-                  className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center"
-                >
-                  후기 {courseReviews.length}
-                </Button>
               </div>
             </div>
 
@@ -516,22 +496,22 @@ const CourseDetail = () => {
                 <section id="instructor" className="bg-muted/30 rounded-2xl p-8">
                   <h2 className="text-2xl font-bold mb-6">강사 소개</h2>
                   <div className="flex items-start gap-6">
-                    <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                      <User className="w-10 h-10 text-muted-foreground" />
+                    <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {courseData.profiles?.instructor_avatar_url ? (
+                        <img 
+                          src={courseData.profiles.instructor_avatar_url}
+                          alt={courseData.profiles?.full_name || "강사"}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-10 h-10 text-muted-foreground" />
+                      )}
                     </div>
                     <div className="flex-1">
                       <h3 className="text-xl font-semibold mb-2">{courseData.profiles?.full_name || "강사"}</h3>
-                      <p className="text-muted-foreground mb-4">{courseData.description}</p>
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          <span>{courseData.total_students.toLocaleString()}명의 수강생</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-yellow-400" />
-                          <span>{courseData.rating}점 평점</span>
-                        </div>
-                      </div>
+                      {courseData.profiles?.instructor_bio && (
+                        <p className="text-muted-foreground">{courseData.profiles.instructor_bio}</p>
+                      )}
                     </div>
                   </div>
                 </section>

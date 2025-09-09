@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { FileUpload } from '@/components/ui/file-upload';
 import { MultiImageUpload } from '@/components/ui/multi-image-upload';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -552,7 +553,7 @@ export const AdminCourseEdit = () => {
               </div>
             </div>
 
-            {/* 썸네일 업로드 섹션 추가 */}
+            {/* 썸네일 업로드 섹션 - 파일 업로드 방식으로 변경 */}
             <div className="space-y-2">
               <Label htmlFor="thumbnail">강의 썸네일</Label>
               <div className="space-y-4">
@@ -568,15 +569,16 @@ export const AdminCourseEdit = () => {
                       size="sm"
                       onClick={() => setCourse({ ...course, thumbnail_url: '' })}
                     >
+                      <Trash2 className="h-4 w-4 mr-2" />
                       삭제
                     </Button>
                   </div>
                 )}
-                <Input
-                  id="thumbnail"
-                  value={course.thumbnail_url || ''}
-                  onChange={(e) => setCourse({ ...course, thumbnail_url: e.target.value })}
-                  placeholder="썸네일 이미지 URL을 입력하세요"
+                <FileUpload
+                  bucket="course-thumbnails"
+                  accept="image/*"
+                  onUpload={(url) => setCourse({ ...course, thumbnail_url: url })}
+                  currentFile={course.thumbnail_url}
                 />
               </div>
             </div>

@@ -24,7 +24,8 @@ import {
   DollarSign,
   Calendar,
   Shield,
-  PlusCircle
+  PlusCircle,
+  User
 } from 'lucide-react';
 
 const menuItems = [
@@ -92,6 +93,12 @@ const menuItems = [
     title: '설정',
     url: '/admin/settings',
     icon: Settings,
+    group: 'system'
+  },
+  {
+    title: '강사 프로필',
+    url: '/admin/instructor-profile',
+    icon: User,
     group: 'system'
   },
   {
