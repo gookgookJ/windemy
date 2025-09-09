@@ -972,7 +972,7 @@ const CourseDetail = () => {
           <Button
             onClick={scrollToTop}
             size="sm"
-            className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white"
+            className="fixed bottom-20 right-4 lg:bottom-8 lg:right-8 z-50 w-12 h-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white animate-fade-in hover:scale-110 transition-transform duration-200"
             aria-label="맨 위로 이동"
           >
             <ChevronUp className="w-5 h-5" />
