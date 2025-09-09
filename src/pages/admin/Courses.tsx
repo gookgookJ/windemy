@@ -234,95 +234,99 @@ export const AdminCourses = () => {
           <CardContent>
             <div className="space-y-4">
               {filteredCourses.map((course) => (
-                <div key={course.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg mb-2">{course.title}</h3>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-                        <span>강사: {course.instructor?.full_name}</span>
-                        <span>생성일: {new Date(course.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1">
-                          <Users className="h-4 w-4" />
-                          <span className="text-sm">{course.total_students}명</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="h-4 w-4" />
-                          <span className="text-sm">{course.price.toLocaleString()}원</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          <span className="text-sm">{course.duration_hours}시간</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col items-end gap-2">
-                      <div className="flex items-center gap-2">
-                        <Badge variant={getLevelBadgeVariant(course.level)}>
-                          {getLevelLabel(course.level)}
-                        </Badge>
+                <div key={course.id} className="p-6 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-lg truncate">{course.title}</h3>
                         <Badge 
                           variant={course.is_published ? "default" : "secondary"}
                           className={course.is_published ? 
-                            "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200" : 
-                            "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200"
+                            "bg-green-500 text-white hover:bg-green-600" : 
+                            "bg-gray-400 text-white hover:bg-gray-500"
                           }
                         >
-                          {course.is_published ? "🟢 공개" : "🔒 비공개"}
+                          {course.is_published ? "🟢 공개중" : "🔒 비공개"}
                         </Badge>
+                        <Badge variant={getLevelBadgeVariant(course.level)}>
+                          {getLevelLabel(course.level)}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                        <span className="font-medium">강사: {course.instructor?.full_name}</span>
+                        <span>생성일: {new Date(course.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-6 text-sm">
+                        <div className="flex items-center gap-1 text-blue-600">
+                          <Users className="h-4 w-4" />
+                          <span className="font-medium">{course.total_students}명 수강</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-green-600">
+                          <DollarSign className="h-4 w-4" />
+                          <span className="font-medium">{course.price.toLocaleString()}원</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-orange-600">
+                          <Clock className="h-4 w-4" />
+                          <span className="font-medium">{course.duration_hours}시간</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/course/${course.id}`)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      미리보기
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/admin/courses/edit/${course.id}`)}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      편집
-                    </Button>
-                    <Button
-                      variant={course.is_published ? "outline" : "default"}
-                      size="sm"
-                      onClick={() => toggleCoursePublication(course.id, course.is_published)}
-                      className={course.is_published ? 
-                        "text-orange-600 border-orange-300 hover:bg-orange-50 hover:text-orange-700" : 
-                        "text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700"
-                      }
-                    >
-                      {course.is_published ? (
-                        <>
-                          <XCircle className="h-4 w-4 mr-2" />
-                          비공개로 변경
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          공개로 변경
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteCourse(course.id, course.title)}
-                      className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      삭제
-                    </Button>
+                  <div className="flex items-center justify-between gap-4 pt-4 border-t">
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/course/${course.id}`)}
+                        className="flex items-center gap-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        미리보기
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/admin/courses/edit/${course.id}`)}
+                        className="flex items-center gap-2"
+                      >
+                        <Edit className="h-4 w-4" />
+                        편집
+                      </Button>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant={course.is_published ? "secondary" : "default"}
+                        size="sm"
+                        onClick={() => toggleCoursePublication(course.id, course.is_published)}
+                        className={course.is_published ? 
+                          "bg-orange-500 text-white hover:bg-orange-600 border-0" : 
+                          "bg-green-500 text-white hover:bg-green-600 border-0"
+                        }
+                      >
+                        {course.is_published ? (
+                          <>
+                            <XCircle className="h-4 w-4 mr-2" />
+                            비공개로 변경
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            공개로 변경
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => deleteCourse(course.id, course.title)}
+                        className="flex items-center gap-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        삭제
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
