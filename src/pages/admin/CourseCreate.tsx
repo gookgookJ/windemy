@@ -60,7 +60,6 @@ interface Course {
   level: string;
   category_id: string;
   what_you_will_learn: string[];
-  requirements: string[];
   sections: CourseSection[];
   course_options: CourseOption[];
   is_published: boolean;
@@ -83,7 +82,6 @@ const AdminCourseCreate = () => {
     level: 'beginner',
     category_id: '',
     what_you_will_learn: [''],
-    requirements: [''],
     sections: [],
     course_options: [
       {
@@ -173,21 +171,21 @@ const AdminCourseCreate = () => {
   };
 
   // 리스트 관리 함수들
-  const addListItem = (field: 'what_you_will_learn' | 'requirements') => {
+  const addListItem = (field: 'what_you_will_learn') => {
     setCourse(prev => ({
       ...prev,
       [field]: [...prev[field], '']
     }));
   };
 
-  const updateListItem = (field: 'what_you_will_learn' | 'requirements', index: number, value: string) => {
+  const updateListItem = (field: 'what_you_will_learn', index: number, value: string) => {
     setCourse(prev => ({
       ...prev,
       [field]: prev[field].map((item, i) => i === index ? value : item)
     }));
   };
 
-  const removeListItem = (field: 'what_you_will_learn' | 'requirements', index: number) => {
+  const removeListItem = (field: 'what_you_will_learn', index: number) => {
     setCourse(prev => ({
       ...prev,
       [field]: prev[field].filter((_, i) => i !== index)
@@ -386,7 +384,7 @@ const AdminCourseCreate = () => {
         level: course.level,
         category_id: course.category_id,
         what_you_will_learn: course.what_you_will_learn.filter(item => item.trim()),
-        requirements: course.requirements.filter(item => item.trim()),
+        
         is_published: !isDraft && course.is_published,
         instructor_id: course.instructor_id // Use selected instructor instead of current user
       };
@@ -702,35 +700,6 @@ const AdminCourseCreate = () => {
                   </div>
                 </div>
 
-                <div>
-                  <Label>수강 요구사항</Label>
-                  <div className="space-y-2">
-                    {course.requirements.map((item, index) => (
-                      <div key={index} className="flex gap-2">
-                        <Input
-                          value={item}
-                          onChange={(e) => updateListItem('requirements', index, e.target.value)}
-                          placeholder="수강에 필요한 조건을 입력하세요"
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeListItem('requirements', index)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addListItem('requirements')}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      항목 추가
-                    </Button>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>

@@ -61,7 +61,6 @@ interface Course {
   level: string;
   duration_hours: number;
   what_you_learn: string[];
-  requirements: string[];
   curriculum: CurriculumSection[];
   options: CourseOption[];
   images: DetailImage[];
@@ -160,7 +159,7 @@ export const AdminCourseEdit = () => {
         level: data.level || 'beginner',
         duration_hours: data.duration_hours || 0,
         what_you_learn: data.what_you_will_learn || [],
-        requirements: data.requirements || [],
+        
         curriculum: transformedCurriculum,
         options: transformedOptions.length > 0 ? transformedOptions : [{
           id: 'default',
@@ -237,7 +236,7 @@ export const AdminCourseEdit = () => {
           level: course.level,
           duration_hours: course.duration_hours,
           what_you_will_learn: course.what_you_learn,
-          requirements: course.requirements,
+          
           category_id: course.category_id,
           instructor_id: course.instructor_id,
           is_published: course.is_published,
@@ -774,44 +773,6 @@ export const AdminCourseEdit = () => {
           </CardContent>
         </Card>
 
-        {/* 수강 요구사항 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>수강 요구사항 (상세페이지 "수강 요구사항" 섹션)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {course.requirements.map((req, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Input
-                  value={req}
-                  onChange={(e) => {
-                    const newReqs = [...course.requirements];
-                    newReqs[index] = e.target.value;
-                    setCourse({ ...course, requirements: newReqs });
-                  }}
-                  placeholder="수강 요구사항을 입력하세요"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const newReqs = course.requirements.filter((_, i) => i !== index);
-                    setCourse({ ...course, requirements: newReqs });
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-            <Button
-              variant="outline"
-              onClick={() => setCourse({ ...course, requirements: [...course.requirements, ''] })}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              요구사항 추가
-            </Button>
-          </CardContent>
-        </Card>
 
         {/* 커리큘럼 */}
         <Card>
