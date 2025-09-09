@@ -21,9 +21,9 @@ import AdminCoupons from "./pages/admin/Coupons";
 import AdminSupport from "./pages/admin/Support";
 import AdminReports from "./pages/admin/Reports";
 import AdminSettings from "./pages/admin/Settings";
+import AdminCourseEdit from "./pages/admin/CourseEdit";
 import Learn from "./pages/Learn";
 import NotFound from "./pages/NotFound";
-import CourseManagement from "./pages/CourseManagement";
 
 console.log('Debug React in App.tsx', React, typeof (React as any)?.useEffect);
 
@@ -46,6 +46,7 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/courses" element={<AdminCourses />} />
+            <Route path="/admin/courses/edit/:id" element={<AdminCourseEdit />} />
             <Route path="/admin/course-create" element={<AdminCourseCreate />} />
             <Route path="/admin/orders" element={<AdminOrders />} />
             <Route path="/admin/announcements" element={<AdminAnnouncements />} />
@@ -54,7 +55,6 @@ const App = () => (
             <Route path="/admin/reports" element={<AdminReports />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/learn/:courseId" element={<Learn />} />
-            <Route path="/course-management" element={<CourseManagement />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

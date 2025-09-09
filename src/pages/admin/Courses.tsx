@@ -153,7 +153,7 @@ export const AdminCourses = () => {
             <h1 className="text-3xl font-bold text-foreground mb-2">강의 관리</h1>
             <p className="text-muted-foreground">등록된 강의들을 관리하고 승인/거부하세요</p>
           </div>
-          <Button onClick={() => navigate('/course-management')}>
+          <Button onClick={() => navigate('/admin/course-create')}>
             새 강의 만들기
           </Button>
         </div>
@@ -251,7 +251,7 @@ export const AdminCourses = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => navigate(`/course-management?edit=${course.id}`)}
+                      onClick={() => navigate(`/admin/courses/edit/${course.id}`)}
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       편집
