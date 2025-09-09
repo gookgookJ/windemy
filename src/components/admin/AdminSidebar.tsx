@@ -1,0 +1,156 @@
+import { useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
+} from '@/components/ui/sidebar';
+import {
+  LayoutDashboard,
+  Users,
+  BookOpen,
+  ShoppingCart,
+  BarChart3,
+  Settings,
+  MessageSquare,
+  FileText,
+  DollarSign,
+  Calendar,
+  Shield
+} from 'lucide-react';
+
+const menuItems = [
+  {
+    title: '대시보드',
+    url: '/admin',
+    icon: LayoutDashboard,
+    group: 'main'
+  },
+  {
+    title: '사용자 관리',
+    url: '/admin/users',
+    icon: Users,
+    group: 'main'
+  },
+  {
+    title: '코스 관리',
+    url: '/admin/courses',
+    icon: BookOpen,
+    group: 'main'
+  },
+  {
+    title: '주문 관리',
+    url: '/admin/orders',
+    icon: ShoppingCart,
+    group: 'main'
+  },
+  {
+    title: '보고서',
+    url: '/admin/reports',
+    icon: BarChart3,
+    group: 'analytics'
+  },
+  {
+    title: '매출 분석',
+    url: '/admin/revenue',
+    icon: DollarSign,
+    group: 'analytics'
+  },
+  {
+    title: '고객 지원',
+    url: '/admin/support',
+    icon: MessageSquare,
+    group: 'support'
+  },
+  {
+    title: '공지사항',
+    url: '/admin/announcements',
+    icon: FileText,
+    group: 'support'
+  },
+  {
+    title: '설정',
+    url: '/admin/settings',
+    icon: Settings,
+    group: 'system'
+  },
+  {
+    title: '권한 관리',
+    url: '/admin/permissions',
+    icon: Shield,
+    group: 'system'
+  }
+];
+
+const groupLabels = {
+  main: '주요 관리',
+  analytics: '분석 & 보고서',
+  support: '고객 지원',
+  system: '시스템 관리'
+};
+
+export const AdminSidebar = () => {
+  const { state } = useSidebar();
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  const isActive = (path: string) => {
+    if (path === '/admin') {
+      return currentPath === '/admin';
+    }
+    return currentPath.startsWith(path);
+  };
+
+  const getNavClassName = (path: string) => {
+    return isActive(path) 
+      ? "bg-primary text-primary-foreground font-medium" 
+      : "hover:bg-muted/50";
+  };
+
+  const groupedItems = menuItems.reduce((acc, item) => {
+    if (!acc[item.group]) acc[item.group] = [];
+    acc[item.group].push(item);
+    return acc;
+  }, {} as Record<string, typeof menuItems>);
+
+  return (
+    <Sidebar collapsible="icon">
+      <SidebarTrigger className="m-2 self-end" />
+      
+      <SidebarContent>
+        {Object.entries(groupedItems).map(([group, items]) => (
+          <SidebarGroup key={group}>
+            <SidebarGroupLabel>
+              {state !== "collapsed" && groupLabels[group as keyof typeof groupLabels]}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink 
+                        to={item.url} 
+                        className={getNavClassName(item.url)}
+                        end={item.url === '/admin'}
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {state !== "collapsed" && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+    </Sidebar>
+  );
+};

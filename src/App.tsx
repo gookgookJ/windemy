@@ -11,6 +11,9 @@ import Auth from "./pages/Auth";
 import Cart from "./pages/Cart";
 import MyPage from "./pages/MyPage";
 import Admin from "./pages/Admin";
+import AdminUsers from "./pages/admin/Users";
+import AdminCourses from "./pages/admin/Courses";
+import AdminOrders from "./pages/admin/Orders";
 import Learn from "./pages/Learn";
 import NotFound from "./pages/NotFound";
 import CourseManagement from "./pages/CourseManagement";
@@ -32,6 +35,9 @@ const App = () => (
             <Route path="/cart" element={<Cart />} />
             <Route path="/my-page" element={<MyPage />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/courses" element={<AdminCourses />} />
+            <Route path="/admin/orders" element={<AdminOrders />} />
             <Route path="/learn/:courseId" element={<Learn />} />
             <Route path="/course-management" element={<CourseManagement />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
