@@ -562,15 +562,6 @@ export const AdminCourseEdit = () => {
                   placeholder="강의 제목을 입력하세요"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="subtitle">부제목</Label>
-                <Input
-                  id="subtitle"
-                  value={course.subtitle}
-                  onChange={(e) => setCourse({ ...course, subtitle: e.target.value })}
-                  placeholder="강의 부제목을 입력하세요"
-                />
-              </div>
             </div>
 
             {/* 썸네일 업로드 섹션 - 파일 업로드 방식으로 변경 */}
@@ -918,7 +909,7 @@ export const AdminCourseEdit = () => {
           <CardContent className="space-y-6">
             {course.options.map((option) => (
               <div key={option.id} className="border rounded-lg p-4 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>옵션명</Label>
                     <Input
@@ -934,14 +925,6 @@ export const AdminCourseEdit = () => {
                       value={option.price}
                       onChange={(e) => updateOption(option.id, { price: Number(e.target.value) })}
                       placeholder="0"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>태그 (선택사항)</Label>
-                    <Input
-                      value={option.tag || ''}
-                      onChange={(e) => updateOption(option.id, { tag: e.target.value })}
-                      placeholder="예: 2차 얼리버드"
                     />
                   </div>
                 </div>

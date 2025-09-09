@@ -214,6 +214,19 @@ const CourseDetail = () => {
 
       setCourseSessions(allSessions);
 
+      // Fetch course reviews
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('course_reviews')
+        .select(`
+          *,
+          profiles:user_id(full_name)
+        `)
+        .eq('course_id', courseId)
+        .order('created_at', { ascending: false });
+
+      if (reviewsError) throw reviewsError;
+      setCourseReviews(reviewsData || []);
+
     } catch (error) {
       console.error('Error fetching course data:', error);
       toast({
