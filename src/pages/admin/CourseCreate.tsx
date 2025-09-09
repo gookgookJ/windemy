@@ -15,6 +15,7 @@ import { MultiImageUpload } from '@/components/ui/multi-image-upload';
 import { useToast } from '@/hooks/use-toast';
 import { Save, Plus, Trash2, ChevronLeft, ChevronRight, FileText, Video, Link, BookOpen, Settings, DollarSign, Users, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DetailImage {
   id: string;
@@ -96,6 +97,8 @@ const AdminCourseCreate = () => {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [priceInput, setPriceInput] = useState<string>('');
 
   const steps = [
     { id: 1, name: '기본 정보', icon: BookOpen },
@@ -270,7 +273,7 @@ const AdminCourseCreate = () => {
         what_you_will_learn: course.what_you_will_learn.filter(item => item.trim()),
         requirements: course.requirements.filter(item => item.trim()),
         is_published: !isDraft && course.is_published,
-        instructor_id: 'current-user-id' // 실제로는 현재 사용자 ID
+        instructor_id: user?.id || null
       };
 
       const { data: savedCourse, error: courseError } = await supabase
@@ -699,10 +702,20 @@ const AdminCourseCreate = () => {
                     <Label htmlFor="price">정가 (원)</Label>
                     <Input
                       id="price"
-                      type="number"
-                      value={course.price}
-                      onChange={(e) => setCourse(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
-                      placeholder="0"
+                      type="text"
+                      inputMode="numeric"
+                      value={priceInput}
+                      onChange={(e) => {
+                        const onlyDigits = e.target.value.replace(/[^\d]/g, '');
+                        setPriceInput(onlyDigits);
+                      }}
+                      onBlur={() =>
+                        setCourse((prev) => ({
+                          ...prev,
+                          price: priceInput === '' ? 0 : parseInt(priceInput, 10),
+                        }))
+                      }
+                      placeholder="정가를 입력하세요"
                     />
                   </div>
                   <div>
