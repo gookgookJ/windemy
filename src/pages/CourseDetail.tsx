@@ -13,7 +13,8 @@ import {
   ChevronDown,
   ChevronRight,
   CheckCircle,
-  User
+  User,
+  ChevronUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +98,7 @@ const CourseDetail = () => {
   const [courseReviews, setCourseReviews] = useState<CourseReview[]>([]);
   const [groupedSections, setGroupedSections] = useState<any[]>([]); // Add state for sections
   const [loading, setLoading] = useState(true);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
   
   const navigate = useNavigate();
   const { id: courseId } = useParams();
@@ -115,6 +117,22 @@ const CourseDetail = () => {
     }
   }, [user, courseId]);
 
+  // Scroll to top functionality
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollToTop(window.scrollY > 500);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
   const fetchCourseData = async () => {
     if (!courseId) return;
     
@@ -948,6 +966,18 @@ const CourseDetail = () => {
             </Button>
           </div>
         </div>
+
+        {/* Scroll to Top Button */}
+        {showScrollToTop && (
+          <Button
+            onClick={scrollToTop}
+            size="sm"
+            className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white"
+            aria-label="맨 위로 이동"
+          >
+            <ChevronUp className="w-5 h-5" />
+          </Button>
+        )}
       </main>
       
       <Footer />
