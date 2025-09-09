@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CourseDetailImages } from "@/components/CourseDetailImages";
 import { Progress } from "@/components/ui/progress";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -379,11 +380,7 @@ const CourseDetail = () => {
             <div className="w-[757px] space-y-8">
               {/* Long Course Detail Image */}
               <div id="overview" className="w-[757px]">
-                <img
-                  src={courseData.detail_image_path || courseDetailLong}
-                  alt="강의 상세 내용"
-                  className="w-[757px] h-auto rounded-xl shadow-lg"
-                />
+                <CourseDetailImages courseId={courseId!} />
               </div>
 
               {/* Course Content Sections */}
@@ -765,11 +762,7 @@ const CourseDetail = () => {
           <div className="mx-4 space-y-8">
             {/* Course Detail Image */}
             <div id="overview">
-              <img
-                src={courseData.detail_image_path || courseDetailLong}
-                alt="강의 상세 내용"
-                className="w-full h-auto rounded-xl shadow-lg"
-              />
+              <CourseDetailImages courseId={courseId!} />
             </div>
 
             {/* What You'll Learn */}

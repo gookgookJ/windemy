@@ -11,9 +11,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { FileUpload } from '@/components/ui/file-upload';
+import { MultiImageUpload } from '@/components/ui/multi-image-upload';
 import { useToast } from '@/hooks/use-toast';
 import { Save, Plus, Trash2, ChevronLeft, ChevronRight, FileText, Video, Link, BookOpen, Settings, DollarSign, Users, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+interface DetailImage {
+  id: string;
+  image_url: string;
+  image_name: string;
+  section_title: string;
+  order_index: number;
+}
 
 interface CourseSession {
   id?: string;
@@ -34,7 +43,7 @@ interface Course {
   short_description: string;
   description: string;
   thumbnail_url: string;
-  detail_image_path: string;
+  detail_images: DetailImage[];
   video_preview_url: string;
   course_type: 'vod' | 'offline' | 'hybrid';
   price: number;
@@ -61,7 +70,7 @@ const AdminCourseCreate = () => {
     short_description: '',
     description: '',
     thumbnail_url: '',
-    detail_image_path: '',
+    detail_images: [],
     video_preview_url: '',
     course_type: 'vod',
     price: 0,
@@ -253,7 +262,6 @@ const AdminCourseCreate = () => {
         short_description: course.short_description,
         description: course.description,
         thumbnail_url: course.thumbnail_url,
-        detail_image_path: course.detail_image_path,
         video_preview_url: course.video_preview_url,
         price: course.price,
         duration_hours: course.duration_hours,
@@ -427,14 +435,12 @@ const AdminCourseCreate = () => {
                   description="강의 목록에서 보여질 썸네일 이미지를 업로드하세요"
                 />
 
-                <FileUpload
+                <MultiImageUpload
                   bucket="course-detail-images"
-                  accept="image/*"
+                  images={course.detail_images}
+                  onImagesChange={(images) => setCourse(prev => ({ ...prev, detail_images: images }))}
+                  accept="image/*,image/gif"
                   maxSize={10}
-                  onUpload={(url) => setCourse(prev => ({ ...prev, detail_image_path: url }))}
-                  currentFile={course.detail_image_path}
-                  label="상세 이미지"
-                  description="강의 상세 페이지에서 보여질 상세 이미지를 업로드하세요"
                 />
 
                 <div>

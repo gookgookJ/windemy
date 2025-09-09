@@ -233,6 +233,44 @@ export type Database = {
           },
         ]
       }
+      course_detail_images: {
+        Row: {
+          course_id: string | null
+          created_at: string | null
+          id: string
+          image_name: string | null
+          image_url: string
+          order_index: number
+          section_title: string | null
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string | null
+          id?: string
+          image_name?: string | null
+          image_url: string
+          order_index?: number
+          section_title?: string | null
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string | null
+          id?: string
+          image_name?: string | null
+          image_url?: string
+          order_index?: number
+          section_title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_detail_images_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_options: {
         Row: {
           benefits: string[] | null
