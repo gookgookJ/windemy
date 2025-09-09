@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, Plus, Edit, Users, User } from 'lucide-react';
+import { Search, Plus, Edit, Users, User, Trash2 } from 'lucide-react';
 
 interface Instructor {
   id: string;
@@ -58,6 +58,35 @@ export const AdminInstructors = () => {
 
   const editInstructor = (instructorId: string) => {
     navigate(`/admin/instructor-profile/${instructorId}`);
+  };
+
+  const deleteInstructor = async (instructorId: string, instructorName: string) => {
+    if (!confirm(`정말로 "${instructorName}" 강사를 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', instructorId);
+
+      if (error) throw error;
+
+      toast({
+        title: "성공",
+        description: "강사가 삭제되었습니다."
+      });
+
+      fetchInstructors();
+    } catch (error) {
+      console.error('Error deleting instructor:', error);
+      toast({
+        title: "오류",
+        description: "강사 삭제에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
   };
 
   const filteredInstructors = instructors.filter(instructor =>
@@ -169,6 +198,15 @@ export const AdminInstructors = () => {
                     >
                       <Users className="h-4 w-4 mr-2" />
                       담당 강의 보기
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteInstructor(instructor.id, instructor.full_name)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      삭제
                     </Button>
                   </div>
                 </div>

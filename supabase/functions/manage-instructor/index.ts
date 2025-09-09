@@ -80,32 +80,8 @@ serve(async (req) => {
     let userId: string | undefined = id;
 
     if (!userId && email) {
-      // Invite user by email (creates user and sends invite if not existing)
-      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        data: { full_name, role },
-      });
-
-      if (inviteError) {
-        console.error("INVITE_ERROR", inviteError);
-        const status = (inviteError as any).status === 400 || (inviteError as any).code === 'validation_failed' ? 400 : 500;
-        const message = (inviteError as any).code === 'validation_failed' ? 'Invalid email format' : inviteError.message;
-        return new Response(
-          JSON.stringify({ error: message, code: (inviteError as any).code || undefined }),
-          {
-            status,
-            headers: { "Content-Type": "application/json", ...corsHeaders },
-          }
-        );
-      }
-
-      userId = inviteData.user?.id;
-      if (!userId) {
-        console.error("NO_USER_ID_AFTER_INVITE", inviteData);
-        return new Response(JSON.stringify({ error: "Failed to create or fetch user" }), {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
-      }
+      // For new instructors, generate a UUID (no actual auth user needed)
+      userId = crypto.randomUUID();
     }
 
     // Upsert profile with provided fields (service role bypasses RLS)

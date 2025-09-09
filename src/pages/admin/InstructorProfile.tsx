@@ -115,7 +115,7 @@ export const AdminInstructorProfile = () => {
 
         toast({
           title: '성공',
-          description: '새 강사에게 초대 메일을 발송하고 프로필을 생성했습니다.'
+          description: '새 강사 프로필이 생성되었습니다.'
         });
       } else {
         // Update existing instructor
