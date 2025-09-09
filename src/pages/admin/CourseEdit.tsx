@@ -667,19 +667,49 @@ export const AdminCourseEdit = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="instructor">담당 강사</Label>
-                <Select value={course.instructor_id} onValueChange={(value) => setCourse({ ...course, instructor_id: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="강사 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {instructors.map((instructor) => (
-                      <SelectItem key={instructor.id} value={instructor.id}>
-                        {instructor.full_name} ({instructor.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="instructor">강사 관리</Label>
+                <div className="flex gap-2">
+                  <Select value={course.instructor_id} onValueChange={(value) => setCourse({ ...course, instructor_id: value })}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="강사 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {instructors.map((instructor) => (
+                        <SelectItem key={instructor.id} value={instructor.id}>
+                          {instructor.full_name} ({instructor.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate('/admin/instructors')}
+                    className="whitespace-nowrap"
+                  >
+                    강사 관리
+                  </Button>
+                </div>
+                {course.instructor_id && (
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/admin/instructor-profile/${course.instructor_id}`)}
+                    >
+                      강사 수정
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setCourse({ ...course, instructor_id: '' })}
+                    >
+                      선택 해제
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 

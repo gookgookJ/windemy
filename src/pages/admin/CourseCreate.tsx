@@ -391,7 +391,7 @@ const AdminCourseCreate = () => {
         what_you_will_learn: course.what_you_will_learn.filter(item => item.trim()),
         requirements: course.requirements.filter(item => item.trim()),
         is_published: !isDraft && course.is_published,
-        instructor_id: course.category_id // Use selected instructor instead of current user
+        instructor_id: course.instructor_id // Use selected instructor instead of current user
       };
 
       const { data: savedCourse, error: courseError } = await supabase
@@ -588,6 +588,55 @@ const AdminCourseCreate = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="instructor">강사 관리</Label>
+                    <div className="flex gap-2">
+                      <Select
+                        value={course.instructor_id || ''}
+                        onValueChange={(value) => setCourse(prev => ({ ...prev, instructor_id: value }))}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="강사를 선택하세요" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {instructors.map(instructor => (
+                            <SelectItem key={instructor.id} value={instructor.id}>
+                              {instructor.full_name} ({instructor.email})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => navigate('/admin/instructors')}
+                        className="whitespace-nowrap"
+                      >
+                        강사 관리
+                      </Button>
+                    </div>
+                    {course.instructor_id && (
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/admin/instructor-profile/${course.instructor_id}`)}
+                        >
+                          강사 수정
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setCourse(prev => ({ ...prev, instructor_id: '' }))}
+                        >
+                          선택 해제
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
