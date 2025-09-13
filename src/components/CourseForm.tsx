@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { FileUpload } from '@/components/ui/file-upload';
 
 const courseSchema = z.object({
   title: z.string().min(1, '제목을 입력해주세요'),
@@ -23,6 +24,7 @@ const courseSchema = z.object({
   level: z.string().min(1, '난이도를 선택해주세요'),
   duration_hours: z.number().min(1, '시간을 입력해주세요'),
   category_id: z.string().min(1, '카테고리를 선택해주세요'),
+  instructor_id: z.string().min(1, '강사를 선택해주세요'),
   thumbnail_path: z.string().optional(),
   detail_image_path: z.string().optional(),
   is_hot: z.boolean().optional(),
@@ -39,6 +41,11 @@ interface Category {
   name: string;
 }
 
+interface Instructor {
+  id: string;
+  full_name: string;
+}
+
 interface CourseOption {
   id?: string;
   name: string;
@@ -49,6 +56,7 @@ interface CourseOption {
 
 const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [whatYouWillLearn, setWhatYouWillLearn] = useState<string[]>(['']);
   const [requirements, setRequirements] = useState<string[]>(['']);
   const [courseOptions, setCourseOptions] = useState<CourseOption[]>([{
@@ -58,6 +66,7 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
     benefits: ['']
   }]);
   const [saving, setSaving] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof courseSchema>>({
@@ -70,6 +79,7 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
       level: 'beginner',
       duration_hours: 1,
       category_id: '',
+      instructor_id: '',
       thumbnail_path: '',
       detail_image_path: '',
       is_hot: false,
@@ -79,6 +89,7 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
 
   useEffect(() => {
     fetchCategories();
+    fetchInstructors();
     if (courseId) {
       fetchCourseData();
     }
@@ -95,6 +106,20 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
       setCategories(data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+    }
+  };
+
+  const fetchInstructors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('instructors')
+        .select('id, full_name')
+        .order('full_name');
+
+      if (error) throw error;
+      setInstructors(data || []);
+    } catch (error) {
+      console.error('Error fetching instructors:', error);
     }
   };
 
@@ -120,6 +145,7 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
         level: courseData.level,
         duration_hours: courseData.duration_hours,
         category_id: courseData.category_id,
+        instructor_id: courseData.instructor_id || '',
         thumbnail_path: courseData.thumbnail_path || '',
         detail_image_path: courseData.detail_image_path || '',
         is_hot: courseData.is_hot || false,
@@ -159,6 +185,7 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
         level: values.level,
         duration_hours: values.duration_hours,
         category_id: values.category_id,
+        instructor_id: values.instructor_id,
         thumbnail_path: values.thumbnail_path,
         detail_image_path: values.detail_image_path,
         what_you_will_learn: whatYouWillLearn.filter(item => item.trim()),
@@ -229,6 +256,91 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const onSaveDraft = async (values: z.infer<typeof courseSchema>) => {
+    setSavingDraft(true);
+    try {
+      const courseData = {
+        title: values.title || '임시저장된 강의',
+        description: values.description || '',
+        short_description: values.short_description || '',
+        price: values.price,
+        level: values.level,
+        duration_hours: values.duration_hours,
+        category_id: values.category_id,
+        instructor_id: values.instructor_id,
+        thumbnail_path: values.thumbnail_path,
+        detail_image_path: values.detail_image_path,
+        what_you_will_learn: whatYouWillLearn.filter(item => item.trim()),
+        requirements: requirements.filter(item => item.trim()),
+        is_published: false,
+        is_hot: values.is_hot || false,
+        is_new: values.is_new || false,
+      };
+
+      let savedCourseId = courseId;
+
+      if (courseId) {
+        // Update existing course
+        const { error } = await supabase
+          .from('courses')
+          .update(courseData)
+          .eq('id', courseId);
+
+        if (error) throw error;
+      } else {
+        // Create new course as draft
+        const { data, error } = await supabase
+          .from('courses')
+          .insert(courseData)
+          .select()
+          .single();
+
+        if (error) throw error;
+        savedCourseId = data.id;
+      }
+
+      // Save course options
+      if (savedCourseId) {
+        // Delete existing options
+        await supabase
+          .from('course_options')
+          .delete()
+          .eq('course_id', savedCourseId);
+
+        // Insert new options
+        const optionsToSave = courseOptions.map(option => ({
+          course_id: savedCourseId,
+          name: option.name,
+          price: option.price,
+          original_price: option.original_price,
+          benefits: option.benefits.filter(benefit => benefit.trim()),
+        }));
+
+        const { error: optionsError } = await supabase
+          .from('course_options')
+          .insert(optionsToSave);
+
+        if (optionsError) throw optionsError;
+      }
+
+      toast({
+        title: "임시저장 완료",
+        description: "강의가 임시저장되었습니다.",
+      });
+
+      if (onSave) onSave();
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast({
+        title: "오류",
+        description: "임시저장에 실패했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setSavingDraft(false);
     }
   };
 
@@ -303,14 +415,26 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
         <h1 className="text-3xl font-bold">
           {courseId ? '강의 수정' : '새 강의 만들기'}
         </h1>
-        <Button 
-          onClick={form.handleSubmit(onSubmit)} 
-          disabled={saving}
-          className="flex items-center gap-2"
-        >
-          <Save className="w-4 h-4" />
-          {saving ? '저장 중...' : '저장'}
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button 
+            type="button"
+            variant="outline"
+            onClick={() => form.handleSubmit(onSaveDraft)()} 
+            disabled={savingDraft || saving}
+            className="flex items-center gap-2"
+          >
+            <Save className="w-4 h-4" />
+            {savingDraft ? '임시저장 중...' : '임시저장'}
+          </Button>
+          <Button 
+            onClick={form.handleSubmit(onSubmit)} 
+            disabled={saving || savingDraft}
+            className="flex items-center gap-2"
+          >
+            <Save className="w-4 h-4" />
+            {saving ? '저장 중...' : '저장'}
+          </Button>
+        </div>
       </div>
 
       <Form {...form}>
@@ -375,7 +499,7 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
                     )}
                   />
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <FormField
                       control={form.control}
                       name="category_id"
@@ -392,6 +516,31 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
                               {categories.map((category) => (
                                 <SelectItem key={category.id} value={category.id}>
                                   {category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="instructor_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>강사</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="강사 선택" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {instructors.map((instructor) => (
+                                <SelectItem key={instructor.id} value={instructor.id}>
+                                  {instructor.full_name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -679,29 +828,67 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
                 <CardHeader>
                   <CardTitle>미디어 파일</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
+                  {/* Thumbnail Image Upload */}
                   <FormField
                     control={form.control}
                     name="thumbnail_path"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>썸네일 이미지 경로</FormLabel>
+                        <FormLabel>썸네일 이미지</FormLabel>
                         <FormControl>
-                          <Input placeholder="/path/to/thumbnail.jpg" {...field} />
+                          <div className="space-y-4">
+                            <FileUpload
+                              bucket="course-thumbnails"
+                              accept="image/*"
+                              onUpload={(url) => field.onChange(url)}
+                              currentFile={field.value}
+                              label="썸네일 이미지 업로드"
+                              description="강의 목록에서 표시될 썸네일 이미지를 업로드하세요."
+                            />
+                            {field.value && (
+                              <div className="mt-4">
+                                <img 
+                                  src={field.value} 
+                                  alt="썸네일 미리보기" 
+                                  className="w-48 h-27 object-cover rounded-lg border"
+                                />
+                              </div>
+                            )}
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
+                  {/* Detail Image Upload */}
                   <FormField
                     control={form.control}
                     name="detail_image_path"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>상세 이미지 경로</FormLabel>
+                        <FormLabel>상세페이지 이미지</FormLabel>
                         <FormControl>
-                          <Input placeholder="/path/to/detail-image.jpg" {...field} />
+                          <div className="space-y-4">
+                            <FileUpload
+                              bucket="course-detail-images"
+                              accept="image/*"
+                              onUpload={(url) => field.onChange(url)}
+                              currentFile={field.value}
+                              label="상세페이지 이미지 업로드"
+                              description="강의 상세페이지에서 표시될 이미지를 업로드하세요."
+                            />
+                            {field.value && (
+                              <div className="mt-4">
+                                <img 
+                                  src={field.value} 
+                                  alt="상세 이미지 미리보기" 
+                                  className="w-full max-w-md h-auto object-cover rounded-lg border"
+                                />
+                              </div>
+                            )}
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>

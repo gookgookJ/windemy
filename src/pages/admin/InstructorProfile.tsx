@@ -15,7 +15,7 @@ import { Save, User, Trash2, ArrowLeft } from 'lucide-react';
 interface InstructorProfile {
   id?: string;
   full_name: string;
-  email: string;
+  email?: string; // Make email optional
   instructor_bio?: string;
   instructor_avatar_url?: string;
 }
@@ -34,7 +34,6 @@ export const AdminInstructorProfile = () => {
       setIsNewInstructor(true);
       setProfile({
         full_name: '',
-        email: '',
         instructor_bio: '',
         instructor_avatar_url: ''
       });
@@ -71,20 +70,10 @@ export const AdminInstructorProfile = () => {
 
     // Client-side validation for new instructor
     if (isNewInstructor) {
-      const email = (profile.email || '').trim();
       const name = (profile.full_name || '').trim();
-      const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
       if (!name) {
         toast({ title: '입력 필요', description: '강사명을 입력하세요.', variant: 'destructive' });
-        return;
-      }
-      if (!email) {
-        toast({ title: '입력 필요', description: '이메일을 입력하세요.', variant: 'destructive' });
-        return;
-      }
-      if (!isValidEmail) {
-        toast({ title: '유효하지 않은 이메일', description: '올바른 이메일 주소 형식으로 입력하세요.', variant: 'destructive' });
         return;
       }
     }
@@ -96,7 +85,7 @@ export const AdminInstructorProfile = () => {
         const { error } = await supabase
           .from('instructors')
           .insert({
-            email: profile.email,
+            email: profile.email || `instructor_${Date.now()}@temp.com`, // Generate temp email if not provided
             full_name: profile.full_name,
             instructor_bio: profile.instructor_bio,
             instructor_avatar_url: profile.instructor_avatar_url,
@@ -192,7 +181,7 @@ export const AdminInstructorProfile = () => {
               <p className="text-muted-foreground">강의 상세페이지에 표시될 강사 정보를 관리합니다</p>
             </div>
           </div>
-          <Button onClick={handleSave} disabled={saving || (isNewInstructor && ((!profile.full_name?.trim()) || (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email || ''))))}>
+          <Button onClick={handleSave} disabled={saving || (isNewInstructor && !profile.full_name?.trim())}>
             <Save className="h-4 w-4 mr-2" />
             {saving ? '저장 중...' : '저장'}
           </Button>
@@ -254,17 +243,19 @@ export const AdminInstructorProfile = () => {
               />
             </div>
 
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email">이메일</Label>
-              <Input
-                id="email"
-                type="email"
-                value={profile.email}
-                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                placeholder="이메일을 입력하세요"
-              />
-            </div>
+            {/* Email - Hidden for new instructors */}
+            {!isNewInstructor && (
+              <div className="space-y-2">
+                <Label htmlFor="email">이메일</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={profile.email || ''}
+                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                  placeholder="이메일을 입력하세요"
+                />
+              </div>
+            )}
 
 
             {/* Bio */}

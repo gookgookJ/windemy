@@ -458,8 +458,20 @@ const CourseDetail = () => {
 
             {/* Main Content Area - 757px width */}
             <div className="w-[757px] space-y-8">
-              {/* Long Course Detail Image */}
+              {/* Course Detail Images */}
               <div id="overview" className="w-[757px]">
+                {/* Display detail_image_path if exists */}
+                {courseData.detail_image_path && (
+                  <div className="mb-8">
+                    <img
+                      src={courseData.detail_image_path}
+                      alt={`${courseData.title} 상세 이미지`}
+                      className="w-full h-auto rounded-lg shadow-lg"
+                    />
+                  </div>
+                )}
+                
+                {/* Display additional course detail images */}
                 <CourseDetailImages courseId={courseId!} />
               </div>
 
