@@ -62,8 +62,22 @@ const CategoryCourses = () => {
   }, [courses]);
 
   useEffect(() => {
+    // Set initial category selection based on route
+    if (category && categories.length > 0) {
+      const routeCategoryMap: Record<string, string> = {
+        "free-courses": "all", // Show all categories for free courses filter
+        "vod-courses": "all", // Show all categories for vod courses filter  
+        "premium-courses": "all" // Show all categories for premium courses filter
+      };
+      
+      const initialCategory = routeCategoryMap[category] || "all";
+      setSelectedCategory(initialCategory);
+    }
+  }, [category, categories]);
+
+  useEffect(() => {
     filterAndSortCourses();
-  }, [courses, searchTerm, filterLevel, selectedCategory]);
+  }, [courses, searchTerm, filterLevel, selectedCategory, category]);
 
   const fetchCourses = async () => {
     try {
@@ -149,10 +163,10 @@ const CategoryCourses = () => {
     if (category === "free-courses") {
       filtered = filtered.filter(course => course.price === 0);
     } else if (category === "vod-courses") {
-      // VOD courses logic - you can modify this based on your requirements
-      filtered = filtered; // Show all for now
+      // Filter by VOD category specifically
+      filtered = filtered.filter(course => course.category === "VOD 강의");
     } else if (category === "premium-courses") {
-      // Premium courses logic - you can modify this based on your requirements  
+      // Filter by premium courses (paid courses)
       filtered = filtered.filter(course => course.price > 0);
     }
 
