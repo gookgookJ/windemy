@@ -605,20 +605,16 @@ const AdminCourseCreate = () => {
                     <Label htmlFor="instructor">강사 관리</Label>
                     <div className="flex gap-2">
                       <Select
-                        value={course.instructor_id || ''}
+                        value={course.instructor_id || undefined}
                         onValueChange={(value) => setCourse(prev => ({ ...prev, instructor_id: value }))}
                       >
                         <SelectTrigger className="flex-1">
                           <SelectValue placeholder="강사를 선택하세요" />
                         </SelectTrigger>
                         <SelectContent>
-                          {instructors.map(instructor => (
-                            <SelectItem
-                              key={`${instructor.email}-${instructor.id || 'none'}`}
-                              value={instructor.id || ''}
-                              disabled={!!instructor.disabled || !instructor.id}
-                            >
-                              {instructor.full_name} ({instructor.email}){instructor.disabled ? ' - 계정 없음(선택 불가)' : ''}
+                          {instructors.filter((i:any)=>i.id).map((instructor:any) => (
+                            <SelectItem key={instructor.id} value={instructor.id}>
+                              {instructor.full_name} ({instructor.email})
                             </SelectItem>
                           ))}
                         </SelectContent>

@@ -557,13 +557,9 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {instructors.map((instructor) => (
-                                <SelectItem
-                                  key={`${instructor.email}-${instructor.id || 'none'}`}
-                                  value={instructor.id || ''}
-                                  disabled={!!instructor.disabled || !instructor.id}
-                                >
-                                  {instructor.full_name} ({instructor.email}){instructor.disabled ? ' - 계정 없음(선택 불가)' : ''}
+                              {instructors.filter((i)=>i.id).map((instructor) => (
+                                <SelectItem key={instructor.id} value={instructor.id}>
+                                  {instructor.full_name} ({instructor.email})
                                 </SelectItem>
                               ))}
                             </SelectContent>
