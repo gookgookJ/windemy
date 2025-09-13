@@ -27,6 +27,7 @@ import AdminInstructorProfile from "./pages/admin/InstructorProfile";
 import AdminSessionManagement from "./pages/admin/SessionManagement";
 import AdminLearningAnalytics from "./pages/admin/LearningAnalytics";
 import AdminProgressMonitoring from "./pages/admin/ProgressMonitoring";
+import CategoryCourses from "./pages/CategoryCourses";
 import Learn from "./pages/Learn";
 import NotFound from "./pages/NotFound";
 
@@ -44,6 +45,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/courses" element={<CourseCatalog />} />
+            <Route path="/courses/:category" element={<CategoryCourses />} />
             <Route path="/course/:id" element={<CourseDetail />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/cart" element={<Cart />} />

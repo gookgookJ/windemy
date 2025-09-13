@@ -47,7 +47,7 @@ const CourseCard = ({
   };
 
   return (
-    <Card className="group cursor-pointer overflow-hidden border-0 shadow-soft hover:shadow-strong transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-b from-white to-muted/30">
+    <Card className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 bg-white">
       <div className="relative overflow-hidden">
         <img
           src={thumbnail}
@@ -58,61 +58,57 @@ const CourseCard = ({
         {/* Overlay Badges */}
         <div className="absolute top-3 left-3 flex gap-2">
           {isHot && (
-            <Badge className="bg-destructive text-destructive-foreground font-bold">
-              🔥 인기
+            <Badge className="bg-red-500 text-white font-medium text-xs px-2 py-1">
+              BEST
             </Badge>
           )}
           {isNew && (
-            <Badge className="bg-success text-success-foreground font-bold">
-              ✨ 신규
+            <Badge className="bg-green-500 text-white font-medium text-xs px-2 py-1">
+              NEW
+            </Badge>
+          )}
+          {price === 0 && (
+            <Badge className="bg-blue-500 text-white font-medium text-xs px-2 py-1">
+              무료강의
             </Badge>
           )}
           {discountRate > 0 && (
-            <Badge className="bg-warning text-warning-foreground font-bold">
-              {discountRate}% 할인
+            <Badge className="bg-orange-500 text-white font-medium text-xs px-2 py-1">
+              할인혜택
             </Badge>
           )}
         </div>
 
-        {/* Level Badge */}
+        {/* Wishlist Button */}
         <div className="absolute top-3 right-3">
-          <Badge className={`${levelConfig[level].color} text-white font-medium`}>
-            {levelConfig[level].text}
-          </Badge>
-        </div>
-
-        {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
           <Button 
-            variant="hero" 
-            size="lg" 
-            className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
-            onClick={() => navigate(`/course/${id}`)}
+            size="sm" 
+            variant="ghost" 
+            className="bg-white/80 hover:bg-white text-gray-600 hover:text-red-500 w-8 h-8 p-0 rounded-full"
           >
-            강의 보기
+            ♡
           </Button>
         </div>
       </div>
 
-      <CardContent className="p-6">
-        {/* Category */}
-        <div className="mb-2">
-          <span className="text-sm text-primary font-medium">{category}</span>
-        </div>
-
-        {/* Title & Instructor */}
-        <h3 className="font-bold text-lg text-foreground mb-2 line-clamp-2 leading-tight">
+      <CardContent className="p-4" onClick={() => navigate(`/course/${id}`)}>
+        {/* Title */}
+        <h3 className="font-bold text-base text-foreground mb-2 line-clamp-2 leading-tight hover:text-primary transition-colors">
           {title}
         </h3>
-        <p className="text-muted-foreground text-sm mb-4">{instructor}</p>
 
-        {/* Stats */}
-        <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
+        {/* Rating & Reviews */}
+        <div className="flex items-center gap-4 mb-3 text-sm">
           <div className="flex items-center gap-1">
-            <Star className="w-4 h-4 text-warning fill-current" />
-            <span className="font-medium text-foreground">{rating}</span>
-            <span>({reviewCount.toLocaleString()})</span>
+            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+            <span className="font-medium text-foreground">{rating.toFixed(1)}</span>
+            <span className="text-muted-foreground">({reviewCount})</span>
           </div>
+          <span className="text-muted-foreground">{instructor}</span>
+        </div>
+
+        {/* Course Info */}
+        <div className="flex items-center gap-4 mb-3 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Clock className="w-4 h-4" />
             <span>{duration}</span>
@@ -123,26 +119,38 @@ const CourseCard = ({
           </div>
         </div>
 
+        {/* Level Badge */}
+        <div className="mb-3">
+          <Badge 
+            variant="outline" 
+            className={`text-xs px-2 py-1 ${
+              level === "beginner" ? "border-green-500 text-green-600" :
+              level === "intermediate" ? "border-yellow-500 text-yellow-600" :
+              "border-red-500 text-red-600"
+            }`}
+          >
+            {level === "beginner" ? "초급" : level === "intermediate" ? "중급" : "고급"}
+          </Badge>
+        </div>
+
         {/* Price */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-primary">
-              {price.toLocaleString()}원
-            </span>
-            {originalPrice && (
-              <span className="text-muted-foreground line-through text-sm">
-                {originalPrice.toLocaleString()}원
-              </span>
+          <div className="flex items-baseline gap-2">
+            {price === 0 ? (
+              <span className="text-lg font-bold text-green-600">무료</span>
+            ) : (
+              <>
+                <span className="text-lg font-bold text-foreground">
+                  {price.toLocaleString()}원
+                </span>
+                {originalPrice && (
+                  <span className="text-sm text-muted-foreground line-through">
+                    {originalPrice.toLocaleString()}원
+                  </span>
+                )}
+              </>
             )}
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="hover:border-primary hover:text-primary"
-            onClick={() => navigate(`/course/${id}`)}
-          >
-            <BookOpen className="w-4 h-4" />
-          </Button>
         </div>
       </CardContent>
     </Card>
