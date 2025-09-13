@@ -255,12 +255,12 @@ export const AdminCourseEdit = () => {
           price: course.price,
           level: course.level,
           duration_hours: course.duration_hours,
-          what_you_will_learn: course.what_you_learn,
+          what_you_will_learn: (course.what_you_learn || []).filter(item => !!item && item.trim() !== ''),
           
-          category_id: course.category_id,
-          instructor_id: course.instructor_id,
+          category_id: course.category_id || null,
+          instructor_id: course.instructor_id || null,
           is_published: course.is_published,
-          thumbnail_path: course.thumbnail_url, // Use thumbnail_path instead of thumbnail_url
+          thumbnail_path: course.thumbnail_url || null,
         })
         .eq('id', id);
 
@@ -378,7 +378,7 @@ export const AdminCourseEdit = () => {
       console.error('Error updating course:', error);
       toast({
         title: "오류",
-        description: "강의 수정에 실패했습니다.",
+        description: `강의 수정에 실패했습니다: ${error instanceof Error ? error.message : String(error)}`,
         variant: "destructive"
       });
     } finally {
@@ -746,7 +746,7 @@ export const AdminCourseEdit = () => {
             <MultiImageUpload
               images={course.images}
               onImagesChange={(images) => setCourse({ ...course, images })}
-              bucket="course-images"
+              bucket="course-detail-images"
             />
           </CardContent>
         </Card>

@@ -100,7 +100,7 @@ const CategoryCourses = () => {
         id: course.id,
         title: course.title,
         instructor: course.profiles?.full_name || 'Unknown',
-        thumbnail: course.thumbnail_url || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png',
+        thumbnail: course.thumbnail_path || course.thumbnail_url || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png',
         price: course.price,
         originalPrice: null,
         rating: course.rating || 0,
