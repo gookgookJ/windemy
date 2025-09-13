@@ -17,8 +17,9 @@ const Header = () => {
       href: "/courses",
       submenu: [
         { name: "전체", href: "/courses" },
-        { name: "무료강의", href: "/courses/free" },
-        { name: "프리미엄 강의", href: "/courses/premium" },
+        { name: "무료강의", href: "/courses/free-courses" },
+        { name: "VOD 강의", href: "/courses/vod-courses" },
+        { name: "프리미엄 강의", href: "/courses/premium-courses" },
       ]
     },
     { name: "강사 지원", href: "/instructor-support" },
