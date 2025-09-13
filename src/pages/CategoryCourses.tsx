@@ -65,9 +65,9 @@ const CategoryCourses = () => {
     // Set initial category selection based on route
     if (category && categories.length > 0) {
       const routeCategoryMap: Record<string, string> = {
-        "free-courses": "all", // Show all categories for free courses filter
-        "vod-courses": "all", // Show all categories for vod courses filter  
-        "premium-courses": "all" // Show all categories for premium courses filter
+        "free-courses": "7c3b2929-c841-42b0-9047-a7c63abb40fa", // 무료강의 category ID
+        "vod-courses": "ce6f2ffc-96bf-4cf0-8f83-27ae2f2fc273", // VOD 강의 category ID  
+        "premium-courses": "76496899-53c0-41d7-a716-ee0ebbab6a41" // 프리미엄 강의 category ID
       };
       
       const initialCategory = routeCategoryMap[category] || "all";

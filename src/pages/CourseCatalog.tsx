@@ -28,6 +28,11 @@ const CourseCatalog = () => {
     }
   }, [courses]);
 
+  // Set initial category selection for main courses page
+  useEffect(() => {
+    setSelectedCategory("all");
+  }, []);
+
   const fetchCourses = async () => {
     try {
       const { data, error } = await supabase
