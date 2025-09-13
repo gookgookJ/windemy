@@ -52,11 +52,26 @@ const CourseCard = ({
         <img
           src={thumbnail}
           alt={title}
-          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+          className="w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          style={{ width: '272.33px', height: '153.17px' }}
         />
-        
-        {/* Overlay Badges */}
-        <div className="absolute top-3 left-3 flex gap-2">
+      </div>
+
+      <CardContent className="p-4" onClick={() => navigate(`/course/${id}`)}>
+        {/* Title */}
+        <h3 className="font-bold text-base text-foreground mb-2 line-clamp-2 leading-tight hover:text-primary transition-colors">
+          {title}
+        </h3>
+
+        {/* Rating & Reviews */}
+        <div className="flex items-center gap-1 mb-3 text-sm">
+          <Star className="w-4 h-4 text-yellow-400 fill-current" />
+          <span className="font-medium text-foreground">{rating.toFixed(1)}</span>
+          <span className="text-muted-foreground">({reviewCount})</span>
+        </div>
+
+        {/* Tags */}
+        <div className="flex flex-wrap gap-2 mb-3">
           {isHot && (
             <Badge className="bg-red-500 text-white font-medium text-xs px-2 py-1">
               BEST
@@ -69,58 +84,9 @@ const CourseCard = ({
           )}
           {price === 0 && (
             <Badge className="bg-blue-500 text-white font-medium text-xs px-2 py-1">
-              무료강의
+              무료
             </Badge>
           )}
-          {discountRate > 0 && (
-            <Badge className="bg-orange-500 text-white font-medium text-xs px-2 py-1">
-              할인혜택
-            </Badge>
-          )}
-        </div>
-
-        {/* Wishlist Button */}
-        <div className="absolute top-3 right-3">
-          <Button 
-            size="sm" 
-            variant="ghost" 
-            className="bg-white/80 hover:bg-white text-gray-600 hover:text-red-500 w-8 h-8 p-0 rounded-full"
-          >
-            ♡
-          </Button>
-        </div>
-      </div>
-
-      <CardContent className="p-4" onClick={() => navigate(`/course/${id}`)}>
-        {/* Title */}
-        <h3 className="font-bold text-base text-foreground mb-2 line-clamp-2 leading-tight hover:text-primary transition-colors">
-          {title}
-        </h3>
-
-        {/* Rating & Reviews */}
-        <div className="flex items-center gap-4 mb-3 text-sm">
-          <div className="flex items-center gap-1">
-            <Star className="w-4 h-4 text-yellow-400 fill-current" />
-            <span className="font-medium text-foreground">{rating.toFixed(1)}</span>
-            <span className="text-muted-foreground">({reviewCount})</span>
-          </div>
-          <span className="text-muted-foreground">{instructor}</span>
-        </div>
-
-        {/* Course Info */}
-        <div className="flex items-center gap-4 mb-3 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            <span>{duration}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Users className="w-4 h-4" />
-            <span>{studentCount.toLocaleString()}명</span>
-          </div>
-        </div>
-
-        {/* Level Badge */}
-        <div className="mb-3">
           <Badge 
             variant="outline" 
             className={`text-xs px-2 py-1 ${
