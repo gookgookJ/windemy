@@ -40,13 +40,13 @@ const CourseCard = ({
   const navigate = useNavigate();
 
   return (
-    <Card className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 bg-white w-[272.33px] sm:w-full">
+    <Card className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 bg-white">
       <div className="relative overflow-hidden">
         <img
           src={thumbnail}
           alt={title}
           className="w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          style={{ height: '153.17px' }}
+          style={{ width: '272.33px', height: '153.17px' }}
         />
       </div>
 

@@ -72,7 +72,7 @@ const CourseCatalog = () => {
         .from('categories')
         .select(`
           *,
-          courses!inner(id)
+          courses!category_id(id)
         `);
 
       if (error) throw error;
