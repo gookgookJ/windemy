@@ -1,16 +1,14 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Filter, Search, Grid, List, Star, Users, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import CourseCard from "@/components/CourseCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
 
 interface Course {
   id: string;
@@ -34,11 +32,12 @@ const CategoryCourses = () => {
   const { category } = useParams<{ category: string }>();
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("latest");
   const [filterLevel, setFilterLevel] = useState("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const { toast } = useToast();
 
   const categoryNames: Record<string, string> = {
@@ -54,29 +53,19 @@ const CategoryCourses = () => {
   };
 
   useEffect(() => {
-    if (category) {
-      fetchCourses();
-    }
-  }, [category]);
+    fetchCourses();
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     filterAndSortCourses();
-  }, [courses, searchTerm, sortBy, filterLevel]);
+  }, [courses, searchTerm, sortBy, filterLevel, selectedCategory]);
 
   const fetchCourses = async () => {
     try {
       setLoading(true);
       
-      // Get category info
-      const { data: categoryData, error: categoryError } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('slug', category)
-        .single();
-
-      if (categoryError) throw categoryError;
-
-      // Get courses for this category
+      // Get all courses
       const { data, error } = await supabase
         .from('courses')
         .select(`
@@ -85,8 +74,7 @@ const CategoryCourses = () => {
           categories:category_id(name),
           course_reviews(rating)
         `)
-        .eq('is_published', true)
-        .eq('category_id', categoryData.id);
+        .eq('is_published', true);
 
       if (error) throw error;
 
@@ -103,8 +91,8 @@ const CategoryCourses = () => {
         studentCount: course.total_students,
         level: course.level as "beginner" | "intermediate" | "advanced",
         category: course.categories?.name || '기타',
-        isHot: course.total_students > 100,
-        isNew: new Date(course.created_at).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000,
+        isHot: course.is_hot || course.total_students > 100,
+        isNew: course.is_new || new Date(course.created_at).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000,
         description: course.short_description || course.description || ""
       }));
 
@@ -121,8 +109,53 @@ const CategoryCourses = () => {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select(`
+          *,
+          courses!category_id(id)
+        `);
+
+      if (error) throw error;
+
+      const categoriesWithCounts = [
+        { id: "all", name: "전체", count: courses.length },
+        ...data.map(cat => ({
+          id: cat.id,
+          name: cat.name,
+          count: cat.courses?.length || 0
+        }))
+      ];
+
+      setCategories(categoriesWithCounts);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
   const filterAndSortCourses = () => {
     let filtered = [...courses];
+
+    // Category filter
+    if (selectedCategory !== "all") {
+      const categoryObj = categories.find(cat => cat.id === selectedCategory);
+      if (categoryObj) {
+        filtered = filtered.filter(course => course.category === categoryObj.name);
+      }
+    }
+
+    // Apply special category logic based on route
+    if (category === "free-courses") {
+      filtered = filtered.filter(course => course.price === 0);
+    } else if (category === "vod-courses") {
+      // VOD courses logic - you can modify this based on your requirements
+      filtered = filtered; // Show all for now
+    } else if (category === "premium-courses") {
+      // Premium courses logic - you can modify this based on your requirements  
+      filtered = filtered.filter(course => course.price > 0);
+    }
 
     // Search filter
     if (searchTerm) {
@@ -159,88 +192,6 @@ const CategoryCourses = () => {
     setFilteredCourses(filtered);
   };
 
-  const renderCourseCard = (course: Course) => (
-    <Card key={course.id} className="group hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20">
-      <CardContent className="p-0">
-        <div className="relative overflow-hidden rounded-t-lg">
-          <img 
-            src={course.thumbnail} 
-            alt={course.title}
-            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-          <div className="absolute top-3 left-3 flex gap-2">
-            {course.isNew && <Badge className="bg-primary/90 text-primary-foreground">NEW</Badge>}
-            {course.isHot && <Badge variant="destructive">HOT</Badge>}
-            {course.price === 0 && <Badge className="bg-green-500 text-white">무료</Badge>}
-          </div>
-          <div className="absolute top-3 right-3">
-            <Button size="sm" variant="ghost" className="bg-white/80 hover:bg-white">
-              ♡
-            </Button>
-          </div>
-        </div>
-
-        <div className="p-4 space-y-3">
-          <div className="space-y-2">
-            <h3 className="font-semibold text-lg line-clamp-2 group-hover:text-primary transition-colors">
-              <Link to={`/course/${course.id}`}>
-                {course.title}
-              </Link>
-            </h3>
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {course.description}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-              <span className="font-medium">{course.rating.toFixed(1)}</span>
-              <span>({course.reviewCount})</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="w-4 h-4" />
-              <span>{course.studentCount}명</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-baseline gap-2">
-                {course.price === 0 ? (
-                  <span className="text-xl font-bold text-green-600">무료</span>
-                ) : (
-                  <>
-                    <span className="text-xl font-bold text-foreground">
-                      {course.price.toLocaleString()}원
-                    </span>
-                    {course.originalPrice && (
-                      <span className="text-sm text-muted-foreground line-through">
-                        {course.originalPrice.toLocaleString()}원
-                      </span>
-                    )}
-                  </>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">{course.instructor}</p>
-            </div>
-
-            <div className="text-right space-y-1">
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                <span>{course.duration}</span>
-              </div>
-              <Badge variant="outline" className="text-xs">
-                {course.level === "beginner" ? "초급" : 
-                 course.level === "intermediate" ? "중급" : "고급"}
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -265,21 +216,44 @@ const CategoryCourses = () => {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-foreground mb-4">{currentCategoryName}</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            {currentCategoryDescription}
-          </p>
-          <div className="mt-6 flex items-center justify-center gap-4 text-sm text-muted-foreground">
-            <span>총 {filteredCourses.length}개의 강의</span>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-4">{currentCategoryName}</h1>
+          <p className="text-muted-foreground">{currentCategoryDescription}</p>
         </div>
 
-        {/* Filters and Search */}
-        <div className="mb-8 space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-            <div className="flex flex-wrap gap-4 flex-1">
-              <div className="relative min-w-[300px]">
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Sidebar Filters */}
+          <div className="space-y-6">
+            <div>
+              <h3 className="font-semibold mb-4">카테고리</h3>
+              <div className="space-y-2">
+                {categories.map((categoryItem) => (
+                  <button
+                    key={categoryItem.id}
+                    onClick={() => setSelectedCategory(categoryItem.id)}
+                    className={`w-full text-left p-3 rounded-xl transition-colors ${
+                      selectedCategory === categoryItem.id
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-muted"
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span>{categoryItem.name}</span>
+                      <Badge variant="outline" className="text-xs">
+                        {categoryItem.count}
+                      </Badge>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Search Controls */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="강의 제목이나 강사명으로 검색"
@@ -315,21 +289,22 @@ const CategoryCourses = () => {
               </Select>
             </div>
 
+            {/* Course Grid */}
+            {filteredCourses.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">📚</div>
+                <h3 className="text-xl font-semibold mb-2">등록된 강의가 없습니다</h3>
+                <p className="text-muted-foreground">곧 새로운 강의가 업데이트될 예정입니다.</p>
+              </div>
+            ) : (
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+                {filteredCourses.map((course) => (
+                  <CourseCard key={course.id} {...course} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Course Grid */}
-        {filteredCourses.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">📚</div>
-            <h3 className="text-xl font-semibold mb-2">등록된 강의가 없습니다</h3>
-            <p className="text-muted-foreground">곧 새로운 강의가 업데이트될 예정입니다.</p>
-          </div>
-        ) : (
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
-            {filteredCourses.map(renderCourseCard)}
-          </div>
-        )}
       </main>
 
       <Footer />

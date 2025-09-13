@@ -40,7 +40,10 @@ const CourseCard = ({
   const navigate = useNavigate();
 
   return (
-    <Card className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 bg-white w-full max-w-[272.33px]">
+    <Card 
+      className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 bg-white w-full max-w-[272.33px]"
+      onClick={() => navigate(`/course/${id}`)}
+    >
       <div className="relative overflow-hidden">
         <img
           src={thumbnail}
@@ -49,7 +52,7 @@ const CourseCard = ({
         />
       </div>
 
-      <CardContent className="p-4" onClick={() => navigate(`/course/${id}`)}>
+      <CardContent className="p-4">
         {/* Title */}
         <h3 className="font-bold text-base text-foreground mb-2 line-clamp-2 leading-tight hover:text-primary transition-colors">
           {title}
