@@ -315,22 +315,6 @@ const CategoryCourses = () => {
               </Select>
             </div>
 
-            <div className="flex gap-2">
-              <Button
-                variant={viewMode === "grid" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
         </div>
 
@@ -342,11 +326,7 @@ const CategoryCourses = () => {
             <p className="text-muted-foreground">곧 새로운 강의가 업데이트될 예정입니다.</p>
           </div>
         ) : (
-          <div className={`grid gap-6 ${
-            viewMode === "grid" 
-              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
-              : "grid-cols-1 lg:grid-cols-2"
-          }`}>
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center sm:justify-items-stretch">
             {filteredCourses.map(renderCourseCard)}
           </div>
         )}

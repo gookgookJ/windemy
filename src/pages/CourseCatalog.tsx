@@ -70,7 +70,10 @@ const CourseCatalog = () => {
     try {
       const { data, error } = await supabase
         .from('categories')
-        .select('*');
+        .select(`
+          *,
+          courses!inner(id)
+        `);
 
       if (error) throw error;
 
@@ -79,7 +82,7 @@ const CourseCatalog = () => {
         ...data.map(cat => ({
           id: cat.id,
           name: cat.name,
-          count: courses.filter(course => course.category === cat.name).length
+          count: cat.courses?.length || 0
         }))
       ];
 
@@ -152,8 +155,8 @@ const CourseCatalog = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Search and View Controls */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-between">
+            {/* Search Controls */}
+            <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
@@ -161,26 +164,10 @@ const CourseCatalog = () => {
                   className="pl-10"
                 />
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                >
-                  <List className="w-4 h-4" />
-                </Button>
-              </div>
             </div>
 
             {/* Course Grid */}
-            <div className={`grid gap-6 ${viewMode === "grid" ? "md:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"}`}>
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center sm:justify-items-stretch">
               {filteredCourses.map((course) => (
                 <CourseCard key={course.id} {...course} />
               ))}

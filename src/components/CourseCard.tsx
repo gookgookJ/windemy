@@ -38,22 +38,15 @@ const CourseCard = ({
   isNew,
 }: CourseCardProps) => {
   const navigate = useNavigate();
-  const discountRate = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
-
-  const levelConfig = {
-    beginner: { text: "초급", color: "bg-level-beginner" },
-    intermediate: { text: "중급", color: "bg-level-intermediate" },
-    advanced: { text: "고급", color: "bg-level-advanced" },
-  };
 
   return (
-    <Card className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 bg-white">
+    <Card className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 bg-white w-[272.33px] sm:w-full">
       <div className="relative overflow-hidden">
         <img
           src={thumbnail}
           alt={title}
           className="w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          style={{ width: '272.33px', height: '153.17px' }}
+          style={{ height: '153.17px' }}
         />
       </div>
 
@@ -71,7 +64,7 @@ const CourseCard = ({
         </div>
 
         {/* Tags */}
-        <div className="flex flex-wrap gap-2 mb-3">
+        <div className="flex flex-wrap gap-2">
           {isHot && (
             <Badge className="bg-red-500 text-white font-medium text-xs px-2 py-1">
               BEST
@@ -97,26 +90,6 @@ const CourseCard = ({
           >
             {level === "beginner" ? "초급" : level === "intermediate" ? "중급" : "고급"}
           </Badge>
-        </div>
-
-        {/* Price */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            {price === 0 ? (
-              <span className="text-lg font-bold text-green-600">무료</span>
-            ) : (
-              <>
-                <span className="text-lg font-bold text-foreground">
-                  {price.toLocaleString()}원
-                </span>
-                {originalPrice && (
-                  <span className="text-sm text-muted-foreground line-through">
-                    {originalPrice.toLocaleString()}원
-                  </span>
-                )}
-              </>
-            )}
-          </div>
         </div>
       </CardContent>
     </Card>
