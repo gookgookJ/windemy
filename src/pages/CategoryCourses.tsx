@@ -326,7 +326,7 @@ const CategoryCourses = () => {
             <p className="text-muted-foreground">곧 새로운 강의가 업데이트될 예정입니다.</p>
           </div>
         ) : (
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center sm:justify-items-stretch">
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
             {filteredCourses.map(renderCourseCard)}
           </div>
         )}
