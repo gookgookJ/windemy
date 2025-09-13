@@ -44,6 +44,8 @@ interface Category {
 interface Instructor {
   id: string;
   full_name: string;
+  email: string;
+  disabled?: boolean;
 }
 
 interface CourseOption {
@@ -111,7 +113,6 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
 
   const fetchInstructors = async () => {
     try {
-      // Fetch both from profiles and instructors tables to ensure sync
       const [profilesResult, instructorsResult] = await Promise.all([
         supabase
           .from('profiles')
@@ -127,18 +128,15 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
       if (profilesResult.error) throw profilesResult.error;
       if (instructorsResult.error) throw instructorsResult.error;
 
-      // Combine and deduplicate instructors
-      const combinedInstructors = [
-        ...(profilesResult.data || []),
-        ...(instructorsResult.data || [])
+      const profiles = profilesResult.data || [];
+      const instructorsOnly = (instructorsResult.data || []).filter((i: any) => !profiles.some((p: any) => p.email === i.email));
+
+      const finalList = [
+        ...profiles.map((p: any) => ({ id: p.id, full_name: p.full_name, email: p.email, disabled: false })),
+        ...instructorsOnly.map((i: any) => ({ id: '', full_name: i.full_name, email: i.email, disabled: true }))
       ];
 
-      // Remove duplicates based on email, prioritize profiles table
-      const uniqueInstructors = combinedInstructors.filter((instructor, index, self) => 
-        index === self.findIndex(i => i.email === instructor.email)
-      );
-
-      setInstructors(uniqueInstructors);
+      setInstructors(finalList);
     } catch (error) {
       console.error('Error fetching instructors:', error);
     }
@@ -560,8 +558,12 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
                             </FormControl>
                             <SelectContent>
                               {instructors.map((instructor) => (
-                                <SelectItem key={instructor.id} value={instructor.id}>
-                                  {instructor.full_name}
+                                <SelectItem
+                                  key={`${instructor.email}-${instructor.id || 'none'}`}
+                                  value={instructor.id || ''}
+                                  disabled={!!instructor.disabled || !instructor.id}
+                                >
+                                  {instructor.full_name} ({instructor.email}){instructor.disabled ? ' - 계정 없음(선택 불가)' : ''}
                                 </SelectItem>
                               ))}
                             </SelectContent>
