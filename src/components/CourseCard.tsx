@@ -48,7 +48,7 @@ const CourseCard = ({
         <img
           src={thumbnail}
           alt={title}
-          className="w-full h-[214px] object-cover transition-transform duration-300 group-hover:scale-105"
+          className="w-full h-[160px] object-cover transition-transform duration-300 group-hover:scale-105"
         />
       </div>
 
