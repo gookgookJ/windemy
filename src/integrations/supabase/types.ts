@@ -458,6 +458,8 @@ export type Database = {
           duration_hours: number | null
           id: string
           instructor_id: string | null
+          is_hot: boolean | null
+          is_new: boolean | null
           is_published: boolean | null
           level: string | null
           price: number
@@ -480,6 +482,8 @@ export type Database = {
           duration_hours?: number | null
           id?: string
           instructor_id?: string | null
+          is_hot?: boolean | null
+          is_new?: boolean | null
           is_published?: boolean | null
           level?: string | null
           price?: number
@@ -502,6 +506,8 @@ export type Database = {
           duration_hours?: number | null
           id?: string
           instructor_id?: string | null
+          is_hot?: boolean | null
+          is_new?: boolean | null
           is_published?: boolean | null
           level?: string | null
           price?: number

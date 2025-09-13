@@ -5,6 +5,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +25,8 @@ const courseSchema = z.object({
   category_id: z.string().min(1, '카테고리를 선택해주세요'),
   thumbnail_path: z.string().optional(),
   detail_image_path: z.string().optional(),
+  is_hot: z.boolean().optional(),
+  is_new: z.boolean().optional(),
 });
 
 interface CourseFormProps {
@@ -69,6 +72,8 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
       category_id: '',
       thumbnail_path: '',
       detail_image_path: '',
+      is_hot: false,
+      is_new: false,
     },
   });
 
@@ -117,6 +122,8 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
         category_id: courseData.category_id,
         thumbnail_path: courseData.thumbnail_path || '',
         detail_image_path: courseData.detail_image_path || '',
+        is_hot: courseData.is_hot || false,
+        is_new: courseData.is_new || false,
       });
 
       setWhatYouWillLearn(courseData.what_you_will_learn || ['']);
@@ -157,6 +164,8 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
         what_you_will_learn: whatYouWillLearn.filter(item => item.trim()),
         requirements: requirements.filter(item => item.trim()),
         is_published: false,
+        is_hot: values.is_hot || false,
+        is_new: values.is_new || false,
       };
 
       let savedCourseId = courseId;
@@ -455,6 +464,61 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
                       )}
                     />
                   </div>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>태그 설정</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="is_hot"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                              <div className="space-y-0.5">
+                                <FormLabel>인기 강의 (BEST)</FormLabel>
+                                <div className="text-sm text-muted-foreground">
+                                  강의에 BEST 태그를 표시합니다
+                                </div>
+                              </div>
+                              <FormControl>
+                                <input
+                                  type="checkbox"
+                                  checked={field.value}
+                                  onChange={field.onChange}
+                                  className="w-4 h-4"
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="is_new"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                              <div className="space-y-0.5">
+                                <FormLabel>신규 강의 (NEW)</FormLabel>
+                                <div className="text-sm text-muted-foreground">
+                                  강의에 NEW 태그를 표시합니다
+                                </div>
+                              </div>
+                              <FormControl>
+                                <input
+                                  type="checkbox"
+                                  checked={field.value}
+                                  onChange={field.onChange}
+                                  className="w-4 h-4"
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
                 </CardContent>
               </Card>
             </TabsContent>
