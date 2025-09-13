@@ -374,11 +374,12 @@ export const AdminCourseEdit = () => {
       });
 
       navigate('/admin/courses');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating course:', error);
+      const message = error?.message || error?.details || error?.hint || (typeof error === 'object' ? JSON.stringify(error) : String(error));
       toast({
         title: "오류",
-        description: `강의 수정에 실패했습니다: ${error instanceof Error ? error.message : String(error)}`,
+        description: `강의 수정에 실패했습니다: ${message}`,
         variant: "destructive"
       });
     } finally {
