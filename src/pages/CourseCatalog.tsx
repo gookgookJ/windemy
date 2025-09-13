@@ -112,8 +112,7 @@ const CourseCatalog = () => {
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(course => 
-        course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.instructor.toLowerCase().includes(searchTerm.toLowerCase())
+        course.title.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -186,7 +185,7 @@ const CourseCatalog = () => {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
-                  placeholder="강의 제목이나 강사명으로 검색"
+                  placeholder="강의 제목으로 검색"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
