@@ -145,15 +145,7 @@ const CategoryCourses = () => {
   const filterAndSortCourses = () => {
     let filtered = [...courses];
 
-    // Category filter
-    if (selectedCategory !== "all") {
-      const categoryObj = categories.find(cat => cat.id === selectedCategory);
-      if (categoryObj) {
-        filtered = filtered.filter(course => course.category === categoryObj.name);
-      }
-    }
-
-    // Apply special category logic based on route
+    // Apply special category logic based on route FIRST
     if (category === "free-courses") {
       filtered = filtered.filter(course => course.price === 0);
     } else if (category === "vod-courses") {
@@ -162,6 +154,14 @@ const CategoryCourses = () => {
     } else if (category === "premium-courses") {
       // Premium courses logic - you can modify this based on your requirements  
       filtered = filtered.filter(course => course.price > 0);
+    }
+
+    // Then apply additional category filter from sidebar (only if not "all")
+    if (selectedCategory !== "all") {
+      const categoryObj = categories.find(cat => cat.id === selectedCategory);
+      if (categoryObj) {
+        filtered = filtered.filter(course => course.category === categoryObj.name);
+      }
     }
 
     // Search filter
