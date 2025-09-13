@@ -111,13 +111,34 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
 
   const fetchInstructors = async () => {
     try {
-      const { data, error } = await supabase
-        .from('instructors')
-        .select('id, full_name')
-        .order('full_name');
+      // Fetch both from profiles and instructors tables to ensure sync
+      const [profilesResult, instructorsResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .or('role.eq.admin,role.eq.instructor')
+          .order('full_name'),
+        supabase
+          .from('instructors')
+          .select('id, full_name, email')
+          .order('full_name')
+      ]);
 
-      if (error) throw error;
-      setInstructors(data || []);
+      if (profilesResult.error) throw profilesResult.error;
+      if (instructorsResult.error) throw instructorsResult.error;
+
+      // Combine and deduplicate instructors
+      const combinedInstructors = [
+        ...(profilesResult.data || []),
+        ...(instructorsResult.data || [])
+      ];
+
+      // Remove duplicates based on email, prioritize profiles table
+      const uniqueInstructors = combinedInstructors.filter((instructor, index, self) => 
+        index === self.findIndex(i => i.email === instructor.email)
+      );
+
+      setInstructors(uniqueInstructors);
     } catch (error) {
       console.error('Error fetching instructors:', error);
     }

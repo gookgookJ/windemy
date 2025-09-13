@@ -1,5 +1,5 @@
 import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
@@ -13,6 +13,7 @@ interface AdminLayoutProps {
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (authLoading) return;
@@ -22,6 +23,11 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     }
     // 임시로 관리자 권한 체크 제거 - 테스트용
   }, [user, authLoading, navigate]);
+
+  // Prevent scroll jumping when navigating between admin pages
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [location.pathname]);
 
   if (authLoading) {
     return (
@@ -44,7 +50,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         <div className="flex min-h-[calc(100vh-64px)] w-full">
           <AdminSidebar />
           <main className="flex-1 overflow-auto">
-            <div className="container mx-auto p-6 pt-8">
+            <div className="container mx-auto p-6 pt-8" style={{ scrollBehavior: 'smooth' }}>
               {children}
             </div>
           </main>

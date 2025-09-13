@@ -123,9 +123,15 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+    scroll-behavior: smooth;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-background text-foreground;
+    scroll-behavior: smooth;
   }
 }

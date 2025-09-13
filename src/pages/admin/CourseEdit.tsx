@@ -207,14 +207,34 @@ export const AdminCourseEdit = () => {
 
   const fetchInstructors = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .or('role.eq.admin,role.eq.instructor')
-        .order('full_name');
+      // Fetch both from profiles and instructors tables to ensure sync
+      const [profilesResult, instructorsResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .or('role.eq.admin,role.eq.instructor')
+          .order('full_name'),
+        supabase
+          .from('instructors')
+          .select('id, full_name, email')
+          .order('full_name')
+      ]);
 
-      if (error) throw error;
-      setInstructors(data || []);
+      if (profilesResult.error) throw profilesResult.error;
+      if (instructorsResult.error) throw instructorsResult.error;
+
+      // Combine and deduplicate instructors
+      const combinedInstructors = [
+        ...(profilesResult.data || []),
+        ...(instructorsResult.data || [])
+      ];
+
+      // Remove duplicates based on email
+      const uniqueInstructors = combinedInstructors.filter((instructor, index, self) => 
+        index === self.findIndex(i => i.email === instructor.email)
+      );
+
+      setInstructors(uniqueInstructors);
     } catch (error) {
       console.error('Error fetching instructors:', error);
     }
@@ -240,7 +260,7 @@ export const AdminCourseEdit = () => {
           category_id: course.category_id,
           instructor_id: course.instructor_id,
           is_published: course.is_published,
-          thumbnail_url: course.thumbnail_url,
+          thumbnail_path: course.thumbnail_url, // Use thumbnail_path instead of thumbnail_url
         })
         .eq('id', id);
 

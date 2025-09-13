@@ -184,6 +184,12 @@ export const AdminSidebar = () => {
                         to={item.url} 
                         className={getNavClassName(item.url)}
                         end={item.url === '/admin'}
+                        onClick={() => {
+                          // Smooth scroll to top when navigating
+                          setTimeout(() => {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }, 100);
+                        }}
                       >
                         <item.icon className="mr-2 h-4 w-4" />
                         {state !== "collapsed" && <span>{item.title}</span>}
