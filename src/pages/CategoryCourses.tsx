@@ -36,7 +36,6 @@ const CategoryCourses = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("latest");
   const [filterLevel, setFilterLevel] = useState("all");
   const { toast } = useToast();
 
@@ -54,12 +53,17 @@ const CategoryCourses = () => {
 
   useEffect(() => {
     fetchCourses();
-    fetchCategories();
   }, []);
 
   useEffect(() => {
+    if (courses.length > 0) {
+      fetchCategories();
+    }
+  }, [courses]);
+
+  useEffect(() => {
     filterAndSortCourses();
-  }, [courses, searchTerm, sortBy, filterLevel, selectedCategory]);
+  }, [courses, searchTerm, filterLevel, selectedCategory]);
 
   const fetchCourses = async () => {
     try {
@@ -120,8 +124,11 @@ const CategoryCourses = () => {
 
       if (error) throw error;
 
+      // Wait for courses to be loaded before calculating counts
+      const allCoursesCount = courses.length;
+      
       const categoriesWithCounts = [
-        { id: "all", name: "전체", count: courses.length },
+        { id: "all", name: "전체", count: allCoursesCount },
         ...data.map(cat => ({
           id: cat.id,
           name: cat.name,
@@ -168,25 +175,6 @@ const CategoryCourses = () => {
     // Level filter
     if (filterLevel !== "all") {
       filtered = filtered.filter(course => course.level === filterLevel);
-    }
-
-    // Sort
-    switch (sortBy) {
-      case "latest":
-        filtered.sort((a, b) => new Date(b.isNew ? 1 : 0).getTime() - new Date(a.isNew ? 1 : 0).getTime());
-        break;
-      case "popular":
-        filtered.sort((a, b) => b.studentCount - a.studentCount);
-        break;
-      case "rating":
-        filtered.sort((a, b) => b.rating - a.rating);
-        break;
-      case "price-low":
-        filtered.sort((a, b) => a.price - b.price);
-        break;
-      case "price-high":
-        filtered.sort((a, b) => b.price - a.price);
-        break;
     }
 
     setFilteredCourses(filtered);
@@ -272,19 +260,6 @@ const CategoryCourses = () => {
                   <SelectItem value="beginner">초급</SelectItem>
                   <SelectItem value="intermediate">중급</SelectItem>
                   <SelectItem value="advanced">고급</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="정렬" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="latest">최신순</SelectItem>
-                  <SelectItem value="popular">인기순</SelectItem>
-                  <SelectItem value="rating">평점순</SelectItem>
-                  <SelectItem value="price-low">가격 낮은순</SelectItem>
-                  <SelectItem value="price-high">가격 높은순</SelectItem>
                 </SelectContent>
               </Select>
             </div>

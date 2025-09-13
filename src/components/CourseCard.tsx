@@ -41,14 +41,14 @@ const CourseCard = ({
 
   return (
     <Card 
-      className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 bg-white w-full max-w-[272.33px]"
+      className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 bg-white w-full max-w-[320px]"
       onClick={() => navigate(`/course/${id}`)}
     >
       <div className="relative overflow-hidden">
         <img
           src={thumbnail}
           alt={title}
-          className="w-full h-[153.17px] object-cover transition-transform duration-300 group-hover:scale-105"
+          className="w-full h-[180px] object-cover transition-transform duration-300 group-hover:scale-105"
         />
       </div>
 

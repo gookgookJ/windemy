@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Filter, Search, Grid, List } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CourseCard from "@/components/CourseCard";
@@ -10,17 +10,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const CourseCatalog = () => {
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [courses, setCourses] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterLevel, setFilterLevel] = useState("all");
   const { toast } = useToast();
 
   useEffect(() => {
     fetchCourses();
-    fetchCategories();
   }, []);
+
+  useEffect(() => {
+    if (courses.length > 0) {
+      fetchCategories();
+    }
+  }, [courses]);
 
   const fetchCourses = async () => {
     try {
@@ -49,8 +55,8 @@ const CourseCatalog = () => {
         studentCount: course.total_students,
         level: course.level as "beginner" | "intermediate" | "advanced",
         category: course.categories?.name || '기타',
-        isHot: course.total_students > 1000,
-        isNew: new Date(course.created_at).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000, // 30일 이내
+        isHot: course.is_hot || course.total_students > 1000,
+        isNew: course.is_new || new Date(course.created_at).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000, // 30일 이내
       }));
 
       setCourses(coursesWithStats);
@@ -77,8 +83,11 @@ const CourseCatalog = () => {
 
       if (error) throw error;
 
+      // Wait for courses to be loaded before calculating counts
+      const allCoursesCount = courses.length;
+      
       const categoriesWithCounts = [
-        { id: "all", name: "전체", count: courses.length },
+        { id: "all", name: "전체", count: allCoursesCount },
         ...data.map(cat => ({
           id: cat.id,
           name: cat.name,
@@ -92,12 +101,29 @@ const CourseCatalog = () => {
     }
   };
 
-  const filteredCourses = selectedCategory === "all" 
-    ? courses 
-    : courses.filter(course => {
-        const category = categories.find(cat => cat.id === selectedCategory);
-        return category && course.category === category.name;
-      });
+  const filteredCourses = (() => {
+    let filtered = selectedCategory === "all" 
+      ? courses 
+      : courses.filter(course => {
+          const category = categories.find(cat => cat.id === selectedCategory);
+          return category && course.category === category.name;
+        });
+
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(course => 
+        course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.instructor.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Level filter
+    if (filterLevel !== "all") {
+      filtered = filtered.filter(course => course.level === filterLevel);
+    }
+
+    return filtered;
+  })();
 
   if (loading) {
     return (
@@ -160,10 +186,24 @@ const CourseCatalog = () => {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
-                  placeholder="강의를 검색해보세요"
+                  placeholder="강의 제목이나 강사명으로 검색"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
+              
+              <Select value={filterLevel} onValueChange={setFilterLevel}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="난이도" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  <SelectItem value="beginner">초급</SelectItem>
+                  <SelectItem value="intermediate">중급</SelectItem>
+                  <SelectItem value="advanced">고급</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Course Grid */}
