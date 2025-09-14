@@ -229,12 +229,27 @@ export const AdminCourseEdit = () => {
         (profiles || []).map((p: any) => [p.email, p.id])
       );
 
-      // Build list: existing profiles use their id; others will be lazily created on selection
-      const finalList = (instructorsRows || []).map((i: any) => ({
-        value: profileByEmail.get(i.email) || `create:${i.email}`,
-        full_name: i.full_name,
-        email: i.email,
-      }));
+      // Ensure missing profiles exist (admin-only edge function)
+      const missing = (instructorsRows || []).filter((i: any) => !profileByEmail.get(i.email));
+      if (missing.length > 0) {
+        await Promise.all(
+          missing.map(async (m: any) => {
+            try {
+              const { data, error } = await supabase.functions.invoke('manage-instructor', {
+                body: { email: m.email, full_name: m.full_name, role: 'instructor' },
+              });
+              const newId = (data as any)?.userId || (data as any)?.user_id || (data as any)?.id;
+              if (!error && newId) profileByEmail.set(m.email, newId);
+            } catch (e) {
+              console.warn('Failed to ensure profile for instructor', m.email, e);
+            }
+          })
+        );
+      }
+
+      const finalList = (instructorsRows || [])
+        .map((i: any) => ({ id: profileByEmail.get(i.email) || '', full_name: i.full_name, email: i.email }))
+        .filter((i: any) => i.id);
 
       setInstructors(finalList);
     } catch (error) {
@@ -706,13 +721,13 @@ export const AdminCourseEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="instructor">강사 관리</Label>
                 <div className="flex gap-2">
-                  <Select value={course.instructor_id || undefined} onValueChange={handleInstructorChange}>
+                  <Select value={course.instructor_id || undefined} onValueChange={(value) => setCourse({ ...course, instructor_id: value })}>
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder="강사 선택" />
                     </SelectTrigger>
                     <SelectContent>
                       {instructors.map((instructor: any) => (
-                        <SelectItem key={instructor.value} value={instructor.value}>
+                        <SelectItem key={instructor.id} value={instructor.id}>
                           {instructor.full_name} ({instructor.email})
                         </SelectItem>
                       ))}

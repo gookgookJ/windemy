@@ -113,7 +113,7 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
 
   const fetchInstructors = async () => {
     try {
-      // Source: instructors table
+      // Source of truth: instructors table
       const { data: instructorsRows, error: insErr } = await supabase
         .from('instructors')
         .select('id, full_name, email')
@@ -131,11 +131,27 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
 
       const profileByEmail = new Map<string, string>((profiles || []).map((p: any) => [p.email, p.id]));
 
-      const finalList = (instructorsRows || []).map((i: any) => ({
-        value: profileByEmail.get(i.email) || `create:${i.email}`,
-        full_name: i.full_name,
-        email: i.email,
-      }));
+      // Ensure missing profiles exist
+      const missing = (instructorsRows || []).filter((i: any) => !profileByEmail.get(i.email));
+      if (missing.length > 0) {
+        await Promise.all(
+          missing.map(async (m: any) => {
+            try {
+              const { data, error } = await supabase.functions.invoke('manage-instructor', {
+                body: { email: m.email, full_name: m.full_name, role: 'instructor' },
+              });
+              const newId = (data as any)?.userId || (data as any)?.user_id || (data as any)?.id;
+              if (!error && newId) profileByEmail.set(m.email, newId);
+            } catch (e) {
+              console.warn('Failed to ensure profile for instructor', m.email, e);
+            }
+          })
+        );
+      }
+
+      const finalList = (instructorsRows || [])
+        .map((i: any) => ({ id: profileByEmail.get(i.email) || '', full_name: i.full_name, email: i.email }))
+        .filter((i: any) => i.id);
 
       setInstructors(finalList as any);
     } catch (error) {
@@ -574,7 +590,7 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>강사</FormLabel>
-                          <Select onValueChange={handleInstructorSelect} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="강사 선택" />
@@ -582,7 +598,7 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
                             </FormControl>
                             <SelectContent>
                               {instructors.map((instructor: any) => (
-                                <SelectItem key={instructor.value} value={instructor.value}>
+                                <SelectItem key={instructor.id} value={instructor.id}>
                                   {instructor.full_name} ({instructor.email})
                                 </SelectItem>
                               ))}
