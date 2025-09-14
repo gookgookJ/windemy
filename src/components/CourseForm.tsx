@@ -113,35 +113,59 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
 
   const fetchInstructors = async () => {
     try {
-      const [profilesResult, instructorsResult] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('id, full_name, email')
-          .eq('role', 'instructor')
-          .order('full_name'),
-        supabase
-          .from('instructors')
-          .select('id, full_name, email')
-          .order('full_name')
-      ]);
+      // Source: instructors table
+      const { data: instructorsRows, error: insErr } = await supabase
+        .from('instructors')
+        .select('id, full_name, email')
+        .order('full_name');
 
-      if (profilesResult.error) throw profilesResult.error;
-      if (instructorsResult.error) throw instructorsResult.error;
+      if (insErr) throw insErr;
 
-      const profiles = profilesResult.data || [];
-      const instructorsOnly = (instructorsResult.data || []).filter((i: any) => !profiles.some((p: any) => p.email === i.email));
+      const emails = (instructorsRows || []).map((i: any) => i.email).filter(Boolean);
+      const { data: profiles, error: profErr } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('email', emails);
 
-      const finalList = [
-        ...profiles.map((p: any) => ({ id: p.id, full_name: p.full_name, email: p.email, disabled: false })),
-        ...instructorsOnly.map((i: any) => ({ id: '', full_name: i.full_name, email: i.email, disabled: true }))
-      ];
+      if (profErr) throw profErr;
 
-      setInstructors(finalList);
+      const profileByEmail = new Map<string, string>((profiles || []).map((p: any) => [p.email, p.id]));
+
+      const finalList = (instructorsRows || []).map((i: any) => ({
+        value: profileByEmail.get(i.email) || `create:${i.email}`,
+        full_name: i.full_name,
+        email: i.email,
+      }));
+
+      setInstructors(finalList as any);
     } catch (error) {
       console.error('Error fetching instructors:', error);
     }
   };
 
+  const handleInstructorSelect = async (val: string) => {
+    try {
+      if (val.startsWith('create:')) {
+        const email = val.slice(7);
+        const target: any = (instructors as any[]).find((i: any) => i.email === email);
+        const full_name = target?.full_name || email;
+        const { data, error } = await supabase.functions.invoke('manage-instructor', {
+          body: { email, full_name, role: 'instructor' },
+        });
+        if (error) throw error;
+        const newId = (data as any)?.userId || (data as any)?.user_id || (data as any)?.id;
+        if (newId) {
+          form.setValue('instructor_id', newId, { shouldValidate: true });
+          await fetchInstructors();
+        }
+      } else {
+        form.setValue('instructor_id', val, { shouldValidate: true });
+      }
+    } catch (e: any) {
+      console.error('Failed to set instructor:', e);
+      toast({ title: '오류', description: '강사 선택에 실패했습니다.', variant: 'destructive' });
+    }
+  };
   const fetchCourseData = async () => {
     if (!courseId) return;
 
@@ -550,15 +574,15 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>강사</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={handleInstructorSelect} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="강사 선택" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {instructors.map((instructor) => (
-                                <SelectItem key={instructor.id} value={instructor.id}>
+                              {instructors.map((instructor: any) => (
+                                <SelectItem key={instructor.value} value={instructor.value}>
                                   {instructor.full_name} ({instructor.email})
                                 </SelectItem>
                               ))}

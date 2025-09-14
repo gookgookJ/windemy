@@ -229,31 +229,40 @@ export const AdminCourseEdit = () => {
         (profiles || []).map((p: any) => [p.email, p.id])
       );
 
-      // Create missing profiles via Edge Function so every instructor is selectable
-      const missing = (instructorsRows || []).filter((i: any) => !profileByEmail.get(i.email));
-      if (missing.length > 0) {
-        await Promise.all(
-          missing.map(async (m: any) => {
-            try {
-              const { data, error } = await supabase.functions.invoke('manage-instructor', {
-                body: { email: m.email, full_name: m.full_name, role: 'instructor' },
-              });
-              const newId = (data as any)?.userId || (data as any)?.user_id || (data as any)?.id;
-              if (!error && newId) profileByEmail.set(m.email, newId);
-            } catch (e) {
-              console.warn('Failed to ensure profile for instructor', m.email, e);
-            }
-          })
-        );
-      }
-
-      const finalList = (instructorsRows || [])
-        .map((i: any) => ({ id: profileByEmail.get(i.email) || '', full_name: i.full_name, email: i.email }))
-        .filter((i: any) => i.id);
+      // Build list: existing profiles use their id; others will be lazily created on selection
+      const finalList = (instructorsRows || []).map((i: any) => ({
+        value: profileByEmail.get(i.email) || `create:${i.email}`,
+        full_name: i.full_name,
+        email: i.email,
+      }));
 
       setInstructors(finalList);
     } catch (error) {
       console.error('Error fetching instructors:', error);
+    }
+  };
+
+  const handleInstructorChange = async (val: string) => {
+    try {
+      if (val.startsWith('create:')) {
+        const email = val.slice(7);
+        const target = (instructors as any[]).find((i: any) => i.email === email);
+        const full_name = target?.full_name || email;
+        const { data, error } = await supabase.functions.invoke('manage-instructor', {
+          body: { email, full_name, role: 'instructor' },
+        });
+        if (error) throw error;
+        const newId = (data as any)?.userId || (data as any)?.user_id || (data as any)?.id;
+        if (newId) {
+          setCourse((prev) => (prev ? { ...prev, instructor_id: newId } : prev));
+          await fetchInstructors();
+        }
+      } else {
+        setCourse((prev) => (prev ? { ...prev, instructor_id: val } : prev));
+      }
+    } catch (e: any) {
+      console.error('Failed to set instructor:', e);
+      toast({ title: '오류', description: '강사 선택에 실패했습니다.', variant: 'destructive' });
     }
   };
 
@@ -697,13 +706,13 @@ export const AdminCourseEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="instructor">강사 관리</Label>
                 <div className="flex gap-2">
-                  <Select value={course.instructor_id || undefined} onValueChange={(value) => setCourse({ ...course, instructor_id: value })}>
+                  <Select value={course.instructor_id || undefined} onValueChange={handleInstructorChange}>
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder="강사 선택" />
                     </SelectTrigger>
                     <SelectContent>
                       {instructors.map((instructor: any) => (
-                        <SelectItem key={instructor.id} value={instructor.id}>
+                        <SelectItem key={instructor.value} value={instructor.value}>
                           {instructor.full_name} ({instructor.email})
                         </SelectItem>
                       ))}
