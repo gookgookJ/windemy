@@ -86,6 +86,13 @@ interface CourseData {
   };
 }
 
+interface InstructorInfo {
+  full_name?: string;
+  instructor_bio?: string;
+  instructor_avatar_url?: string;
+  email?: string;
+}
+
 const CourseDetail = () => {
   const [expandedSection, setExpandedSection] = useState<number | null>(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -99,6 +106,7 @@ const CourseDetail = () => {
   const [groupedSections, setGroupedSections] = useState<any[]>([]); // Add state for sections
   const [loading, setLoading] = useState(true);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [instructorInfo, setInstructorInfo] = useState<InstructorInfo | null>(null);
   
   const navigate = useNavigate();
   const { id: courseId } = useParams();
@@ -138,12 +146,12 @@ const CourseDetail = () => {
     
     setLoading(true);
     try {
-      // Fetch course details with instructor info
+      // Fetch course details with basic instructor reference (profile for email)
       const { data: course, error: courseError } = await supabase
         .from('courses')
         .select(`
           *,
-          profiles:instructor_id(full_name, instructor_bio, instructor_avatar_url),
+          profiles:instructor_id(full_name, email),
           categories:category_id(name)
         `)
         .eq('id', courseId)
@@ -151,6 +159,31 @@ const CourseDetail = () => {
 
       if (courseError) throw courseError;
       setCourseData(course);
+
+      // Fetch instructor details from 'instructors' table using email (source of truth)
+      try {
+        let insInfo: InstructorInfo | null = null;
+        const email = (course as any)?.profiles?.email as string | undefined;
+        if (email) {
+          const { data: byEmail } = await supabase
+            .from('instructors')
+            .select('full_name, instructor_bio, instructor_avatar_url, email')
+            .eq('email', email)
+            .maybeSingle();
+          if (byEmail) insInfo = byEmail as InstructorInfo;
+        }
+        if (!insInfo && (course as any)?.instructor_id) {
+          const { data: byId } = await supabase
+            .from('instructors')
+            .select('full_name, instructor_bio, instructor_avatar_url, email')
+            .eq('id', (course as any).instructor_id)
+            .maybeSingle();
+          if (byId) insInfo = byId as InstructorInfo;
+        }
+        setInstructorInfo(insInfo);
+      } catch (e) {
+        console.warn('Failed to load instructor info from instructors table', e);
+      }
 
       // Fetch course options
       const { data: optionsData, error: optionsError } = await supabase
@@ -917,10 +950,10 @@ const CourseDetail = () => {
               <h2 className="text-xl font-bold mb-4">강사 소개</h2>
               <div className="flex items-start gap-4">
                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  {courseData.profiles?.instructor_avatar_url ? (
+                  {instructorInfo?.instructor_avatar_url ? (
                     <img
-                      src={courseData.profiles.instructor_avatar_url}
-                      alt={courseData.profiles?.full_name || '강사'}
+                      src={instructorInfo.instructor_avatar_url}
+                      alt={instructorInfo.full_name || '강사'}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -928,9 +961,9 @@ const CourseDetail = () => {
                   )}
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-2">{courseData.profiles?.full_name || '강사'}</h3>
-                  {courseData.profiles?.instructor_bio && (
-                    <p className="text-sm text-muted-foreground mb-3">{courseData.profiles.instructor_bio}</p>
+                  <h3 className="text-lg font-semibold mb-2">{instructorInfo?.full_name || courseData.profiles?.full_name || '강사'}</h3>
+                  {instructorInfo?.instructor_bio && (
+                    <p className="text-sm text-muted-foreground mb-3">{instructorInfo.instructor_bio}</p>
                   )}
                   <div className="flex items-center gap-4 text-xs">
                     <div className="flex items-center gap-1">

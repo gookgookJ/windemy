@@ -52,12 +52,29 @@ export const AdminCourses = () => {
           duration_hours,
           level,
           created_at,
-          instructor:profiles(full_name)
+          instructor:profiles(full_name, email)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setCourses(data || []);
+
+      // Override instructor name with data from instructors table (source of truth)
+      const emails = Array.from(new Set((data || []).map((d: any) => d.instructor?.email).filter(Boolean)));
+      let instructorsByEmail = new Map<string, string>();
+      if (emails.length > 0) {
+        const { data: insRows } = await supabase
+          .from('instructors')
+          .select('email, full_name')
+          .in('email', emails as string[]);
+        instructorsByEmail = new Map((insRows || []).map((r: any) => [r.email, r.full_name]));
+      }
+
+      const normalized = (data || []).map((d: any) => ({
+        ...d,
+        instructor: { full_name: instructorsByEmail.get(d.instructor?.email) || d.instructor?.full_name || '' }
+      }));
+
+      setCourses(normalized as any);
     } catch (error) {
       console.error('Error fetching courses:', error);
       toast({
