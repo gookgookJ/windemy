@@ -211,7 +211,7 @@ export const AdminCourseEdit = () => {
         supabase
           .from('profiles')
           .select('id, full_name, email')
-          .or('role.eq.admin,role.eq.instructor')
+          .eq('role', 'instructor')
           .order('full_name'),
         supabase
           .from('instructors')
@@ -682,11 +682,15 @@ export const AdminCourseEdit = () => {
                       <SelectValue placeholder="강사 선택" />
                     </SelectTrigger>
                     <SelectContent>
-                      {instructors.filter((i:any)=>i.id).map((instructor:any) => (
-                        <SelectItem key={instructor.id} value={instructor.id}>
-                          {instructor.full_name} ({instructor.email})
-                        </SelectItem>
-                      ))}
+                      {instructors.map((instructor: any) => {
+                        const itemValue = instructor.id || `noid:${instructor.email}`;
+                        const isDisabled = !!instructor.disabled || !instructor.id;
+                        return (
+                          <SelectItem key={itemValue} value={itemValue} disabled={isDisabled}>
+                            {instructor.full_name} ({instructor.email}){isDisabled ? ' - 계정 없음(선택 불가)' : ''}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   <Button

@@ -117,7 +117,7 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
         supabase
           .from('profiles')
           .select('id, full_name, email')
-          .or('role.eq.admin,role.eq.instructor')
+          .eq('role', 'instructor')
           .order('full_name'),
         supabase
           .from('instructors')
@@ -557,11 +557,15 @@ const CourseForm = ({ courseId, onSave }: CourseFormProps) => {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {instructors.filter((i)=>i.id).map((instructor) => (
-                                <SelectItem key={instructor.id} value={instructor.id}>
-                                  {instructor.full_name} ({instructor.email})
-                                </SelectItem>
-                              ))}
+                              {instructors.map((instructor) => {
+                                const itemValue = instructor.id || `noid:${instructor.email}`;
+                                const isDisabled = !!instructor.disabled || !instructor.id;
+                                return (
+                                  <SelectItem key={itemValue} value={itemValue} disabled={isDisabled}>
+                                    {instructor.full_name} ({instructor.email}){isDisabled ? ' - 계정 없음(선택 불가)' : ''}
+                                  </SelectItem>
+                                );
+                              })}
                             </SelectContent>
                           </Select>
                           <FormMessage />
