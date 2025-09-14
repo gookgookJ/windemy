@@ -153,28 +153,49 @@ const AdminCourseCreate = () => {
 
   const fetchInstructors = async () => {
     try {
-      const [profilesResult, instructorsResult] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('id, full_name, email')
-          .eq('role', 'instructor')
-          .order('full_name'),
-        supabase
-          .from('instructors')
-          .select('id, full_name, email')
-          .order('full_name')
-      ]);
+      // Source of truth: instructors table
+      const { data: instructorsRows, error: insErr } = await supabase
+        .from('instructors')
+        .select('id, full_name, email')
+        .order('full_name');
 
-      if (profilesResult.error) throw profilesResult.error;
-      if (instructorsResult.error) throw instructorsResult.error;
+      if (insErr) throw insErr;
 
-      const profiles = profilesResult.data || [];
-      const instructorsOnly = (instructorsResult.data || []).filter((i: any) => !profiles.some((p: any) => p.email === i.email));
+      const emails = (instructorsRows || []).map((i: any) => i.email).filter(Boolean);
 
-      const finalList = [
-        ...profiles.map((p: any) => ({ id: p.id, full_name: p.full_name, email: p.email, disabled: false })),
-        ...instructorsOnly.map((i: any) => ({ id: '', full_name: i.full_name, email: i.email, disabled: true }))
-      ];
+      // Fetch existing profiles for these emails
+      const { data: profiles, error: profErr } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('email', emails);
+
+      if (profErr) throw profErr;
+
+      const profileByEmail = new Map<string, string>(
+        (profiles || []).map((p: any) => [p.email, p.id])
+      );
+
+      // Create missing profiles via Edge Function so every instructor is selectable
+      const missing = (instructorsRows || []).filter((i: any) => !profileByEmail.get(i.email));
+      if (missing.length > 0) {
+        await Promise.all(
+          missing.map(async (m: any) => {
+            try {
+              const { data, error } = await supabase.functions.invoke('manage-instructor', {
+                body: { email: m.email, full_name: m.full_name, role: 'instructor' },
+              });
+              const newId = (data as any)?.userId || (data as any)?.user_id || (data as any)?.id;
+              if (!error && newId) profileByEmail.set(m.email, newId);
+            } catch (e) {
+              console.warn('Failed to ensure profile for instructor', m.email, e);
+            }
+          })
+        );
+      }
+
+      const finalList = (instructorsRows || [])
+        .map((i: any) => ({ id: profileByEmail.get(i.email) || '', full_name: i.full_name, email: i.email }))
+        .filter((i: any) => i.id);
 
       setInstructors(finalList);
     } catch (error) {
@@ -612,15 +633,11 @@ const AdminCourseCreate = () => {
                           <SelectValue placeholder="강사를 선택하세요" />
                         </SelectTrigger>
                         <SelectContent>
-                          {instructors.map((instructor: any) => {
-                            const itemValue = instructor.id || `noid:${instructor.email}`;
-                            const isDisabled = !!instructor.disabled || !instructor.id;
-                            return (
-                              <SelectItem key={itemValue} value={itemValue} disabled={isDisabled}>
-                                {instructor.full_name} ({instructor.email}){isDisabled ? ' - 계정 없음(선택 불가)' : ''}
-                              </SelectItem>
-                            );
-                          })}
+                          {instructors.map((instructor: any) => (
+                            <SelectItem key={instructor.id} value={instructor.id}>
+                              {instructor.full_name} ({instructor.email})
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <Button
