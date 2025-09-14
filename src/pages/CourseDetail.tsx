@@ -590,10 +590,10 @@ const CourseDetail = () => {
                   <div className="bg-muted/30 rounded-2xl p-8">
                     <div className="flex items-start gap-6">
                       <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {courseData.profiles?.instructor_avatar_url ? (
+                        {instructorInfo?.instructor_avatar_url ? (
                           <img 
-                            src={courseData.profiles.instructor_avatar_url}
-                            alt={courseData.profiles?.full_name || "강사"}
+                            src={instructorInfo.instructor_avatar_url}
+                            alt={instructorInfo.full_name || '강사'}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -601,9 +601,9 @@ const CourseDetail = () => {
                         )}
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold mb-2">{courseData.profiles?.full_name || "강사"}</h3>
-                        {courseData.profiles?.instructor_bio && (
-                          <p className="text-muted-foreground">{courseData.profiles.instructor_bio}</p>
+                        <h3 className="text-xl font-semibold mb-2">{instructorInfo?.full_name || courseData.profiles?.full_name || '강사'}</h3>
+                        {instructorInfo?.instructor_bio && (
+                          <p className="text-muted-foreground">{instructorInfo.instructor_bio}</p>
                         )}
                       </div>
                     </div>
