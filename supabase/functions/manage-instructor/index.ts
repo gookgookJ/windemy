@@ -79,9 +79,40 @@ serve(async (req) => {
 
     let userId: string | undefined = id;
 
+    // Ensure there is an auth user for this instructor
     if (!userId && email) {
-      // For new instructors, generate a UUID (no actual auth user needed)
-      userId = crypto.randomUUID();
+      // Try to create the user (idempotent with fallback)
+      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: { full_name, role },
+      });
+
+      if (createErr) {
+        // If already exists, find the existing user by email
+        try {
+          const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+          if (listErr) throw listErr;
+          const found = list?.users?.find((u: any) => (u.email || '').toLowerCase() === (email || '').toLowerCase());
+          if (!found) throw createErr;
+          userId = found.id;
+        } catch (listError) {
+          console.error('ADMIN_CREATE_OR_LOOKUP_ERROR', createErr, listError);
+          return new Response(JSON.stringify({ error: 'Failed to ensure auth user for instructor' }), {
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          });
+        }
+      } else {
+        userId = created?.user?.id;
+      }
+    }
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: 'Unable to resolve instructor user id' }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     // Upsert profile with provided fields (service role bypasses RLS)
