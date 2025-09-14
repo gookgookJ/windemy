@@ -82,27 +82,43 @@ export const AdminInstructorProfile = () => {
     try {
       if (isNewInstructor) {
         // Create instructor (no auth user needed)
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('instructors')
           .insert({
-            email: profile.email || `instructor_${Date.now()}@temp.com`, // Generate temp email if not provided
+            email: profile.email || `instructor_${Date.now()}@temp.com`,
             full_name: profile.full_name,
             instructor_bio: profile.instructor_bio,
             instructor_avatar_url: profile.instructor_avatar_url,
-          });
+          })
+          .select()
+          .maybeSingle();
 
         if (error) {
           throw new Error(error.message || '강사 생성에 실패했습니다.');
         }
 
+        // Sync to profiles via Edge Function so course pages see updated data
+        try {
+          await supabase.functions.invoke('manage-instructor', {
+            body: {
+              email: inserted?.email || profile.email,
+              full_name: inserted?.full_name || profile.full_name,
+              instructor_bio: inserted?.instructor_bio || profile.instructor_bio,
+              instructor_avatar_url: inserted?.instructor_avatar_url || profile.instructor_avatar_url,
+              role: 'instructor',
+            },
+          });
+        } catch (e) {
+          console.warn('Profile sync failed (create)', e);
+        }
 
         toast({
           title: '성공',
           description: '새 강사 프로필이 생성되었습니다.'
         });
       } else {
-        // Update existing instructor
-        const { error } = await supabase
+        // Update existing instructor and then sync to profiles
+        const { data: updated, error } = await supabase
           .from('instructors')
           .update({
             full_name: profile.full_name,
@@ -110,9 +126,26 @@ export const AdminInstructorProfile = () => {
             instructor_bio: profile.instructor_bio,
             instructor_avatar_url: profile.instructor_avatar_url,
           })
-          .eq('id', id);
+          .eq('id', id)
+          .select()
+          .maybeSingle();
 
         if (error) throw new Error(error.message);
+
+        // Sync to profiles via Edge Function
+        try {
+          await supabase.functions.invoke('manage-instructor', {
+            body: {
+              email: updated?.email || profile.email,
+              full_name: updated?.full_name || profile.full_name,
+              instructor_bio: updated?.instructor_bio || profile.instructor_bio,
+              instructor_avatar_url: updated?.instructor_avatar_url || profile.instructor_avatar_url,
+              role: 'instructor',
+            },
+          });
+        } catch (e) {
+          console.warn('Profile sync failed (update)', e);
+        }
 
         toast({
           title: '성공',

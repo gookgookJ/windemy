@@ -916,12 +916,22 @@ const CourseDetail = () => {
             <section id="instructor" className="bg-muted/30 rounded-2xl p-6">
               <h2 className="text-xl font-bold mb-4">강사 소개</h2>
               <div className="flex items-start gap-4">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                  <User className="w-8 h-8 text-muted-foreground" />
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {courseData.profiles?.instructor_avatar_url ? (
+                    <img
+                      src={courseData.profiles.instructor_avatar_url}
+                      alt={courseData.profiles?.full_name || '강사'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-8 h-8 text-muted-foreground" />
+                  )}
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-2">{courseData.profiles?.full_name || "강사"}</h3>
-                  <p className="text-sm text-muted-foreground mb-3">{courseData.description}</p>
+                  <h3 className="text-lg font-semibold mb-2">{courseData.profiles?.full_name || '강사'}</h3>
+                  {courseData.profiles?.instructor_bio && (
+                    <p className="text-sm text-muted-foreground mb-3">{courseData.profiles.instructor_bio}</p>
+                  )}
                   <div className="flex items-center gap-4 text-xs">
                     <div className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
