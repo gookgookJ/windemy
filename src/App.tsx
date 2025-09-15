@@ -35,6 +35,17 @@ import CategoryCourses from "./pages/CategoryCourses";
 import Learn from "./pages/Learn";
 import NotFound from "./pages/NotFound";
 
+// User pages
+import FavoriteCourses from "./pages/FavoriteCourses";
+import CourseConsultation from "./pages/CourseConsultation";
+import HonorsBenefits from "./pages/HonorsBenefits";
+import Certificates from "./pages/Certificates";
+import ReviewManagement from "./pages/ReviewManagement";
+import Inquiry from "./pages/Inquiry";
+import FAQ from "./pages/FAQ";
+import AccountSettings from "./pages/AccountSettings";
+import ProfileSettings from "./pages/ProfileSettings";
+
 console.log('Debug React in App.tsx', React, typeof (React as any)?.useEffect);
 
 const queryClient = new QueryClient();
@@ -57,6 +68,15 @@ const App = () => (
             <Route path="/cart" element={<Cart />} />
             <Route path="/purchase-history" element={<PurchaseHistory />} />
             <Route path="/my-page" element={<MyPage />} />
+            <Route path="/favorite-courses" element={<FavoriteCourses />} />
+            <Route path="/course-consultation" element={<CourseConsultation />} />
+            <Route path="/honors-benefits" element={<HonorsBenefits />} />
+            <Route path="/certificates" element={<Certificates />} />
+            <Route path="/review-management" element={<ReviewManagement />} />
+            <Route path="/inquiry" element={<Inquiry />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/account-settings" element={<AccountSettings />} />
+            <Route path="/profile-settings" element={<ProfileSettings />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/courses" element={<AdminCourses />} />

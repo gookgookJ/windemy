@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { BookOpen, Clock, Award, Settings, User, Play, ChevronRight, Calendar, FileText, CreditCard } from 'lucide-react';
 import Header from '@/components/Header';
+import UserSidebar from '@/components/UserSidebar';
 
 interface Enrollment {
   id: string;
@@ -109,80 +110,7 @@ const MyPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* 사이드바 */}
             <div className="lg:col-span-1">
-              <Card className="sticky top-24">
-                <CardContent className="p-6">
-                  <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-3">
-                      <User className="w-8 h-8 text-white" />
-                    </div>
-                    <h2 className="text-xl font-bold">{profile?.full_name || '사용자'}</h2>
-                    <p className="text-muted-foreground text-sm">
-                      {profile?.role === 'student' ? '학생' : 
-                       profile?.role === 'instructor' ? '강사' : 
-                       profile?.role === 'admin' ? '관리자' : '사용자'}
-                    </p>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Button variant="ghost" className="w-full justify-start text-left bg-primary/10 text-primary">
-                      <BookOpen className="w-4 h-4 mr-3" />
-                      내 강의실
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start text-left" onClick={() => navigate('/purchase-history')}>
-                      <CreditCard className="w-4 h-4 mr-3" />
-                      구매 내역
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start text-left">
-                      <Settings className="w-4 h-4 mr-3" />
-                      관심 클래스
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start text-left">
-                      <User className="w-4 h-4 mr-3" />
-                      강의 상담
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start text-left">
-                      <FileText className="w-4 h-4 mr-3" />
-                      아너스 혜택
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start text-left">
-                      <Award className="w-4 h-4 mr-3" />
-                      수료증
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start text-left">
-                      <Settings className="w-4 h-4 mr-3" />
-                      후기 관리
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start text-left">
-                      <FileText className="w-4 h-4 mr-3" />
-                      구매 내역
-                    </Button>
-                    <div className="pt-4 border-t">
-                      <Button variant="ghost" className="w-full justify-start text-left">
-                        <Clock className="w-4 h-4 mr-3" />
-                        1:1 문의
-                      </Button>
-                      <Button variant="ghost" className="w-full justify-start text-left">
-                        <FileText className="w-4 h-4 mr-3" />
-                        자주 묻는 질문
-                      </Button>
-                      <div className="pt-4 border-t">
-                        <Button variant="ghost" className="w-full justify-start text-left">
-                          <Settings className="w-4 h-4 mr-3" />
-                          계정 관리
-                        </Button>
-                        <Button variant="ghost" className="w-full justify-start text-left">
-                          <Settings className="w-4 h-4 mr-3" />
-                          회원정보관리
-                        </Button>
-                        <Button variant="ghost" className="w-full justify-start text-left" onClick={handleSignOut}>
-                          <Settings className="w-4 h-4 mr-3" />
-                          로그아웃
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <UserSidebar />
             </div>
 
             {/* 메인 콘텐츠 */}

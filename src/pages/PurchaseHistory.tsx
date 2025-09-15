@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, CreditCard, Package, Filter } from 'lucide-react';
 import Header from '@/components/Header';
+import UserSidebar from '@/components/UserSidebar';
 
 interface OrderItem {
   id: string;
@@ -164,12 +165,20 @@ const PurchaseHistory = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* 헤더 */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">구매 내역</h1>
-            <p className="text-muted-foreground">구매하신 강의들을 확인해보세요.</p>
-          </div>
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* 사이드바 */}
+            <div className="lg:col-span-1">
+              <UserSidebar />
+            </div>
+            
+            {/* 메인 콘텐츠 */}
+            <div className="lg:col-span-3">
+              {/* 헤더 */}
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold mb-2">구매 내역</h1>
+                <p className="text-muted-foreground">구매하신 강의들을 확인해보세요.</p>
+              </div>
 
           {/* 필터 */}
           <Card className="mb-6">
@@ -293,8 +302,10 @@ const PurchaseHistory = () => {
                   </CardContent>
                 </Card>
               ))}
+              </div>
+            )}
             </div>
-          )}
+          </div>
         </div>
       </main>
     </div>
