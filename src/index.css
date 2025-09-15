@@ -120,6 +120,17 @@ All colors MUST be HSL.
   }
 }
 
+/* Text truncation utilities */
+@layer utilities {
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-height: 1.2;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
