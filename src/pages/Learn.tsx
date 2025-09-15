@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { PlayCircle, CheckCircle, Clock, ArrowLeft, ArrowRight, File } from 'lucide-react';
+import { PlayCircle, CheckCircle, Clock, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import '@/types/vimeo.d.ts';
 import { VideoProgressTracker } from '@/utils/VideoProgressTracker';
@@ -19,8 +19,6 @@ interface CourseSession {
   duration_minutes: number;
   order_index: number;
   is_free: boolean;
-  attachment_url?: string;
-  attachment_name?: string;
 }
 
 interface SessionProgress {
@@ -180,14 +178,10 @@ const Learn = () => {
       }
       setEnrollment(enrollmentData);
 
-      // 세션 목록 (첨부파일 정보 포함)
+      // 세션 목록
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('course_sessions')
-        .select(`
-          *,
-          attachment_url,
-          attachment_name
-        `)
+        .select('*')
         .eq('course_id', courseId)
         .order('order_index');
 
@@ -360,36 +354,6 @@ const Learn = () => {
     const currentIndex = sessions.findIndex(s => s.id === currentSession?.id);
     if (currentIndex > 0) {
       setCurrentSession(sessions[currentIndex - 1]);
-    }
-  };
-
-  const handleFileDownload = async (fileUrl: string, fileName: string) => {
-    if (!currentSession || !user) return;
-
-    try {
-      // 다운로드 로그 기록
-      await supabase
-        .from('session_file_downloads')
-        .insert({
-          user_id: user.id,
-          session_id: currentSession.id,
-          file_name: fileName
-        });
-
-      // 새 탭에서 파일 다운로드
-      window.open(fileUrl, '_blank');
-      
-      toast({
-        title: "다운로드 시작",
-        description: "파일 다운로드가 시작되었습니다.",
-      });
-    } catch (error) {
-      console.error('Error downloading file:', error);
-      toast({
-        title: "다운로드 실패",
-        description: "파일 다운로드에 실패했습니다.",
-        variant: "destructive"
-      });
     }
   };
 

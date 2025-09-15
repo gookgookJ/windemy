@@ -730,38 +730,6 @@ export type Database = {
         }
         Relationships: []
       }
-      session_file_downloads: {
-        Row: {
-          downloaded_at: string
-          file_name: string
-          id: string
-          session_id: string
-          user_id: string
-        }
-        Insert: {
-          downloaded_at?: string
-          file_name: string
-          id?: string
-          session_id: string
-          user_id: string
-        }
-        Update: {
-          downloaded_at?: string
-          file_name?: string
-          id?: string
-          session_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "session_file_downloads_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "course_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       session_progress: {
         Row: {
           completed: boolean | null
