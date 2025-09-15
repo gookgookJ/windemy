@@ -167,9 +167,11 @@ export const AdminSidebar = () => {
 
   return (
     <Sidebar collapsible="icon" className="pt-16">
-      <SidebarTrigger className="m-2 self-end" />
-      
       <SidebarContent className="pt-4">
+        <div className="flex justify-end p-2">
+          <SidebarTrigger />
+        </div>
+        
         {Object.entries(groupedItems).map(([group, items]) => (
           <SidebarGroup key={group}>
             <SidebarGroupLabel>
