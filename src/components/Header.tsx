@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<'signin' | 'signup'>('signup');
   const { user, profile, signOut, isAdmin } = useAuth();
 
   const navigationItems = [
@@ -122,16 +125,26 @@ const Header = () => {
               </div>
             ) : (
               <div className="hidden sm:flex items-center space-x-2">
-                <Link to="/auth">
-                  <Button variant="ghost" size="sm">
-                    로그인
-                  </Button>
-                </Link>
-                <Link to="/auth">
-                  <Button variant="default" size="sm">
-                    회원가입
-                  </Button>
-                </Link>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setAuthModalTab('signin');
+                    setIsAuthModalOpen(true);
+                  }}
+                >
+                  로그인
+                </Button>
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={() => {
+                    setAuthModalTab('signup');
+                    setIsAuthModalOpen(true);
+                  }}
+                >
+                  회원가입
+                </Button>
               </div>
             )}
 
@@ -206,16 +219,28 @@ const Header = () => {
               {/* Mobile Auth Buttons */}
               {!user ? (
                 <div className="flex space-x-3 pt-4 border-t border-border sm:hidden">
-                  <Link to="/auth" className="flex-1">
-                    <Button variant="ghost" className="w-full">
-                      로그인
-                    </Button>
-                  </Link>
-                  <Link to="/auth" className="flex-1">
-                    <Button variant="default" className="w-full">
-                      회원가입
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    className="flex-1"
+                    onClick={() => {
+                      setAuthModalTab('signin');
+                      setIsAuthModalOpen(true);
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    로그인
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    className="flex-1"
+                    onClick={() => {
+                      setAuthModalTab('signup');
+                      setIsAuthModalOpen(true);
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    회원가입
+                  </Button>
                 </div>
               ) : (
                 <div className="pt-4 border-t border-border sm:hidden">
@@ -229,6 +254,13 @@ const Header = () => {
           </div>
         )}
       </div>
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        defaultTab={authModalTab}
+      />
     </header>
   );
 };
