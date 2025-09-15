@@ -25,12 +25,21 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
     email: '', 
     password: '', 
     fullName: '', 
+    phone: '',
     confirmPassword: '' 
   });
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [findIdData, setFindIdData] = useState({ fullName: '', phone: '' });
   const [foundEmail, setFoundEmail] = useState('');
   const { signIn } = useAuth();
+  
+  // 전화번호 포맷팅 함수
+  const formatPhoneNumber = (value: string) => {
+    const numbers = value.replace(/[^\d]/g, '');
+    if (numbers.length <= 3) return numbers;
+    if (numbers.length <= 7) return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+  };
   const { toast } = useToast();
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -99,7 +108,8 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            full_name: signUpData.fullName
+            full_name: signUpData.fullName,
+            phone: signUpData.phone
           }
         }
       });
@@ -123,7 +133,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
           title: "회원가입 완료",
           description: "이메일로 인증 링크를 발송했습니다. 이메일을 확인해주세요."
         });
-        setSignUpData({ email: '', password: '', fullName: '', confirmPassword: '' });
+        setSignUpData({ email: '', password: '', fullName: '', phone: '', confirmPassword: '' });
         setCurrentView('main');
       }
     } catch (error: any) {
@@ -227,7 +237,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
   const handleClose = () => {
     setCurrentView('main');
     setSignInData({ email: '', password: '' });
-    setSignUpData({ email: '', password: '', fullName: '', confirmPassword: '' });
+    setSignUpData({ email: '', password: '', fullName: '', phone: '', confirmPassword: '' });
     setForgotPasswordEmail('');
     setFindIdData({ fullName: '', phone: '' });
     setFoundEmail('');
@@ -364,6 +374,23 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="phone">전화번호</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="전화번호 (010-1234-5678)"
+                    value={signUpData.phone}
+                    onChange={(e) => {
+                      const formatted = formatPhoneNumber(e.target.value);
+                      setSignUpData({ ...signUpData, phone: formatted });
+                    }}
+                    className="h-12 border-gray-200 rounded-lg"
+                    maxLength={13}
+                    required
+                  />
+                  <p className="text-xs text-gray-500">ID 찾기 시 사용됩니다</p>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="password">비밀번호</Label>
                   <Input
                     id="password"
@@ -420,10 +447,14 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                       <Input
                         id="findIdPhone"
                         type="tel"
-                        placeholder="가입시 입력한 전화번호를 입력하세요"
+                        placeholder="전화번호 (010-1234-5678)"
                         value={findIdData.phone}
-                        onChange={(e) => setFindIdData({ ...findIdData, phone: e.target.value })}
+                        onChange={(e) => {
+                          const formatted = formatPhoneNumber(e.target.value);
+                          setFindIdData({ ...findIdData, phone: formatted });
+                        }}
                         className="h-12 border-gray-200 rounded-lg"
+                        maxLength={13}
                         required
                       />
                     </div>
