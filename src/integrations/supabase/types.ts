@@ -700,6 +700,7 @@ export type Database = {
           id: string
           instructor_avatar_url: string | null
           instructor_bio: string | null
+          marketing_consent: boolean | null
           phone: string | null
           role: string | null
           updated_at: string | null
@@ -712,6 +713,7 @@ export type Database = {
           id: string
           instructor_avatar_url?: string | null
           instructor_bio?: string | null
+          marketing_consent?: boolean | null
           phone?: string | null
           role?: string | null
           updated_at?: string | null
@@ -724,6 +726,7 @@ export type Database = {
           id?: string
           instructor_avatar_url?: string | null
           instructor_bio?: string | null
+          marketing_consent?: boolean | null
           phone?: string | null
           role?: string | null
           updated_at?: string | null

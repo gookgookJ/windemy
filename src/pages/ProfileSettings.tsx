@@ -43,6 +43,7 @@ const ProfileSettings = () => {
     bio: '',
     avatar_url: ''
   });
+  const [originalMarketingConsent, setOriginalMarketingConsent] = useState(false);
 
   useEffect(() => {
     document.title = "회원정보관리 | 윈들리아카데미";
@@ -63,14 +64,17 @@ const ProfileSettings = () => {
       };
       setFormData(initialData);
       setOriginalFormData(initialData);
+      setMarketingConsent(profile.marketing_consent || false);
+      setOriginalMarketingConsent(profile.marketing_consent || false);
     }
   }, [user, profile, navigate]);
 
   // 변경사항 감지
   useEffect(() => {
     const hasFormChanges = JSON.stringify(formData) !== JSON.stringify(originalFormData);
-    setHasChanges(hasFormChanges);
-  }, [formData, originalFormData]);
+    const hasMarketingChanges = marketingConsent !== originalMarketingConsent;
+    setHasChanges(hasFormChanges || hasMarketingChanges);
+  }, [formData, originalFormData, marketingConsent, originalMarketingConsent]);
 
   const handleFormChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -154,6 +158,7 @@ const ProfileSettings = () => {
           full_name: formData.full_name,
           phone: formData.phone,
           instructor_bio: formData.bio,
+          marketing_consent: marketingConsent,
           updated_at: new Date().toISOString()
         })
         .eq('id', user?.id);
@@ -162,6 +167,7 @@ const ProfileSettings = () => {
 
       // 원본 데이터 업데이트
       setOriginalFormData({ ...formData });
+      setOriginalMarketingConsent(marketingConsent);
       setProfileCurrentPassword('');
 
       toast({
