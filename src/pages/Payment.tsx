@@ -207,7 +207,7 @@ const Payment = () => {
             {/* Course Information */}
             <Card className="overflow-hidden">
               <CardContent className="p-6">
-                <div className="flex gap-6">
+                <div className="flex gap-6 items-center">
                   {/* Course Thumbnail */}
                   <div className="flex-shrink-0">
                     <img
