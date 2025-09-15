@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,8 +11,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { User, Camera, Save, Lock, Trash2 } from 'lucide-react';
+import { User, Camera, Save, Lock, Trash2, Upload, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { uploadAvatar } from '@/utils/uploadAvatar';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
 
@@ -24,13 +25,22 @@ const ProfileSettings = () => {
     avatar_url: ''
   });
   const [marketingConsent, setMarketingConsent] = useState(true);
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const [originalFormData, setOriginalFormData] = useState({
+    full_name: '',
+    phone: '',
+    bio: '',
+    avatar_url: ''
+  });
 
   useEffect(() => {
     document.title = "회원정보관리 | 윈들리아카데미";
@@ -43,23 +53,67 @@ const ProfileSettings = () => {
     }
 
     if (profile) {
-      setFormData({
+      const initialData = {
         full_name: profile.full_name || '',
         phone: profile.phone || '',
         bio: profile.instructor_bio || '',
         avatar_url: profile.avatar_url || ''
-      });
+      };
+      setFormData(initialData);
+      setOriginalFormData(initialData);
     }
   }, [user, profile, navigate]);
+
+  // 변경사항 감지
+  useEffect(() => {
+    const hasFormChanges = JSON.stringify(formData) !== JSON.stringify(originalFormData);
+    setHasChanges(hasFormChanges);
+  }, [formData, originalFormData]);
+
+  const handleFormChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploadingAvatar(true);
+    try {
+      const avatarUrl = await uploadAvatar(file, user.id);
+      setFormData(prev => ({ ...prev, avatar_url: avatarUrl }));
+      
+      // 즉시 프로필에 반영
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar_url: avatarUrl })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "성공",
+        description: "프로필 사진이 성공적으로 업데이트되었습니다.",
+      });
+    } catch (error: any) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        title: "오류",
+        description: error.message || "프로필 사진 업로드 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!currentPassword) {
+    if (!hasChanges) {
       toast({
-        title: "오류",
-        description: "현재 비밀번호를 입력해주세요.",
-        variant: "destructive",
+        title: "알림",
+        description: "변경된 내용이 없습니다.",
       });
       return;
     }
@@ -67,21 +121,6 @@ const ProfileSettings = () => {
     setLoading(true);
 
     try {
-      // 현재 비밀번호 확인
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user?.email || '',
-        password: currentPassword,
-      });
-
-      if (signInError) {
-        toast({
-          title: "오류", 
-          description: "현재 비밀번호가 올바르지 않습니다.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       // 프로필 업데이트
       const { error: profileError } = await supabase
         .from('profiles')
@@ -89,19 +128,19 @@ const ProfileSettings = () => {
           full_name: formData.full_name,
           phone: formData.phone,
           instructor_bio: formData.bio,
-          avatar_url: formData.avatar_url,
           updated_at: new Date().toISOString()
         })
         .eq('id', user?.id);
 
       if (profileError) throw profileError;
 
+      // 원본 데이터 업데이트
+      setOriginalFormData({ ...formData });
+
       toast({
         title: "성공",
         description: "회원정보가 성공적으로 업데이트되었습니다.",
       });
-      
-      setCurrentPassword('');
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
@@ -188,28 +227,20 @@ const ProfileSettings = () => {
     }
   };
 
-  const handleAvatarUpload = () => {
-    // TODO: 파일 업로드 로직 구현
-    toast({
-      title: "기능 준비 중",
-      description: "프로필 사진 업로드 기능은 곧 제공될 예정입니다."
-    });
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-1">
               <UserSidebar />
             </div>
             
-            <div className="lg:col-span-3 space-y-6">
+            <div className="lg:col-span-3 space-y-8">
               <div className="mb-8">
                 <h1 className="text-3xl font-bold mb-2">회원정보관리</h1>
-                <p className="text-muted-foreground">회원정보를 수정하고 계정을 관리하세요.</p>
+                <p className="text-muted-foreground">개인정보를 수정하고 계정을 관리하세요.</p>
               </div>
 
               {/* 기본 정보 수정 */}
@@ -224,25 +255,44 @@ const ProfileSettings = () => {
                   <form onSubmit={handleProfileUpdate} className="space-y-6">
                     {/* 프로필 사진 */}
                     <div className="flex items-center gap-6">
-                      <Avatar className="h-24 w-24">
-                        <AvatarImage src={formData.avatar_url} />
-                        <AvatarFallback className="text-lg">
-                          {formData.full_name ? formData.full_name[0] : 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
+                      <div className="relative">
+                        <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
+                          <AvatarImage src={formData.avatar_url} />
+                          <AvatarFallback className="text-xl bg-primary text-primary-foreground">
+                            {formData.full_name ? formData.full_name[0] : 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        {uploadingAvatar && (
+                          <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={handleAvatarUpload}
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingAvatar}
                           className="flex items-center gap-2"
                         >
-                          <Camera className="h-4 w-4" />
-                          사진 변경
+                          {uploadingAvatar ? (
+                            <Upload className="h-4 w-4 animate-pulse" />
+                          ) : (
+                            <Camera className="h-4 w-4" />
+                          )}
+                          {uploadingAvatar ? "업로드 중..." : "사진 변경"}
                         </Button>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          JPG, PNG 파일만 업로드 가능합니다.
+                        <p className="text-sm text-muted-foreground">
+                          JPG, PNG 파일 (최대 5MB)
                         </p>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarUpload}
+                          className="hidden"
+                        />
                       </div>
                     </div>
 
@@ -253,7 +303,7 @@ const ProfileSettings = () => {
                         <Input
                           id="full_name"
                           value={formData.full_name}
-                          onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                          onChange={(e) => handleFormChange('full_name', e.target.value)}
                           required
                         />
                       </div>
@@ -278,7 +328,7 @@ const ProfileSettings = () => {
                         id="phone"
                         type="tel"
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(e) => handleFormChange('phone', e.target.value)}
                         placeholder="010-1234-5678"
                       />
                     </div>
@@ -289,7 +339,7 @@ const ProfileSettings = () => {
                         <Textarea
                           id="bio"
                           value={formData.bio}
-                          onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                          onChange={(e) => handleFormChange('bio', e.target.value)}
                           placeholder="강사님의 경력과 전문분야를 소개해주세요."
                           className="min-h-[100px]"
                         />
@@ -297,13 +347,15 @@ const ProfileSettings = () => {
                     )}
 
                     {/* 마케팅 수신 동의 */}
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 p-4 bg-muted/50 rounded-lg">
                       <Checkbox
                         id="marketing"
                         checked={marketingConsent}
                         onCheckedChange={(checked) => setMarketingConsent(!!checked)}
                       />
-                      <Label htmlFor="marketing">마케팅 정보 수신에 동의합니다</Label>
+                      <Label htmlFor="marketing" className="text-sm">
+                        마케팅 정보 및 이벤트 소식을 이메일로 받아보겠습니다
+                      </Label>
                     </div>
 
                     <Separator />
@@ -311,11 +363,11 @@ const ProfileSettings = () => {
                     {/* 계정 정보 */}
                     <div>
                       <h3 className="text-lg font-semibold mb-4">계정 정보</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <Label>계정 유형</Label>
                           <div className="p-3 bg-muted rounded-md">
-                            {profile?.role === 'student' ? '학생' : 
+                            {profile?.role === 'student' ? '학습자' : 
                              profile?.role === 'instructor' ? '강사' : 
                              profile?.role === 'admin' ? '관리자' : '사용자'}
                           </div>
@@ -330,22 +382,30 @@ const ProfileSettings = () => {
                       </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="currentPassword">현재 비밀번호 확인</Label>
-                      <Input
-                        id="currentPassword"
-                        type="password"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        placeholder="변경사항 저장을 위해 현재 비밀번호를 입력하세요"
-                        required
-                      />
+                    <div className="flex justify-end">
+                      <Button 
+                        type="submit" 
+                        disabled={loading || !hasChanges}
+                        className="min-w-[120px]"
+                      >
+                        {loading ? (
+                          <div className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                            저장 중...
+                          </div>
+                        ) : hasChanges ? (
+                          <>
+                            <Save className="h-4 w-4 mr-2" />
+                            변경사항 저장
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-4 w-4 mr-2" />
+                            저장 완료
+                          </>
+                        )}
+                      </Button>
                     </div>
-
-                    <Button type="submit" disabled={loading}>
-                      <Save className="h-4 w-4 mr-2" />
-                      {loading ? '저장 중...' : '변경사항 저장'}
-                    </Button>
                   </form>
                 </CardContent>
               </Card>
@@ -360,76 +420,92 @@ const ProfileSettings = () => {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handlePasswordChange} className="space-y-4">
-                    <div>
-                      <Label htmlFor="newPassword">새 비밀번호</Label>
-                      <Input
-                        id="newPassword"
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="새 비밀번호를 입력하세요 (최소 6자)"
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="newPassword">새 비밀번호</Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="새 비밀번호 (최소 6자)"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="confirmPassword">새 비밀번호 확인</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="새 비밀번호 다시 입력"
+                        />
+                      </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="confirmPassword">새 비밀번호 확인</Label>
-                      <Input
-                        id="confirmPassword"
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="새 비밀번호를 다시 입력하세요"
-                      />
+                    <div className="flex justify-end">
+                      <Button type="submit" disabled={loading || !newPassword || !confirmPassword}>
+                        <Lock className="h-4 w-4 mr-2" />
+                        {loading ? '변경 중...' : '비밀번호 변경'}
+                      </Button>
                     </div>
-
-                    <Button type="submit" disabled={loading || !newPassword || !confirmPassword}>
-                      <Lock className="h-4 w-4 mr-2" />
-                      {loading ? '변경 중...' : '비밀번호 변경'}
-                    </Button>
                   </form>
                 </CardContent>
               </Card>
 
-              {/* 회원탈퇴 */}
-              <Card className="border-destructive">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-destructive">
-                    <Trash2 className="h-5 w-5" />
-                    회원탈퇴
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    계정을 삭제하면 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.
-                  </p>
-                  
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        회원탈퇴
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>정말로 탈퇴하시겠습니까?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          이 작업은 되돌릴 수 없습니다. 계정과 모든 데이터가 영구적으로 삭제됩니다.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>취소</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={handleAccountDeletion}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          삭제하기
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </CardContent>
-              </Card>
+              {/* 회원탈퇴 - 덜 눈에 띄게 배치 */}
+              <details className="group">
+                <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  기타 계정 설정 ▼
+                </summary>
+                <Card className="mt-4 border-destructive/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-destructive text-base">
+                      <Trash2 className="h-4 w-4" />
+                      회원탈퇴
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-destructive/5 p-4 rounded-lg mb-4">
+                      <p className="text-sm text-muted-foreground">
+                        ⚠️ 계정을 삭제하면 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.
+                        <br />수강 기록, 구매 내역, 작성한 리뷰 등이 모두 사라집니다.
+                      </p>
+                    </div>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive/10">
+                          <Trash2 className="h-3 w-3 mr-2" />
+                          회원탈퇴
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>정말로 탈퇴하시겠습니까?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            이 작업은 되돌릴 수 없습니다. 계정과 모든 데이터가 영구적으로 삭제됩니다.
+                            <br /><br />
+                            • 수강 중인 강의 접근 불가
+                            • 구매 내역 및 수료증 삭제
+                            • 작성한 리뷰 및 문의 내역 삭제
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={handleAccountDeletion}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            삭제하기
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </CardContent>
+                </Card>
+              </details>
             </div>
           </div>
         </div>

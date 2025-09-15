@@ -3,19 +3,18 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { BookOpen, Clock, Award, Settings, User, Play, ChevronRight, Calendar, FileText, CreditCard } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { BookOpen, Clock, Award, TrendingUp, Play, Calendar, Users } from 'lucide-react';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
 
-interface Enrollment {
+interface EnrollmentWithCourse {
   id: string;
   progress: number;
   enrolled_at: string;
-  completed_at?: string;
   course: {
     id: string;
     title: string;
@@ -27,12 +26,22 @@ interface Enrollment {
 }
 
 const MyPage = () => {
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [enrollments, setEnrollments] = useState<EnrollmentWithCourse[]>([]);
+  const [stats, setStats] = useState({
+    totalCourses: 0,
+    completedCourses: 0,
+    inProgressCourses: 0,
+    totalHours: 0
+  });
   const [loading, setLoading] = useState(true);
-  const { user, profile, signOut } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    document.title = "내 강의실 | 윈들리아카데미";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", "수강 중인 강의와 학습 진도를 확인하세요");
+    
     if (!user) {
       navigate('/auth');
       return;
@@ -41,6 +50,8 @@ const MyPage = () => {
   }, [user, navigate]);
 
   const fetchEnrollments = async () => {
+    if (!user) return;
+
     try {
       const { data, error } = await supabase
         .from('enrollments')
@@ -48,7 +59,6 @@ const MyPage = () => {
           id,
           progress,
           enrolled_at,
-          completed_at,
           course:courses(
             id,
             title,
@@ -56,29 +66,24 @@ const MyPage = () => {
             instructor:profiles(full_name)
           )
         `)
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .order('enrolled_at', { ascending: false });
 
       if (error) throw error;
+
       setEnrollments(data || []);
-
-      // 각 강의의 세션 진행률도 가져오기
-      if (data && data.length > 0) {
-        const courseIds = data.map(enrollment => enrollment.course.id);
-        
-        const { data: sessionProgressData } = await supabase
-          .from('session_progress')
-          .select(`
-            session_id,
-            completed,
-            watched_duration_seconds,
-            course_sessions!inner(course_id, title, duration_minutes)
-          `)
-          .eq('user_id', user?.id)
-          .in('course_sessions.course_id', courseIds);
-
-        console.log('Session progress:', sessionProgressData);
-      }
+      
+      // 통계 계산
+      const totalCourses = data?.length || 0;
+      const completedCourses = data?.filter(e => e.progress >= 100).length || 0;
+      const inProgressCourses = data?.filter(e => e.progress < 100 && e.progress > 0).length || 0;
+      
+      setStats({
+        totalCourses,
+        completedCourses,
+        inProgressCourses,
+        totalHours: totalCourses * 10 // 예시 계산
+      });
     } catch (error) {
       console.error('Error fetching enrollments:', error);
     } finally {
@@ -86,9 +91,8 @@ const MyPage = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+  const handleCourseClick = (courseId: string) => {
+    navigate(`/learn/${courseId}`);
   };
 
   if (loading) {
@@ -107,217 +111,172 @@ const MyPage = () => {
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* 사이드바 */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-1">
               <UserSidebar />
             </div>
+            
+            <div className="lg:col-span-3 space-y-8">
+              {/* 환영 섹션 */}
+              <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
+                <CardContent className="p-8">
+                  <div className="flex items-center gap-6">
+                    <Avatar className="h-20 w-20 border-4 border-white shadow-lg">
+                      <AvatarImage src={profile?.avatar_url} />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+                        {profile?.full_name ? profile.full_name[0] : 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <h1 className="text-3xl font-bold mb-2">
+                        안녕하세요, {profile?.full_name || '학습자'}님! 👋
+                      </h1>
+                      <p className="text-lg text-muted-foreground mb-4">
+                        오늘도 새로운 것을 배워보세요.
+                      </p>
+                      <div className="flex items-center gap-4">
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          가입일: {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : '-'}
+                        </Badge>
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {profile?.role === 'student' ? '학습자' : 
+                           profile?.role === 'instructor' ? '강사' : 
+                           profile?.role === 'admin' ? '관리자' : '사용자'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* 메인 콘텐츠 */}
-            <div className="lg:col-span-3">
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold text-foreground mb-1">강의</h1>
-                <p className="text-muted-foreground">수강 중인 강의의 진도율을 한 눈에 확인해 보세요.</p>
+              {/* 학습 통계 */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                        <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">전체 강의</p>
+                        <p className="text-2xl font-bold">{stats.totalCourses}개</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                        <Award className="h-6 w-6 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">완료한 강의</p>
+                        <p className="text-2xl font-bold">{stats.completedCourses}개</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
+                        <TrendingUp className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">진행 중</p>
+                        <p className="text-2xl font-bold">{stats.inProgressCourses}개</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                        <Clock className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">총 학습 시간</p>
+                        <p className="text-2xl font-bold">{stats.totalHours}시간</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
-              <Tabs defaultValue="studying" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-6">
-                  <TabsTrigger value="studying">내 강의실</TabsTrigger>
-                  <TabsTrigger value="completed">완료한 강의</TabsTrigger>
-                  <TabsTrigger value="profile">프로필</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="studying" className="space-y-6">
+              {/* 수강 중인 강의 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Play className="h-5 w-5" />
+                    내 강의 목록
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                   {enrollments.length === 0 ? (
-                    <div className="text-center py-16">
+                    <div className="text-center py-12">
                       <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">관심 클래스가 없습니다.</h3>
-                      <Button onClick={() => navigate('/courses')} className="mt-4">
-                        클래스 둘러보기
+                      <h3 className="text-lg font-semibold mb-2">아직 수강 중인 강의가 없습니다</h3>
+                      <p className="text-muted-foreground mb-6">새로운 강의를 찾아보세요!</p>
+                      <Button onClick={() => navigate('/courses')} size="lg">
+                        강의 둘러보기
                       </Button>
                     </div>
                   ) : (
-                    <div className="space-y-6">
-                      {enrollments.filter(e => e.progress < 100).map((enrollment) => (
-                        <Card key={enrollment.id} className="overflow-hidden hover:shadow-md transition-shadow duration-200">
-                          <CardContent className="p-4">
-                            <div className="flex gap-6 items-center">
-                              <div className="relative w-64 h-36 bg-muted/20 rounded-lg overflow-hidden flex-shrink-0">
-                                <img
-                                  src={enrollment.course.thumbnail_url || "/placeholder.svg"}
-                                  alt={enrollment.course.title}
-                                  className="w-full h-full object-cover"
-                                />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {enrollments.map((enrollment) => (
+                        <Card key={enrollment.id} className="overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer group" onClick={() => handleCourseClick(enrollment.course.id)}>
+                          <div className="relative">
+                            <img
+                              src={enrollment.course.thumbnail_url || '/placeholder.svg'}
+                              alt={enrollment.course.title}
+                              className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
+                            />
+                            <div className="absolute top-4 right-4">
+                              <Badge className={enrollment.progress >= 100 ? "bg-green-600" : "bg-blue-600"}>
+                                {enrollment.progress >= 100 ? "완료" : "진행중"}
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          <CardContent className="p-6">
+                            <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                              {enrollment.course.title}
+                            </h3>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              강사: {enrollment.course.instructor?.full_name}
+                            </p>
+                            
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span>진도율</span>
+                                <span className="font-semibold">{enrollment.progress}%</span>
                               </div>
-                              
-                              <div className="flex-1 min-w-0 py-2">
-                                <div className="space-y-3">
-                                  <div>
-                                    <Badge variant="outline" className="mb-3 text-xs">온라인 강의</Badge>
-                                    <h3 className="text-xl font-bold mb-2 line-clamp-2 leading-snug">{enrollment.course.title}</h3>
-                                    <p className="text-sm text-muted-foreground">
-                                      수강기간: {new Date(enrollment.enrolled_at).toLocaleDateString()} - 2025.01.21
-                                    </p>
-                                  </div>
-                                  
-                                  <div className="pt-2">
-                                    <div className="flex items-center justify-between mb-3">
-                                      <span className="text-sm font-medium">학습 진도</span>
-                                      <span className="text-lg font-bold text-primary">{Math.round(enrollment.progress)}% 완료</span>
-                                    </div>
-                                    <div className="relative">
-                                      <Progress value={enrollment.progress} className="h-3" />
-                                      <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                                        <span>시작</span>
-                                        <span>완료</span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              <div className="flex flex-col space-y-3 min-w-fit">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => navigate(`/learn/${enrollment.course.id}?from=mypage`)}
-                                  className="px-4 py-2 h-9 text-sm whitespace-nowrap hover:bg-muted transition-colors duration-200"
-                                >
-                                  강의 자료
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => navigate(`/learn/${enrollment.course.id}?from=mypage`)}
-                                  className="px-4 py-2 h-9 text-sm whitespace-nowrap transition-colors duration-200"
-                                >
-                                  학습하기
-                                </Button>
-                              </div>
+                              <Progress value={enrollment.progress} className="h-2" />
+                            </div>
+                            
+                            <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                              <span className="text-sm text-muted-foreground">
+                                수강 시작: {new Date(enrollment.enrolled_at).toLocaleDateString()}
+                              </span>
+                              <Button size="sm" className="ml-auto">
+                                <Play className="h-3 w-3 mr-1" />
+                                {enrollment.progress >= 100 ? "복습하기" : "계속 학습"}
+                              </Button>
                             </div>
                           </CardContent>
                         </Card>
                       ))}
                     </div>
                   )}
-                </TabsContent>
-
-                <TabsContent value="completed" className="space-y-6">
-                  <div className="space-y-4">
-                    {enrollments.filter(e => e.progress >= 100).length === 0 ? (
-                      <div className="text-center py-16">
-                        <Award className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">완료한 강의가 없습니다.</h3>
-                        <p className="text-muted-foreground">강의를 완료하면 여기에 표시됩니다.</p>
-                      </div>
-                    ) : (
-                      enrollments.filter(e => e.progress >= 100).map((enrollment) => (
-                        <Card key={enrollment.id} className="overflow-hidden hover:shadow-md transition-shadow duration-200">
-                          <CardContent className="p-4">
-                            <div className="flex gap-6 items-center">
-                              <div className="relative w-56 h-32 bg-muted/20 rounded-lg overflow-hidden flex-shrink-0">
-                                <img
-                                  src={enrollment.course.thumbnail_url || "/placeholder.svg"}
-                                  alt={enrollment.course.title}
-                                  className="w-full h-full object-cover"
-                                />
-                                <div className="absolute top-2 left-2">
-                                  <Badge className="bg-green-600 text-white text-xs">완료</Badge>
-                                </div>
-                              </div>
-                              
-                              <div className="flex-1 min-w-0 py-2">
-                                <div className="space-y-2">
-                                  <h3 className="text-xl font-bold line-clamp-2 leading-snug">{enrollment.course.title}</h3>
-                                  <p className="text-sm text-muted-foreground">
-                                    강사: {enrollment.course.instructor?.full_name}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    완료일: {enrollment.completed_at ? new Date(enrollment.completed_at).toLocaleDateString() : '완료됨'}
-                                  </p>
-                                </div>
-                              </div>
-                              
-                              <div className="flex flex-col space-y-3 min-w-fit">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  className="px-4 py-2 h-9 text-sm whitespace-nowrap hover:bg-muted transition-colors duration-200"
-                                >
-                                  수료증
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => navigate(`/learn/${enrollment.course.id}?from=mypage`)} 
-                                  className="px-4 py-2 h-9 text-sm whitespace-nowrap transition-colors duration-200"
-                                >
-                                  다시 보기
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                    )}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="profile" className="space-y-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>프로필 정보</CardTitle>
-                      <CardDescription>개인 정보를 관리하세요</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="text-sm font-medium text-muted-foreground">이름</label>
-                          <p className="text-lg font-medium">{profile?.full_name || '설정되지 않음'}</p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-muted-foreground">이메일</label>
-                          <p className="text-lg font-medium">{user?.email}</p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-muted-foreground">전화번호</label>
-                          <p className="text-lg font-medium">{profile?.phone || '설정되지 않음'}</p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-muted-foreground">계정 유형</label>
-                          <p className="text-lg font-medium">
-                            {profile?.role === 'student' ? '학생' : 
-                             profile?.role === 'instructor' ? '강사' : 
-                             profile?.role === 'admin' ? '관리자' : '사용자'}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-primary">{enrollments.length}</div>
-                          <div className="text-sm text-muted-foreground">학습등급</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-primary">{enrollments.length}</div>
-                          <div className="text-sm text-muted-foreground">내 쿠폰</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-primary">{enrollments.filter(e => e.progress >= 100).length}</div>
-                          <div className="text-sm text-muted-foreground">상품권</div>
-                        </div>
-                      </div>
-                      
-                      <div className="text-center pt-6 border-t">
-                        <Button variant="outline" className="mr-3">
-                          프로필 수정
-                        </Button>
-                        <Button variant="destructive" onClick={handleSignOut}>
-                          로그아웃
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
