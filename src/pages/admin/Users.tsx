@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Filter, UserCheck, UserX, Mail, Calendar } from 'lucide-react';
+import { Search, Filter, UserCheck, UserX, Mail, Calendar, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface User {
   id: string;
@@ -73,6 +74,42 @@ export const AdminUsers = () => {
       toast({
         title: "오류",
         description: "사용자 권한 변경에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('인증이 필요합니다.');
+      }
+
+      const response = await supabase.functions.invoke('delete-user', {
+        body: { userId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || '사용자 삭제에 실패했습니다.');
+      }
+
+      // Remove user from local state
+      setUsers(users.filter(user => user.id !== userId));
+
+      toast({
+        title: "성공",
+        description: "사용자가 성공적으로 삭제되었습니다."
+      });
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "오류",
+        description: error.message || "사용자 삭제에 실패했습니다.",
         variant: "destructive"
       });
     }
@@ -202,6 +239,38 @@ export const AdminUsers = () => {
                         <SelectItem value="admin">관리자</SelectItem>
                       </SelectContent>
                     </Select>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>사용자 삭제 확인</AlertDialogTitle>
+                          <AlertDialogDescription className="space-y-2">
+                            <p>정말로 이 사용자를 삭제하시겠습니까?</p>
+                            <div className="bg-muted p-3 rounded-lg">
+                              <p className="font-medium">{user.full_name || '이름 없음'}</p>
+                              <p className="text-sm text-muted-foreground">{user.email}</p>
+                            </div>
+                            <p className="text-sm text-destructive">
+                              ⚠️ 이 작업은 되돌릴 수 없습니다. 사용자의 모든 데이터가 영구적으로 삭제됩니다.
+                            </p>
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => deleteUser(user.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            삭제
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               ))}
