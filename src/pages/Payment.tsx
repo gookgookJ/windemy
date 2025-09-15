@@ -49,6 +49,7 @@ const Payment = () => {
   const [selectedCouponId, setSelectedCouponId] = useState<string>("");
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [pointsToUse, setPointsToUse] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank_transfer'>('card');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   
@@ -147,63 +148,76 @@ const Payment = () => {
   };
 
   const handlePayment = async () => {
-    setProcessing(true);
-    
-    try {
-      // 주문 생성
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user?.id,
-          total_amount: totalPrice,
-          status: 'completed',
-          payment_method: 'card' // 기본값으로 카드 설정
-        })
-        .select()
-        .single();
+    if (totalPrice === 0) {
+      // 무료 강의인 경우 즉시 완료
+      setProcessing(true);
+      
+      try {
+        // 주문 생성
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            user_id: user?.id,
+            total_amount: 0,
+            status: 'completed',
+            payment_method: 'free'
+          })
+          .select()
+          .single();
 
-      if (orderError) throw orderError;
+        if (orderError) throw orderError;
 
-      // 주문 아이템 생성
-      const { error: orderItemError } = await supabase
-        .from('order_items')
-        .insert({
-          order_id: order.id,
-          course_id: courseId,
-          price: finalPrice
-        });
+        // 주문 아이템 생성
+        const { error: orderItemError } = await supabase
+          .from('order_items')
+          .insert({
+            order_id: order.id,
+            course_id: courseId,
+            price: 0
+          });
 
-      if (orderItemError) throw orderItemError;
+        if (orderItemError) throw orderItemError;
 
-      // 수강 등록
-      const { error: enrollmentError } = await supabase
-        .from('enrollments')
-        .insert({
-          user_id: user?.id,
-          course_id: courseId,
-          progress: 0
+        // 수강 등록
+        const { error: enrollmentError } = await supabase
+          .from('enrollments')
+          .insert({
+            user_id: user?.id,
+            course_id: courseId,
+            progress: 0
+          });
+          
+        if (enrollmentError) throw enrollmentError;
+        
+        toast({
+          title: "수강 등록 완료",
+          description: "무료 강의 수강 등록이 완료되었습니다!",
         });
         
-      if (enrollmentError) throw enrollmentError;
-      
-      toast({
-        title: "결제 완료",
-        description: "강의 결제가 완료되었습니다!",
-      });
-      
-      // 구매 내역 페이지로 이동
-      navigate('/purchase-history');
-    } catch (error) {
-      console.error('Error processing payment:', error);
-      toast({
-        title: "결제 실패",
-        description: "결제 처리 중 오류가 발생했습니다.",
-        variant: "destructive"
-      });
-    } finally {
-      setProcessing(false);
+        navigate('/my-page');
+        return;
+      } catch (error) {
+        console.error('Error processing free enrollment:', error);
+        toast({
+          title: "등록 실패",
+          description: "수강 등록 중 오류가 발생했습니다.",
+          variant: "destructive"
+        });
+        setProcessing(false);
+        return;
+      }
+    }
+
+    // 유료 결제 처리
+    if (paymentMethod === 'card') {
+      // 신용카드/체크카드 결제 - PG사 화면으로 이동
+      window.location.href = `/payment-gateway/card?amount=${totalPrice}&orderId=${Date.now()}`;
+    } else if (paymentMethod === 'bank_transfer') {
+      // 실시간 계좌이체 - PG사 화면으로 이동
+      window.location.href = `/payment-gateway/bank?amount=${totalPrice}&orderId=${Date.now()}`;
     }
   };
+
 
   if (loading) {
     return (
@@ -441,14 +455,24 @@ const Payment = () => {
               <CardContent>
                 <div className="space-y-3">
                   <Button 
-                    variant="outline" 
-                    className="w-full h-14 bg-slate-900 text-white hover:bg-slate-800 flex items-center justify-center gap-3 font-medium border-slate-900"
+                    variant={paymentMethod === 'card' ? 'default' : 'outline'}
+                    onClick={() => setPaymentMethod('card')}
+                    className={`w-full h-14 flex items-center justify-center gap-3 font-medium ${
+                      paymentMethod === 'card' 
+                        ? 'bg-slate-900 text-white hover:bg-slate-800 border-slate-900' 
+                        : 'hover:bg-muted/50'
+                    }`}
                   >
                     신용카드 · 체크카드
                   </Button>
                   <Button 
-                    variant="outline" 
-                    className="w-full h-14 hover:bg-muted/50 flex items-center justify-center gap-3 font-medium"
+                    variant={paymentMethod === 'bank_transfer' ? 'default' : 'outline'}
+                    onClick={() => setPaymentMethod('bank_transfer')}
+                    className={`w-full h-14 flex items-center justify-center gap-3 font-medium ${
+                      paymentMethod === 'bank_transfer' 
+                        ? 'bg-slate-900 text-white hover:bg-slate-800 border-slate-900' 
+                        : 'hover:bg-muted/50'
+                    }`}
                   >
                     실시간 계좌이체
                   </Button>
@@ -510,10 +534,10 @@ const Payment = () => {
                   {processing ? (
                     <span className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      결제 처리 중...
+                      {totalPrice === 0 ? "등록 중..." : "결제 처리 중..."}
                     </span>
                   ) : (
-                    "결제하기"
+                    totalPrice === 0 ? "무료 수강 등록" : `${totalPrice.toLocaleString()}원 결제하기`
                   )}
                 </Button>
                 
