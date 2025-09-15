@@ -213,7 +213,7 @@ const Payment = () => {
                     <img
                       src={courseData.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
                       alt={courseData.title}
-                      className="w-48 h-32 object-contain bg-muted/30 rounded-lg border"
+                      className="w-72 h-48 object-contain bg-muted/30 rounded-lg"
                     />
                   </div>
                   
