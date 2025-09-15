@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import CourseDetail from "./pages/CourseDetail";
+import Payment from "./pages/Payment";
 import CourseCatalog from "./pages/CourseCatalog";
 import Auth from "./pages/Auth";
 import Cart from "./pages/Cart";
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/courses" element={<CourseCatalog />} />
             <Route path="/courses/:category" element={<CategoryCourses />} />
             <Route path="/course/:id" element={<CourseDetail />} />
+            <Route path="/payment/:id" element={<Payment />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/my-page" element={<MyPage />} />

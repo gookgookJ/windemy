@@ -307,7 +307,7 @@ const CourseDetail = () => {
     }
   };
 
-  const handleEnroll = async () => {
+  const handlePurchase = () => {
     if (!user) {
       navigate('/auth');
       return;
@@ -315,36 +315,12 @@ const CourseDetail = () => {
     
     if (!courseId) return;
     
-    setEnrolling(true);
-    try {
-      const { error } = await supabase
-        .from('enrollments')
-        .insert({
-          user_id: user.id,
-          course_id: courseId,
-          progress: 0
-        });
-        
-      if (error) throw error;
-      
-      setIsEnrolled(true);
-      toast({
-        title: "수강 등록 완료",
-        description: "강의 학습을 시작하세요!",
-      });
-      
-      // 바로 학습 페이지로 이동
-      navigate(`/learn/${courseId}`);
-    } catch (error) {
-      console.error('Error enrolling:', error);
-      toast({
-        title: "등록 실패",
-        description: "수강 등록 중 오류가 발생했습니다.",
-        variant: "destructive"
-      });
-    } finally {
-      setEnrolling(false);
-    }
+    // 결제 페이지로 이동 (선택된 옵션이 있으면 쿼리 파라미터로 전달)
+    const paymentUrl = selectedOption 
+      ? `/payment/${courseId}?option=${selectedOption}`
+      : `/payment/${courseId}`;
+    
+    navigate(paymentUrl);
   };
 
   const selectedCourse = courseOptions.find(option => option.id === selectedOption);
@@ -749,17 +725,16 @@ const CourseDetail = () => {
                       >
                         강의 구매하기
                       </Button>
-                    ) : (
-                      <Button 
-                        variant="default" 
-                        size="lg" 
-                        className="w-full bg-primary hover:bg-primary/90"
-                        onClick={handleEnroll}
-                        disabled={enrolling}
-                      >
-                        {enrolling ? "등록 중..." : "강의 구매하기"}
-                      </Button>
-                    )}
+                     ) : (
+                       <Button 
+                         variant="default" 
+                         size="lg" 
+                         className="w-full bg-primary hover:bg-primary/90"
+                         onClick={handlePurchase}
+                       >
+                         강의 구매하기
+                       </Button>
+                     )}
                   </div>
                 </div>
               </Card>
@@ -1026,10 +1001,9 @@ const CourseDetail = () => {
               variant="default" 
               size="lg" 
               className="bg-primary hover:bg-primary/90 px-8"
-              onClick={handleEnroll}
-              disabled={enrolling}
+              onClick={handlePurchase}
             >
-              {enrolling ? "등록 중..." : "강의 구매하기"}
+              강의 구매하기
             </Button>
           </div>
         </div>
