@@ -166,10 +166,10 @@ export const AdminSidebar = () => {
   }, {} as Record<string, typeof menuItems>);
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="pt-16">
       <SidebarTrigger className="m-2 self-end" />
       
-      <SidebarContent>
+      <SidebarContent className="pt-4">
         {Object.entries(groupedItems).map(([group, items]) => (
           <SidebarGroup key={group}>
             <SidebarGroupLabel>
