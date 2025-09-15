@@ -205,56 +205,73 @@ const Payment = () => {
           {/* Left Column - Course Info & Payment Options */}
           <div className="lg:col-span-2 space-y-6">
             {/* Course Information */}
-            <Card>
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-4">
+            <Card className="overflow-hidden">
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  {/* Course Header with Badge */}
                   {courseOption?.tag && (
-                    <Badge variant="destructive" className="text-xs">
-                      {courseOption.tag}
-                    </Badge>
+                    <div className="flex justify-start">
+                      <Badge variant="destructive" className="text-xs font-medium">
+                        {courseOption.tag}
+                      </Badge>
+                    </div>
                   )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4">
-                  <img
-                    src={courseData.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
-                    alt={courseData.title}
-                    className="w-24 h-16 object-cover rounded-lg flex-shrink-0"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-1">{courseData.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {courseData.profiles?.full_name || "강사명"}
-                    </p>
-                    <div className="text-lg font-bold text-primary">
-                      {finalPrice.toLocaleString()}원
+                  
+                  {/* Course Image and Info */}
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <img
+                        src={courseData.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
+                        alt={courseData.title}
+                        className="w-full h-48 object-cover rounded-lg shadow-sm"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h3 className="font-bold text-xl leading-tight">{courseData.title}</h3>
+                      <p className="text-muted-foreground">
+                        {courseData.profiles?.full_name || "강사명"}
+                      </p>
+                      <div className="text-2xl font-bold text-primary">
+                        {finalPrice.toLocaleString()}원
+                      </div>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Coupon Section */}
+            {/* Discount & Coupon Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">쿠폰</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  🎫 할인 혜택
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="사용 가능한 쿠폰이 없어요"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button 
-                    variant="outline" 
-                    onClick={applyCoupon}
-                    disabled={!couponCode.trim()}
-                  >
-                    쿠폰 적용
-                  </Button>
+                <div className="space-y-4">
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">쿠폰 적용 가능</span>
+                      <span className="font-medium">0개</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="쿠폰 코드를 입력하세요"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button 
+                      variant="outline" 
+                      onClick={applyCoupon}
+                      disabled={!couponCode.trim()}
+                      className="px-6"
+                    >
+                      적용
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -262,42 +279,50 @@ const Payment = () => {
             {/* Points & Credits Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">상품권 · 포인트</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  💎 포인트 & 적립금
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* 상품권 */}
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <input type="radio" id="gift-card" name="points" className="rounded" />
-                    <Label htmlFor="gift-card">상품권</Label>
-                    <span className="text-sm text-muted-foreground ml-auto">사용 가능 0</span>
+              <CardContent className="space-y-6">
+                {/* 적립금 */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-medium">적립금</Label>
+                    <span className="text-sm text-muted-foreground">보유: 0원</span>
                   </div>
                   <div className="flex gap-2">
                     <Input 
-                      placeholder="0" 
+                      placeholder="사용할 적립금을 입력하세요" 
                       disabled
                       className="flex-1"
                     />
-                    <Button variant="outline" disabled>전액 사용</Button>
+                    <Button variant="outline" disabled className="px-6">
+                      전액사용
+                    </Button>
                   </div>
                 </div>
 
+                <Separator />
+
                 {/* 포인트 */}
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <input type="radio" id="points" name="points" className="rounded" />
-                    <Label htmlFor="points">포인트</Label>
-                    <span className="text-sm text-muted-foreground ml-auto">사용 가능 0</span>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-medium">포인트</Label>
+                    <span className="text-sm text-muted-foreground">보유: 0P</span>
                   </div>
                   <div className="flex gap-2">
                     <Input 
-                      placeholder="0" 
+                      placeholder="사용할 포인트를 입력하세요" 
                       disabled
                       className="flex-1"
                     />
-                    <Button variant="outline" disabled>전액 사용</Button>
+                    <Button variant="outline" disabled className="px-6">
+                      전액사용
+                    </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">* 실 결제 금액의 50%까지 사용 가능</p>
+                  <p className="text-xs text-muted-foreground">
+                    * 결제 금액의 50%까지 사용 가능
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -305,19 +330,21 @@ const Payment = () => {
             {/* Payment Method */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">결제 수단</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  💳 결제 수단
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-3">
                   <Button 
                     variant="outline" 
-                    className="h-14 bg-black text-white hover:bg-gray-800 flex items-center justify-center gap-2 font-medium"
+                    className="w-full h-16 bg-gradient-to-r from-gray-900 to-gray-700 text-white hover:from-gray-800 hover:to-gray-600 flex items-center justify-center gap-3 font-medium text-lg border-0"
                   >
-                    💳 신용 · 체크 카드
+                    💳 신용카드 · 체크카드
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="h-14 flex items-center justify-center gap-2 font-medium"
+                    className="w-full h-16 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 flex items-center justify-center gap-3 font-medium text-lg border border-blue-200"
                   >
                     🏦 실시간 계좌이체
                   </Button>
@@ -327,51 +354,68 @@ const Payment = () => {
           </div>
 
           {/* Right Column - Order Summary */}
-          <div>
-            <Card className="sticky top-8">
-              <CardHeader>
-                <CardTitle className="text-lg">결제 금액</CardTitle>
+          <div className="lg:col-span-1">
+            <Card className="sticky top-8 shadow-lg border-2">
+              <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+                <CardTitle className="text-xl flex items-center gap-2">
+                  🧾 주문 요약
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span>총 클래스 금액</span>
-                    <span>{finalPrice.toLocaleString()}원</span>
+              <CardContent className="space-y-6 p-6">
+                {/* Price Breakdown */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-base">강의 금액</span>
+                    <span className="text-lg font-semibold">{finalPrice.toLocaleString()}원</span>
                   </div>
                   
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>쿠폰 사용</span>
-                    <span>0원</span>
-                  </div>
-                  
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>상품권 사용</span>
-                    <span>0원</span>
-                  </div>
-                  
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>포인트 사용</span>
-                    <span>0원</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>쿠폰 할인</span>
+                      <span>-0원</span>
+                    </div>
+                    
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>적립금 사용</span>
+                      <span>-0원</span>
+                    </div>
+                    
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>포인트 사용</span>
+                      <span>-0원</span>
+                    </div>
                   </div>
                 </div>
                 
-                <Separator />
+                <Separator className="my-4" />
                 
-                <div className="flex justify-between text-xl font-bold">
-                  <span>총 결제 금액</span>
-                  <span className="text-primary">{totalPrice.toLocaleString()}원</span>
+                {/* Final Amount */}
+                <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-semibold">최종 결제금액</span>
+                    <span className="text-2xl font-bold text-primary">{totalPrice.toLocaleString()}원</span>
+                  </div>
                 </div>
                 
+                {/* Payment Button */}
                 <Button 
-                  className="w-full h-12 text-lg font-semibold"
+                  className="w-full h-14 text-lg font-bold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg"
                   onClick={handlePayment}
                   disabled={processing}
                 >
-                  {processing ? "결제 처리 중..." : "결제하기"}
+                  {processing ? (
+                    <span className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      결제 처리 중...
+                    </span>
+                  ) : (
+                    "💳 결제하기"
+                  )}
                 </Button>
                 
-                <p className="text-xs text-muted-foreground text-center">
-                  결제 및 결제 정보를 확인했으며, 소상공법 및 민원대장의 동의합니다.
+                {/* Terms */}
+                <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                  결제 진행 시 <span className="font-medium">이용약관</span> 및 <span className="font-medium">개인정보처리방침</span>에 동의한 것으로 간주됩니다.
                 </p>
               </CardContent>
             </Card>
