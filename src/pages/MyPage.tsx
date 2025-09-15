@@ -216,15 +216,12 @@ const MyPage = () => {
                         <Card key={enrollment.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                           <CardContent className="p-0">
                             <div className="flex gap-4">
-                              <div className="relative w-72 h-32">
+                              <div className="relative w-72 h-32 bg-muted/30 rounded-lg overflow-hidden">
                                 <img
                                   src={enrollment.course.thumbnail_url || "/placeholder.svg"}
                                   alt={enrollment.course.title}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-contain"
                                 />
-                                <div className="absolute top-2 left-2">
-                                  <Badge className="bg-blue-600 text-white">[완결보장]</Badge>
-                                </div>
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                                   <Button 
                                     size="sm" 
@@ -247,11 +244,17 @@ const MyPage = () => {
                                 </div>
                                 
                                 <div className="mt-4">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm text-muted-foreground">수강률 {Math.round(enrollment.progress)}% 달성</span>
-                                    <span className="text-sm font-medium">{Math.round(enrollment.progress)}%</span>
+                                  <div className="flex items-center justify-between mb-3">
+                                    <span className="text-sm font-medium">학습 진도</span>
+                                    <span className="text-sm font-bold text-primary">{Math.round(enrollment.progress)}% 완료</span>
                                   </div>
-                                  <Progress value={enrollment.progress} className="h-2" />
+                                  <div className="relative">
+                                    <Progress value={enrollment.progress} className="h-3" />
+                                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                                      <span>시작</span>
+                                      <span>완료</span>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                               
@@ -292,11 +295,11 @@ const MyPage = () => {
                         <Card key={enrollment.id} className="overflow-hidden">
                           <CardContent className="p-0">
                             <div className="flex gap-4">
-                              <div className="relative w-72 h-32">
+                              <div className="relative w-72 h-32 bg-muted/30 rounded-lg overflow-hidden">
                                 <img
                                   src={enrollment.course.thumbnail_url || "/placeholder.svg"}
                                   alt={enrollment.course.title}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-contain"
                                 />
                                 <div className="absolute top-2 left-2">
                                   <Badge className="bg-green-600 text-white">완료</Badge>
