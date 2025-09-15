@@ -42,6 +42,7 @@ const Learn = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const initialSessionId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('session') : null;
 
   useEffect(() => {
     if (!user) {
@@ -191,7 +192,8 @@ const Learn = () => {
       setSessions(sessionsData || []);
       
       if (sessionsData && sessionsData.length > 0) {
-        setCurrentSession(sessionsData[0]);
+        const initial = initialSessionId ? sessionsData.find(s => s.id === initialSessionId) : null;
+        setCurrentSession(initial || sessionsData[0]);
       }
 
       // 진행 상황
@@ -345,6 +347,34 @@ const Learn = () => {
     return videoProgress[sessionId] || 0;
   };
 
+  const downloadAttachment = async () => {
+    if (!currentSession?.attachment_url) return;
+    try {
+      let path = currentSession.attachment_url;
+      if (path.startsWith('http')) {
+        const marker = '/course-files/';
+        const idx = path.indexOf(marker);
+        if (idx !== -1) {
+          path = path.substring(idx + marker.length);
+        }
+      }
+      const { data, error } = await supabase.storage
+        .from('course-files')
+        .createSignedUrl(path, 60);
+      if (error || !data?.signedUrl) throw error || new Error('Signed URL 생성 실패');
+      window.open(data.signedUrl, '_blank');
+      if (user && currentSession) {
+        await (supabase as any).from('session_file_downloads').insert({
+          user_id: user.id,
+          session_id: currentSession.id,
+          file_name: currentSession.attachment_name || path.split('/').pop() || 'file'
+        });
+      }
+    } catch (err) {
+      console.error('download error', err);
+      toast({ title: '다운로드 실패', description: '파일 접근 권한 또는 경로를 확인해주세요.', variant: 'destructive' });
+    }
+  };
   const goToNextSession = () => {
     const currentIndex = sessions.findIndex(s => s.id === currentSession?.id);
     if (currentIndex < sessions.length - 1) {
@@ -528,12 +558,7 @@ const Learn = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              const link = document.createElement('a');
-                              link.href = currentSession.attachment_url;
-                              link.download = currentSession.attachment_name;
-                              link.click();
-                            }}
+                            onClick={downloadAttachment}
                           >
                             다운로드
                           </Button>
