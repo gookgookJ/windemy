@@ -166,10 +166,15 @@ export const AdminSidebar = () => {
   }, {} as Record<string, typeof menuItems>);
 
   return (
-    <Sidebar collapsible="icon" className="pt-16">
-      <SidebarContent className="pt-4">
-        <div className="flex justify-end p-2">
-          <SidebarTrigger />
+    <Sidebar collapsible="icon" className="pt-16 border-r">
+      <SidebarContent className="pt-2">
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <div className="flex items-center space-x-2">
+            {state !== "collapsed" && (
+              <h2 className="font-semibold text-foreground">관리자</h2>
+            )}
+          </div>
+          <SidebarTrigger className="hover:bg-muted/50 transition-colors" />
         </div>
         
         {Object.entries(groupedItems).map(([group, items]) => (

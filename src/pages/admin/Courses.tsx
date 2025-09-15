@@ -305,7 +305,7 @@ export const AdminCourses = () => {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          onClick={() => navigate(`/course/${course.id}`)}
+                          onClick={() => window.open(`/course/${course.id}`, '_blank')}
                           className="h-8 px-3 hover-scale"
                         >
                           <Eye className="h-3 w-3 mr-1" />
