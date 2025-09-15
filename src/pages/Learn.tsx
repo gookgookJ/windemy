@@ -21,6 +21,14 @@ interface CourseSession {
   is_free: boolean;
   attachment_url?: string;
   attachment_name?: string;
+  section_id?: string;
+}
+
+interface CourseSection {
+  id: string;
+  title: string;
+  order_index: number;
+  sessions: CourseSession[];
 }
 
 interface SessionProgress {
@@ -33,6 +41,7 @@ const Learn = () => {
   const { courseId } = useParams();
   const [course, setCourse] = useState<any>(null);
   const [sessions, setSessions] = useState<CourseSession[]>([]);
+  const [sections, setSections] = useState<CourseSection[]>([]);
   const [currentSession, setCurrentSession] = useState<CourseSession | null>(null);
   const [progress, setProgress] = useState<SessionProgress[]>([]);
   const [enrollment, setEnrollment] = useState<any>(null);
@@ -181,14 +190,38 @@ const Learn = () => {
       }
       setEnrollment(enrollmentData);
 
-      // 세션 목록
-      const { data: sessionsData, error: sessionsError } = await supabase
+      // Fetch course sections with sessions
+      const { data: sectionsData, error: sectionsError } = await supabase
+        .from('course_sections')
+        .select(`
+          *,
+          course_sessions(*)
+        `)
+        .eq('course_id', courseId)
+        .order('order_index');
+
+      const { data: sessionsData, error: sessionsFetchError } = await supabase
         .from('course_sessions')
         .select('*')
         .eq('course_id', courseId)
         .order('order_index');
 
-      if (sessionsError) throw sessionsError;
+      if (sectionsError || sessionsFetchError) throw sectionsError || sessionsFetchError;
+
+      // Transform sections data
+      const transformedSections: CourseSection[] = (sectionsData || []).map(section => ({
+        id: section.id,
+        title: section.title,
+        order_index: section.order_index,
+        sessions: (section.course_sessions || [])
+          .sort((a: any, b: any) => a.order_index - b.order_index)
+          .map((session: any) => ({
+            ...session,
+            section_id: section.id
+          }))
+      }));
+
+      setSections(transformedSections);
       setSessions(sessionsData || []);
       
       if (sessionsData && sessionsData.length > 0) {
@@ -478,60 +511,74 @@ const Learn = () => {
             <Card>
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-4">강의 목차</h3>
-                <div className="space-y-2">
-                  {sessions.map((session) => {
-                    const sessionProgress = getSessionProgress(session.id);
-                    const isCompleted = sessionProgress?.completed || false;
-                    const isCurrent = currentSession?.id === session.id;
-                    
-                    return (
-                      <div
-                        key={session.id}
-                        onClick={() => setCurrentSession(session)}
-                        className={`p-3 border rounded cursor-pointer transition-colors ${
-                          isCurrent ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          {isCompleted ? (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                          ) : isCurrent && getVideoProgress(session.id) > 0 ? (
-                            <div className="relative w-4 h-4">
-                              <div className="absolute inset-0 bg-muted rounded-full" />
-                              <div 
-                                className="absolute inset-0 bg-primary rounded-full origin-center"
-                                style={{
-                                  clipPath: `inset(0 ${100 - getVideoProgress(session.id)}% 0 0)`
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            <PlayCircle className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <span className="text-sm font-medium flex-1">
-                            {session.order_index}. {session.title}
-                          </span>
-                          {session.is_free && (
-                            <Badge variant="secondary" className="text-xs">무료</Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          <span>{session.duration_minutes}분</span>
-                          {isCurrent && getVideoProgress(session.id) > 0 && (
-                            <span className="ml-2 text-primary">
-                              • {Math.round(getVideoProgress(session.id))}% 시청
-                            </span>
-                          )}
-                        </div>
-                        {isCurrent && getVideoProgress(session.id) > 0 && (
-                          <div className="mt-2">
-                            <Progress value={getVideoProgress(session.id)} className="h-1" />
-                          </div>
-                        )}
+                <div className="space-y-4">
+                  {sections.map((section) => (
+                    <div key={section.id} className="space-y-2">
+                      {/* 섹션 헤더 */}
+                      <div className="px-3 py-2 bg-muted/30 rounded-lg border-l-4 border-primary">
+                        <h3 className="font-semibold text-base text-foreground">
+                          {section.title}
+                        </h3>
                       </div>
-                    );
-                  })}
+                      
+                      {/* 세션 목록 */}
+                      <div className="ml-4 space-y-2">
+                        {section.sessions.map((session) => {
+                          const sessionProgress = getSessionProgress(session.id);
+                          const isCompleted = sessionProgress?.completed || false;
+                          const isCurrent = currentSession?.id === session.id;
+                          
+                          return (
+                            <div
+                              key={session.id}
+                              className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                                isCurrent ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
+                              }`}
+                              onClick={() => setCurrentSession(session)}
+                            >
+                              <div className="flex items-center gap-3">
+                                {isCompleted ? (
+                                  <CheckCircle className="h-4 w-4 text-green-600" />
+                                ) : isCurrent && getVideoProgress(session.id) > 0 ? (
+                                  <div className="relative w-4 h-4">
+                                    <div className="absolute inset-0 bg-muted rounded-full" />
+                                    <div 
+                                      className="absolute inset-0 bg-primary rounded-full origin-center"
+                                      style={{
+                                        clipPath: `inset(0 ${100 - getVideoProgress(session.id)}% 0 0)`
+                                      }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <PlayCircle className="h-4 w-4 text-muted-foreground" />
+                                )}
+                                <span className="text-sm font-medium flex-1">
+                                  ㄴ {session.order_index}. {session.title}
+                                </span>
+                                {session.is_free && (
+                                  <Badge variant="secondary" className="text-xs">무료</Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground ml-7">
+                                <Clock className="h-3 w-3" />
+                                <span>{session.duration_minutes}분</span>
+                                {isCurrent && getVideoProgress(session.id) > 0 && (
+                                  <span className="ml-2 text-primary">
+                                    • {Math.round(getVideoProgress(session.id))}% 시청
+                                  </span>
+                                )}
+                              </div>
+                              {isCurrent && getVideoProgress(session.id) > 0 && (
+                                <div className="mt-2 ml-7">
+                                  <Progress value={getVideoProgress(session.id)} className="h-1" />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
