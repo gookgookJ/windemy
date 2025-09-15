@@ -100,7 +100,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
     setIsLoading(true);
     
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/auth/callback`;
       
       const { error } = await supabase.auth.signUp({
         email: signUpData.email,
@@ -152,7 +152,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
     setIsLoading(true);
     
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/auth/callback`;
       
       const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
         redirectTo: redirectUrl
