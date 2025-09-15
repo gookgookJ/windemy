@@ -489,8 +489,8 @@ const ProfileSettings = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handlePasswordChange} className="space-y-4">
-                    <div>
+                  <form onSubmit={handlePasswordChange} className="space-y-6">
+                    <div className="space-y-2">
                       <Label htmlFor="currentPassword">현재 비밀번호 *</Label>
                       <Input
                         id="currentPassword"
@@ -502,8 +502,8 @@ const ProfileSettings = () => {
                       />
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
                         <Label htmlFor="newPassword">새 비밀번호</Label>
                         <Input
                           id="newPassword"
@@ -514,7 +514,7 @@ const ProfileSettings = () => {
                         />
                       </div>
 
-                      <div>
+                      <div className="space-y-2">
                         <Label htmlFor="confirmPassword">새 비밀번호 확인</Label>
                         <Input
                           id="confirmPassword"
