@@ -207,26 +207,28 @@ const Payment = () => {
             {/* Course Information */}
             <Card className="overflow-hidden">
               <CardContent className="p-6">
-                <div className="space-y-4">
-                  {/* Course Header with Badge */}
-                  {courseOption?.tag && (
-                    <div className="flex justify-start">
-                      <Badge variant="destructive" className="text-xs font-medium">
-                        {courseOption.tag}
-                      </Badge>
-                    </div>
-                  )}
+                <div className="flex gap-6">
+                  {/* Course Thumbnail */}
+                  <div className="flex-shrink-0">
+                    <img
+                      src={courseData.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
+                      alt={courseData.title}
+                      className="w-48 h-32 object-contain bg-muted/30 rounded-lg border"
+                    />
+                  </div>
                   
-                  {/* Course Image and Info */}
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <img
-                        src={courseData.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
-                        alt={courseData.title}
-                        className="w-full h-40 object-contain bg-muted/30 rounded-lg border"
-                      />
-                    </div>
+                  {/* Course Details */}
+                  <div className="flex-1 space-y-3">
+                    {/* Badge */}
+                    {courseOption?.tag && (
+                      <div className="flex justify-start">
+                        <Badge variant="destructive" className="text-xs font-medium">
+                          {courseOption.tag}
+                        </Badge>
+                      </div>
+                    )}
                     
+                    {/* Course Info */}
                     <div className="space-y-2">
                       <h3 className="font-bold text-xl leading-tight">{courseData.title}</h3>
                       <p className="text-muted-foreground">
