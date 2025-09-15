@@ -8,7 +8,6 @@ interface AuthContextType {
   session: Session | null;
   profile: any | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
@@ -71,54 +70,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName
-        }
-      }
-    });
-
-    if (error) {
-      toast({
-        title: "회원가입 실패",
-        description: error.message,
-        variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "회원가입 성공",
-        description: "이메일을 확인하여 계정을 활성화해주세요."
-      });
-    }
-
-    return { error };
-  };
-
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
-
-    if (error) {
-      toast({
-        title: "로그인 실패",
-        description: error.message,
-        variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "로그인 성공",
-        description: "환영합니다!"
-      });
-    }
 
     return { error };
   };
@@ -142,7 +98,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session,
         profile,
         loading,
-        signUp,
         signIn,
         signOut,
         isAdmin,

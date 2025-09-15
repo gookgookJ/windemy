@@ -11,7 +11,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [signInData, setSignInData] = useState({ email: '', password: '' });
   const [signUpData, setSignUpData] = useState({ email: '', password: '', fullName: '', confirmPassword: '' });
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,18 +34,8 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (signUpData.password !== signUpData.confirmPassword) {
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    const { error } = await signUp(signUpData.email, signUpData.password, signUpData.fullName);
-    
-    if (!error) {
-      setSignUpData({ email: '', password: '', fullName: '', confirmPassword: '' });
-    }
-    setIsLoading(false);
+    // 회원가입 기능은 AuthModal에서 처리
+    console.log('회원가입은 AuthModal에서 처리됩니다.');
   };
 
   return (
