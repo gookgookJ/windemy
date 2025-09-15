@@ -54,6 +54,7 @@ export const SectionManagement = () => {
         .order('order_index', { ascending: true });
 
       if (error) throw error;
+      console.log('Admin sections data:', data);
       setSections(data || []);
     } catch (error) {
       console.error('Error fetching sections:', error);

@@ -213,6 +213,8 @@ const Learn = () => {
         id: section.id,
         title: section.title,
         order_index: section.order_index,
+        attachment_url: section.attachment_url,
+        attachment_name: section.attachment_name,
         sessions: (section.course_sessions || [])
           .sort((a: any, b: any) => a.order_index - b.order_index)
           .map((session: any) => ({
@@ -223,6 +225,9 @@ const Learn = () => {
 
       setSections(transformedSections);
       setSessions(sessionsData || []);
+      
+      // Debug: 섹션 데이터 확인
+      console.log('Sections with attachments:', transformedSections.filter(s => s.attachment_url));
       
       if (sessionsData && sessionsData.length > 0) {
         const initial = initialSessionId ? sessionsData.find(s => s.id === initialSessionId) : null;
@@ -517,7 +522,7 @@ const Learn = () => {
                               </h3>
                             </div>
                             {/* 섹션 자료 다운로드 버튼 */}
-                            {section.attachment_url && section.attachment_name && (
+                            {section.attachment_url && section.attachment_name ? (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -528,6 +533,10 @@ const Learn = () => {
                                 <span className="hidden sm:inline">자료 다운로드</span>
                                 <span className="sm:hidden">자료</span>
                               </Button>
+                            ) : (
+                              <div className="text-xs text-muted-foreground px-2 py-1 bg-muted/30 rounded">
+                                자료 없음
+                              </div>
                             )}
                           </div>
                           {/* 섹션 자료 정보 */}
