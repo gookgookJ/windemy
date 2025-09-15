@@ -130,7 +130,7 @@ const MyPage = () => {
                       <BookOpen className="w-4 h-4 mr-3" />
                       내 강의실
                     </Button>
-                    <Button variant="ghost" className="w-full justify-start text-left" onClick={() => navigate('/cart')}>
+                    <Button variant="ghost" className="w-full justify-start text-left" onClick={() => navigate('/purchase-history')}>
                       <CreditCard className="w-4 h-4 mr-3" />
                       구매 내역
                     </Button>

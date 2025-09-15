@@ -1,41 +1,55 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { AdminLayout } from '@/layouts/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { Search, Filter, CreditCard, User, Calendar, DollarSign } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Search, Filter, Download, Eye, MoreHorizontal, Calendar, CreditCard, Package } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AdminLayout } from "@/layouts/AdminLayout";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface OrderItem {
+  id: string;
+  price: number;
+  course: {
+    id: string;
+    title: string;
+  };
+}
 
 interface Order {
   id: string;
   total_amount: number;
   status: string;
-  payment_method: string;
+  payment_method?: string;
   created_at: string;
-  user: {
-    full_name: string;
+  user_id: string;
+  profiles?: {
+    full_name?: string;
     email: string;
   };
-  order_items: {
-    course: {
-      title: string;
-    };
-    price: number;
-  }[];
+  order_items: OrderItem[];
 }
 
-export const AdminOrders = () => {
+const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [timeFilter, setTimeFilter] = useState<string>("all");
   const { toast } = useToast();
 
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [orders, searchTerm, statusFilter, timeFilter]);
 
   const fetchOrders = async () => {
     try {
@@ -47,10 +61,18 @@ export const AdminOrders = () => {
           status,
           payment_method,
           created_at,
-          user:profiles(full_name, email),
-          order_items(
+          user_id,
+          profiles:user_id (
+            full_name,
+            email
+          ),
+          order_items (
+            id,
             price,
-            course:courses(title)
+            course:courses (
+              id,
+              title
+            )
           )
         `)
         .order('created_at', { ascending: false });
@@ -60,8 +82,8 @@ export const AdminOrders = () => {
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast({
-        title: "오류",
-        description: "주문 데이터를 불러오는데 실패했습니다.",
+        title: "데이터 로딩 실패",
+        description: "주문 데이터를 불러오는 중 오류가 발생했습니다.",
         variant: "destructive"
       });
     } finally {
@@ -69,72 +91,108 @@ export const AdminOrders = () => {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.user?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const applyFilters = () => {
+    let filtered = [...orders];
 
-  const getStatusBadgeVariant = (status: string) => {
+    // 검색어 필터
+    if (searchTerm) {
+      filtered = filtered.filter(order => 
+        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.profiles?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.order_items.some(item => 
+          item.course.title.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+    }
+
+    // 상태 필터
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(order => order.status === statusFilter);
+    }
+
+    // 기간 필터
+    if (timeFilter !== "all") {
+      const now = new Date();
+      const filterDate = new Date();
+      
+      switch (timeFilter) {
+        case '1day':
+          filterDate.setDate(now.getDate() - 1);
+          break;
+        case '1week':
+          filterDate.setDate(now.getDate() - 7);
+          break;
+        case '1month':
+          filterDate.setMonth(now.getMonth() - 1);
+          break;
+        case '3months':
+          filterDate.setMonth(now.getMonth() - 3);
+          break;
+      }
+      
+      if (timeFilter !== "all") {
+        filtered = filtered.filter(order => new Date(order.created_at) >= filterDate);
+      }
+    }
+
+    setFilteredOrders(filtered);
+  };
+
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'default';
+        return <Badge className="bg-green-600 text-white">결제완료</Badge>;
       case 'pending':
-        return 'secondary';
-      case 'failed':
-        return 'destructive';
+        return <Badge variant="outline">결제대기</Badge>;
       case 'cancelled':
-        return 'outline';
+        return <Badge variant="destructive">취소됨</Badge>;
+      case 'refunded':
+        return <Badge className="bg-orange-600 text-white">환불됨</Badge>;
       default:
-        return 'secondary';
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return '완료';
-      case 'pending':
-        return '대기';
-      case 'failed':
-        return '실패';
-      case 'cancelled':
-        return '취소';
-      default:
-        return status;
-    }
-  };
-
-  const getPaymentMethodLabel = (method: string) => {
+  const getPaymentMethodText = (method?: string) => {
     switch (method) {
       case 'card':
-        return '카드';
+        return '신용카드';
       case 'bank_transfer':
         return '계좌이체';
-      case 'mobile':
-        return '모바일';
+      case 'kakao_pay':
+        return '카카오페이';
+      case 'toss_pay':
+        return '토스페이';
       default:
-        return method || '미지정';
+        return method || '-';
     }
   };
 
-  // 통계 계산
-  const totalRevenue = filteredOrders
-    .filter(order => order.status === 'completed')
-    .reduce((sum, order) => sum + order.total_amount, 0);
-  
-  const completedOrders = filteredOrders.filter(order => order.status === 'completed').length;
-  const pendingOrders = filteredOrders.filter(order => order.status === 'pending').length;
-  const failedOrders = filteredOrders.filter(order => order.status === 'failed').length;
+  const getTotalRevenue = () => {
+    return filteredOrders
+      .filter(order => order.status === 'completed')
+      .reduce((sum, order) => sum + order.total_amount, 0);
+  };
+
+  const getOrderStats = () => {
+    const total = filteredOrders.length;
+    const completed = filteredOrders.filter(order => order.status === 'completed').length;
+    const pending = filteredOrders.filter(order => order.status === 'pending').length;
+    const cancelled = filteredOrders.filter(order => order.status === 'cancelled').length;
+    
+    return { total, completed, pending, cancelled };
+  };
+
+  const stats = getOrderStats();
 
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center h-96">
+        <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="text-lg">로딩 중...</div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">주문 데이터를 불러오는 중...</p>
           </div>
         </div>
       </AdminLayout>
@@ -144,153 +202,199 @@ export const AdminOrders = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        {/* 헤더 */}
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">주문 관리</h1>
-          <p className="text-muted-foreground">결제 현황과 주문 내역을 관리하세요</p>
+          <h2 className="text-3xl font-bold tracking-tight">주문 관리</h2>
+          <p className="text-muted-foreground">
+            전체 주문을 관리하고 매출을 확인하세요.
+          </p>
         </div>
 
-        {/* 주문 통계 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* 통계 카드 */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-green-600" />
-                <div>
-                  <p className="text-sm text-muted-foreground">총 매출</p>
-                  <p className="text-lg font-bold">{totalRevenue.toLocaleString()}원</p>
-                </div>
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">총 주문</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total}</div>
+              <p className="text-xs text-muted-foreground">전체 주문 수</p>
             </CardContent>
           </Card>
+          
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-blue-600" />
-                <div>
-                  <p className="text-sm text-muted-foreground">완료된 주문</p>
-                  <p className="text-lg font-bold">{completedOrders}</p>
-                </div>
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">완료된 주문</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
+              <p className="text-xs text-muted-foreground">결제 완료</p>
             </CardContent>
           </Card>
+          
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-orange-600" />
-                <div>
-                  <p className="text-sm text-muted-foreground">대기 중</p>
-                  <p className="text-lg font-bold">{pendingOrders}</p>
-                </div>
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">대기 중</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
+              <p className="text-xs text-muted-foreground">결제 대기</p>
             </CardContent>
           </Card>
+          
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-red-600" />
-                <div>
-                  <p className="text-sm text-muted-foreground">실패한 주문</p>
-                  <p className="text-lg font-bold">{failedOrders}</p>
-                </div>
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">총 매출</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">{getTotalRevenue().toLocaleString()}원</div>
+              <p className="text-xs text-muted-foreground">완료된 주문 기준</p>
             </CardContent>
           </Card>
         </div>
 
         {/* 필터 및 검색 */}
         <Card>
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="사용자명, 이메일 또는 주문 ID로 검색..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="상태 필터" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">모든 상태</SelectItem>
-                  <SelectItem value="completed">완료</SelectItem>
-                  <SelectItem value="pending">대기</SelectItem>
-                  <SelectItem value="failed">실패</SelectItem>
-                  <SelectItem value="cancelled">취소</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 주문 목록 */}
-        <Card>
           <CardHeader>
-            <CardTitle>주문 목록 ({filteredOrders.length}개)</CardTitle>
+            <CardTitle>주문 목록</CardTitle>
+            <CardDescription>주문을 검색하고 필터링하세요.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {filteredOrders.map((order) => (
-                <div key={order.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold">주문 #{order.id.substring(0, 8)}</h3>
-                        <Badge variant={getStatusBadgeVariant(order.status)}>
-                          {getStatusLabel(order.status)}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <div className="flex items-center gap-1">
-                          <User className="h-3 w-3" />
-                          {order.user?.full_name} ({order.user?.email})
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(order.created_at).toLocaleString()}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <CreditCard className="h-3 w-3" />
-                          {getPaymentMethodLabel(order.payment_method)}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <div className="text-lg font-bold">
-                        {order.total_amount.toLocaleString()}원
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {order.order_items?.length || 0}개 항목
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* 주문 상품 목록 */}
-                  {order.order_items && order.order_items.length > 0 && (
-                    <div className="border-t pt-3">
-                      <div className="space-y-2">
-                        {order.order_items.map((item, index) => (
-                          <div key={index} className="flex justify-between items-center text-sm">
-                            <span>{item.course?.title}</span>
-                            <span>{item.price.toLocaleString()}원</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+            <div className="flex flex-wrap gap-4 mb-6">
+              <div className="flex-1 min-w-[200px]">
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="주문번호, 사용자명, 이메일, 강의명으로 검색..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8"
+                  />
                 </div>
-              ))}
+              </div>
               
-              {filteredOrders.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  검색 조건에 맞는 주문이 없습니다.
-                </div>
-              )}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="상태" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 상태</SelectItem>
+                  <SelectItem value="completed">결제완료</SelectItem>
+                  <SelectItem value="pending">결제대기</SelectItem>
+                  <SelectItem value="cancelled">취소됨</SelectItem>
+                  <SelectItem value="refunded">환불됨</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={timeFilter} onValueChange={setTimeFilter}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="기간" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 기간</SelectItem>
+                  <SelectItem value="1day">1일</SelectItem>
+                  <SelectItem value="1week">1주일</SelectItem>
+                  <SelectItem value="1month">1개월</SelectItem>
+                  <SelectItem value="3months">3개월</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                내보내기
+              </Button>
+            </div>
+
+            {/* 주문 테이블 */}
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>주문번호</TableHead>
+                    <TableHead>고객</TableHead>
+                    <TableHead>강의</TableHead>
+                    <TableHead>결제방법</TableHead>
+                    <TableHead>상태</TableHead>
+                    <TableHead>금액</TableHead>
+                    <TableHead>주문일시</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredOrders.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        조건에 맞는 주문이 없습니다.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredOrders.map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-mono text-sm">
+                          {order.id.slice(0, 8)}...
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">
+                              {order.profiles?.full_name || '이름 없음'}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {order.profiles?.email}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="max-w-[200px]">
+                            {order.order_items.map((item, index) => (
+                              <div key={item.id} className="text-sm">
+                                {item.course.title}
+                                {index < order.order_items.length - 1 && ", "}
+                              </div>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>{getPaymentMethodText(order.payment_method)}</TableCell>
+                        <TableCell>{getStatusBadge(order.status)}</TableCell>
+                        <TableCell className="font-medium">
+                          {order.total_amount.toLocaleString()}원
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(order.created_at).toLocaleDateString('ko-KR', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Eye className="h-4 w-4 mr-2" />
+                                상세보기
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Download className="h-4 w-4 mr-2" />
+                                영수증 다운로드
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
@@ -299,4 +403,4 @@ export const AdminOrders = () => {
   );
 };
 
-export default AdminOrders;
+export default Orders;

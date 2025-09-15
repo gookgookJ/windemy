@@ -151,9 +151,33 @@ const Payment = () => {
     setProcessing(true);
     
     try {
-      // 여기에 실제 결제 처리 로직이 들어갑니다
-      // 현재는 수강 등록만 처리
-      const { error } = await supabase
+      // 주문 생성
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user?.id,
+          total_amount: totalPrice,
+          status: 'completed',
+          payment_method: 'card' // 기본값으로 카드 설정
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 주문 아이템 생성
+      const { error: orderItemError } = await supabase
+        .from('order_items')
+        .insert({
+          order_id: order.id,
+          course_id: courseId,
+          price: finalPrice
+        });
+
+      if (orderItemError) throw orderItemError;
+
+      // 수강 등록
+      const { error: enrollmentError } = await supabase
         .from('enrollments')
         .insert({
           user_id: user?.id,
@@ -161,15 +185,15 @@ const Payment = () => {
           progress: 0
         });
         
-      if (error) throw error;
+      if (enrollmentError) throw enrollmentError;
       
       toast({
         title: "결제 완료",
         description: "강의 결제가 완료되었습니다!",
       });
       
-      // 학습 페이지로 이동
-      navigate(`/learn/${courseId}`);
+      // 구매 내역 페이지로 이동
+      navigate('/purchase-history');
     } catch (error) {
       console.error('Error processing payment:', error);
       toast({
