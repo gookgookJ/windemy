@@ -98,6 +98,15 @@ export const SessionUploadModal = ({ session, isOpen, onClose, onUpdate }: Sessi
     if (!session?.attachment_url) return;
 
     try {
+      // 스토리지에서 파일 삭제
+      if (session.attachment_url.includes('course-files')) {
+        const filePath = session.attachment_url.split('/course-files/')[1];
+        await supabase.storage
+          .from('course-files')
+          .remove([filePath]);
+      }
+
+      // 데이터베이스에서 파일 정보 제거
       const { error } = await supabase
         .from('course_sessions')
         .update({
@@ -121,6 +130,71 @@ export const SessionUploadModal = ({ session, isOpen, onClose, onUpdate }: Sessi
         description: "파일 삭제에 실패했습니다.",
         variant: "destructive"
       });
+    }
+  };
+
+  const replaceFile = async () => {
+    if (!session || !selectedFile) {
+      toast({
+        title: "오류",
+        description: "파일을 선택해주세요.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // 기존 파일이 있다면 삭제
+      if (session.attachment_url && session.attachment_url.includes('course-files')) {
+        const oldFilePath = session.attachment_url.split('/course-files/')[1];
+        await supabase.storage
+          .from('course-files')
+          .remove([oldFilePath]);
+      }
+
+      // 새 파일 업로드
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${session.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${session.course.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('course-files')
+        .upload(filePath, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('course-files')
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('course_sessions')
+        .update({
+          attachment_url: publicUrl,
+          attachment_name: selectedFile.name
+        })
+        .eq('id', session.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "성공",
+        description: "파일이 교체되었습니다."
+      });
+
+      onUpdate();
+      onClose();
+      setSelectedFile(null);
+    } catch (error) {
+      console.error('Error replacing file:', error);
+      toast({
+        title: "오류",
+        description: "파일 교체에 실패했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -195,13 +269,23 @@ export const SessionUploadModal = ({ session, isOpen, onClose, onUpdate }: Sessi
           </div>
 
           <div className="flex gap-2 pt-4">
-            <Button 
-              onClick={handleUpload} 
-              disabled={!selectedFile || uploading}
-              className="flex-1"
-            >
-              {uploading ? '업로드 중...' : '업로드'}
-            </Button>
+            {session?.attachment_url && selectedFile ? (
+              <Button 
+                onClick={replaceFile} 
+                disabled={uploading}
+                className="flex-1"
+              >
+                {uploading ? '교체 중...' : '파일 교체'}
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleUpload} 
+                disabled={!selectedFile || uploading}
+                className="flex-1"
+              >
+                {uploading ? '업로드 중...' : '업로드'}
+              </Button>
+            )}
             <Button variant="outline" onClick={onClose} className="flex-1">
               취소
             </Button>

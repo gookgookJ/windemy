@@ -129,6 +129,12 @@ const menuItems = [
     url: '/admin/logs',
     icon: FileText,
     group: 'system'
+  },
+  {
+    title: '파일 다운로드',
+    url: '/admin/file-downloads',
+    icon: FileText,
+    group: 'analytics'
   }
 ];
 
