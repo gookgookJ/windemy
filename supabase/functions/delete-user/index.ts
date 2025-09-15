@@ -55,9 +55,100 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('관리자 권한이 필요합니다.');
     }
 
-    // Delete user from auth.users (this will cascade to profiles table due to foreign key)
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    // 1) Pre-clean related data that may block auth deletion (storage objects, FK-like relations)
+    try {
+      // Fetch target profile (email used to clean instructors table)
+      const { data: targetProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('email')
+        .eq('id', userId)
+        .maybeSingle();
 
+      // Clean storage objects owned by the user (common cause of deleteUser 500s)
+      const { data: ownedObjects, error: ownedErr } = await supabaseAdmin
+        .from('storage.objects')
+        .select('name,bucket_id')
+        .eq('owner', userId);
+
+      if (!ownedErr && ownedObjects && ownedObjects.length) {
+        const bucketMap = new Map<string, string[]>();
+        for (const obj of ownedObjects) {
+          const arr = bucketMap.get(obj.bucket_id) ?? [];
+          arr.push(obj.name);
+          bucketMap.set(obj.bucket_id, arr);
+        }
+        for (const [bucket, names] of bucketMap.entries()) {
+          // Chunk deletes to avoid payload limits
+          const chunkSize = 50;
+          for (let i = 0; i < names.length; i += chunkSize) {
+            const chunk = names.slice(i, i + chunkSize);
+            const { error: rmErr } = await supabaseAdmin.storage.from(bucket).remove(chunk);
+            if (rmErr) console.warn(`Failed removing some storage objects from ${bucket}:`, rmErr.message);
+          }
+        }
+      }
+
+      // Delete dependent rows in our public schema
+      const simpleUserTables = [
+        'session_progress',
+        'video_watch_segments',
+        'video_seek_events',
+        'video_checkpoints',
+        'activity_logs',
+        'support_tickets',
+      ];
+      for (const t of simpleUserTables) {
+        const { error } = await supabaseAdmin.from(t).delete().eq('user_id', userId);
+        if (error) console.warn(`Cleanup warn: deleting from ${t} failed`, error.message);
+      }
+
+      // Orders and items
+      const { data: ordersToDelete } = await supabaseAdmin
+        .from('orders')
+        .select('id')
+        .eq('user_id', userId);
+      if (ordersToDelete && ordersToDelete.length) {
+        const orderIds = ordersToDelete.map((o: any) => o.id);
+        const { error: oiErr } = await supabaseAdmin
+          .from('order_items')
+          .delete()
+          .in('order_id', orderIds);
+        if (oiErr) console.warn('Cleanup warn: order_items', oiErr.message);
+        const { error: oErr } = await supabaseAdmin
+          .from('orders')
+          .delete()
+          .eq('user_id', userId);
+        if (oErr) console.warn('Cleanup warn: orders', oErr.message);
+      }
+
+      // Courses authored by the user -> detach instructor
+      const { error: coursesErr } = await supabaseAdmin
+        .from('courses')
+        .update({ instructor_id: null })
+        .eq('instructor_id', userId);
+      if (coursesErr) console.warn('Cleanup warn: courses', coursesErr.message);
+
+      // Instructors directory by email
+      if (targetProfile?.email) {
+        const { error: instErr } = await supabaseAdmin
+          .from('instructors')
+          .delete()
+          .eq('email', targetProfile.email);
+        if (instErr) console.warn('Cleanup warn: instructors', instErr.message);
+      }
+
+      // Finally, delete profile row
+      const { error: profDelErr } = await supabaseAdmin
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+      if (profDelErr) console.warn('Cleanup warn: profiles', profDelErr.message);
+    } catch (cleanupErr) {
+      console.warn('Cleanup stage encountered warnings:', cleanupErr);
+    }
+
+    // 2) Delete user from auth.users (retry after cleanup)
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
     if (deleteError) {
       console.error('Error deleting user:', deleteError);
       throw new Error(`사용자 삭제 실패: ${deleteError.message}`);
