@@ -45,21 +45,6 @@ const UserSidebar = () => {
       icon: Heart,
     },
     {
-      path: '/course-consultation',
-      label: '강의 상담',
-      icon: MessageCircle,
-    },
-    {
-      path: '/honors-benefits',
-      label: '아너스 혜택',
-      icon: Award,
-    },
-    {
-      path: '/certificates',
-      label: '수료증',
-      icon: Award,
-    },
-    {
       path: '/review-management',
       label: '후기 관리',
       icon: FileText,

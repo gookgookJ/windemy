@@ -37,9 +37,6 @@ import NotFound from "./pages/NotFound";
 
 // User pages
 import FavoriteCourses from "./pages/FavoriteCourses";
-import CourseConsultation from "./pages/CourseConsultation";
-import HonorsBenefits from "./pages/HonorsBenefits";
-import Certificates from "./pages/Certificates";
 import ReviewManagement from "./pages/ReviewManagement";
 import Inquiry from "./pages/Inquiry";
 import FAQ from "./pages/FAQ";
@@ -69,9 +66,6 @@ const App = () => (
             <Route path="/purchase-history" element={<PurchaseHistory />} />
             <Route path="/my-page" element={<MyPage />} />
             <Route path="/favorite-courses" element={<FavoriteCourses />} />
-            <Route path="/course-consultation" element={<CourseConsultation />} />
-            <Route path="/honors-benefits" element={<HonorsBenefits />} />
-            <Route path="/certificates" element={<Certificates />} />
             <Route path="/review-management" element={<ReviewManagement />} />
             <Route path="/inquiry" element={<Inquiry />} />
             <Route path="/faq" element={<FAQ />} />
