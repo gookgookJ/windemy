@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -56,7 +55,6 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
           </main>
         </div>
       </SidebarProvider>
-      <Footer />
     </div>
   );
 };
