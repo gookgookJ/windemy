@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { PlayCircle, CheckCircle, Clock, ArrowLeft, ArrowRight } from 'lucide-react';
+import { PlayCircle, CheckCircle, Clock, ArrowLeft, ArrowRight, File } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import '@/types/vimeo.d.ts';
 import { VideoProgressTracker } from '@/utils/VideoProgressTracker';
@@ -19,6 +19,8 @@ interface CourseSession {
   duration_minutes: number;
   order_index: number;
   is_free: boolean;
+  attachment_url?: string;
+  attachment_name?: string;
 }
 
 interface SessionProgress {
@@ -476,7 +478,7 @@ const Learn = () => {
                     <p className="text-muted-foreground">{currentSession.description}</p>
                   </div>
                   
-                  {/* 비디오 플레이어 영역 */}
+                   {/* 비디오 플레이어 영역 */}
                   <div className="bg-black rounded-lg aspect-video flex items-center justify-center mb-6">
                     {currentSession.video_url ? (
                       currentSession.video_url.includes('vimeo.com') ? (
@@ -506,6 +508,39 @@ const Learn = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* 세션 첨부파일 영역 */}
+                  {currentSession.attachment_url && currentSession.attachment_name && (
+                    <Card className="mb-6">
+                      <CardContent className="p-4">
+                        <h3 className="font-semibold mb-3 flex items-center gap-2">
+                          <File className="h-5 w-5" />
+                          세션 자료
+                        </h3>
+                        <div className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <File className="h-6 w-6 text-blue-600" />
+                            <div>
+                              <p className="font-medium">{currentSession.attachment_name}</p>
+                              <p className="text-sm text-muted-foreground">첨부파일</p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = currentSession.attachment_url;
+                              link.download = currentSession.attachment_name;
+                              link.click();
+                            }}
+                          >
+                            다운로드
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* 컨트롤 버튼 */}
                   <div className="flex items-center justify-between">

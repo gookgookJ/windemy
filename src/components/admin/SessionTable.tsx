@@ -148,7 +148,7 @@ export const SessionTable = ({
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={() => window.open(`/learn/${session.course?.id}?session=${session.id}`, '_blank')}
+                        onClick={() => navigate(`/learn/${session.course?.id}?session=${session.id}`)}
                         className="h-8 px-3 hover-scale"
                       >
                         <Eye className="h-3 w-3 mr-1" />
