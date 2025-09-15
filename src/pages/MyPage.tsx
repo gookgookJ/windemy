@@ -211,12 +211,12 @@ const MyPage = () => {
                       </Button>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       {enrollments.filter(e => e.progress < 100).map((enrollment) => (
-                        <Card key={enrollment.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                          <CardContent className="p-0">
-                            <div className="flex gap-3 h-40">
-                              <div className="relative w-80 h-40 bg-muted/20 rounded-l-lg overflow-hidden flex-shrink-0">
+                        <Card key={enrollment.id} className="overflow-hidden hover:shadow-md transition-shadow duration-200">
+                          <CardContent className="p-4">
+                            <div className="flex gap-6 items-center">
+                              <div className="relative w-64 h-36 bg-muted/20 rounded-lg overflow-hidden flex-shrink-0">
                                 <img
                                   src={enrollment.course.thumbnail_url || "/placeholder.svg"}
                                   alt={enrollment.course.title}
@@ -224,24 +224,24 @@ const MyPage = () => {
                                 />
                               </div>
                               
-                              <div className="flex-1 p-4 min-w-0">
-                                <div className="h-full flex flex-col justify-between">
+                              <div className="flex-1 min-w-0 py-2">
+                                <div className="space-y-3">
                                   <div>
-                                    <Badge variant="outline" className="mb-2 text-xs">온라인 강의</Badge>
-                                    <h3 className="text-lg font-bold mb-1 line-clamp-2 leading-tight">{enrollment.course.title}</h3>
-                                    <p className="text-xs text-muted-foreground mb-3">
+                                    <Badge variant="outline" className="mb-3 text-xs">온라인 강의</Badge>
+                                    <h3 className="text-xl font-bold mb-2 line-clamp-2 leading-snug">{enrollment.course.title}</h3>
+                                    <p className="text-sm text-muted-foreground">
                                       수강기간: {new Date(enrollment.enrolled_at).toLocaleDateString()} - 2025.01.21
                                     </p>
                                   </div>
                                   
-                                  <div className="mt-auto">
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className="text-xs font-medium">학습 진도</span>
-                                      <span className="text-sm font-bold text-primary">{Math.round(enrollment.progress)}% 완료</span>
+                                  <div className="pt-2">
+                                    <div className="flex items-center justify-between mb-3">
+                                      <span className="text-sm font-medium">학습 진도</span>
+                                      <span className="text-lg font-bold text-primary">{Math.round(enrollment.progress)}% 완료</span>
                                     </div>
                                     <div className="relative">
-                                      <Progress value={enrollment.progress} className="h-2" />
-                                      <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                                      <Progress value={enrollment.progress} className="h-3" />
+                                      <div className="flex justify-between text-xs text-muted-foreground mt-2">
                                         <span>시작</span>
                                         <span>완료</span>
                                       </div>
@@ -250,19 +250,19 @@ const MyPage = () => {
                                 </div>
                               </div>
                               
-                              <div className="p-4 flex flex-col justify-center space-y-2 min-w-fit">
+                              <div className="flex flex-col space-y-3 min-w-fit">
                                 <Button 
                                   size="sm" 
                                   variant="outline"
                                   onClick={() => navigate(`/learn/${enrollment.course.id}?from=mypage`)}
-                                  className="text-xs px-3 py-2 h-8"
+                                  className="px-4 py-2 h-9 text-sm whitespace-nowrap hover:bg-muted transition-colors duration-200"
                                 >
                                   강의 자료
                                 </Button>
                                 <Button 
                                   size="sm" 
                                   onClick={() => navigate(`/learn/${enrollment.course.id}?from=mypage`)}
-                                  className="text-xs px-3 py-2 h-8"
+                                  className="px-4 py-2 h-9 text-sm whitespace-nowrap transition-colors duration-200"
                                 >
                                   학습하기
                                 </Button>
@@ -285,10 +285,10 @@ const MyPage = () => {
                       </div>
                     ) : (
                       enrollments.filter(e => e.progress >= 100).map((enrollment) => (
-                        <Card key={enrollment.id} className="overflow-hidden">
-                          <CardContent className="p-0">
-                            <div className="flex gap-3 h-32">
-                              <div className="relative w-64 h-32 bg-muted/20 rounded-l-lg overflow-hidden flex-shrink-0">
+                        <Card key={enrollment.id} className="overflow-hidden hover:shadow-md transition-shadow duration-200">
+                          <CardContent className="p-4">
+                            <div className="flex gap-6 items-center">
+                              <div className="relative w-56 h-32 bg-muted/20 rounded-lg overflow-hidden flex-shrink-0">
                                 <img
                                   src={enrollment.course.thumbnail_url || "/placeholder.svg"}
                                   alt={enrollment.course.title}
@@ -299,25 +299,31 @@ const MyPage = () => {
                                 </div>
                               </div>
                               
-                              <div className="flex-1 p-4 min-w-0">
-                                <div className="h-full flex flex-col justify-between">
-                                  <div>
-                                    <h3 className="text-lg font-bold mb-1 line-clamp-2">{enrollment.course.title}</h3>
-                                    <p className="text-sm text-muted-foreground mb-2">
-                                      강사: {enrollment.course.instructor?.full_name}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                      완료일: {enrollment.completed_at ? new Date(enrollment.completed_at).toLocaleDateString() : '완료됨'}
-                                    </p>
-                                  </div>
+                              <div className="flex-1 min-w-0 py-2">
+                                <div className="space-y-2">
+                                  <h3 className="text-xl font-bold line-clamp-2 leading-snug">{enrollment.course.title}</h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    강사: {enrollment.course.instructor?.full_name}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    완료일: {enrollment.completed_at ? new Date(enrollment.completed_at).toLocaleDateString() : '완료됨'}
+                                  </p>
                                 </div>
                               </div>
                               
-                              <div className="p-4 flex flex-col justify-center space-y-2 min-w-fit">
-                                <Button size="sm" variant="outline" className="text-xs px-3 py-2 h-8">
+                              <div className="flex flex-col space-y-3 min-w-fit">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="px-4 py-2 h-9 text-sm whitespace-nowrap hover:bg-muted transition-colors duration-200"
+                                >
                                   수료증
                                 </Button>
-                                <Button size="sm" onClick={() => navigate(`/learn/${enrollment.course.id}?from=mypage`)} className="text-xs px-3 py-2 h-8">
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => navigate(`/learn/${enrollment.course.id}?from=mypage`)} 
+                                  className="px-4 py-2 h-9 text-sm whitespace-nowrap transition-colors duration-200"
+                                >
                                   다시 보기
                                 </Button>
                               </div>
