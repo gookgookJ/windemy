@@ -25,8 +25,10 @@ const ProfileSettings = () => {
     avatar_url: ''
   });
   const [marketingConsent, setMarketingConsent] = useState(true);
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [profileCurrentPassword, setProfileCurrentPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -118,9 +120,33 @@ const ProfileSettings = () => {
       return;
     }
 
+    if (!profileCurrentPassword) {
+      toast({
+        title: "보안 확인 필요",
+        description: "회원정보 변경을 위해 현재 비밀번호를 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
+      // 현재 비밀번호 확인
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || '',
+        password: profileCurrentPassword,
+      });
+
+      if (signInError) {
+        toast({
+          title: "인증 실패", 
+          description: "현재 비밀번호가 올바르지 않습니다.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // 프로필 업데이트
       const { error: profileError } = await supabase
         .from('profiles')
@@ -136,6 +162,7 @@ const ProfileSettings = () => {
 
       // 원본 데이터 업데이트
       setOriginalFormData({ ...formData });
+      setProfileCurrentPassword('');
 
       toast({
         title: "성공",
@@ -155,6 +182,15 @@ const ProfileSettings = () => {
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!currentPassword) {
+      toast({
+        title: "현재 비밀번호 필요",
+        description: "보안을 위해 현재 비밀번호를 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (newPassword !== confirmPassword) {
       toast({
@@ -177,6 +213,22 @@ const ProfileSettings = () => {
     setLoading(true);
 
     try {
+      // 현재 비밀번호 확인
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || '',
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        toast({
+          title: "인증 실패", 
+          description: "현재 비밀번호가 올바르지 않습니다.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 새 비밀번호로 업데이트
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
@@ -188,6 +240,7 @@ const ProfileSettings = () => {
         description: "비밀번호가 성공적으로 변경되었습니다.",
       });
       
+      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
@@ -381,6 +434,24 @@ const ProfileSettings = () => {
                       </div>
                     </div>
 
+                    {/* 보안 확인 */}
+                    <div className="border-t pt-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="profileCurrentPassword">현재 비밀번호 확인 *</Label>
+                        <Input
+                          id="profileCurrentPassword"
+                          type="password"
+                          value={profileCurrentPassword}
+                          onChange={(e) => setProfileCurrentPassword(e.target.value)}
+                          placeholder="회원정보 변경을 위해 현재 비밀번호를 입력하세요"
+                          required={hasChanges}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          보안을 위해 회원정보 변경 시 비밀번호 확인이 필요합니다.
+                        </p>
+                      </div>
+                    </div>
+
                     <div className="flex justify-end">
                       <Button 
                         type="submit" 
@@ -419,6 +490,18 @@ const ProfileSettings = () => {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handlePasswordChange} className="space-y-4">
+                    <div>
+                      <Label htmlFor="currentPassword">현재 비밀번호 *</Label>
+                      <Input
+                        id="currentPassword"
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="현재 사용 중인 비밀번호"
+                        required
+                      />
+                    </div>
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="newPassword">새 비밀번호</Label>
@@ -444,7 +527,7 @@ const ProfileSettings = () => {
                     </div>
 
                     <div className="flex justify-end">
-                      <Button type="submit" disabled={loading || !newPassword || !confirmPassword}>
+                      <Button type="submit" disabled={loading || !currentPassword || !newPassword || !confirmPassword}>
                         <Lock className="h-4 w-4 mr-2" />
                         {loading ? '변경 중...' : '비밀번호 변경'}
                       </Button>
