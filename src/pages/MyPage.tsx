@@ -216,22 +216,12 @@ const MyPage = () => {
                         <Card key={enrollment.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                           <CardContent className="p-0">
                             <div className="flex gap-4">
-                              <div className="relative w-72 h-32 bg-muted/30 rounded-lg overflow-hidden">
+                              <div className="relative w-72 h-32 bg-muted/20 rounded-lg overflow-hidden flex-shrink-0">
                                 <img
                                   src={enrollment.course.thumbnail_url || "/placeholder.svg"}
                                   alt={enrollment.course.title}
-                                  className="w-full h-full object-contain"
+                                  className="w-full h-full object-cover"
                                 />
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                                  <Button 
-                                    size="sm" 
-                                    variant="secondary"
-                                    onClick={() => navigate(`/learn/${enrollment.course.id}?from=mypage`)}
-                                  >
-                                    <Play className="w-4 h-4 mr-2" />
-                                    학습하기
-                                  </Button>
-                                </div>
                               </div>
                               
                               <div className="flex-1 p-4">
@@ -295,11 +285,11 @@ const MyPage = () => {
                         <Card key={enrollment.id} className="overflow-hidden">
                           <CardContent className="p-0">
                             <div className="flex gap-4">
-                              <div className="relative w-72 h-32 bg-muted/30 rounded-lg overflow-hidden">
+                              <div className="relative w-72 h-32 bg-muted/20 rounded-lg overflow-hidden flex-shrink-0">
                                 <img
                                   src={enrollment.course.thumbnail_url || "/placeholder.svg"}
                                   alt={enrollment.course.title}
-                                  className="w-full h-full object-contain"
+                                  className="w-full h-full object-cover"
                                 />
                                 <div className="absolute top-2 left-2">
                                   <Badge className="bg-green-600 text-white">완료</Badge>
