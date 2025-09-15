@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,8 @@ interface SessionProgress {
 
 const Learn = () => {
   const { courseId } = useParams();
+  const [searchParams] = useSearchParams();
+  const fromPage = searchParams.get('from');
   const [course, setCourse] = useState<any>(null);
   const [sessions, setSessions] = useState<CourseSession[]>([]);
   const [sections, setSections] = useState<CourseSection[]>([]);
@@ -489,10 +491,16 @@ const Learn = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate(`/course/${courseId}`)}
+                onClick={() => {
+                  if (fromPage === 'mypage') {
+                    navigate('/my-page');
+                  } else {
+                    navigate(`/course/${courseId}`);
+                  }
+                }}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                강의로 돌아가기
+                {fromPage === 'mypage' ? '내 강의실로 돌아가기' : '강의로 돌아가기'}
               </Button>
               <div>
                 <h1 className="text-xl font-semibold">{course?.title}</h1>

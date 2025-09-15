@@ -229,7 +229,7 @@ const MyPage = () => {
                                   <Button 
                                     size="sm" 
                                     variant="secondary"
-                                    onClick={() => navigate(`/learn/${enrollment.course.id}`)}
+                                    onClick={() => navigate(`/learn/${enrollment.course.id}?from=mypage`)}
                                   >
                                     <Play className="w-4 h-4 mr-2" />
                                     학습하기
@@ -259,14 +259,14 @@ const MyPage = () => {
                                 <Button 
                                   size="sm" 
                                   variant="outline"
-                                  onClick={() => navigate(`/learn/${enrollment.course.id}`)}
+                                  onClick={() => navigate(`/learn/${enrollment.course.id}?from=mypage`)}
                                   className="mb-2"
                                 >
                                   강의 자료 다운로드
                                 </Button>
                                 <Button 
                                   size="sm" 
-                                  onClick={() => navigate(`/learn/${enrollment.course.id}`)}
+                                  onClick={() => navigate(`/learn/${enrollment.course.id}?from=mypage`)}
                                 >
                                   학습하기
                                 </Button>
@@ -317,7 +317,7 @@ const MyPage = () => {
                                 <Button size="sm" variant="outline" className="mb-2">
                                   수료증 다운로드
                                 </Button>
-                                <Button size="sm" onClick={() => navigate(`/learn/${enrollment.course.id}`)}>
+                                <Button size="sm" onClick={() => navigate(`/learn/${enrollment.course.id}?from=mypage`)}>
                                   다시 보기
                                 </Button>
                               </div>
