@@ -223,7 +223,7 @@ const Payment = () => {
                       <img
                         src={courseData.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
                         alt={courseData.title}
-                        className="w-full h-48 object-cover rounded-lg shadow-sm"
+                        className="w-full h-40 object-contain bg-muted/30 rounded-lg border"
                       />
                     </div>
                     
@@ -244,8 +244,8 @@ const Payment = () => {
             {/* Discount & Coupon Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  🎫 할인 혜택
+                <CardTitle className="text-lg">
+                  할인 혜택
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -279,8 +279,8 @@ const Payment = () => {
             {/* Points & Credits Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  💎 포인트 & 적립금
+                <CardTitle className="text-lg">
+                  포인트 & 적립금
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -330,23 +330,23 @@ const Payment = () => {
             {/* Payment Method */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  💳 결제 수단
+                <CardTitle className="text-lg">
+                  결제 수단
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <Button 
                     variant="outline" 
-                    className="w-full h-16 bg-gradient-to-r from-gray-900 to-gray-700 text-white hover:from-gray-800 hover:to-gray-600 flex items-center justify-center gap-3 font-medium text-lg border-0"
+                    className="w-full h-14 bg-slate-900 text-white hover:bg-slate-800 flex items-center justify-center gap-3 font-medium border-slate-900"
                   >
-                    💳 신용카드 · 체크카드
+                    신용카드 · 체크카드
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="w-full h-16 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 flex items-center justify-center gap-3 font-medium text-lg border border-blue-200"
+                    className="w-full h-14 hover:bg-muted/50 flex items-center justify-center gap-3 font-medium"
                   >
-                    🏦 실시간 계좌이체
+                    실시간 계좌이체
                   </Button>
                 </div>
               </CardContent>
@@ -355,10 +355,10 @@ const Payment = () => {
 
           {/* Right Column - Order Summary */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-8 shadow-lg border-2">
-              <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
-                <CardTitle className="text-xl flex items-center gap-2">
-                  🧾 주문 요약
+            <Card className="sticky top-8 border">
+              <CardHeader className="border-b bg-muted/30">
+                <CardTitle className="text-xl">
+                  주문 요약
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6 p-6">
@@ -390,7 +390,7 @@ const Payment = () => {
                 <Separator className="my-4" />
                 
                 {/* Final Amount */}
-                <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4">
+                <div className="bg-muted/50 rounded-lg p-4 border">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold">최종 결제금액</span>
                     <span className="text-2xl font-bold text-primary">{totalPrice.toLocaleString()}원</span>
@@ -399,7 +399,7 @@ const Payment = () => {
                 
                 {/* Payment Button */}
                 <Button 
-                  className="w-full h-14 text-lg font-bold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg"
+                  className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90"
                   onClick={handlePayment}
                   disabled={processing}
                 >
@@ -409,13 +409,13 @@ const Payment = () => {
                       결제 처리 중...
                     </span>
                   ) : (
-                    "💳 결제하기"
+                    "결제하기"
                   )}
                 </Button>
                 
                 {/* Terms */}
                 <p className="text-xs text-muted-foreground text-center leading-relaxed">
-                  결제 진행 시 <span className="font-medium">이용약관</span> 및 <span className="font-medium">개인정보처리방침</span>에 동의한 것으로 간주됩니다.
+                  결제 진행 시 이용약관 및 개인정보처리방침에 동의한 것으로 간주됩니다.
                 </p>
               </CardContent>
             </Card>
