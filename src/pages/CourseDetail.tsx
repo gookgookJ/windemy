@@ -716,25 +716,14 @@ const CourseDetail = () => {
                   {/* Action Buttons */}
                   <div className="space-y-3">
                     
-                    {isEnrolled ? (
-                      <Button 
-                        variant="default" 
-                        size="lg" 
-                        className="w-full bg-primary hover:bg-primary/90"
-                        onClick={() => navigate(`/learn/${courseId}`)}
-                      >
-                        강의 보기
-                      </Button>
-                     ) : (
-                       <Button 
-                         variant="default" 
-                         size="lg" 
-                         className="w-full bg-primary hover:bg-primary/90"
-                         onClick={handlePurchase}
-                       >
-                         강의 구매하기
-                       </Button>
-                     )}
+                    <Button 
+                      variant="default" 
+                      size="lg" 
+                      className="w-full bg-primary hover:bg-primary/90"
+                      onClick={handlePurchase}
+                    >
+                      강의 구매하기
+                    </Button>
                   </div>
                 </div>
               </Card>
