@@ -166,34 +166,25 @@ export const AdminSidebar = () => {
   }, {} as Record<string, typeof menuItems>);
 
   return (
-    <Sidebar 
-      collapsible="icon" 
-      className="border-r border-border/50 bg-card/50 backdrop-blur-sm"
-    >
-      <SidebarContent className="pt-20">
-        <div className="flex justify-end px-4 pb-2">
-          <SidebarTrigger className="h-8 w-8" />
+    <Sidebar collapsible="icon" className="pt-16">
+      <SidebarContent className="pt-4">
+        <div className="flex justify-end p-2">
+          <SidebarTrigger />
         </div>
         
         {Object.entries(groupedItems).map(([group, items]) => (
-          <SidebarGroup key={group} className="px-2">
-            <SidebarGroupLabel className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          <SidebarGroup key={group}>
+            <SidebarGroupLabel>
               {state !== "collapsed" && groupLabels[group as keyof typeof groupLabels]}
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="space-y-1">
+              <SidebarMenu>
                 {items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild size="sm">
+                    <SidebarMenuButton asChild>
                       <NavLink 
                         to={item.url} 
-                        className={({ isActive }) => 
-                          `flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-accent ${
-                            isActive 
-                              ? "bg-primary text-primary-foreground shadow-sm font-medium" 
-                              : "text-muted-foreground hover:text-foreground"
-                          }`
-                        }
+                        className={getNavClassName(item.url)}
                         end={item.url === '/admin'}
                         onClick={() => {
                           // Smooth scroll to top when navigating
@@ -202,10 +193,8 @@ export const AdminSidebar = () => {
                           }, 100);
                         }}
                       >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        {state !== "collapsed" && (
-                          <span className="truncate">{item.title}</span>
-                        )}
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {state !== "collapsed" && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
