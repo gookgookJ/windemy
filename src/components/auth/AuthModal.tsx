@@ -15,7 +15,7 @@ interface AuthModalProps {
   defaultTab?: 'signin' | 'signup';
 }
 
-type AuthView = 'main' | 'signup' | 'forgot-password';
+type AuthView = 'main' | 'signup' | 'forgot-password' | 'find-id';
 
 export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalProps) => {
   const [currentView, setCurrentView] = useState<AuthView>('main');
@@ -28,6 +28,8 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
     confirmPassword: '' 
   });
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [findIdData, setFindIdData] = useState({ fullName: '', phone: '' });
+  const [foundEmail, setFoundEmail] = useState('');
   const { signIn } = useAuth();
   const { toast } = useToast();
 
@@ -171,6 +173,48 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
     }
   };
 
+  const handleFindId = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('full_name', findIdData.fullName)
+        .eq('phone', findIdData.phone)
+        .maybeSingle();
+      
+      if (error) {
+        toast({
+          title: "오류 발생",
+          description: "ID 찾기 중 오류가 발생했습니다.",
+          variant: "destructive"
+        });
+      } else if (data) {
+        setFoundEmail(data.email);
+        toast({
+          title: "ID 찾기 완료",
+          description: "입력하신 정보로 등록된 이메일을 찾았습니다."
+        });
+      } else {
+        toast({
+          title: "정보 없음",
+          description: "입력하신 정보로 등록된 계정이 없습니다.",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "오류 발생",
+        description: "ID 찾기 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleKakaoLogin = () => {
     // 카카오 로그인 로직 (향후 구현)
     toast({
@@ -185,6 +229,8 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
     setSignInData({ email: '', password: '' });
     setSignUpData({ email: '', password: '', fullName: '', confirmPassword: '' });
     setForgotPasswordEmail('');
+    setFindIdData({ fullName: '', phone: '' });
+    setFoundEmail('');
     onClose();
   };
 
@@ -211,6 +257,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                 {currentView === 'main' && "지금 가입 하고\n첫구매 할인쿠폰을 받으세요!"}
                 {currentView === 'signup' && "새 계정을 만들어보세요"}
                 {currentView === 'forgot-password' && "비밀번호를 재설정하세요"}
+                {currentView === 'find-id' && "이름과 전화번호로 ID를 찾으세요"}
               </DialogDescription>
             </div>
           </DialogHeader>
@@ -265,6 +312,13 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
 
                 {/* Footer Links */}
                 <div className="flex justify-center space-x-4 mt-6 text-sm text-gray-500">
+                  <button 
+                    onClick={() => setCurrentView('find-id')}
+                    className="hover:text-gray-700"
+                  >
+                    ID 찾기
+                  </button>
+                  <span>|</span>
                   <button 
                     onClick={() => setCurrentView('forgot-password')}
                     className="hover:text-gray-700"
@@ -342,6 +396,67 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                   {isLoading ? '가입 중...' : '회원가입'}
                 </Button>
               </form>
+            )}
+
+            {/* Find ID View */}
+            {currentView === 'find-id' && (
+              <div className="space-y-4">
+                {!foundEmail ? (
+                  <form onSubmit={handleFindId} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="findIdName">이름</Label>
+                      <Input
+                        id="findIdName"
+                        type="text"
+                        placeholder="가입시 입력한 이름을 입력하세요"
+                        value={findIdData.fullName}
+                        onChange={(e) => setFindIdData({ ...findIdData, fullName: e.target.value })}
+                        className="h-12 border-gray-200 rounded-lg"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="findIdPhone">전화번호</Label>
+                      <Input
+                        id="findIdPhone"
+                        type="tel"
+                        placeholder="가입시 입력한 전화번호를 입력하세요"
+                        value={findIdData.phone}
+                        onChange={(e) => setFindIdData({ ...findIdData, phone: e.target.value })}
+                        className="h-12 border-gray-200 rounded-lg"
+                        required
+                      />
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      가입시 입력하신 이름과 전화번호를 정확히 입력해주세요.
+                    </p>
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-lg mt-6"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'ID 찾는 중...' : 'ID 찾기'}
+                    </Button>
+                  </form>
+                ) : (
+                  <div className="text-center space-y-4">
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <h3 className="font-semibold text-green-800 mb-2">찾은 이메일 (ID)</h3>
+                      <p className="text-green-700 font-mono text-lg">{foundEmail}</p>
+                    </div>
+                    <Button 
+                      onClick={() => {
+                        setCurrentView('main');
+                        setFoundEmail('');
+                        setFindIdData({ fullName: '', phone: '' });
+                      }}
+                      className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-lg"
+                    >
+                      로그인하러 가기
+                    </Button>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Forgot Password View */}
