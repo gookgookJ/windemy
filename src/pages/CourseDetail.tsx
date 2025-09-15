@@ -723,7 +723,7 @@ const CourseDetail = () => {
                         className="w-full bg-primary hover:bg-primary/90"
                         onClick={() => navigate(`/learn/${courseId}`)}
                       >
-                        강의 구매하기
+                        강의 보기
                       </Button>
                      ) : (
                        <Button 
