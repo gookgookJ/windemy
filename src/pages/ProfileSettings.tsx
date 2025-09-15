@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { User, Camera, Save, Lock, Trash2, Upload, Check } from 'lucide-react';
+import { User, Camera, Save, Lock, Upload, Check, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { uploadAvatar } from '@/utils/uploadAvatar';
 import Header from '@/components/Header';
@@ -365,18 +365,17 @@ const ProfileSettings = () => {
                       <h3 className="text-lg font-semibold mb-4">계정 정보</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <Label>계정 유형</Label>
-                          <div className="p-3 bg-muted rounded-md">
-                            {profile?.role === 'student' ? '학습자' : 
-                             profile?.role === 'instructor' ? '강사' : 
-                             profile?.role === 'admin' ? '관리자' : '사용자'}
+                          <Label>가입일</Label>
+                          <div className="p-3 bg-muted rounded-md flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : '-'}
                           </div>
                         </div>
                         
                         <div className="space-y-2">
-                          <Label>가입일</Label>
+                          <Label>이메일 확인</Label>
                           <div className="p-3 bg-muted rounded-md">
-                            {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : '-'}
+                            {user?.email_confirmed_at ? '확인됨' : '미확인'}
                           </div>
                         </div>
                       </div>
@@ -454,58 +453,80 @@ const ProfileSettings = () => {
                 </CardContent>
               </Card>
 
-              {/* 회원탈퇴 - 덜 눈에 띄게 배치 */}
-              <details className="group">
-                <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  기타 계정 설정 ▼
-                </summary>
-                <Card className="mt-4 border-destructive/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-destructive text-base">
-                      <Trash2 className="h-4 w-4" />
-                      회원탈퇴
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-destructive/5 p-4 rounded-lg mb-4">
+              {/* 회원탈퇴 */}
+              <Card className="border-destructive/20">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-base font-medium mb-1">계정 관리</h3>
                       <p className="text-sm text-muted-foreground">
-                        ⚠️ 계정을 삭제하면 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.
-                        <br />수강 기록, 구매 내역, 작성한 리뷰 등이 모두 사라집니다.
+                        계정을 더 이상 사용하지 않으신다면 탈퇴할 수 있습니다.
                       </p>
                     </div>
                     
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive/10">
-                          <Trash2 className="h-3 w-3 mr-2" />
-                          회원탈퇴
+                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+                          탈퇴하기
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>정말로 탈퇴하시겠습니까?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            이 작업은 되돌릴 수 없습니다. 계정과 모든 데이터가 영구적으로 삭제됩니다.
-                            <br /><br />
-                            • 수강 중인 강의 접근 불가
-                            • 구매 내역 및 수료증 삭제
-                            • 작성한 리뷰 및 문의 내역 삭제
-                          </AlertDialogDescription>
+                      <AlertDialogContent className="max-w-md">
+                        <AlertDialogHeader className="text-left">
+                          <AlertDialogTitle className="text-lg font-bold">회원탈퇴 안내</AlertDialogTitle>
                         </AlertDialogHeader>
-                        <AlertDialogFooter>
+                        
+                        <div className="space-y-4 text-sm">
+                          <p className="text-muted-foreground">
+                            회원 탈퇴 시점에 당신 아래 내용을 반드시 확인해주세요.
+                          </p>
+                          
+                          <div>
+                            <h4 className="font-semibold mb-2">회원탈퇴 시 처리내용</h4>
+                            <p className="text-muted-foreground">
+                              탈퇴일으로부터 모든 개인정보는 소멸되며 복원되지 않습니다.
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-semibold mb-2">구매 정보가 삭제됩니다.</h4>
+                            <p className="text-muted-foreground">
+                              소비자보호에 관한 법령 제6조에 의거, 계약 또는 청약철회 등에 관한 기록은 5년, 대금결제 및 재화공급에 관한 기록은 5년, 소비자의 불만 또는 분쟁처리에 관한 기록은 3년 동안 보관됩니다. 동 개인정보는 법령에 의한 보유 목적 외에 다른 목적으로는 이용하지 않습니다.
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-semibold mb-2">회원탈퇴 시 재가입 관련</h4>
+                            <p className="text-muted-foreground">
+                              탈퇴회원 정보는 재가입 시 복구 및 연동이 상이하므로, 회원정보 상태로 이전 정상적 복원이 불가하며 수강 횟수 및 적립 포인트 복원도 불가하므로 신중한 검토 후 탈퇴 신청하시기 바랍니다.
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-semibold mb-2">회원탈퇴 후 재가입 제한</h4>
+                            <p className="text-muted-foreground">
+                              탈퇴 회원이 재가입하더라도 기존의 포인트나 혜택은 소멸되어 복원되지 않습니다.
+                            </p>
+                          </div>
+                          
+                          <div className="bg-muted p-3 rounded">
+                            <p className="text-sm">위 내용을 모두 확인하였습니다.</p>
+                          </div>
+                        </div>
+                        
+                        <AlertDialogFooter className="gap-2">
                           <AlertDialogCancel>취소</AlertDialogCancel>
                           <AlertDialogAction 
                             onClick={handleAccountDeletion}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
-                            삭제하기
+                            탈퇴하기
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
-                  </CardContent>
-                </Card>
-              </details>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

@@ -139,12 +139,6 @@ const MyPage = () => {
                           <Calendar className="h-3 w-3" />
                           가입일: {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : '-'}
                         </Badge>
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {profile?.role === 'student' ? '학습자' : 
-                           profile?.role === 'instructor' ? '강사' : 
-                           profile?.role === 'admin' ? '관리자' : '사용자'}
-                        </Badge>
                       </div>
                     </div>
                   </div>
