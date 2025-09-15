@@ -23,7 +23,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CourseDetailImages } from "@/components/CourseDetailImages";
 import { Progress } from "@/components/ui/progress";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import courseDetailLong from "@/assets/course-detail-long.jpg";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -379,7 +378,6 @@ const CourseDetail = () => {
             <p className="text-muted-foreground">강의 정보를 불러오는 중...</p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -397,7 +395,6 @@ const CourseDetail = () => {
             </Button>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -1009,8 +1006,6 @@ const CourseDetail = () => {
           </Button>
         )}
       </main>
-      
-      <Footer />
     </div>
   );
 };

@@ -12,7 +12,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 
 interface CourseData {
   id: string;
@@ -216,7 +215,6 @@ const Payment = () => {
             <p className="text-muted-foreground">결제 정보를 불러오는 중...</p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -233,7 +231,6 @@ const Payment = () => {
             </Button>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -529,8 +526,6 @@ const Payment = () => {
           </div>
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 };

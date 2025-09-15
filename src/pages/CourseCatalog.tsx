@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import CourseCard from "@/components/CourseCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -139,7 +138,6 @@ const CourseCatalog = () => {
             <p className="text-muted-foreground">강의 목록을 불러오는 중...</p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -219,8 +217,6 @@ const CourseCatalog = () => {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };

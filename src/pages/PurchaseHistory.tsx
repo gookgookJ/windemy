@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, CreditCard, Package, Filter } from 'lucide-react';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 
 interface OrderItem {
   id: string;
@@ -157,7 +156,6 @@ const PurchaseHistory = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">로딩 중...</div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -299,7 +297,6 @@ const PurchaseHistory = () => {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 };
