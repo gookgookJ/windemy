@@ -411,14 +411,32 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                     placeholder="비밀번호를 다시 입력하세요"
                     value={signUpData.confirmPassword}
                     onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })}
-                    className="h-12 border-gray-200 rounded-lg"
+                    className={`h-12 border-gray-200 rounded-lg ${
+                      signUpData.confirmPassword && signUpData.password !== signUpData.confirmPassword 
+                        ? 'border-red-500 focus:border-red-500' 
+                        : signUpData.confirmPassword && signUpData.password === signUpData.confirmPassword 
+                        ? 'border-green-500 focus:border-green-500' 
+                        : ''
+                    }`}
                     required
                   />
+                  {signUpData.confirmPassword && (
+                    <p className={`text-xs ${
+                      signUpData.password === signUpData.confirmPassword 
+                        ? 'text-green-600' 
+                        : 'text-red-600'
+                    }`}>
+                      {signUpData.password === signUpData.confirmPassword 
+                        ? '✓ 비밀번호가 일치합니다' 
+                        : '✗ 비밀번호가 일치하지 않습니다'
+                      }
+                    </p>
+                  )}
                 </div>
                 <Button 
                   type="submit" 
                   className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-lg mt-6"
-                  disabled={isLoading}
+                  disabled={isLoading || (signUpData.password !== signUpData.confirmPassword && signUpData.confirmPassword !== '')}
                 >
                   {isLoading ? '가입 중...' : '회원가입'}
                 </Button>
