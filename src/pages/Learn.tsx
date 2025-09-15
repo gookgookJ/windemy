@@ -389,7 +389,18 @@ const Learn = () => {
     if (!section.attachment_url || !user) return;
     
     try {
-      // 파일 경로 추출
+      // URL이 http로 시작하면 외부 링크로 처리
+      if (section.attachment_url.startsWith('http') && !section.attachment_url.includes('supabase.co')) {
+        window.open(section.attachment_url, '_blank');
+        
+        toast({
+          title: "링크 열기",
+          description: "새 탭에서 자료 링크가 열렸습니다."
+        });
+        return;
+      }
+
+      // Supabase Storage 파일 처리
       let path = section.attachment_url;
       if (path.startsWith('http')) {
         const marker = '/course-files/';
@@ -530,7 +541,7 @@ const Learn = () => {
                                 className="flex items-center gap-2 hover:bg-primary/10 transition-colors"
                               >
                                 <File className="h-4 w-4" />
-                                <span className="hidden sm:inline">자료 다운로드</span>
+                                <span className="hidden sm:inline">자료 보기</span>
                                 <span className="sm:hidden">자료</span>
                               </Button>
                             ) : (
@@ -539,13 +550,6 @@ const Learn = () => {
                               </div>
                             )}
                           </div>
-                          {/* 섹션 자료 정보 */}
-                          {section.attachment_url && section.attachment_name && (
-                            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                              <File className="h-3 w-3" />
-                              <span>{section.attachment_name}</span>
-                            </div>
-                          )}
                         </div>
                       </div>
                       
