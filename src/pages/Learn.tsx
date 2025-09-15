@@ -19,8 +19,6 @@ interface CourseSession {
   duration_minutes: number;
   order_index: number;
   is_free: boolean;
-  attachment_url?: string;
-  attachment_name?: string;
   section_id?: string;
 }
 
@@ -28,6 +26,8 @@ interface CourseSection {
   id: string;
   title: string;
   order_index: number;
+  attachment_url?: string;
+  attachment_name?: string;
   sessions: CourseSession[];
 }
 
@@ -380,12 +380,12 @@ const Learn = () => {
     return videoProgress[sessionId] || 0;
   };
 
-  const downloadAttachment = async () => {
-    if (!currentSession?.attachment_url) return;
+  const downloadSectionAttachment = async (section: CourseSection) => {
+    if (!section.attachment_url || !user) return;
     
     try {
       // 파일 경로 추출
-      let path = currentSession.attachment_url;
+      let path = section.attachment_url;
       if (path.startsWith('http')) {
         const marker = '/course-files/';
         const idx = path.indexOf(marker);
@@ -415,7 +415,7 @@ const Learn = () => {
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = currentSession.attachment_name || 'download';
+      link.download = section.attachment_name || 'download';
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
@@ -423,15 +423,6 @@ const Learn = () => {
       
       // Blob URL 정리
       setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-
-      // 다운로드 로그 기록
-      if (user && currentSession) {
-        await (supabase as any).from('session_file_downloads').insert({
-          user_id: user.id,
-          session_id: currentSession.id,
-          file_name: currentSession.attachment_name || path.split('/').pop() || 'file'
-        });
-      }
 
       toast({
         title: "다운로드 완료",
@@ -511,18 +502,46 @@ const Learn = () => {
             <Card>
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-4">강의 목차</h3>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {sections.map((section) => (
-                    <div key={section.id} className="space-y-2">
-                      {/* 섹션 헤더 */}
-                      <div className="px-3 py-2 bg-muted/30 rounded-lg border-l-4 border-primary">
-                        <h3 className="font-semibold text-base text-foreground">
-                          {section.title}
-                        </h3>
+                    <div key={section.id} className="space-y-3">
+                      {/* 섹션 헤더 - 더 예쁘게 디자인 */}
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent rounded-xl" />
+                        <div className="relative px-4 py-3 bg-card/80 backdrop-blur-sm rounded-xl border border-primary/20 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-1 h-6 bg-gradient-to-b from-primary to-primary/60 rounded-full" />
+                              <h3 className="font-bold text-lg text-foreground">
+                                {section.title}
+                              </h3>
+                            </div>
+                            {/* 섹션 자료 다운로드 버튼 */}
+                            {section.attachment_url && section.attachment_name && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => downloadSectionAttachment(section)}
+                                className="flex items-center gap-2 hover:bg-primary/10 transition-colors"
+                              >
+                                <File className="h-4 w-4" />
+                                <span className="hidden sm:inline">자료 다운로드</span>
+                                <span className="sm:hidden">자료</span>
+                              </Button>
+                            )}
+                          </div>
+                          {/* 섹션 자료 정보 */}
+                          {section.attachment_url && section.attachment_name && (
+                            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                              <File className="h-3 w-3" />
+                              <span>{section.attachment_name}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       
                       {/* 세션 목록 */}
-                      <div className="ml-4 space-y-2">
+                      <div className="ml-6 space-y-2">
                         {section.sessions.map((session) => {
                           const sessionProgress = getSessionProgress(session.id);
                           const isCompleted = sessionProgress?.completed || false;
@@ -531,16 +550,20 @@ const Learn = () => {
                           return (
                             <div
                               key={session.id}
-                              className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                                isCurrent ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
+                              className={`group p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
+                                isCurrent 
+                                  ? 'bg-primary/10 border-primary shadow-sm' 
+                                  : 'hover:bg-muted/50 hover:border-muted-foreground/30'
                               }`}
                               onClick={() => setCurrentSession(session)}
                             >
                               <div className="flex items-center gap-3">
                                 {isCompleted ? (
-                                  <CheckCircle className="h-4 w-4 text-green-600" />
+                                  <div className="flex items-center justify-center w-6 h-6 bg-green-100 rounded-full">
+                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                  </div>
                                 ) : isCurrent && getVideoProgress(session.id) > 0 ? (
-                                  <div className="relative w-4 h-4">
+                                  <div className="relative w-6 h-6">
                                     <div className="absolute inset-0 bg-muted rounded-full" />
                                     <div 
                                       className="absolute inset-0 bg-primary rounded-full origin-center"
@@ -550,26 +573,28 @@ const Learn = () => {
                                     />
                                   </div>
                                 ) : (
-                                  <PlayCircle className="h-4 w-4 text-muted-foreground" />
+                                  <div className="flex items-center justify-center w-6 h-6 bg-muted/50 rounded-full group-hover:bg-primary/20 transition-colors">
+                                    <PlayCircle className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                                  </div>
                                 )}
                                 <span className="text-sm font-medium flex-1">
-                                  ㄴ {session.order_index}. {session.title}
+                                  {session.order_index}. {session.title}
                                 </span>
                                 {session.is_free && (
                                   <Badge variant="secondary" className="text-xs">무료</Badge>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground ml-7">
+                              <div className="flex items-center gap-1 mt-2 ml-9 text-xs text-muted-foreground">
                                 <Clock className="h-3 w-3" />
                                 <span>{session.duration_minutes}분</span>
                                 {isCurrent && getVideoProgress(session.id) > 0 && (
-                                  <span className="ml-2 text-primary">
+                                  <span className="ml-2 text-primary font-medium">
                                     • {Math.round(getVideoProgress(session.id))}% 시청
                                   </span>
                                 )}
                               </div>
                               {isCurrent && getVideoProgress(session.id) > 0 && (
-                                <div className="mt-2 ml-7">
+                                <div className="mt-2 ml-9">
                                   <Progress value={getVideoProgress(session.id)} className="h-1" />
                                 </div>
                               )}
@@ -625,33 +650,6 @@ const Learn = () => {
                     )}
                   </div>
 
-                  {/* 세션 첨부파일 영역 */}
-                  {currentSession.attachment_url && currentSession.attachment_name && (
-                    <Card className="mb-6">
-                      <CardContent className="p-4">
-                        <h3 className="font-semibold mb-3 flex items-center gap-2">
-                          <File className="h-5 w-5" />
-                          세션 자료
-                        </h3>
-                        <div className="flex items-center justify-between p-3 border rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <File className="h-6 w-6 text-blue-600" />
-                            <div>
-                              <p className="font-medium">{currentSession.attachment_name}</p>
-                              <p className="text-sm text-muted-foreground">첨부파일</p>
-                            </div>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={downloadAttachment}
-                          >
-                            다운로드
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
 
                   {/* 컨트롤 버튼 */}
                   <div className="flex items-center justify-between">

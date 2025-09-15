@@ -13,8 +13,6 @@ interface CourseSession {
   duration_minutes?: number;
   is_free: boolean;
   is_preview: boolean;
-  attachment_url?: string;
-  attachment_name?: string;
   course: {
     title: string;
     id: string;
@@ -32,7 +30,6 @@ interface SessionTableProps {
   itemsPerPage: number;
   onPageChange: (page: number) => void;
   onEdit: (session: CourseSession) => void;
-  onUpload: (session: CourseSession) => void;
   onDelete: (sessionId: string, sessionTitle: string) => void;
 }
 
@@ -43,7 +40,6 @@ export const SessionTable = ({
   itemsPerPage,
   onPageChange,
   onEdit,
-  onUpload,
   onDelete
 }: SessionTableProps) => {
   const navigate = useNavigate();
@@ -83,12 +79,6 @@ export const SessionTable = ({
                     {session.description && (
                       <div className="text-sm text-muted-foreground max-w-[250px] truncate">
                         {session.description}
-                      </div>
-                    )}
-                    {session.attachment_name && (
-                      <div className="flex items-center gap-1 text-xs text-blue-600">
-                        <File className="h-3 w-3" />
-                        <span>{session.attachment_name}</span>
                       </div>
                     )}
                   </div>
@@ -134,12 +124,6 @@ export const SessionTable = ({
                         영상 없음
                       </Badge>
                     )}
-                    {session.attachment_url && (
-                      <Badge variant="outline" className="text-xs w-fit">
-                        <File className="h-3 w-3 mr-1" />
-                        자료 있음
-                      </Badge>
-                    )}
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
@@ -168,13 +152,6 @@ export const SessionTable = ({
                         >
                           <Edit className="mr-2 h-4 w-4" />
                           편집
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => onUpload(session)}
-                          className="cursor-pointer"
-                        >
-                          <Upload className="mr-2 h-4 w-4" />
-                          자료 업로드
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => onDelete(session.id, session.title)}

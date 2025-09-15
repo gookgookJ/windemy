@@ -7,25 +7,22 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, File, X } from 'lucide-react';
 
-interface CourseSession {
+interface CourseSection {
   id: string;
   title: string;
   attachment_url?: string;
   attachment_name?: string;
-  course: {
-    title: string;
-    id: string;
-  };
+  course_id: string;
 }
 
-interface SessionUploadModalProps {
-  session: CourseSession | null;
+interface SectionUploadModalProps {
+  section: CourseSection | null;
   isOpen: boolean;
   onClose: () => void;
   onUpdate: () => void;
 }
 
-export const SessionUploadModal = ({ session, isOpen, onClose, onUpdate }: SessionUploadModalProps) => {
+export const SectionUploadModal = ({ section, isOpen, onClose, onUpdate }: SectionUploadModalProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,7 +36,7 @@ export const SessionUploadModal = ({ session, isOpen, onClose, onUpdate }: Sessi
   };
 
   const handleUpload = async () => {
-    if (!session || !selectedFile) {
+    if (!section || !selectedFile) {
       toast({
         title: "오류",
         description: "파일을 선택해주세요.",
@@ -51,8 +48,8 @@ export const SessionUploadModal = ({ session, isOpen, onClose, onUpdate }: Sessi
     setUploading(true);
     try {
       const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${session.id}-${Date.now()}.${fileExt}`;
-      const filePath = `${session.course.id}/${fileName}`;
+      const fileName = `section-${section.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${section.course_id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('course-files')
@@ -65,12 +62,12 @@ export const SessionUploadModal = ({ session, isOpen, onClose, onUpdate }: Sessi
         .getPublicUrl(filePath);
 
       const { error: updateError } = await supabase
-        .from('course_sessions')
+        .from('course_sections')
         .update({
           attachment_url: publicUrl,
           attachment_name: selectedFile.name
         })
-        .eq('id', session.id);
+        .eq('id', section.id);
 
       if (updateError) throw updateError;
 
@@ -95,16 +92,16 @@ export const SessionUploadModal = ({ session, isOpen, onClose, onUpdate }: Sessi
   };
 
   const removeCurrentFile = async () => {
-    if (!session?.attachment_url) return;
+    if (!section?.attachment_url) return;
 
     try {
       const { error } = await supabase
-        .from('course_sessions')
+        .from('course_sections')
         .update({
           attachment_url: null,
           attachment_name: null
         })
-        .eq('id', session.id);
+        .eq('id', section.id);
 
       if (error) throw error;
 
@@ -128,20 +125,20 @@ export const SessionUploadModal = ({ session, isOpen, onClose, onUpdate }: Sessi
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>자료 업로드</DialogTitle>
+          <DialogTitle>섹션 자료 업로드</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
             <p className="text-sm text-muted-foreground mb-4">
-              {session?.title}에 첨부할 자료를 업로드하세요
+              "{section?.title}" 섹션에 첨부할 자료를 업로드하세요
             </p>
             
-            {session?.attachment_url && (
+            {section?.attachment_url && (
               <div className="mb-4 p-3 bg-muted/50 rounded-md">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <File className="h-4 w-4" />
-                    <span className="text-sm">{session.attachment_name}</span>
+                    <span className="text-sm">{section.attachment_name}</span>
                   </div>
                   <Button
                     variant="ghost"

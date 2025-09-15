@@ -59,6 +59,12 @@ const menuItems = [
     group: 'content'
   },
   {
+    title: '섹션 자료 관리',
+    url: '/admin/section-management',
+    icon: FileText,
+    group: 'content'
+  },
+  {
     title: '주문 관리',
     url: '/admin/orders',
     icon: ShoppingCart,

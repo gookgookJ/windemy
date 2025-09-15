@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Search, Filter, Plus, Loader2 } from 'lucide-react';
 import { SessionTable } from '@/components/admin/SessionTable';
 import { SessionEditModal } from '@/components/admin/SessionEditModal';
-import { SessionUploadModal } from '@/components/admin/SessionUploadModal';
+
 import { getVimeoVideoInfo, isValidVimeoUrl } from '@/utils/vimeoUtils';
 
 interface CourseSession {
@@ -24,8 +24,6 @@ interface CourseSession {
   order_index: number;
   is_free: boolean;
   is_preview: boolean;
-  attachment_url?: string;
-  attachment_name?: string;
   course: {
     title: string;
     id: string;
@@ -50,9 +48,7 @@ export const SessionManagement = () => {
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<CourseSession | null>(null);
-  const [uploadingSession, setUploadingSession] = useState<CourseSession | null>(null);
   const [loadingVideoInfo, setLoadingVideoInfo] = useState(false);
   
   const [newSession, setNewSession] = useState({
@@ -235,10 +231,6 @@ export const SessionManagement = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleUpload = (session: CourseSession) => {
-    setUploadingSession(session);
-    setIsUploadModalOpen(true);
-  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -446,7 +438,7 @@ export const SessionManagement = () => {
               itemsPerPage={itemsPerPage}
               onPageChange={handlePageChange}
               onEdit={handleEdit}
-              onUpload={handleUpload}
+              
               onDelete={deleteSession}
             />
           </CardContent>
@@ -463,15 +455,6 @@ export const SessionManagement = () => {
           onUpdate={fetchSessions}
         />
 
-        <SessionUploadModal
-          session={uploadingSession}
-          isOpen={isUploadModalOpen}
-          onClose={() => {
-            setIsUploadModalOpen(false);
-            setUploadingSession(null);
-          }}
-          onUpdate={fetchSessions}
-        />
       </div>
     </AdminLayout>
   );

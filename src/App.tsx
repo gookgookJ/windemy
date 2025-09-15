@@ -25,6 +25,7 @@ import AdminCourseEdit from "./pages/admin/CourseEdit";
 import AdminInstructors from "./pages/admin/Instructors";
 import AdminInstructorProfile from "./pages/admin/InstructorProfile";
 import AdminSessionManagement from "./pages/admin/SessionManagement";
+import AdminSectionManagement from "./pages/admin/SectionManagement";
 import AdminLearningAnalytics from "./pages/admin/LearningAnalytics";
 import AdminProgressMonitoring from "./pages/admin/ProgressMonitoring";
 import CategoryCourses from "./pages/CategoryCourses";
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/admin/courses/edit/:id" element={<AdminCourseEdit />} />
             <Route path="/admin/course-create" element={<AdminCourseCreate />} />
             <Route path="/admin/sessions" element={<AdminSessionManagement />} />
+            <Route path="/admin/section-management" element={<AdminSectionManagement />} />
             <Route path="/admin/learning-analytics" element={<AdminLearningAnalytics />} />
             <Route path="/admin/progress-monitoring" element={<AdminProgressMonitoring />} />
             <Route path="/admin/orders" element={<AdminOrders />} />
