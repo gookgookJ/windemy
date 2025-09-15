@@ -186,7 +186,7 @@ const Payment = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button 
@@ -201,9 +201,9 @@ const Payment = () => {
           <h1 className="text-2xl font-bold">주문결제</h1>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Column - Course Info & Payment Options */}
-          <div className="space-y-6">
+          <div className="lg:col-span-2 space-y-6">
             {/* Course Information */}
             <Card>
               <CardHeader className="pb-4">
@@ -308,44 +308,18 @@ const Payment = () => {
                 <CardTitle className="text-lg">결제 수단</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <Button 
                     variant="outline" 
-                    className="h-12 bg-black text-white hover:bg-gray-800 flex items-center justify-center gap-2"
+                    className="h-14 bg-black text-white hover:bg-gray-800 flex items-center justify-center gap-2 font-medium"
                   >
                     💳 신용 · 체크 카드
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="h-12 flex items-center justify-center gap-2"
+                    className="h-14 flex items-center justify-center gap-2 font-medium"
                   >
-                    💬 카카오페이
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="h-12 flex items-center justify-center gap-2"
-                  >
-                    📱 토스페이
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="h-12 flex items-center justify-center gap-2"
-                  >
-                    🔵 최재영 아이엠
-                  </Button>
-                </div>
-                <div className="grid grid-cols-2 gap-3 mt-3">
-                  <Button 
-                    variant="outline" 
-                    className="h-12 flex items-center justify-center gap-2"
-                  >
-                    📱 토스페이
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="h-12 flex items-center justify-center gap-2 text-blue-600"
-                  >
-                    🏪 최재영아이엠 <span className="text-xs">1%적립액!</span>
+                    🏦 실시간 계좌이체
                   </Button>
                 </div>
               </CardContent>
