@@ -349,7 +349,9 @@ const Learn = () => {
 
   const downloadAttachment = async () => {
     if (!currentSession?.attachment_url) return;
+    
     try {
+      // 파일 경로 추출
       let path = currentSession.attachment_url;
       if (path.startsWith('http')) {
         const marker = '/course-files/';
@@ -358,11 +360,38 @@ const Learn = () => {
           path = path.substring(idx + marker.length);
         }
       }
+
+      // Signed URL 생성
       const { data, error } = await supabase.storage
         .from('course-files')
         .createSignedUrl(path, 60);
-      if (error || !data?.signedUrl) throw error || new Error('Signed URL 생성 실패');
-      window.open(data.signedUrl, '_blank');
+      
+      if (error || !data?.signedUrl) {
+        throw error || new Error('Signed URL 생성 실패');
+      }
+
+      // fetch로 파일을 다운로드해서 blob으로 변환
+      const response = await fetch(data.signedUrl);
+      if (!response.ok) {
+        throw new Error(`파일 다운로드 실패: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      
+      // Blob URL을 생성해서 다운로드
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = currentSession.attachment_name || 'download';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Blob URL 정리
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+
+      // 다운로드 로그 기록
       if (user && currentSession) {
         await (supabase as any).from('session_file_downloads').insert({
           user_id: user.id,
@@ -370,9 +399,19 @@ const Learn = () => {
           file_name: currentSession.attachment_name || path.split('/').pop() || 'file'
         });
       }
+
+      toast({
+        title: "다운로드 완료",
+        description: "파일이 성공적으로 다운로드되었습니다."
+      });
+
     } catch (err) {
       console.error('download error', err);
-      toast({ title: '다운로드 실패', description: '파일 접근 권한 또는 경로를 확인해주세요.', variant: 'destructive' });
+      toast({ 
+        title: '다운로드 실패', 
+        description: '파일 다운로드에 실패했습니다. 잠시 후 다시 시도해주세요.', 
+        variant: 'destructive' 
+      });
     }
   };
   const goToNextSession = () => {
