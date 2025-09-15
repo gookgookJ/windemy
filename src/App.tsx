@@ -40,7 +40,6 @@ import FavoriteCourses from "./pages/FavoriteCourses";
 import ReviewManagement from "./pages/ReviewManagement";
 import Inquiry from "./pages/Inquiry";
 import FAQ from "./pages/FAQ";
-import AccountSettings from "./pages/AccountSettings";
 import ProfileSettings from "./pages/ProfileSettings";
 
 console.log('Debug React in App.tsx', React, typeof (React as any)?.useEffect);
@@ -69,7 +68,6 @@ const App = () => (
             <Route path="/review-management" element={<ReviewManagement />} />
             <Route path="/inquiry" element={<Inquiry />} />
             <Route path="/faq" element={<FAQ />} />
-            <Route path="/account-settings" element={<AccountSettings />} />
             <Route path="/profile-settings" element={<ProfileSettings />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/users" element={<AdminUsers />} />

@@ -66,11 +66,6 @@ const UserSidebar = () => {
 
   const accountItems = [
     {
-      path: '/account-settings',
-      label: '계정 관리',
-      icon: Settings,
-    },
-    {
       path: '/profile-settings',
       label: '회원정보관리',
       icon: User,

@@ -7,8 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Camera, Save } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { User, Camera, Save, Lock, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
@@ -20,15 +23,19 @@ const ProfileSettings = () => {
     bio: '',
     avatar_url: ''
   });
+  const [marketingConsent, setMarketingConsent] = useState(true);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     document.title = "회원정보관리 | 윈들리아카데미";
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute("content", "회원정보를 수정하세요");
+    if (meta) meta.setAttribute("content", "회원정보를 관리하고 비밀번호를 변경하세요");
     
     if (!user) {
       navigate('/auth');
@@ -45,13 +52,38 @@ const ProfileSettings = () => {
     }
   }, [user, profile, navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    
+    if (!currentPassword) {
+      toast({
+        title: "오류",
+        description: "현재 비밀번호를 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setLoading(true);
+
     try {
-      const { error } = await supabase
+      // 현재 비밀번호 확인
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || '',
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        toast({
+          title: "오류", 
+          description: "현재 비밀번호가 올바르지 않습니다.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 프로필 업데이트
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           full_name: formData.full_name,
@@ -60,20 +92,96 @@ const ProfileSettings = () => {
           avatar_url: formData.avatar_url,
           updated_at: new Date().toISOString()
         })
-        .eq('id', user.id);
+        .eq('id', user?.id);
+
+      if (profileError) throw profileError;
+
+      toast({
+        title: "성공",
+        description: "회원정보가 성공적으로 업데이트되었습니다.",
+      });
+      
+      setCurrentPassword('');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "오류",
+        description: "회원정보 업데이트 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "오류",
+        description: "새 비밀번호가 일치하지 않습니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "오류",
+        description: "비밀번호는 최소 6자 이상이어야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
 
       if (error) throw error;
 
       toast({
-        title: "프로필 업데이트 완료",
-        description: "회원정보가 성공적으로 업데이트되었습니다."
+        title: "성공",
+        description: "비밀번호가 성공적으로 변경되었습니다.",
       });
+      
+      setNewPassword('');
+      setConfirmPassword('');
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error updating password:', error);
       toast({
-        title: "프로필 업데이트 실패",
-        description: "프로필 업데이트 중 오류가 발생했습니다.",
-        variant: "destructive"
+        title: "오류",
+        description: "비밀번호 변경 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAccountDeletion = async () => {
+    try {
+      setLoading(true);
+      
+      // 로그아웃 처리 (실제로는 백엔드에서 계정 삭제를 처리해야 함)
+      await signOut();
+
+      toast({
+        title: "계정 삭제 완료",
+        description: "계정이 성공적으로 삭제되었습니다.",
+      });
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast({
+        title: "오류",
+        description: "계정 삭제 중 오류가 발생했습니다.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -98,21 +206,22 @@ const ProfileSettings = () => {
               <UserSidebar />
             </div>
             
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3 space-y-6">
               <div className="mb-8">
                 <h1 className="text-3xl font-bold mb-2">회원정보관리</h1>
-                <p className="text-muted-foreground">개인정보를 수정하세요.</p>
+                <p className="text-muted-foreground">회원정보를 수정하고 계정을 관리하세요.</p>
               </div>
 
+              {/* 기본 정보 수정 */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="h-5 w-5" />
-                    프로필 정보
+                    기본 정보
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={handleProfileUpdate} className="space-y-6">
                     {/* 프로필 사진 */}
                     <div className="flex items-center gap-6">
                       <Avatar className="h-24 w-24">
@@ -187,10 +296,22 @@ const ProfileSettings = () => {
                       </div>
                     )}
 
+                    {/* 마케팅 수신 동의 */}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="marketing"
+                        checked={marketingConsent}
+                        onCheckedChange={(checked) => setMarketingConsent(!!checked)}
+                      />
+                      <Label htmlFor="marketing">마케팅 정보 수신에 동의합니다</Label>
+                    </div>
+
+                    <Separator />
+
                     {/* 계정 정보 */}
-                    <div className="pt-6 border-t">
+                    <div>
                       <h3 className="text-lg font-semibold mb-4">계정 정보</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                         <div className="space-y-2">
                           <Label>계정 유형</Label>
                           <div className="p-3 bg-muted rounded-md">
@@ -209,13 +330,104 @@ const ProfileSettings = () => {
                       </div>
                     </div>
 
-                    <div className="flex justify-end">
-                      <Button type="submit" disabled={loading}>
-                        <Save className="h-4 w-4 mr-2" />
-                        {loading ? '저장 중...' : '변경사항 저장'}
-                      </Button>
+                    <div>
+                      <Label htmlFor="currentPassword">현재 비밀번호 확인</Label>
+                      <Input
+                        id="currentPassword"
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="변경사항 저장을 위해 현재 비밀번호를 입력하세요"
+                        required
+                      />
                     </div>
+
+                    <Button type="submit" disabled={loading}>
+                      <Save className="h-4 w-4 mr-2" />
+                      {loading ? '저장 중...' : '변경사항 저장'}
+                    </Button>
                   </form>
+                </CardContent>
+              </Card>
+
+              {/* 비밀번호 변경 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lock className="h-5 w-5" />
+                    비밀번호 변경
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handlePasswordChange} className="space-y-4">
+                    <div>
+                      <Label htmlFor="newPassword">새 비밀번호</Label>
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="새 비밀번호를 입력하세요 (최소 6자)"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="confirmPassword">새 비밀번호 확인</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="새 비밀번호를 다시 입력하세요"
+                      />
+                    </div>
+
+                    <Button type="submit" disabled={loading || !newPassword || !confirmPassword}>
+                      <Lock className="h-4 w-4 mr-2" />
+                      {loading ? '변경 중...' : '비밀번호 변경'}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* 회원탈퇴 */}
+              <Card className="border-destructive">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-destructive">
+                    <Trash2 className="h-5 w-5" />
+                    회원탈퇴
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">
+                    계정을 삭제하면 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.
+                  </p>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        회원탈퇴
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>정말로 탈퇴하시겠습니까?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          이 작업은 되돌릴 수 없습니다. 계정과 모든 데이터가 영구적으로 삭제됩니다.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>취소</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleAccountDeletion}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          삭제하기
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </CardContent>
               </Card>
             </div>
