@@ -177,14 +177,14 @@ const HeroSection = () => {
 
   if (loading || slides.length === 0) {
     return (
-      <section className="relative h-[240px] md:h-[380px] overflow-hidden bg-white flex items-center justify-center">
+      <section className="relative h-[200px] md:h-[380px] overflow-hidden bg-white flex items-center justify-center">
         <div className="text-muted-foreground">로딩중...</div>
       </section>
     );
   }
 
   return (
-    <section className="relative h-[240px] md:h-[380px] overflow-hidden bg-white">
+    <section className="relative h-[200px] md:h-[380px] overflow-hidden bg-white">
       {/* Mobile Single Slide Layout */}
       <div className="block md:hidden relative w-full h-full">
         <div 
@@ -204,12 +204,12 @@ const HeroSection = () => {
             alt={slides[currentSlide].title}
             className="w-full h-full object-cover responsive-image"
           />
-          <div className="absolute inset-0 flex items-start pt-8">
-            <div className="text-white space-y-1.5 px-4 safe-area-padding flex-1">
-              <h2 className="text-lg font-bold leading-tight drop-shadow-lg">
+          <div className="absolute inset-0 flex items-start pt-6">
+            <div className="text-white space-y-1 px-6 safe-area-padding flex-1">
+              <h2 className="text-base font-bold leading-tight drop-shadow-lg">
                 {slides[currentSlide].title}
               </h2>
-              <h3 className="text-sm font-medium opacity-90 drop-shadow-lg">
+              <h3 className="text-xs font-medium opacity-90 drop-shadow-lg">
                 {slides[currentSlide].subtitle}
               </h3>
               <p className="text-xs opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
