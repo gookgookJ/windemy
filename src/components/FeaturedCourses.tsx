@@ -41,52 +41,66 @@ const FeaturedCourses = () => {
     try {
       setLoading(true);
 
-      // Fetch all published courses with instructor data
+      // Fetch all published courses with instructor and category data
       const { data: coursesData, error: coursesError } = await supabase
         .from('courses')
         .select(`
           *,
-          profiles:instructor_id(full_name)
+          profiles:instructor_id(full_name),
+          categories:category_id(name, slug)
         `)
         .eq('is_published', true)
         .order('created_at', { ascending: false });
 
-      if (coursesError) throw coursesError;
+      if (coursesError) {
+        console.error('Error fetching courses:', coursesError);
+        throw coursesError;
+      }
 
-      // Fetch categories with course counts
+      // Fetch categories for the category section
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('categories')
         .select('*')
         .order('name');
 
-      if (categoriesError) throw categoriesError;
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError);
+        throw categoriesError;
+      }
 
-      // Process courses data
+      // Process courses data with better handling
       const processedCourses = coursesData?.map(course => ({
         ...course,
-        instructor_name: course.profiles?.full_name || '강사',
-        category: course.category_id ? categoriesData?.find(cat => cat.id === course.category_id)?.name : '기타'
+        instructor_name: course.profiles?.full_name || course.instructor_id ? '강사' : '운영진',
+        category: course.categories?.name || '기타',
+        // Ensure thumbnail_url is properly handled
+        thumbnail_url: course.thumbnail_url || '/placeholder.svg'
       })) || [];
 
-      // Get featured courses (hot or new courses, limited to 8)
-      const featured = processedCourses
-        .filter(course => course.is_hot || course.is_new)
-        .slice(0, 8);
+      console.log('Processed courses:', processedCourses);
+
+      // Get featured courses - if none are marked as hot/new, get the latest ones
+      let featured = processedCourses.filter(course => course.is_hot || course.is_new);
+      if (featured.length === 0) {
+        featured = processedCourses.slice(0, 8);
+      } else {
+        featured = featured.slice(0, 8);
+      }
 
       setFeaturedCourses(featured);
 
-      // Categorize courses by type
+      // Categorize courses by category name
       const free = processedCourses.filter(course => 
-        course.category === '무료강의' || course.price === 0
-      ).slice(0, 3);
+        course.category === '무료강의'
+      ).slice(0, 6);
 
       const premium = processedCourses.filter(course => 
         course.category === '프리미엄 강의'
-      ).slice(0, 3);
+      ).slice(0, 6);
 
       const vod = processedCourses.filter(course => 
         course.category === 'VOD 강의'
-      ).slice(0, 3);
+      ).slice(0, 6);
 
       setFreeCourses(free);
       setPremiumCourses(premium);
@@ -100,8 +114,13 @@ const FeaturedCourses = () => {
 
       setCategories(processedCategories);
 
+      console.log('Categories with counts:', processedCategories);
+      console.log('Free courses:', free);
+      console.log('Premium courses:', premium);
+      console.log('VOD courses:', vod);
+
     } catch (error) {
-      console.error('Error fetching courses:', error);
+      console.error('Error fetching courses data:', error);
     } finally {
       setLoading(false);
     }
@@ -130,9 +149,13 @@ const FeaturedCourses = () => {
           <Link key={course.id} to={`/course/${course.id}`} className="group cursor-pointer">
             <div className="relative mb-4">
               <img
-                src={course.thumbnail_url || '/placeholder.svg'}
+                src={course.thumbnail_url}
                 alt={course.title}
                 className="w-full h-48 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/placeholder.svg';
+                }}
               />
               {course.is_hot && (
                 <div className="absolute top-3 right-3">
