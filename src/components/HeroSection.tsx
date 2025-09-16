@@ -184,12 +184,12 @@ const HeroSection = () => {
   }
 
   return (
-    <section className="relative h-[200px] md:h-[380px] overflow-hidden bg-white">
+    <section className="relative h-[200px] md:h-[380px] overflow-hidden bg-white px-4">
       {/* Mobile Single Slide Layout */}
       <div className="block md:hidden relative w-full h-full">
         <div 
           ref={slideRef}
-          className="relative w-full h-full cursor-pointer select-none bg-gradient-to-r from-blue-400 to-blue-600"
+          className="relative w-full h-full cursor-pointer select-none bg-white rounded-lg overflow-hidden shadow-sm"
           onClick={() => handleSlideClick(slides[currentSlide])}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -202,25 +202,18 @@ const HeroSection = () => {
           <div className="absolute inset-0 flex">
             {/* Left side - Text content */}
             <div className="flex-1 p-4 flex flex-col justify-center space-y-2">
-              {/* Badge */}
-              <div className="inline-flex">
-                <span className="bg-blue-500 text-white text-xs font-medium px-3 py-1 rounded-full">
-                  BEST 강의
-                </span>
-              </div>
-              
               {/* Title */}
-              <h2 className="text-white text-base font-bold leading-tight">
+              <h2 className="text-gray-800 text-base font-bold leading-tight">
                 {slides[currentSlide].title}
               </h2>
               
               {/* Subtitle */}
-              <h3 className="text-white/90 text-sm font-medium">
+              <h3 className="text-gray-600 text-sm font-medium">
                 {slides[currentSlide].subtitle}
               </h3>
               
               {/* Description with arrow */}
-              <p className="text-white/80 text-xs">
+              <p className="text-gray-500 text-xs">
                 {slides[currentSlide].description}
               </p>
             </div>
