@@ -117,6 +117,8 @@ const CourseDetail = () => {
   const leftColRef = useRef<HTMLDivElement | null>(null);
   const rightColWrapperRef = useRef<HTMLDivElement | null>(null);
   const [rightMinHeight, setRightMinHeight] = useState<number>(0);
+  const rightColRef = useRef<HTMLDivElement | null>(null);
+  const [fixedLeft, setFixedLeft] = useState<number | null>(null);
 
   useEffect(() => {
     const el = leftColRef.current;
@@ -130,6 +132,17 @@ const CourseDetail = () => {
       ro.disconnect();
       window.removeEventListener('resize', update);
     };
+  }, []);
+
+  useEffect(() => {
+    const updateLeft = () => {
+      if (!rightColRef.current) return;
+      const rect = rightColRef.current.getBoundingClientRect();
+      setFixedLeft(rect.left + window.scrollX);
+    };
+    updateLeft();
+    window.addEventListener('resize', updateLeft);
+    return () => window.removeEventListener('resize', updateLeft);
   }, []);
 
   useEffect(() => {
@@ -676,11 +689,15 @@ const CourseDetail = () => {
 
           {/* Right Column: Fixed Purchase Card - Desktop Only */}
           <div
-            ref={rightColWrapperRef}
+            ref={rightColRef}
             className="hidden lg:block w-[383px] flex-shrink-0"
             style={{ minHeight: rightMinHeight ? rightMinHeight : undefined }}
-          >
-            <div className="sticky top-24 h-fit max-h-[calc(100vh-6rem)] overflow-y-auto">
+          />
+          {fixedLeft !== null && (
+            <div
+              className="hidden lg:block z-30 overflow-y-auto"
+              style={{ position: 'fixed', left: fixedLeft, top: 96, width: 383, maxHeight: 'calc(100vh - 96px)' }}
+            >
               <Card className="shadow-lg border border-border/50 p-6">
                 <div className="space-y-6">
                   {/* Course Title */}
@@ -775,7 +792,7 @@ const CourseDetail = () => {
                 </div>
               </Card>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Mobile/Tablet Layout */}
