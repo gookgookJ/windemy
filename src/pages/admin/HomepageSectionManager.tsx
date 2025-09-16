@@ -418,16 +418,6 @@ const HomepageSectionManager = () => {
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">실시간 미리보기</h2>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setIsPreviewPlaying(!isPreviewPlaying)}
-              >
-                {isPreviewPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                {isPreviewPlaying ? '일시정지' : '재생'}
-              </Button>
-            </div>
           </div>
           
           <div className="bg-gray-50 rounded-lg p-6">
