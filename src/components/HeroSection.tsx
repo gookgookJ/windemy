@@ -149,7 +149,7 @@ const HeroSection = () => {
       <div className="relative w-full h-full flex items-center justify-center">
         {/* Viewport - shows 3 panels worth */}
         <div className="relative w-full h-[340px] overflow-hidden flex items-center justify-center">
-          {/* Sliding Strip - infinite loop with duplicated slides */}
+          {/* Sliding Strip - infinite loop */}
           <div 
             className="flex transition-transform duration-700 ease-out"
             style={{
@@ -157,113 +157,57 @@ const HeroSection = () => {
               width: `${slides.length * 3 * 800}px`
             }}
           >
-            {/* Previous set for infinite loop */}
-            {slides.map((slide, index) => (
-              <div
-                key={`prev-${slide.id}`}
-                className="relative flex-shrink-0 w-[760px] h-[340px] mx-5"
-              >
-                <div 
-                  className={`relative w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-opacity duration-700 ${
-                    index === (currentSlide - 1 + slides.length) % slides.length ? 'opacity-60' :
-                    index === currentSlide ? 'opacity-100' :
-                    index === (currentSlide + 1) % slides.length ? 'opacity-60' : 'opacity-30'
-                  }`}
-                  onClick={() => handleSlideClick(slide)}
+            {/* Triple the slides for infinite effect: prev + current + next */}
+            {[...slides, ...slides, ...slides].map((slide, globalIndex) => {
+              const slideIndex = globalIndex % slides.length;
+              const setIndex = Math.floor(globalIndex / slides.length); // 0=prev, 1=current, 2=next
+              
+              // Calculate if this slide should be visible (center, left, or right of current view)
+              const viewPosition = globalIndex - (currentSlide + slides.length);
+              const isCenter = viewPosition === 0;
+              const isLeftSide = viewPosition === -1;
+              const isRightSide = viewPosition === 1;
+              const isVisible = isCenter || isLeftSide || isRightSide;
+              
+              return (
+                <div
+                  key={`${setIndex}-${slide.id}`}
+                  className="relative flex-shrink-0 w-[760px] h-[340px] mx-5"
                 >
-                  <img
-                    src={slide.image_url}
-                    alt={slide.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/30 flex items-center">
-                    <div className="text-white space-y-4 px-12 flex-1">
-                      <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
-                        {slide.title}
-                      </h2>
-                      <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
-                        {slide.subtitle}
-                      </h3>
-                      <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
-                        {slide.description}
-                      </p>
+                  <div 
+                    className={`relative w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-opacity duration-700 ${
+                      isCenter ? 'opacity-100' : 'opacity-40'
+                    }`}
+                    onClick={() => handleSlideClick(slide)}
+                  >
+                    <img
+                      src={slide.image_url}
+                      alt={slide.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/30 flex items-center">
+                      <div className="text-white space-y-4 px-12 flex-1">
+                        <h2 className={`font-bold leading-tight drop-shadow-lg ${
+                          isCenter ? 'text-3xl' : 'text-2xl'
+                        }`}>
+                          {slide.title}
+                        </h2>
+                        <h3 className={`font-medium opacity-90 drop-shadow-lg ${
+                          isCenter ? 'text-xl' : 'text-lg'
+                        }`}>
+                          {slide.subtitle}
+                        </h3>
+                        <p className={`opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg ${
+                          isCenter ? 'text-base' : 'text-sm'
+                        }`}>
+                          {slide.description}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-            
-            {/* Current set */}
-            {slides.map((slide, index) => (
-              <div
-                key={`current-${slide.id}`}
-                className="relative flex-shrink-0 w-[760px] h-[340px] mx-5"
-              >
-                <div 
-                  className={`relative w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-opacity duration-700 ${
-                    index === (currentSlide - 1 + slides.length) % slides.length ? 'opacity-60' :
-                    index === currentSlide ? 'opacity-100' :
-                    index === (currentSlide + 1) % slides.length ? 'opacity-60' : 'opacity-30'
-                  }`}
-                  onClick={() => handleSlideClick(slide)}
-                >
-                  <img
-                    src={slide.image_url}
-                    alt={slide.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/30 flex items-center">
-                    <div className="text-white space-y-4 px-12 flex-1">
-                      <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
-                        {slide.title}
-                      </h2>
-                      <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
-                        {slide.subtitle}
-                      </h3>
-                      <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
-                        {slide.description}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-            
-            {/* Next set for infinite loop */}
-            {slides.map((slide, index) => (
-              <div
-                key={`next-${slide.id}`}
-                className="relative flex-shrink-0 w-[760px] h-[340px] mx-5"
-              >
-                <div 
-                  className={`relative w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-opacity duration-700 ${
-                    index === (currentSlide - 1 + slides.length) % slides.length ? 'opacity-60' :
-                    index === currentSlide ? 'opacity-100' :
-                    index === (currentSlide + 1) % slides.length ? 'opacity-60' : 'opacity-30'
-                  }`}
-                  onClick={() => handleSlideClick(slide)}
-                >
-                  <img
-                    src={slide.image_url}
-                    alt={slide.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/30 flex items-center">
-                    <div className="text-white space-y-4 px-12 flex-1">
-                      <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
-                        {slide.title}
-                      </h2>
-                      <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
-                        {slide.subtitle}
-                      </h3>
-                      <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
-                        {slide.description}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
