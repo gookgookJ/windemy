@@ -246,10 +246,10 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-[95vw] max-w-md p-0 gap-0 bg-white modal-open safe-area-padding">
-        <div className="relative">
+      <DialogContent className="w-[95vw] max-w-md max-h-[85vh] p-0 gap-0 bg-white modal-open safe-area-padding overflow-hidden">
+        <div className="relative flex flex-col max-h-[85vh]">
           {/* Header */}
-          <DialogHeader className="px-6 pt-8 pb-6 text-center">
+          <DialogHeader className="px-6 pt-8 pb-6 text-center flex-shrink-0">
             <div className="flex flex-col items-center space-y-4">
               {currentView !== 'main' && (
                 <button
@@ -272,7 +272,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
             </div>
           </DialogHeader>
 
-          <div className="px-6 pb-8">
+          <div className="px-6 pb-8 overflow-y-auto flex-1 min-h-0">
             {/* Main Login View */}
             {currentView === 'main' && (
               <>
