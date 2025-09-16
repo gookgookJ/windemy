@@ -31,6 +31,9 @@ interface HomepageSection {
   icon_type: string;
   icon_value: string;
   section_type: string;
+  filter_type: string;
+  filter_value?: string;
+  display_limit: number;
   is_active: boolean;
 }
 
@@ -107,63 +110,100 @@ const HomepageSectionManager = () => {
 
   const fetchSectionData = async () => {
     try {
-      // Fetch or create section
-      let { data: sectionData, error } = await supabase
+      // Fetch existing section
+      const { data: sectionData, error } = await supabase
         .from('homepage_sections')
         .select('*')
         .eq('section_type', config.section_type)
         .single();
 
-      if (error && error.code === 'PGRST116') {
-        // Section doesn't exist, create it
-        const { data: newSection, error: createError } = await supabase
-          .from('homepage_sections')
-          .insert({
-            title: config.title,
-            section_type: config.section_type,
-            icon_type: 'lucide',
-            icon_value: config.icon.name,
-            filter_type: 'manual',
-            display_limit: 8,
-            order_index: 0,
-            is_active: true
-          })
-          .select()
-          .single();
-
-        if (createError) throw createError;
-        sectionData = newSection;
-      } else if (error) {
-        throw error;
+      if (error) {
+        console.error('Error fetching section:', error);
+        toast({
+          title: "오류",
+          description: "섹션을 찾을 수 없습니다.",
+          variant: "destructive"
+        });
+        return;
       }
 
       setSection(sectionData);
 
-      // Fetch selected courses for this section
-      const { data: sectionCourses, error: coursesError } = await supabase
-        .from('homepage_section_courses')
-        .select(`
-          *,
-          course:courses(
+      // Fetch courses based on the section's filter_type
+      let courses: SelectedCourse[] = [];
+      
+      if (sectionData.filter_type === 'manual') {
+        // Fetch manually selected courses
+        const { data: sectionCourses, error: coursesError } = await supabase
+          .from('homepage_section_courses')
+          .select(`
             *,
-            profiles:instructor_id(full_name)
-          )
-        `)
-        .eq('section_id', sectionData.id)
-        .order('order_index');
+            course:courses(
+              *,
+              profiles:instructor_id(full_name)
+            )
+          `)
+          .eq('section_id', sectionData.id)
+          .order('order_index');
 
-      if (coursesError) throw coursesError;
+        if (coursesError) throw coursesError;
 
-      const processedCourses = (sectionCourses || []).map((sc: any) => ({
-        ...sc,
-        course: {
-          ...sc.course,
-          instructor_name: sc.course?.profiles?.full_name || '운영진',
-          thumbnail_url: sc.course?.thumbnail_url || sc.course?.thumbnail_path || '/placeholder.svg'
+        courses = (sectionCourses || []).map((sc: any) => ({
+          ...sc,
+          course: {
+            ...sc.course,
+            instructor_name: sc.course?.profiles?.full_name || '운영진',
+            thumbnail_url: sc.course?.thumbnail_url || sc.course?.thumbnail_path || '/placeholder.svg'
+          }
+        }));
+      } else {
+        // For other filter types, show current live courses for preview
+        let liveCoursesData: any[] = [];
+        
+        if (sectionData.filter_type === 'category' && sectionData.filter_value) {
+          const { data: categoryCourses } = await supabase
+            .from('courses')
+            .select(`
+              *,
+              profiles:instructor_id(full_name),
+              categories:category_id(name)
+            `)
+            .eq('is_published', true)
+            .eq('categories.name', sectionData.filter_value)
+            .order('created_at', { ascending: false })
+            .limit(sectionData.display_limit);
+          
+          liveCoursesData = categoryCourses || [];
+        } else if (sectionData.filter_type === 'hot_new') {
+          const { data: hotNewCourses } = await supabase
+            .from('courses')
+            .select(`
+              *,
+              profiles:instructor_id(full_name),
+              categories:category_id(name)
+            `)
+            .eq('is_published', true)
+            .or('is_hot.eq.true,is_new.eq.true')
+            .order('created_at', { ascending: false })
+            .limit(sectionData.display_limit);
+          
+          liveCoursesData = hotNewCourses || [];
         }
-      }));
+        
+        // Convert to SelectedCourse format for display (but these are not actually selected)
+        courses = liveCoursesData.map((course: any, index: number) => ({
+          id: `preview-${course.id}`,
+          course_id: course.id,
+          order_index: index,
+          course: {
+            ...course,
+            instructor_name: course.profiles?.full_name || '운영진',
+            thumbnail_url: course.thumbnail_url || course.thumbnail_path || '/placeholder.svg'
+          }
+        }));
+      }
 
-      setSelectedCourses(processedCourses);
+      setSelectedCourses(courses);
 
     } catch (error) {
       console.error('Error fetching section data:', error);
@@ -303,6 +343,82 @@ const HomepageSectionManager = () => {
     }
   };
 
+  const convertToManual = async () => {
+    if (!section || section.filter_type === 'manual') return;
+
+    try {
+      // 1. Update section to manual filter
+      const { error: sectionError } = await supabase
+        .from('homepage_sections')
+        .update({ 
+          filter_type: 'manual',
+          filter_value: null 
+        })
+        .eq('id', section.id);
+
+      if (sectionError) throw sectionError;
+
+      // 2. Save current courses as manual selections
+      const coursesToSave = selectedCourses.map((course, index) => ({
+        section_id: section.id,
+        course_id: course.course_id,
+        order_index: index
+      }));
+
+      if (coursesToSave.length > 0) {
+        const { error: coursesError } = await supabase
+          .from('homepage_section_courses')
+          .insert(coursesToSave);
+
+        if (coursesError) throw coursesError;
+      }
+
+      // 3. Update local state
+      setSection(prev => prev ? { 
+        ...prev, 
+        filter_type: 'manual',
+        filter_value: null 
+      } : null);
+
+      // 4. Update selected courses with proper IDs from database
+      const { data: newCourses } = await supabase
+        .from('homepage_section_courses')
+        .select(`
+          *,
+          course:courses(
+            *,
+            profiles:instructor_id(full_name)
+          )
+        `)
+        .eq('section_id', section.id)
+        .order('order_index');
+
+      if (newCourses) {
+        const processedCourses = newCourses.map((sc: any) => ({
+          ...sc,
+          course: {
+            ...sc.course,
+            instructor_name: sc.course?.profiles?.full_name || '운영진',
+            thumbnail_url: sc.course?.thumbnail_url || sc.course?.thumbnail_path || '/placeholder.svg'
+          }
+        }));
+        setSelectedCourses(processedCourses);
+      }
+
+      toast({
+        title: "성공",
+        description: "수동 선택 모드로 전환되었습니다. 이제 강의를 직접 추가/제거할 수 있습니다."
+      });
+    } catch (error) {
+      console.error('Error converting to manual:', error);
+      toast({
+        title: "오류",
+        description: "수동 모드 전환에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const onDragEnd = async (result: any) => {
     if (!result.destination) return;
 
@@ -426,6 +542,47 @@ const HomepageSectionManager = () => {
             </div>
           </div>
 
+          {/* Current Filter Settings */}
+          {section && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Target className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-blue-900">현재 필터 설정</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="outline" className="text-blue-700 border-blue-300">
+                        {section.filter_type === 'manual' && '수동 선택'}
+                        {section.filter_type === 'category' && `카테고리: ${section.filter_value}`}
+                        {section.filter_type === 'hot_new' && '인기/신규 강의'}
+                      </Badge>
+                      <span className="text-sm text-blue-600">
+                        최대 {section.display_limit}개 강의 표시
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {section.filter_type !== 'manual' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={convertToManual}
+                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                  >
+                    수동 선택으로 전환
+                  </Button>
+                )}
+              </div>
+              {section.filter_type !== 'manual' && (
+                <p className="text-sm text-blue-600 mt-3">
+                  현재 자동 필터링으로 강의가 표시되고 있습니다. 수동으로 강의를 선택하려면 "수동 선택으로 전환" 버튼을 클릭하세요.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Preview Content */}
           <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-8 min-h-[300px]">
             {selectedCourses.length === 0 ? (
@@ -514,25 +671,26 @@ const HomepageSectionManager = () => {
         </div>
 
         {/* Management Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Selected Courses */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <span>선택된 강의</span>
-                    <Badge variant="secondary">{selectedCourses.length}개</Badge>
-                  </CardTitle>
-                  <Button
-                    onClick={() => setShowAvailable(!showAvailable)}
-                    variant={showAvailable ? "default" : "outline"}
-                  >
-                    {showAvailable ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-                    {showAvailable ? '강의 목록 숨기기' : '강의 추가'}
-                  </Button>
-                </div>
-              </CardHeader>
+        {section?.filter_type === 'manual' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Selected Courses */}
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <span>선택된 강의</span>
+                      <Badge variant="secondary">{selectedCourses.length}개</Badge>
+                    </CardTitle>
+                    <Button
+                      onClick={() => setShowAvailable(!showAvailable)}
+                      variant={showAvailable ? "default" : "outline"}
+                    >
+                      {showAvailable ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+                      {showAvailable ? '강의 목록 숨기기' : '강의 추가'}
+                    </Button>
+                  </div>
+                </CardHeader>
               <CardContent>
                 {selectedCourses.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
@@ -704,7 +862,18 @@ const HomepageSectionManager = () => {
               </Card>
             </div>
           )}
-        </div>
+        ) : (
+          <div className="text-center py-12 bg-gray-50 rounded-xl">
+            <IconComponent className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-semibold text-muted-foreground mb-2">자동 필터링 모드</h3>
+            <p className="text-muted-foreground mb-4">
+              현재 {section.filter_type === 'category' ? '카테고리' : '인기/신규'} 필터로 자동 관리되고 있습니다.
+            </p>
+            <Button onClick={convertToManual} variant="outline">
+              수동 선택으로 전환
+            </Button>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
