@@ -40,6 +40,7 @@ import ReviewManagement from "./pages/ReviewManagement";
 import Inquiry from "./pages/Inquiry";
 import FAQ from "./pages/FAQ";
 import ProfileSettings from "./pages/ProfileSettings";
+import About from "./pages/About";
 
 console.log('Debug React in App.tsx', React, typeof (React as any)?.useEffect);
 
@@ -54,6 +55,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/about" element={<About />} />
             <Route path="/courses" element={<CourseCatalog />} />
             <Route path="/courses/:category" element={<CategoryCourses />} />
             <Route path="/course/:id" element={<CourseDetail />} />
