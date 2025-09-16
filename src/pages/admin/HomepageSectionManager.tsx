@@ -31,8 +31,6 @@ interface HomepageSection {
   icon_type: string;
   icon_value: string;
   section_type: string;
-  filter_type: string;
-  filter_value?: string;
   display_limit: number;
   is_active: boolean;
 }
@@ -120,81 +118,42 @@ const HomepageSectionManager = () => {
         return;
       }
 
+      // 모든 섹션을 수동 관리로 설정
+      if (sectionData.filter_type !== 'manual') {
+        await supabase
+          .from('homepage_sections')
+          .update({ filter_type: 'manual', filter_value: null })
+          .eq('id', sectionData.id);
+        
+        sectionData.filter_type = 'manual';
+        sectionData.filter_value = null;
+      }
+
       setSection(sectionData);
 
-      // Fetch courses based on the section's filter_type
-      let courses: SelectedCourse[] = [];
-      
-      if (sectionData.filter_type === 'manual') {
-        // Fetch manually selected courses
-        const { data: sectionCourses, error: coursesError } = await supabase
-          .from('homepage_section_courses')
-          .select(`
+      // Fetch manually selected courses
+      const { data: sectionCourses, error: coursesError } = await supabase
+        .from('homepage_section_courses')
+        .select(`
+          *,
+          course:courses(
             *,
-            course:courses(
-              *,
-              profiles:instructor_id(full_name)
-            )
-          `)
-          .eq('section_id', sectionData.id)
-          .order('order_index');
+            profiles:instructor_id(full_name)
+          )
+        `)
+        .eq('section_id', sectionData.id)
+        .order('order_index');
 
-        if (coursesError) throw coursesError;
+      if (coursesError) throw coursesError;
 
-        courses = (sectionCourses || []).map((sc: any) => ({
-          ...sc,
-          course: {
-            ...sc.course,
-            instructor_name: sc.course?.profiles?.full_name || '운영진',
-            thumbnail_url: sc.course?.thumbnail_url || sc.course?.thumbnail_path || '/placeholder.svg'
-          }
-        }));
-      } else {
-        // For other filter types, show current live courses for preview
-        let liveCoursesData: any[] = [];
-        
-        if (sectionData.filter_type === 'category' && sectionData.filter_value) {
-          const { data: categoryCourses } = await supabase
-            .from('courses')
-            .select(`
-              *,
-              profiles:instructor_id(full_name),
-              categories:category_id(name)
-            `)
-            .eq('is_published', true)
-            .eq('categories.name', sectionData.filter_value)
-            .order('created_at', { ascending: false })
-            .limit(sectionData.display_limit);
-          
-          liveCoursesData = categoryCourses || [];
-        } else if (sectionData.filter_type === 'hot_new') {
-          const { data: hotNewCourses } = await supabase
-            .from('courses')
-            .select(`
-              *,
-              profiles:instructor_id(full_name),
-              categories:category_id(name)
-            `)
-            .eq('is_published', true)
-            .or('is_hot.eq.true,is_new.eq.true')
-            .order('created_at', { ascending: false })
-            .limit(sectionData.display_limit);
-          
-          liveCoursesData = hotNewCourses || [];
+      const courses = (sectionCourses || []).map((sc: any) => ({
+        ...sc,
+        course: {
+          ...sc.course,
+          instructor_name: sc.course?.profiles?.full_name || '운영진',
+          thumbnail_url: sc.course?.thumbnail_url || sc.course?.thumbnail_path || '/placeholder.svg'
         }
-        
-        // Convert to SelectedCourse format for display (but these are not actually selected)
-        courses = liveCoursesData.map((course: any, index: number) => ({
-          id: `preview-${course.id}`,
-          course_id: course.id,
-          order_index: index,
-          course: {
-            ...course,
-            instructor_name: course.profiles?.full_name || '운영진',
-            thumbnail_url: course.thumbnail_url || course.thumbnail_path || '/placeholder.svg'
-          }
-        }));
-      }
+      }));
 
       setSelectedCourses(courses);
 
@@ -241,7 +200,7 @@ const HomepageSectionManager = () => {
   };
 
   const addCourse = async (course: Course) => {
-    if (!section || section.filter_type !== 'manual') return;
+    if (!section) return;
 
     // Check if course is already selected
     if (selectedCourses.some(sc => sc.course_id === course.id)) {
@@ -298,7 +257,7 @@ const HomepageSectionManager = () => {
   };
 
   const removeCourse = async (courseId: string) => {
-    if (!section || section.filter_type !== 'manual') return;
+    if (!section) return;
 
     try {
       const { error } = await supabase
@@ -351,84 +310,8 @@ const HomepageSectionManager = () => {
     }
   };
 
-  const convertToManual = async () => {
-    if (!section || section.filter_type === 'manual') return;
-
-    try {
-      // 1. Update section to manual filter
-      const { error: sectionError } = await supabase
-        .from('homepage_sections')
-        .update({ 
-          filter_type: 'manual',
-          filter_value: null 
-        })
-        .eq('id', section.id);
-
-      if (sectionError) throw sectionError;
-
-      // 2. Save current courses as manual selections
-      const coursesToSave = selectedCourses.map((course, index) => ({
-        section_id: section.id,
-        course_id: course.course_id,
-        order_index: index
-      }));
-
-      if (coursesToSave.length > 0) {
-        const { error: coursesError } = await supabase
-          .from('homepage_section_courses')
-          .insert(coursesToSave);
-
-        if (coursesError) throw coursesError;
-      }
-
-      // 3. Update local state
-      setSection(prev => prev ? { 
-        ...prev, 
-        filter_type: 'manual',
-        filter_value: null 
-      } : null);
-
-      // 4. Update selected courses with proper IDs from database
-      const { data: newCourses } = await supabase
-        .from('homepage_section_courses')
-        .select(`
-          *,
-          course:courses(
-            *,
-            profiles:instructor_id(full_name)
-          )
-        `)
-        .eq('section_id', section.id)
-        .order('order_index');
-
-      if (newCourses) {
-        const processedCourses = newCourses.map((sc: any) => ({
-          ...sc,
-          course: {
-            ...sc.course,
-            instructor_name: sc.course?.profiles?.full_name || '운영진',
-            thumbnail_url: sc.course?.thumbnail_url || sc.course?.thumbnail_path || '/placeholder.svg'
-          }
-        }));
-        setSelectedCourses(processedCourses);
-      }
-
-      toast({
-        title: "성공",
-        description: "수동 선택 모드로 전환되었습니다. 이제 강의를 직접 추가/제거할 수 있습니다."
-      });
-    } catch (error) {
-      console.error('Error converting to manual:', error);
-      toast({
-        title: "오류",
-        description: "수동 모드 전환에 실패했습니다.",
-        variant: "destructive"
-      });
-    }
-  };
-
   const onDragEnd = async (result: any) => {
-    if (!result.destination || section?.filter_type !== 'manual') return;
+    if (!result.destination) return;
 
     const items = Array.from(selectedCourses);
     const [reorderedItem] = items.splice(result.source.index, 1);
@@ -503,376 +386,230 @@ const HomepageSectionManager = () => {
                   checked={section?.is_active || false}
                   onCheckedChange={updateSectionStatus}
                 />
-                <Label htmlFor="section-active" className="text-sm font-medium">
-                  섹션 활성화
+                <Label htmlFor="section-active" className="flex items-center gap-2">
+                  {section?.is_active ? (
+                    <><Eye className="w-4 h-4" /> 활성화</>
+                  ) : (
+                    <><EyeOff className="w-4 h-4" /> 비활성화</>
+                  )}
                 </Label>
               </div>
             </div>
           </div>
+          
+          {/* Stats */}
+          <div className="mt-6 grid grid-cols-3 gap-4">
+            <div className="bg-gray-50 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-gray-900">{selectedCourses.length}</div>
+              <div className="text-sm text-gray-600">선택된 강의</div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-gray-900">{section?.display_limit || 8}</div>
+              <div className="text-sm text-gray-600">표시 제한</div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-gray-900">{selectedCourses.reduce((sum, c) => sum + (c.course?.total_students || 0), 0)}</div>
+              <div className="text-sm text-gray-600">총 수강생</div>
+            </div>
+          </div>
         </div>
 
-        {/* Live Preview Section */}
+        {/* Live Preview */}
         <div className="bg-white rounded-xl shadow-sm border p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-semibold">라이브 미리보기</h2>
-              <Badge variant={section?.is_active ? "default" : "secondary"}>
-                {section?.is_active ? "활성" : "비활성"}
-              </Badge>
-            </div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">실시간 미리보기</h2>
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
                 size="sm"
+                variant="outline"
                 onClick={() => setIsPreviewPlaying(!isPreviewPlaying)}
-                disabled={selectedCourses.length === 0}
               >
                 {isPreviewPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                {isPreviewPlaying ? '일시정지' : '재생'}
               </Button>
-              <div className="flex gap-1">
+            </div>
+          </div>
+          
+          <div className="bg-gray-50 rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">{config.title}</h3>
+              <div className="flex items-center gap-2">
                 <Button
-                  variant="outline"
                   size="sm"
-                  onClick={() => setPreviewCurrentCourse(Math.max(0, previewCurrentCourse - 1))}
-                  disabled={previewCurrentCourse === 0 || selectedCourses.length === 0}
+                  variant="outline"
+                  onClick={() => setPreviewCurrentCourse(Math.max(0, previewCurrentCourse - 4))}
+                  disabled={previewCurrentCourse === 0}
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
                 <Button
-                  variant="outline"
                   size="sm"
-                  onClick={() => setPreviewCurrentCourse(Math.min(Math.min(selectedCourses.length, 4) - 1, previewCurrentCourse + 1))}
-                  disabled={previewCurrentCourse >= Math.min(selectedCourses.length, 4) - 1 || selectedCourses.length === 0}
+                  variant="outline"
+                  onClick={() => setPreviewCurrentCourse(Math.min(selectedCourses.length - 4, previewCurrentCourse + 4))}
+                  disabled={previewCurrentCourse + 4 >= selectedCourses.length}
                 >
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
             </div>
-          </div>
-
-          {/* Current Filter Settings */}
-          {section && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Target className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-blue-900">현재 필터 설정</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-blue-700 border-blue-300">
-                        {section.filter_type === 'manual' && '수동 선택'}
-                        {section.filter_type === 'category' && `카테고리: ${section.filter_value}`}
-                        {section.filter_type === 'hot_new' && '인기/신규 강의'}
-                      </Badge>
-                      <span className="text-sm text-blue-600">
-                        최대 {section.display_limit}개 강의 표시
-                      </span>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {selectedCourses.slice(previewCurrentCourse, previewCurrentCourse + 4).map((course, index) => (
+                <Card key={course.id} className="overflow-hidden">
+                  <div className="aspect-video bg-gray-200 relative">
+                    <img
+                      src={course.course.thumbnail_url || '/placeholder.svg'}
+                      alt={course.course.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2 left-2 bg-white px-2 py-1 rounded text-xs font-medium">
+                      {previewCurrentCourse + index + 1}
                     </div>
                   </div>
-                </div>
-                {section.filter_type !== 'manual' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={convertToManual}
-                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                  >
-                    수동 선택으로 전환
-                  </Button>
-                )}
-              </div>
-              {section.filter_type !== 'manual' && (
-                <p className="text-sm text-blue-600 mt-3">
-                  현재 자동 필터링으로 강의가 표시되고 있습니다. 수동으로 강의를 선택하려면 "수동 선택으로 전환" 버튼을 클릭하세요.
-                </p>
-              )}
+                  <CardContent className="p-4">
+                    <h4 className="font-medium text-sm line-clamp-2 mb-2">{course.course.title}</h4>
+                    <p className="text-xs text-gray-600 mb-2">{course.course.instructor_name}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                        <span className="text-xs">{course.course.rating || 5.0}</span>
+                      </div>
+                      <span className="text-xs font-bold">{course.course.price.toLocaleString()}원</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          )}
-
-          {/* Preview Content */}
-          <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-8 min-h-[300px]">
-            {selectedCourses.length === 0 ? (
-              <div className="text-center py-12">
-                <IconComponent className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-semibold text-muted-foreground mb-2">섹션이 비어있습니다</h3>
-                <p className="text-muted-foreground">
-                  강의를 추가하면 메인 페이지에서 이렇게 표시됩니다
-                </p>
-              </div>
-            ) : (
-              <div>
-                {/* Section Title */}
-                <div className="flex items-center gap-3 mb-8">
-                  <IconComponent className="w-8 h-8 text-primary" />
-                  <h2 className="text-2xl lg:text-3xl font-bold text-foreground">
-                    {config.title}
-                  </h2>
-                </div>
-
-                {/* Course Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {selectedCourses.slice(0, 4).map((selectedCourse, index) => (
-                    <div
-                      key={selectedCourse.id}
-                      className={`group cursor-pointer transform transition-all duration-300 ${
-                        index === previewCurrentCourse ? 'scale-105 ring-2 ring-primary' : 'hover:scale-102'
-                      }`}
-                    >
-                      <div className="relative mb-4">
-                        <img
-                          src={selectedCourse.course.thumbnail_url}
-                          alt={selectedCourse.course.title}
-                          className="w-full h-[159px] object-cover rounded-xl"
-                          style={{ aspectRatio: "283/159" }}
-                        />
-                        
-                        {/* Tags */}
-                        <div className="absolute top-3 left-3 flex gap-1">
-                          {selectedCourse.course.is_hot && (
-                            <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                              HOT
-                            </span>
-                          )}
-                          {selectedCourse.course.is_new && (
-                            <span className="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                              NEW
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <h3 className="font-bold text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors">
-                          {selectedCourse.course.title}
-                        </h3>
-                        
-                        {selectedCourse.course.instructor_name && 
-                         selectedCourse.course.instructor_name !== "운영진" && 
-                         selectedCourse.course.instructor_name !== "강사" && (
-                          <div className="text-sm text-muted-foreground">
-                            {selectedCourse.course.instructor_name}
-                          </div>
-                        )}
-
-                        {selectedCourse.course.price !== undefined && (
-                          <div className="text-sm font-semibold text-primary">
-                            {selectedCourse.course.price.toLocaleString()}원
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {selectedCourses.length > 4 && (
-                  <div className="text-center mt-6">
-                    <p className="text-muted-foreground">
-                      총 {selectedCourses.length}개 강의 중 4개 표시 (실제로는 더보기 버튼과 캐러셀로 표시됨)
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Management Section */}
-        {section?.filter_type === 'manual' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Selected Courses */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <span>선택된 강의</span>
-                      <Badge variant="secondary">{selectedCourses.length}개</Badge>
-                    </CardTitle>
-                    <Button
-                      onClick={() => setShowAvailable(!showAvailable)}
-                      variant={showAvailable ? "default" : "outline"}
-                    >
-                      {showAvailable ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-                      {showAvailable ? '강의 목록 숨기기' : '강의 추가'}
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {selectedCourses.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <IconComponent className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>선택된 강의가 없습니다.</p>
-                      <p className="text-sm">강의 추가 버튼을 클릭하여 강의를 추가해보세요.</p>
-                    </div>
-                  ) : (
-                    <DragDropContext onDragEnd={onDragEnd}>
-                      <Droppable droppableId="selected-courses">
-                        {(provided) => (
-                          <div
-                            {...provided.droppableProps}
-                            ref={provided.innerRef}
-                            className="space-y-3"
-                          >
-                            {selectedCourses.map((selectedCourse, index) => (
-                              <Draggable
-                                key={selectedCourse.id}
-                                draggableId={selectedCourse.id}
-                                index={index}
-                              >
-                                {(provided, snapshot) => (
-                                  <div
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    className={`flex items-center p-4 border rounded-lg bg-white transition-all ${
-                                      snapshot.isDragging ? 'shadow-lg rotate-1' : 'shadow-sm'
-                                    }`}
-                                  >
-                                    <div
-                                      {...provided.dragHandleProps}
-                                      className="mr-3 text-muted-foreground hover:text-foreground cursor-grab"
-                                    >
-                                      <GripVertical className="w-4 h-4" />
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-3 flex-1">
-                                      <div className="relative">
-                                        <img 
-                                          src={selectedCourse.course.thumbnail_url} 
-                                          alt={selectedCourse.course.title}
-                                          className="w-20 h-14 object-cover rounded"
-                                        />
-                                        <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full font-medium">
-                                          {index + 1}
-                                        </div>
-                                      </div>
-                                      
-                                      <div className="flex-1 min-w-0">
-                                        <h4 className="font-semibold text-sm mb-1 line-clamp-1">{selectedCourse.course.title}</h4>
-                                        <p className="text-xs text-muted-foreground mb-2">{selectedCourse.course.instructor_name}</p>
-                                        <div className="flex items-center gap-2">
-                                          <span className="text-sm font-medium text-primary">{selectedCourse.course.price.toLocaleString()}원</span>
-                                          {selectedCourse.course.is_hot && (
-                                            <Badge variant="destructive" className="text-xs">HOT</Badge>
-                                          )}
-                                          {selectedCourse.course.is_new && (
-                                            <Badge variant="default" className="text-xs">NEW</Badge>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                    
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => removeCourse(selectedCourse.id)}
-                                      className="hover:bg-destructive hover:text-destructive-foreground"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                )}
-                              </Draggable>
-                            ))}
-                            {provided.placeholder}
-                          </div>
-                        )}
-                      </Droppable>
-                    </DragDropContext>
-                  )}
-                </CardContent>
-              </Card>
+        {/* Course Management */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Selected Courses */}
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">선택된 강의 ({selectedCourses.length})</h2>
+              <Button 
+                onClick={() => setShowAvailable(!showAvailable)}
+                size="sm"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                강의 추가
+              </Button>
             </div>
 
-            {/* Available Courses */}
-            {showAvailable && (
-              <div className="lg:col-span-1">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>사용 가능한 강의</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
-                      {availableCourses
-                        .filter(course => !selectedCourses.some(sc => sc.course_id === course.id))
-                        .map((course) => (
-                          <div key={course.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                            <img 
-                              src={course.thumbnail_url} 
-                              alt={course.title}
-                              className="w-16 h-12 object-cover rounded"
+            <DragDropContext onDragEnd={onDragEnd}>
+              <Droppable droppableId="selected-courses">
+                {(provided) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="space-y-3 rounded-lg p-2 min-h-[200px]"
+                  >
+                    {selectedCourses.map((course, index) => (
+                      <Draggable 
+                        key={course.id} 
+                        draggableId={course.id} 
+                        index={index}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={`flex items-center gap-3 p-3 border rounded-lg bg-white ${
+                              snapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
+                            } transition-shadow`}
+                          >
+                            <div {...provided.dragHandleProps} className="cursor-move">
+                              <GripVertical className="w-4 h-4 text-gray-400" />
+                            </div>
+                            <div className="bg-primary text-white rounded px-2 py-1 text-xs font-medium min-w-[24px] text-center">
+                              {index + 1}
+                            </div>
+                            <img
+                              src={course.course.thumbnail_url || '/placeholder.svg'}
+                              alt={course.course.title}
+                              className="w-12 h-12 rounded object-cover"
                             />
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm line-clamp-2 mb-1">{course.title}</h4>
-                              <p className="text-xs text-muted-foreground">{course.instructor_name}</p>
+                              <h3 className="font-medium text-sm truncate">{course.course.title}</h3>
+                              <p className="text-xs text-gray-600">{course.course.instructor_name}</p>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs font-medium text-primary">{course.price.toLocaleString()}원</span>
-                                {course.is_hot && <Badge variant="destructive" className="text-xs">HOT</Badge>}
-                                {course.is_new && <Badge variant="default" className="text-xs">NEW</Badge>}
+                                <span className="text-xs font-bold">{course.course.price.toLocaleString()}원</span>
+                                {course.course.is_hot && <Badge variant="destructive" className="text-xs">HOT</Badge>}
+                                {course.course.is_new && <Badge variant="secondary" className="text-xs">NEW</Badge>}
                               </div>
                             </div>
                             <Button
-                              variant="outline"
                               size="sm"
-                              onClick={() => addCourse(course)}
+                              variant="outline"
+                              onClick={() => removeCourse(course.id)}
+                              className="text-red-600 hover:text-red-700"
                             >
-                              <Plus className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
-                        ))}
-                      {availableCourses.filter(course => !selectedCourses.some(sc => sc.course_id === course.id)).length === 0 && (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <p>추가할 수 있는 강의가 없습니다.</p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                    {selectedCourses.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>선택된 강의가 없습니다.</p>
+                        <p className="text-sm">강의 추가 버튼을 클릭하여 강의를 추가하세요.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </div>
 
-            {/* Statistics */}
-            {!showAvailable && (
-              <div className="lg:col-span-1">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>섹션 통계</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                        <span className="text-sm font-medium">선택된 강의</span>
-                        <Badge variant="outline">{selectedCourses.length}개</Badge>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                        <span className="text-sm font-medium">섹션 상태</span>
-                        <Badge variant={section?.is_active ? "default" : "secondary"}>
-                          {section?.is_active ? "활성" : "비활성"}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                        <span className="text-sm font-medium">필터 타입</span>
-                        <Badge variant="outline">수동 선택</Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+          {/* Available Courses */}
+          {showAvailable && (
+            <div className="bg-white rounded-xl shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">사용 가능한 강의</h2>
+                <Button 
+                  onClick={() => setShowAvailable(false)}
+                  size="sm"
+                  variant="outline"
+                >
+                  닫기
+                </Button>
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-12 bg-gray-50 rounded-xl">
-            <IconComponent className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <h3 className="text-lg font-semibold text-muted-foreground mb-2">자동 필터링 모드</h3>
-            <p className="text-muted-foreground mb-4">
-              현재 {section?.filter_type === 'category' ? '카테고리' : '인기/신규'} 필터로 자동 관리되고 있습니다.
-            </p>
-            <Button onClick={convertToManual} variant="outline">
-              수동 선택으로 전환
-            </Button>
-          </div>
-        )}
+
+              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                {availableCourses
+                  .filter(course => !selectedCourses.some(sc => sc.course_id === course.id))
+                  .map(course => (
+                    <div key={course.id} className="flex items-center gap-3 p-3 border rounded-lg hover:shadow-sm transition-shadow">
+                      <img
+                        src={course.thumbnail_url || '/placeholder.svg'}
+                        alt={course.title}
+                        className="w-12 h-12 rounded object-cover"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-sm truncate">{course.title}</h3>
+                        <p className="text-xs text-gray-600">{course.instructor_name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs font-bold">{course.price.toLocaleString()}원</span>
+                          {course.is_hot && <Badge variant="destructive" className="text-xs">HOT</Badge>}
+                          {course.is_new && <Badge variant="secondary" className="text-xs">NEW</Badge>}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => addCourse(course)}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </AdminLayout>
   );
