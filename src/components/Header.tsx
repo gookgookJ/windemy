@@ -34,11 +34,11 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">W</span>
+            <Link to="/" className="flex items-center space-x-3 flex-shrink-0">
+              <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-xl leading-none">W</span>
               </div>
-              <span className="text-xl font-bold text-foreground">Windly Academy</span>
+              <span className="text-xl font-bold text-foreground whitespace-nowrap">Windly Academy</span>
             </Link>
 
             {/* Desktop Navigation */}
