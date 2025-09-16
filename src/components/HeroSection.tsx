@@ -88,7 +88,7 @@ const HeroSection = () => {
                     <img
                       src={slides[getSlideIndex(-1)].image}
                       alt={slides[getSlideIndex(-1)].title}
-                      className="w-48 h-60 object-cover rounded-xl"
+                      className="w-48 h-60 object-cover rounded-xl shadow-lg"
                     />
                   </div>
                 </div>
@@ -146,7 +146,7 @@ const HeroSection = () => {
                     <img
                       src={slides[getSlideIndex(1)].image}
                       alt={slides[getSlideIndex(1)].title}
-                      className="w-48 h-60 object-cover rounded-xl"
+                      className="w-48 h-60 object-cover rounded-xl shadow-lg"
                     />
                   </div>
                 </div>
