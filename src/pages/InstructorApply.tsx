@@ -68,10 +68,11 @@ const InstructorApply = () => {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative bg-background overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/10" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background" />
+      <section className="relative bg-white overflow-hidden border-b border-border">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 to-secondary/5">
+          <div className="absolute inset-0" style={{
+            backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='grid' patternUnits='userSpaceOnUse' width='100' height='100'%3E%3Cpath d='M25 50h50 M50 25v50' stroke='%23e1e4ed' stroke-width='0.5' fill='none'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23grid)'/%3E%3C/svg%3E\")"
+          }} />
         </div>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-40 relative z-10">
           <div className="max-w-6xl mx-auto text-center">
@@ -106,7 +107,7 @@ const InstructorApply = () => {
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Value Section */}
-        <section className="py-24 lg:py-32">
+        <section className="py-24 lg:py-32 bg-muted/30">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-20">
               <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
@@ -153,7 +154,7 @@ const InstructorApply = () => {
         </section>
 
         {/* Categories Section */}
-        <section className="py-24 lg:py-32">
+        <section className="py-24 lg:py-32 bg-white">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-20">
               <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
@@ -184,7 +185,7 @@ const InstructorApply = () => {
         </section>
 
         {/* Who We Seek Section */}
-        <section className="py-24 lg:py-32">
+        <section className="py-24 lg:py-32 bg-muted/30">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-20">
               <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
@@ -250,7 +251,7 @@ const InstructorApply = () => {
         </section>
 
         {/* Process Section */}
-        <section className="py-24 lg:py-32">
+        <section className="py-24 lg:py-32 bg-white">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-20">
               <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
@@ -272,8 +273,8 @@ const InstructorApply = () => {
                 { num: "5", title: "콘텐츠 제작", desc: "전담팀과 함께 강의 콘텐츠 제작 및 런칭 준비에 착수합니다." },
                 { num: "6", title: "런칭 & 성장", desc: "성공적인 런칭 이후, 데이터 기반으로 함께 성장 방안을 모색합니다." }
               ].map((item, index) => (
-                <div key={index} className="bg-card border border-border rounded-3xl p-8 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                  <div className="text-3xl font-black text-white bg-primary w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
+                <div key={index} className="bg-card border border-border rounded-3xl p-8 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group">
+                  <div className="text-3xl font-black text-white bg-gradient-to-br from-primary to-secondary w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-200">
                     {item.num}
                   </div>
                   <h4 className="text-xl font-bold mb-4">{item.title}</h4>
@@ -285,7 +286,7 @@ const InstructorApply = () => {
         </section>
 
         {/* Compare Section */}
-        <section className="py-24 lg:py-32">
+        <section className="py-24 lg:py-32 bg-muted/30">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-20">
               <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
@@ -346,7 +347,7 @@ const InstructorApply = () => {
         </section>
 
         {/* FAQ Section */}
-        <section className="py-24 lg:py-32">
+        <section className="py-24 lg:py-32 bg-white">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-20">
               <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
@@ -416,14 +417,14 @@ const InstructorApply = () => {
       </section>
 
       {/* Sticky Apply Button */}
-      {showStickyButton && (
-        <div className="fixed bottom-8 right-8 z-50">
-          <Button className="shadow-2xl hover:scale-105 transition-transform text-lg px-8 py-4 h-auto font-bold">
-            지금 지원하기
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-        </div>
-      )}
+      <div className={`fixed bottom-8 right-8 z-50 transition-all duration-500 ease-out ${
+        showStickyButton ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95 pointer-events-none'
+      }`}>
+        <Button className="shadow-2xl hover:scale-105 transition-all duration-200 text-lg px-8 py-4 h-auto font-bold hover:shadow-xl">
+          강사 지원하기
+          <ArrowRight className="ml-2 h-5 w-5" />
+        </Button>
+      </div>
     </div>
   );
 };
