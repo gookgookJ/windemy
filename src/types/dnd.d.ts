@@ -55,7 +55,7 @@ declare module 'react-beautiful-dnd' {
   export interface DraggableProps {
     draggableId: string;
     index: number;
-    children: (provided: DraggableProvided) => ReactElement;
+    children: (provided: DraggableProvided, snapshot?: any) => ReactElement;
   }
 
   export const DragDropContext: ComponentType<DragDropContextProps>;

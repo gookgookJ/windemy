@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Trash2, Plus, GripVertical, Eye, EyeOff, Target, Zap, Crown, Monitor } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Eye, EyeOff, Target, Zap, Crown, Monitor, Star, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { AdminLayout } from '@/layouts/AdminLayout';
@@ -75,8 +75,28 @@ const HomepageSectionManager = () => {
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAvailable, setShowAvailable] = useState(false);
+  const [previewCurrentCourse, setPreviewCurrentCourse] = useState(0);
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState(true);
 
   const config = sectionConfig[sectionType as keyof typeof sectionConfig];
+
+  useEffect(() => {
+    if (config) {
+      fetchSectionData();
+      fetchAvailableCourses();
+    }
+  }, [sectionType]);
+
+  // 미리보기 자동 슬라이드
+  useEffect(() => {
+    if (!isPreviewPlaying || selectedCourses.length === 0) return;
+    
+    const timer = setInterval(() => {
+      setPreviewCurrentCourse((prev) => (prev + 1) % Math.min(selectedCourses.length, 4));
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, [selectedCourses.length, isPreviewPlaying]);
 
   useEffect(() => {
     if (config) {
@@ -363,33 +383,162 @@ const HomepageSectionManager = () => {
                   섹션 활성화
                 </Label>
               </div>
-              <Button
-                onClick={() => setShowAvailable(!showAvailable)}
-                variant={showAvailable ? "default" : "outline"}
-              >
-                {showAvailable ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-                {showAvailable ? '강의 목록 숨기기' : '강의 추가'}
-              </Button>
             </div>
           </div>
         </div>
 
+        {/* Live Preview Section */}
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-semibold">라이브 미리보기</h2>
+              <Badge variant={section?.is_active ? "default" : "secondary"}>
+                {section?.is_active ? "활성" : "비활성"}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsPreviewPlaying(!isPreviewPlaying)}
+                disabled={selectedCourses.length === 0}
+              >
+                {isPreviewPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              </Button>
+              <div className="flex gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPreviewCurrentCourse(Math.max(0, previewCurrentCourse - 1))}
+                  disabled={previewCurrentCourse === 0 || selectedCourses.length === 0}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPreviewCurrentCourse(Math.min(Math.min(selectedCourses.length, 4) - 1, previewCurrentCourse + 1))}
+                  disabled={previewCurrentCourse >= Math.min(selectedCourses.length, 4) - 1 || selectedCourses.length === 0}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Preview Content */}
+          <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-8 min-h-[300px]">
+            {selectedCourses.length === 0 ? (
+              <div className="text-center py-12">
+                <IconComponent className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-semibold text-muted-foreground mb-2">섹션이 비어있습니다</h3>
+                <p className="text-muted-foreground">
+                  강의를 추가하면 메인 페이지에서 이렇게 표시됩니다
+                </p>
+              </div>
+            ) : (
+              <div>
+                {/* Section Title */}
+                <div className="flex items-center gap-3 mb-8">
+                  <IconComponent className="w-8 h-8 text-primary" />
+                  <h2 className="text-2xl lg:text-3xl font-bold text-foreground">
+                    {config.title}
+                  </h2>
+                </div>
+
+                {/* Course Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {selectedCourses.slice(0, 4).map((selectedCourse, index) => (
+                    <div
+                      key={selectedCourse.id}
+                      className={`group cursor-pointer transform transition-all duration-300 ${
+                        index === previewCurrentCourse ? 'scale-105 ring-2 ring-primary' : 'hover:scale-102'
+                      }`}
+                    >
+                      <div className="relative mb-4">
+                        <img
+                          src={selectedCourse.course.thumbnail_url}
+                          alt={selectedCourse.course.title}
+                          className="w-full h-[159px] object-cover rounded-xl"
+                          style={{ aspectRatio: "283/159" }}
+                        />
+                        
+                        {/* Tags */}
+                        <div className="absolute top-3 left-3 flex gap-1">
+                          {selectedCourse.course.is_hot && (
+                            <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
+                              HOT
+                            </span>
+                          )}
+                          {selectedCourse.course.is_new && (
+                            <span className="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">
+                              NEW
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <h3 className="font-bold text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+                          {selectedCourse.course.title}
+                        </h3>
+                        
+                        {selectedCourse.course.instructor_name && 
+                         selectedCourse.course.instructor_name !== "운영진" && 
+                         selectedCourse.course.instructor_name !== "강사" && (
+                          <div className="text-sm text-muted-foreground">
+                            {selectedCourse.course.instructor_name}
+                          </div>
+                        )}
+
+                        {selectedCourse.course.price !== undefined && (
+                          <div className="text-sm font-semibold text-primary">
+                            {selectedCourse.course.price.toLocaleString()}원
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {selectedCourses.length > 4 && (
+                  <div className="text-center mt-6">
+                    <p className="text-muted-foreground">
+                      총 {selectedCourses.length}개 강의 중 4개 표시 (실제로는 더보기 버튼과 캐러셀로 표시됨)
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Management Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Selected Courses */}
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span>선택된 강의</span>
-                  <Badge variant="secondary">{selectedCourses.length}개</Badge>
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <span>선택된 강의</span>
+                    <Badge variant="secondary">{selectedCourses.length}개</Badge>
+                  </CardTitle>
+                  <Button
+                    onClick={() => setShowAvailable(!showAvailable)}
+                    variant={showAvailable ? "default" : "outline"}
+                  >
+                    {showAvailable ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+                    {showAvailable ? '강의 목록 숨기기' : '강의 추가'}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {selectedCourses.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <IconComponent className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>선택된 강의가 없습니다.</p>
-                    <p className="text-sm">오른쪽에서 강의를 추가해보세요.</p>
+                    <p className="text-sm">강의 추가 버튼을 클릭하여 강의를 추가해보세요.</p>
                   </div>
                 ) : (
                   <DragDropContext onDragEnd={onDragEnd}>
@@ -406,11 +555,13 @@ const HomepageSectionManager = () => {
                               draggableId={selectedCourse.id}
                               index={index}
                             >
-                              {(provided) => (
+                              {(provided, snapshot) => (
                                 <div
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
-                                  className="flex items-center p-4 border rounded-lg bg-white shadow-sm"
+                                  className={`flex items-center p-4 border rounded-lg bg-white transition-all ${
+                                    snapshot.isDragging ? 'shadow-lg rotate-1' : 'shadow-sm'
+                                  }`}
                                 >
                                   <div
                                     {...provided.dragHandleProps}
@@ -419,23 +570,30 @@ const HomepageSectionManager = () => {
                                     <GripVertical className="w-4 h-4" />
                                   </div>
                                   
-                                  <img 
-                                    src={selectedCourse.course.thumbnail_url} 
-                                    alt={selectedCourse.course.title}
-                                    className="w-16 h-12 object-cover rounded mr-4"
-                                  />
-                                  
-                                  <div className="flex-1">
-                                    <h4 className="font-semibold text-sm">{selectedCourse.course.title}</h4>
-                                    <p className="text-xs text-muted-foreground">{selectedCourse.course.instructor_name}</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <span className="text-sm font-medium">{selectedCourse.course.price.toLocaleString()}원</span>
-                                      {selectedCourse.course.is_hot && (
-                                        <Badge variant="destructive" className="text-xs">HOT</Badge>
-                                      )}
-                                      {selectedCourse.course.is_new && (
-                                        <Badge variant="default" className="text-xs">NEW</Badge>
-                                      )}
+                                  <div className="flex items-center gap-3 flex-1">
+                                    <div className="relative">
+                                      <img 
+                                        src={selectedCourse.course.thumbnail_url} 
+                                        alt={selectedCourse.course.title}
+                                        className="w-20 h-14 object-cover rounded"
+                                      />
+                                      <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full font-medium">
+                                        {index + 1}
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="font-semibold text-sm mb-1 line-clamp-1">{selectedCourse.course.title}</h4>
+                                      <p className="text-xs text-muted-foreground mb-2">{selectedCourse.course.instructor_name}</p>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium text-primary">{selectedCourse.course.price.toLocaleString()}원</span>
+                                        {selectedCourse.course.is_hot && (
+                                          <Badge variant="destructive" className="text-xs">HOT</Badge>
+                                        )}
+                                        {selectedCourse.course.is_new && (
+                                          <Badge variant="default" className="text-xs">NEW</Badge>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                   
@@ -443,6 +601,7 @@ const HomepageSectionManager = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => removeCourse(selectedCourse.id)}
+                                    className="hover:bg-destructive hover:text-destructive-foreground"
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
@@ -474,27 +633,30 @@ const HomepageSectionManager = () => {
                       .map((course) => (
                         <div
                           key={course.id}
-                          className="flex items-center p-3 border rounded-lg hover:border-primary/50 transition-colors"
+                          className="flex items-center p-3 border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer"
+                          onClick={() => addCourse(course)}
                         >
                           <img 
                             src={course.thumbnail_url} 
                             alt={course.title}
-                            className="w-12 h-8 object-cover rounded mr-3"
+                            className="w-14 h-10 object-cover rounded mr-3"
                           />
                           
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-sm truncate">{course.title}</h4>
                             <p className="text-xs text-muted-foreground">{course.instructor_name}</p>
-                            <p className="text-xs font-medium">{course.price.toLocaleString()}원</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <p className="text-xs font-medium text-primary">{course.price.toLocaleString()}원</p>
+                              {course.is_hot && (
+                                <Badge variant="destructive" className="text-xs">HOT</Badge>
+                              )}
+                              {course.is_new && (
+                                <Badge variant="default" className="text-xs">NEW</Badge>
+                              )}
+                            </div>
                           </div>
                           
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => addCourse(course)}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
+                          <Plus className="w-4 h-4 text-muted-foreground ml-2" />
                         </div>
                       ))}
                   </div>
@@ -503,51 +665,40 @@ const HomepageSectionManager = () => {
             </div>
           )}
 
-          {/* Preview */}
+          {/* Quick Stats */}
           {!showAvailable && (
             <div className="lg:col-span-1">
               <Card>
                 <CardHeader>
-                  <CardTitle>미리보기</CardTitle>
+                  <CardTitle>섹션 통계</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 mb-4">
-                      <IconComponent className="w-6 h-6 text-primary" />
-                      <h3 className="font-bold text-lg">{config.title}</h3>
+                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                      <span className="text-sm font-medium">선택된 강의</span>
+                      <Badge variant="outline">{selectedCourses.length}개</Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                      <span className="text-sm font-medium">섹션 상태</span>
+                      <Badge variant={section?.is_active ? "default" : "secondary"}>
+                        {section?.is_active ? "활성" : "비활성"}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                      <span className="text-sm font-medium">추가 가능</span>
+                      <Badge variant="outline">
+                        {availableCourses.filter(course => !selectedCourses.some(sc => sc.course_id === course.id)).length}개
+                      </Badge>
                     </div>
                     
-                    {selectedCourses.length === 0 ? (
-                      <p className="text-muted-foreground text-sm">
-                        선택된 강의가 없어 섹션이 표시되지 않습니다.
+                    <div className="pt-4 border-t">
+                      <p className="text-xs text-muted-foreground mb-3">
+                        💡 드래그앤드롭으로 순서를 변경할 수 있습니다
                       </p>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-3">
-                        {selectedCourses.slice(0, 4).map((selectedCourse) => (
-                          <div
-                            key={selectedCourse.id}
-                            className="border rounded-lg p-2 bg-muted/30"
-                          >
-                            <div className="flex items-center gap-2">
-                              <img 
-                                src={selectedCourse.course.thumbnail_url}
-                                alt={selectedCourse.course.title}
-                                className="w-12 h-8 object-cover rounded"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium truncate">{selectedCourse.course.title}</p>
-                                <p className="text-xs text-muted-foreground">{selectedCourse.course.instructor_name}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                        {selectedCourses.length > 4 && (
-                          <p className="text-xs text-muted-foreground text-center">
-                            +{selectedCourses.length - 4}개 더
-                          </p>
-                        )}
-                      </div>
-                    )}
+                      <p className="text-xs text-muted-foreground">
+                        🎯 메인 페이지에서는 최대 8개 강의가 표시됩니다
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
