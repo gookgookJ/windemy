@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,10 @@ const HeroSection = () => {
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
   const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [loading, setLoading] = useState(true);
+  const [translateX, setTranslateX] = useState(0);
+  const [stride, setStride] = useState(800);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const centerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   
   // 기본 슬라이드 (데이터베이스에서 불러오지 못할 경우 사용)
@@ -83,6 +87,17 @@ const HeroSection = () => {
     }
   };
 
+  // 슬라이드 이동 거리 계산 (중앙 카드 폭 + 좌우 마진)
+  useEffect(() => {
+    const calcStride = () => {
+      const width = centerRef.current?.offsetWidth ?? 760; // mx-4 포함을 위해 +32
+      setStride(width + 32);
+    };
+    calcStride();
+    window.addEventListener('resize', calcStride);
+    return () => window.removeEventListener('resize', calcStride);
+  }, []);
+
   const handleSlideClick = (slide: HeroSlide) => {
     if (slide.course_id) {
       navigate(`/course/${slide.course_id}`);
@@ -93,23 +108,37 @@ const HeroSection = () => {
 
   useEffect(() => {
     if (!isPlaying || slides.length === 0) return;
-    
     const timer = setInterval(() => {
-      setDirection('next');
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
+      if (!isAnimating) {
+        setDirection('next');
+        nextSlide();
+      }
     }, 5000);
-
     return () => clearInterval(timer);
-  }, [slides.length, isPlaying]);
+  }, [slides.length, isPlaying, isAnimating, stride]);
 
   const nextSlide = () => {
+    if (isAnimating || slides.length === 0) return;
     setDirection('next');
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    setIsAnimating(true);
+    setTranslateX(-stride);
   };
 
   const prevSlide = () => {
+    if (isAnimating || slides.length === 0) return;
     setDirection('prev');
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    setIsAnimating(true);
+    setTranslateX(stride);
+  };
+
+  const handleTransitionEnd = () => {
+    if (!isAnimating) return;
+    setIsAnimating(false);
+    setTranslateX(0);
+    setCurrentSlide((prev) => {
+      if (direction === 'next') return (prev + 1) % slides.length;
+      return (prev - 1 + slides.length) % slides.length;
+    });
   };
 
   const togglePlayPause = () => {
@@ -132,7 +161,12 @@ const HeroSection = () => {
     <section className="relative h-[380px] overflow-hidden bg-white">
       {/* Three Panel Layout */}
       <div className="relative w-full h-full flex items-center justify-center">
-        <div key={currentSlide} className="flex w-full items-center justify-center transition-all duration-1000 ease-out">
+        <div
+          key={currentSlide}
+          className="flex w-full items-center justify-center transition-all duration-1000 ease-out"
+          style={{ transform: `translateX(${translateX}px)`, transition: isAnimating ? 'transform 1000ms ease-out' : undefined }}
+          onTransitionEnd={handleTransitionEnd}
+        >
           
           {/* Left Panel (Previous Slide) - Partially visible */}  
           <div className="flex-1 relative opacity-40 transition-all duration-1000 ease-out cursor-pointer overflow-hidden"
