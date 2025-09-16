@@ -177,19 +177,19 @@ const HeroSection = () => {
 
   if (loading || slides.length === 0) {
     return (
-      <section className="relative h-[180px] md:h-[380px] overflow-hidden bg-white flex items-center justify-center">
+      <section className="relative h-[200px] md:h-[380px] overflow-hidden bg-white flex items-center justify-center">
         <div className="text-muted-foreground">로딩중...</div>
       </section>
     );
   }
 
   return (
-    <section className="relative h-[180px] md:h-[380px] overflow-hidden bg-white">
+    <section className="relative h-[200px] md:h-[380px] overflow-hidden bg-white">
       {/* Mobile Single Slide Layout */}
       <div className="block md:hidden relative w-full h-full">
         <div 
           ref={slideRef}
-          className="relative w-full h-full cursor-pointer select-none"
+          className="relative w-full h-full cursor-pointer select-none bg-gradient-to-r from-blue-400 to-blue-600"
           onClick={() => handleSlideClick(slides[currentSlide])}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -199,27 +199,45 @@ const HeroSection = () => {
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
-          <img
-            src={slides[currentSlide].image_url}
-            alt={slides[currentSlide].title}
-            className="w-full h-full object-cover responsive-image"
-          />
-          <div className="absolute inset-0 flex items-center">
-            <div className="text-white space-y-1 px-12 safe-area-padding flex-1">
-              <h2 className="text-base font-bold leading-tight drop-shadow-lg">
+          <div className="absolute inset-0 flex">
+            {/* Left side - Text content */}
+            <div className="flex-1 p-4 flex flex-col justify-center space-y-2">
+              {/* Badge */}
+              <div className="inline-flex">
+                <span className="bg-blue-500 text-white text-xs font-medium px-3 py-1 rounded-full">
+                  BEST 강의
+                </span>
+              </div>
+              
+              {/* Title */}
+              <h2 className="text-white text-base font-bold leading-tight">
                 {slides[currentSlide].title}
               </h2>
-              <h3 className="text-xs font-medium opacity-90 drop-shadow-lg">
+              
+              {/* Subtitle */}
+              <h3 className="text-white/90 text-sm font-medium">
                 {slides[currentSlide].subtitle}
               </h3>
-              <p className="text-xs opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
+              
+              {/* Description with arrow */}
+              <p className="text-white/80 text-xs">
                 {slides[currentSlide].description}
               </p>
+            </div>
+            
+            {/* Right side - Image */}
+            <div className="w-32 relative">
+              <img
+                src={slides[currentSlide].image_url}
+                alt={slides[currentSlide].title}
+                className="absolute right-0 bottom-0 w-full h-full object-cover object-right"
+                style={{ clipPath: 'polygon(20% 0%, 100% 0%, 100% 100%, 0% 100%)' }}
+              />
             </div>
           </div>
           
           {/* Mobile Slide Counter */}
-          <div className="absolute bottom-3 right-4 bg-black/50 rounded-full px-2.5 py-1 text-white text-xs font-medium">
+          <div className="absolute bottom-3 right-4 bg-black/40 rounded-full px-2.5 py-1 text-white text-xs font-medium">
             {currentSlide + 1}/{slides.length}
           </div>
         </div>
