@@ -127,9 +127,9 @@ const About = () => {
       {/* By The Numbers Section */}
       <section className="py-20 px-4 bg-muted/30" data-animate>
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-left mb-16">
             <h2 className="text-primary text-base font-bold tracking-wider mb-4">BY THE NUMBERS</h2>
-            <p className="text-3xl md:text-4xl font-bold text-foreground">
+            <p className="text-3xl md:text-5xl font-extrabold text-foreground">
               숫자가 증명하는 윈들리아카데미의 가치
             </p>
           </div>
@@ -140,16 +140,16 @@ const About = () => {
               { label: '수강 후 평균 수익 증가율', value: 350, icon: BarChart },
               { label: '수강생 목표 달성률', value: 92, icon: Target }
             ].map((stat, index) => (
-              <div key={stat.label} className="bg-card border border-border rounded-xl p-8 text-center hover:shadow-lg transition-all duration-300" data-animate>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="text-5xl font-extrabold text-primary">
+              <div key={stat.label} className="bg-card border border-border rounded-2xl p-8 hover:shadow-lg transition-all duration-300" data-animate>
+                <p className="text-muted-foreground font-semibold mb-4 text-sm">{stat.label}</p>
+                <div className="flex items-center justify-between">
+                  <div className="text-5xl md:text-6xl font-extrabold text-foreground">
                     <span data-count={stat.value}>0</span>%
                   </div>
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center flex-shrink-0">
                     <stat.icon className="w-6 h-6 text-primary" />
                   </div>
                 </div>
-                <p className="text-muted-foreground font-medium">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -159,12 +159,12 @@ const About = () => {
       {/* Our Principles Section */}
       <section className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16" data-animate>
+          <div className="text-left mb-16" data-animate>
             <h2 className="text-primary text-base font-bold tracking-wider mb-4">OUR PRINCIPLES</h2>
-            <h3 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
+            <h3 className="text-3xl md:text-5xl font-extrabold mb-4 text-foreground">
               우리가 이기는 결과를 만드는
             </h3>
-            <p className="text-3xl md:text-4xl font-bold text-primary">
+            <p className="text-3xl md:text-5xl font-extrabold text-primary">
               6가지 핵심 원칙
             </p>
           </div>
@@ -179,11 +179,11 @@ const About = () => {
               { title: '스파르타식 관리', desc: '의지가 약해도 괜찮습니다. 1:1 맞춤 피드백과 체계적인 관리 시스템으로 포기하지 않고 목표를 달성하도록 돕습니다.', icon: SquareCheck },
             ].map((principle, index) => (
               <div key={principle.title} className="bg-card border border-border rounded-3xl p-8 hover:shadow-lg hover:-translate-y-2 transition-all duration-300" data-animate>
-                <div className="w-15 h-15 bg-primary/10 rounded-2xl mb-6 flex items-center justify-center">
-                  <principle.icon className="w-8 h-8 text-primary" />
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl mb-6 flex items-center justify-center">
+                  <principle.icon className="w-6 h-6 text-primary" />
                 </div>
-                <h4 className="text-xl font-bold mb-3 text-foreground">{principle.title}</h4>
-                <p className="text-muted-foreground leading-relaxed">{principle.desc}</p>
+                <h4 className="text-xl font-bold mb-4 text-foreground">{principle.title}</h4>
+                <p className="text-muted-foreground leading-relaxed text-sm">{principle.desc}</p>
               </div>
             ))}
           </div>
