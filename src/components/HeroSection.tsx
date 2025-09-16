@@ -149,21 +149,98 @@ const HeroSection = () => {
       <div className="relative w-full h-full flex items-center justify-center">
         {/* Viewport - shows 3 panels worth */}
         <div className="relative w-full h-[340px] overflow-hidden flex items-center justify-center">
-          {/* Sliding Strip - all images in one continuous row */}
+          {/* Sliding Strip - infinite loop with duplicated slides */}
           <div 
             className="flex transition-transform duration-700 ease-out"
             style={{
-              transform: `translateX(-${currentSlide * 800}px)`,
-              width: `${slides.length * 800}px`
+              transform: `translateX(-${(currentSlide + slides.length) * 800}px)`,
+              width: `${slides.length * 3 * 800}px`
             }}
           >
+            {/* Previous set for infinite loop */}
             {slides.map((slide, index) => (
               <div
-                key={slide.id}
+                key={`prev-${slide.id}`}
                 className="relative flex-shrink-0 w-[760px] h-[340px] mx-5"
               >
                 <div 
-                  className="relative w-full h-full rounded-2xl overflow-hidden cursor-pointer"
+                  className={`relative w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-opacity duration-700 ${
+                    index === (currentSlide - 1 + slides.length) % slides.length ? 'opacity-60' :
+                    index === currentSlide ? 'opacity-100' :
+                    index === (currentSlide + 1) % slides.length ? 'opacity-60' : 'opacity-30'
+                  }`}
+                  onClick={() => handleSlideClick(slide)}
+                >
+                  <img
+                    src={slide.image_url}
+                    alt={slide.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/30 flex items-center">
+                    <div className="text-white space-y-4 px-12 flex-1">
+                      <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
+                        {slide.title}
+                      </h2>
+                      <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
+                        {slide.subtitle}
+                      </h3>
+                      <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
+                        {slide.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {/* Current set */}
+            {slides.map((slide, index) => (
+              <div
+                key={`current-${slide.id}`}
+                className="relative flex-shrink-0 w-[760px] h-[340px] mx-5"
+              >
+                <div 
+                  className={`relative w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-opacity duration-700 ${
+                    index === (currentSlide - 1 + slides.length) % slides.length ? 'opacity-60' :
+                    index === currentSlide ? 'opacity-100' :
+                    index === (currentSlide + 1) % slides.length ? 'opacity-60' : 'opacity-30'
+                  }`}
+                  onClick={() => handleSlideClick(slide)}
+                >
+                  <img
+                    src={slide.image_url}
+                    alt={slide.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/30 flex items-center">
+                    <div className="text-white space-y-4 px-12 flex-1">
+                      <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
+                        {slide.title}
+                      </h2>
+                      <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
+                        {slide.subtitle}
+                      </h3>
+                      <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
+                        {slide.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {/* Next set for infinite loop */}
+            {slides.map((slide, index) => (
+              <div
+                key={`next-${slide.id}`}
+                className="relative flex-shrink-0 w-[760px] h-[340px] mx-5"
+              >
+                <div 
+                  className={`relative w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-opacity duration-700 ${
+                    index === (currentSlide - 1 + slides.length) % slides.length ? 'opacity-60' :
+                    index === currentSlide ? 'opacity-100' :
+                    index === (currentSlide + 1) % slides.length ? 'opacity-60' : 'opacity-30'
+                  }`}
                   onClick={() => handleSlideClick(slide)}
                 >
                   <img
@@ -188,10 +265,6 @@ const HeroSection = () => {
               </div>
             ))}
           </div>
-          
-          {/* Overlay masks for side panels */}
-          <div className="absolute left-0 top-0 w-1/3 h-full bg-gradient-to-r from-white via-white/20 to-transparent pointer-events-none z-10"></div>
-          <div className="absolute right-0 top-0 w-1/3 h-full bg-gradient-to-l from-white via-white/20 to-transparent pointer-events-none z-10"></div>
         </div>
       </div>
 
