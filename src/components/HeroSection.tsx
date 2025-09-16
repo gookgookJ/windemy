@@ -130,91 +130,55 @@ const HeroSection = () => {
 
   return (
     <section className="relative h-[380px] overflow-hidden bg-white">
-      {/* Three Panel Layout */}
+      {/* Carousel Container */}
       <div className="relative w-full h-full flex items-center justify-center">
-        <div key={currentSlide} className={`flex w-full items-center justify-center transition-all duration-1000 ease-out transform ${direction === 'next' ? 'animate-slide-in-right' : 'animate-slide-in-left'}`}>
-          
-          {/* Left Panel (Previous Slide) - Partially visible */}  
-          <div className="flex-1 relative opacity-40 transition-all duration-1000 ease-out cursor-pointer overflow-hidden"
-               onClick={prevSlide}
-               style={{ height: '340px' }}>
-            <div className="absolute -right-[200px] top-0 w-[760px] h-[340px] rounded-l-2xl overflow-hidden transform transition-all duration-1000 ease-out">
-              <div className="relative w-full h-full">
-                <img
-                  src={slides[getSlideIndex(-1)].image_url}
-                  alt={slides[getSlideIndex(-1)].title}
-                  className="w-full h-full object-cover transition-all duration-1000 ease-out"
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center">
-                  <div className="text-white space-y-4 px-12 flex-1">
-                    <h3 className="text-2xl font-bold drop-shadow-lg">
-                      {slides[getSlideIndex(-1)].title}
-                    </h3>
-                    <p className="text-lg opacity-90 drop-shadow-lg">
-                      {slides[getSlideIndex(-1)].subtitle}
-                    </p>
-                    <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
-                      {slides[getSlideIndex(-1)].description}
-                    </p>
+        {/* Slides Strip Container */}
+        <div className="relative w-[1200px] h-[340px] overflow-hidden">
+          {/* All Slides in a Row */}
+          <div 
+            className="flex transition-transform duration-1000 ease-out"
+            style={{
+              transform: `translateX(-${currentSlide * 800}px)`,
+              width: `${slides.length * 800}px`
+            }}
+          >
+            {slides.map((slide, index) => (
+              <div
+                key={slide.id}
+                className="relative flex-shrink-0 w-[760px] h-[340px] mx-5"
+                onClick={() => handleSlideClick(slide)}
+              >
+                {/* Main slide (center position) */}
+                <div className={`relative w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                  index === currentSlide ? 'opacity-100 scale-100' : 'opacity-60 scale-95'
+                }`}>
+                  <img
+                    src={slide.image_url}
+                    alt={slide.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/30 flex items-center">
+                    <div className="text-white space-y-4 px-12 flex-1">
+                      <h2 className={`font-bold leading-tight drop-shadow-lg ${
+                        index === currentSlide ? 'text-3xl' : 'text-2xl'
+                      }`}>
+                        {slide.title}
+                      </h2>
+                      <h3 className={`font-medium opacity-90 drop-shadow-lg ${
+                        index === currentSlide ? 'text-xl' : 'text-lg'
+                      }`}>
+                        {slide.subtitle}
+                      </h3>
+                      <p className={`opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg ${
+                        index === currentSlide ? 'text-base' : 'text-sm'
+                      }`}>
+                        {slide.description}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Center Panel (Current Slide) - Full visible */}
-          <div className="relative z-10 mx-4 transform transition-all duration-1000 ease-out">
-            <div 
-              className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer"
-              onClick={() => handleSlideClick(slides[currentSlide])}
-            >
-              <img
-                src={slides[currentSlide].image_url}
-                alt={slides[currentSlide].title}
-                className="w-full h-full object-cover transition-all duration-1000 ease-out"
-              />
-              <div className="absolute inset-0 bg-black/30 flex items-center">
-                <div className="text-white space-y-4 px-12 flex-1">
-                  <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
-                    {slides[currentSlide].title}
-                  </h2>
-                  <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
-                    {slides[currentSlide].subtitle}
-                  </h3>
-                  <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
-                    {slides[currentSlide].description}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Panel (Next Slide) - Partially visible */}
-          <div className="flex-1 relative opacity-40 transition-all duration-1000 ease-out cursor-pointer overflow-hidden"
-               onClick={nextSlide}
-               style={{ height: '340px' }}>
-            <div className="absolute -left-[200px] top-0 w-[760px] h-[340px] rounded-r-2xl overflow-hidden transform transition-all duration-1000 ease-out">
-              <div className="relative w-full h-full">
-                <img
-                  src={slides[getSlideIndex(1)].image_url}
-                  alt={slides[getSlideIndex(1)].title}
-                  className="w-full h-full object-cover transition-all duration-1000 ease-out"
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center">
-                  <div className="text-white space-y-4 px-12 flex-1">
-                    <h3 className="text-2xl font-bold drop-shadow-lg">
-                      {slides[getSlideIndex(1)].title}
-                    </h3>
-                    <p className="text-lg opacity-90 drop-shadow-lg">
-                      {slides[getSlideIndex(1)].subtitle}
-                    </p>
-                    <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
-                      {slides[getSlideIndex(1)].description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
