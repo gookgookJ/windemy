@@ -189,7 +189,7 @@ const HeroSection = () => {
       <div className="block md:hidden relative w-full h-full">
         <div 
           ref={slideRef}
-          className="relative w-full h-full cursor-pointer select-none bg-white rounded-lg overflow-hidden shadow-sm"
+          className="relative w-full h-full cursor-pointer select-none"
           onClick={() => handleSlideClick(slides[currentSlide])}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -199,33 +199,28 @@ const HeroSection = () => {
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
+          <img
+            src={slides[currentSlide].image_url}
+            alt={slides[currentSlide].title}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
           <div className="absolute inset-0 flex">
             {/* Left side - Text content */}
             <div className="flex-1 p-4 flex flex-col justify-center space-y-2">
               {/* Title */}
-              <h2 className="text-gray-800 text-base font-bold leading-tight">
+              <h2 className="text-white text-base font-bold leading-tight drop-shadow-lg">
                 {slides[currentSlide].title}
               </h2>
               
               {/* Subtitle */}
-              <h3 className="text-gray-600 text-sm font-medium">
+              <h3 className="text-white/90 text-sm font-medium drop-shadow-lg">
                 {slides[currentSlide].subtitle}
               </h3>
               
               {/* Description with arrow */}
-              <p className="text-gray-500 text-xs">
+              <p className="text-white/80 text-xs drop-shadow-lg">
                 {slides[currentSlide].description}
               </p>
-            </div>
-            
-            {/* Right side - Image */}
-            <div className="w-32 relative">
-              <img
-                src={slides[currentSlide].image_url}
-                alt={slides[currentSlide].title}
-                className="absolute right-0 bottom-0 w-full h-full object-cover object-right"
-                style={{ clipPath: 'polygon(20% 0%, 100% 0%, 100% 100%, 0% 100%)' }}
-              />
             </div>
           </div>
           
