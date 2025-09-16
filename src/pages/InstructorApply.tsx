@@ -79,8 +79,8 @@ const InstructorApply = () => {
             <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
               WINDLY ACADEMY INSTRUCTOR
             </div>
-            <h1 className="text-5xl sm:text-6xl font-black mb-8" style={{ lineHeight: 1.4 }}>
-              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-5xl sm:text-6xl font-black mb-8" style={{ lineHeight: 1.2 }}>
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 최고의 전문가를 위한
               </span>
               <br />
