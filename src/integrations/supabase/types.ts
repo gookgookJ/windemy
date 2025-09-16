@@ -612,9 +612,11 @@ export type Database = {
           id: string
           image_url: string
           is_active: boolean
+          is_draft: boolean | null
           link_type: string
           link_url: string | null
           order_index: number
+          published_at: string | null
           subtitle: string | null
           title: string
           updated_at: string
@@ -628,9 +630,11 @@ export type Database = {
           id?: string
           image_url: string
           is_active?: boolean
+          is_draft?: boolean | null
           link_type?: string
           link_url?: string | null
           order_index?: number
+          published_at?: string | null
           subtitle?: string | null
           title: string
           updated_at?: string
@@ -644,9 +648,11 @@ export type Database = {
           id?: string
           image_url?: string
           is_active?: boolean
+          is_draft?: boolean | null
           link_type?: string
           link_url?: string | null
           order_index?: number
+          published_at?: string | null
           subtitle?: string | null
           title?: string
           updated_at?: string

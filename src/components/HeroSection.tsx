@@ -64,6 +64,7 @@ const HeroSection = () => {
         .from('hero_slides')
         .select('*')
         .eq('is_active', true)
+        .eq('is_draft', false)
         .order('order_index');
 
       if (error) {

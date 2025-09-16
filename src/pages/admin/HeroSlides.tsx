@@ -24,6 +24,8 @@ interface HeroSlide {
   link_type: 'course' | 'url';
   order_index: number;
   is_active: boolean;
+  is_draft?: boolean;
+  published_at?: string;
   course?: {
     id: string;
     title: string;
@@ -73,21 +75,67 @@ const HeroSlides = () => {
 
   const fetchSlides = async () => {
     try {
+      // Fetch draft slides for editing
       const { data, error } = await supabase
         .from('hero_slides')
         .select(`
           *,
           course:courses(id, title)
         `)
+        .eq('is_draft', true)
         .order('order_index');
 
       if (error) throw error;
-      // Map data to include default values for missing fields
-      const mappedData = (data || []).map((slide: any) => ({
+
+      let draftSlides = (data || []).map((slide: any) => ({   
         ...slide,
         link_type: (slide.link_type || 'course') as 'course' | 'url'
       }));
-      setSlides(mappedData);
+
+      // If no draft slides exist, create them from published slides
+      if (draftSlides.length === 0) {
+        const { data: publishedSlides } = await supabase
+          .from('hero_slides')
+          .select(`
+            *,
+            course:courses(id, title)
+          `)
+          .eq('is_draft', false)
+          .order('order_index');
+
+        if (publishedSlides && publishedSlides.length > 0) {
+          // Create draft versions
+          const draftVersions = publishedSlides.map(slide => ({
+            title: slide.title,
+            subtitle: slide.subtitle,
+            description: slide.description,
+            image_url: slide.image_url,
+            course_id: slide.course_id,
+            link_url: slide.link_url,
+            link_type: slide.link_type || 'course',
+            order_index: slide.order_index,
+            is_active: slide.is_active,
+            is_draft: true
+          }));
+
+          const { data: newDrafts } = await supabase
+            .from('hero_slides')
+            .insert(draftVersions)
+            .select(`
+              *,
+              course:courses(id, title)
+            `);
+
+          if (newDrafts) {
+            draftSlides = newDrafts.map((slide: any) => ({
+              ...slide,
+              link_type: (slide.link_type || 'course') as 'course' | 'url'
+            }));
+          }
+        }
+      }
+
+      setSlides(draftSlides);
     } catch (error) {
       console.error('Error fetching slides:', error);
       toast({
@@ -212,7 +260,8 @@ const HeroSlides = () => {
           .insert({
             ...slideData,
             image_url: imageUrl!,
-            order_index: maxOrder + 1
+            order_index: maxOrder + 1,
+            is_draft: true
           });
 
         if (error) throw error;
@@ -293,6 +342,57 @@ const HeroSlides = () => {
     updateOrder(newSlides[targetIndex].id, targetIndex + 1);
   };
 
+  const publishSlides = async () => {
+    try {
+      // Check if published versions exist
+      const { data: publishedSlides } = await supabase
+        .from('hero_slides')
+        .select('id')
+        .eq('is_draft', false);
+
+      if (publishedSlides && publishedSlides.length > 0) {
+        // Delete existing published slides
+        await supabase
+          .from('hero_slides')
+          .delete()
+          .eq('is_draft', false);
+      }
+
+      // Create published versions from drafts
+      const publishedVersions = slides.map(slide => ({
+        title: slide.title,
+        subtitle: slide.subtitle,
+        description: slide.description,
+        image_url: slide.image_url,
+        course_id: slide.course_id,
+        link_url: slide.link_url,
+        link_type: slide.link_type,
+        order_index: slide.order_index,
+        is_active: slide.is_active,
+        is_draft: false,
+        published_at: new Date().toISOString()
+      }));
+
+      const { error } = await supabase
+        .from('hero_slides')
+        .insert(publishedVersions);
+
+      if (error) throw error;
+
+      toast({
+        title: "성공",
+        description: "히어로 슬라이드가 라이브에 적용되었습니다."
+      });
+    } catch (error) {
+      console.error('Error publishing slides:', error);
+      toast({
+        title: "오류",
+        description: "슬라이드 적용에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       title: '',
@@ -349,24 +449,33 @@ const HeroSlides = () => {
                 메인페이지 히어로 섹션에 표시될 슬라이드를 관리합니다. (최대 10개)
               </p>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  onClick={() => setEditingSlide(null)} 
-                  disabled={slides.length >= 10}
-                  size="lg"
-                  className="shadow-md"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  슬라이드 추가
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="text-xl">
-                    {editingSlide ? '슬라이드 수정' : '새 슬라이드 추가'}
-                  </DialogTitle>
-                </DialogHeader>
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={publishSlides}
+                className="bg-green-600 hover:bg-green-700"
+                disabled={slides.length === 0}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                적용
+              </Button>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    onClick={() => setEditingSlide(null)} 
+                    disabled={slides.length >= 10}
+                    size="lg"
+                    className="shadow-md"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    슬라이드 추가
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl">
+                      {editingSlide ? '슬라이드 수정' : '새 슬라이드 추가'}
+                    </DialogTitle>
+                  </DialogHeader>
                 <form onSubmit={(e) => {
                   e.preventDefault();
                   const fileInput = document.getElementById('image-upload') as HTMLInputElement;
@@ -503,7 +612,8 @@ const HeroSlides = () => {
                   </div>
                 </form>
               </DialogContent>
-            </Dialog>
+              </Dialog>
+            </div>
           </div>
         </div>
 
