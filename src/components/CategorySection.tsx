@@ -4,8 +4,7 @@ import {
   Play, 
   MessageCircle, 
   Youtube,
-  FileText,
-  Users
+  FileText
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -53,13 +52,6 @@ const CategorySection = () => {
       link: "https://www.windly.cc/blog",
       isExternal: true
     },
-    { 
-      icon: Users, 
-      label: "커뮤니티", 
-      color: "bg-cyan-100 text-cyan-600",
-      link: "/community",
-      isExternal: false
-    },
   ];
 
   const handleCategoryClick = (category: typeof categories[0]) => {
@@ -71,7 +63,7 @@ const CategorySection = () => {
   return (
     <section className="py-12 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-6">
+        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-6">
           {categories.map((category, index) => {
             const content = (
               <div className="flex flex-col items-center group cursor-pointer">
