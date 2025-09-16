@@ -3,19 +3,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Trash2, Edit, Plus, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
+import { Trash2, Edit, Plus, Upload, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface HeroSlide {
   id: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
   image_url: string;
   course_id?: string;
   order_index: number;
   is_active: boolean;
+  background_color: string;
   course?: {
     id: string;
     title: string;
@@ -38,9 +44,22 @@ const HeroSlides = () => {
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(true);
 
   const [formData, setFormData] = useState({
+    title: '',
+    subtitle: '',
+    description: '',
     course_id: 'none',
+    background_color: 'from-blue-400 to-blue-600',
     is_active: true
   });
+
+  const backgroundColors = [
+    { label: '블루 그라데이션', value: 'from-blue-400 to-blue-600' },
+    { label: '핑크 그라데이션', value: 'from-pink-400 to-red-400' },
+    { label: '핑크 파스텔', value: 'from-pink-300 to-pink-500' },
+    { label: '그린-블루', value: 'from-green-400 to-blue-500' },
+    { label: '퍼플 그라데이션', value: 'from-purple-400 to-purple-600' },
+    { label: '오렌지 그라데이션', value: 'from-orange-400 to-orange-600' }
+  ];
 
   useEffect(() => {
     fetchSlides();
@@ -164,7 +183,11 @@ const HeroSlides = () => {
 
     try {
       const slideData = {
+        title: formData.title,
+        subtitle: formData.subtitle || null,
+        description: formData.description || null,
         course_id: formData.course_id === 'none' ? null : formData.course_id || null,
+        background_color: formData.background_color,
         is_active: formData.is_active,
         ...(imageUrl && { image_url: imageUrl })
       };
@@ -189,9 +212,7 @@ const HeroSlides = () => {
           .insert({
             ...slideData,
             image_url: imageUrl!,
-            order_index: maxOrder + 1,
-            title: '',
-            background_color: 'from-blue-400 to-blue-600'
+            order_index: maxOrder + 1
           });
 
         if (error) throw error;
@@ -274,7 +295,11 @@ const HeroSlides = () => {
 
   const resetForm = () => {
     setFormData({
+      title: '',
+      subtitle: '',
+      description: '',
       course_id: 'none',
+      background_color: 'from-blue-400 to-blue-600',
       is_active: true
     });
     setEditingSlide(null);
@@ -284,7 +309,11 @@ const HeroSlides = () => {
   const openEditDialog = (slide: HeroSlide) => {
     setEditingSlide(slide);
     setFormData({
+      title: slide.title,
+      subtitle: slide.subtitle || '',
+      description: slide.description || '',
       course_id: slide.course_id || 'none',
+      background_color: slide.background_color,
       is_active: slide.is_active
     });
     setIsDialogOpen(true);
@@ -360,7 +389,28 @@ const HeroSlides = () => {
                     handleSubmit(e);
                   }
                 }} className="space-y-6 pt-4">
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <Label htmlFor="title" className="text-sm font-medium">제목 *</Label>
+                      <Input
+                        id="title"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        required
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="subtitle" className="text-sm font-medium">부제목</Label>
+                      <Input
+                        id="subtitle"
+                        value={formData.subtitle}
+                        onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                        className="mt-1"
+                      />
+                    </div>
+
                     <div>
                       <Label htmlFor="course" className="text-sm font-medium">연결할 강의</Label>
                       <Select value={formData.course_id} onValueChange={(value) => setFormData({ ...formData, course_id: value })}>
@@ -378,11 +428,38 @@ const HeroSlides = () => {
                       </Select>
                     </div>
 
+                    <div className="md:col-span-2">
+                      <Label htmlFor="description" className="text-sm font-medium">설명</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="mt-1 resize-none"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="background-color" className="text-sm font-medium">배경 색상</Label>
+                      <Select value={formData.background_color} onValueChange={(value) => setFormData({ ...formData, background_color: value })}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {backgroundColors.map((color) => (
+                            <SelectItem key={color.value} value={color.value}>
+                              {color.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <div>
                       <Label htmlFor="image-upload" className="text-sm font-medium">
                         이미지 업로드 {!editingSlide && '*'}
                         <span className="text-xs text-gray-500 ml-2">
-                          (권장: 1200x400px, 최대 5MB)
+                          (권장: 760x340px, 최대 5MB)
                         </span>
                       </Label>
                       <Input
@@ -393,7 +470,7 @@ const HeroSlides = () => {
                       />
                     </div>
 
-                    <div className="flex items-center space-x-3 pt-2">
+                    <div className="md:col-span-2 flex items-center space-x-3 pt-2">
                       <Switch
                         id="is-active"
                         checked={formData.is_active}
@@ -422,35 +499,101 @@ const HeroSlides = () => {
           <Card className="shadow-md">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
-                <span>라이브 미리보기</span>
+                <Eye className="h-5 w-5" />
+                실시간 미리보기
                 <span className="text-sm font-normal text-muted-foreground">
-                  (실제 메인페이지와 동일한 형태)
+                  (메인페이지에서 보이는 모습)
                 </span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="relative h-80 bg-gray-100 rounded-lg overflow-hidden">
-                {/* 현재 슬라이드 */}
-                <div className="absolute inset-0 transition-all duration-700 ease-in-out">
-                  <img
-                    src={activeSlides[previewCurrentSlide]?.image_url}
-                    alt="Hero Slide"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/20"></div>
-                </div>
+            <CardContent>
+              <div className="relative h-[280px] overflow-hidden bg-white rounded-lg border">
+                <div className="relative w-full h-full flex items-center justify-center">
+                  <div className="flex w-full items-center justify-center">
+                    
+                    {/* Left Panel */}
+                    <div className="flex-1 relative opacity-40 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-r-lg"
+                         onClick={() => setPreviewCurrentSlide((prev) => (prev - 1 + activeSlides.length) % activeSlides.length)}
+                         style={{ height: '240px' }}>
+                      <div className="absolute -right-16 top-0 w-[500px] h-[240px] rounded-lg overflow-hidden shadow-md">
+                        <div className={cn("absolute inset-0 bg-gradient-to-br rounded-lg", activeSlides[getSlideIndex(-1)]?.background_color)}>
+                          <div className="flex items-center h-full">
+                            <div className="text-white space-y-2 px-8 flex-1">
+                              <h3 className="text-lg font-bold">
+                                {activeSlides[getSlideIndex(-1)]?.title}
+                              </h3>
+                              <p className="text-sm opacity-90">
+                                {activeSlides[getSlideIndex(-1)]?.subtitle}
+                              </p>
+                            </div>
+                            <div className="pr-8">
+                              <img
+                                src={activeSlides[getSlideIndex(-1)]?.image_url}
+                                alt={activeSlides[getSlideIndex(-1)]?.title}
+                                className="w-24 h-32 object-cover rounded-lg shadow-sm"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                {/* 다음 슬라이드 미리보기 */}
-                {activeSlides.length > 1 && (
-                  <div className="absolute top-4 right-4 w-60 h-32 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 overflow-hidden">
-                    <img
-                      src={activeSlides[getSlideIndex(1)]?.image_url}
-                      alt="Next Slide"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/20"></div>
+                    {/* Center Panel */}
+                    <div className="relative z-10 mx-3">
+                      <div className="relative w-[500px] h-[240px] rounded-lg overflow-hidden shadow-lg">
+                        <div className={cn("absolute inset-0 bg-gradient-to-br", activeSlides[previewCurrentSlide]?.background_color)}>
+                          <div className="flex items-center h-full">
+                            <div className="text-white space-y-3 px-8 flex-1">
+                              <h2 className="text-xl font-bold leading-tight">
+                                {activeSlides[previewCurrentSlide]?.title}
+                              </h2>
+                              <h3 className="text-base font-medium opacity-90">
+                                {activeSlides[previewCurrentSlide]?.subtitle}
+                              </h3>
+                              <p className="text-xs opacity-80">
+                                {activeSlides[previewCurrentSlide]?.description}
+                              </p>
+                            </div>
+                            <div className="pr-8">
+                              <img
+                                src={activeSlides[previewCurrentSlide]?.image_url}
+                                alt={activeSlides[previewCurrentSlide]?.title}
+                                className="w-32 h-40 object-cover rounded-lg shadow-md"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Panel */}
+                    <div className="flex-1 relative opacity-40 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-l-lg"
+                         onClick={() => setPreviewCurrentSlide((prev) => (prev + 1) % activeSlides.length)}
+                         style={{ height: '240px' }}>
+                      <div className="absolute -left-16 top-0 w-[500px] h-[240px] rounded-lg overflow-hidden shadow-md">
+                        <div className={cn("absolute inset-0 bg-gradient-to-br rounded-lg", activeSlides[getSlideIndex(1)]?.background_color)}>
+                          <div className="flex items-center h-full">
+                            <div className="text-white space-y-2 px-8 flex-1">
+                              <h3 className="text-lg font-bold">
+                                {activeSlides[getSlideIndex(1)]?.title}
+                              </h3>
+                              <p className="text-sm opacity-90">
+                                {activeSlides[getSlideIndex(1)]?.subtitle}
+                              </p>
+                            </div>
+                            <div className="pr-8">
+                              <img
+                                src={activeSlides[getSlideIndex(1)]?.image_url}
+                                alt={activeSlides[getSlideIndex(1)]?.title}
+                                className="w-24 h-32 object-cover rounded-lg shadow-sm"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
 
                 {/* Control Buttons */}
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
@@ -530,13 +673,16 @@ const HeroSlides = () => {
                     <div className="w-32 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                       <img
                         src={slide.image_url}
-                        alt="Slide Image"
+                        alt={slide.title}
                         className="w-full h-full object-cover"
                       />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg text-gray-900 truncate">이미지 슬라이드 #{slide.order_index}</h3>
+                      <h3 className="font-semibold text-lg text-gray-900 truncate">{slide.title}</h3>
+                      {slide.subtitle && (
+                        <p className="text-sm text-gray-600 mt-1 truncate">{slide.subtitle}</p>
+                      )}
                       {slide.course && (
                         <p className="text-xs text-blue-600 mt-2 truncate">
                           📚 연결된 강의: {slide.course.title}
