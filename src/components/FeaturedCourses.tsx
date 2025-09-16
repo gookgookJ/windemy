@@ -187,18 +187,15 @@ const FeaturedCourses = () => {
                 </div>
               )}
 
-              {course.rating && 
-               course.rating > 0 && 
-               course.total_students && 
-               course.total_students > 0 && (
+              {(Number(course.rating) > 0 && Number(course.total_students) > 0) ? (
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-yellow-500">★</span>
                   <span className="font-semibold">{course.rating}</span>
                   <span className="text-muted-foreground">
-                    ({course.total_students.toLocaleString()}명)
+                    ({Number(course.total_students).toLocaleString()}명)
                   </span>
                 </div>
-              )}
+              ) : null}
 
               {course.price > 0 && (
                 <div className="text-lg font-bold text-foreground">
