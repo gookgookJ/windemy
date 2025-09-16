@@ -29,16 +29,16 @@ const Header = () => {
   ];
 
   return (
-    <header className="bg-white border-b border-border sticky top-0 z-50 shadow-soft">
+    <header className="bg-white border-b border-border sticky top-0 z-50 shadow-soft font-sans" style={{ fontFamily: "Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Roboto, 'Noto Sans KR', 'Segoe UI', sans-serif" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center space-x-3 flex-shrink-0">
+            <Link to="/" className="flex items-center space-x-3 flex-shrink-0 select-none">
               <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-xl leading-none">W</span>
+                <span className="text-white font-bold text-[18px] leading-none">W</span>
               </div>
-              <span className="text-xl font-bold text-foreground whitespace-nowrap">Windly Academy</span>
+              <span className="text-[20px] leading-none tracking-tight font-bold text-foreground whitespace-nowrap">Windly Academy</span>
             </Link>
 
             {/* Desktop Navigation */}
