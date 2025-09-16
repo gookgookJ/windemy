@@ -612,6 +612,8 @@ export type Database = {
           id: string
           image_url: string
           is_active: boolean
+          link_type: string
+          link_url: string | null
           order_index: number
           subtitle: string | null
           title: string
@@ -626,6 +628,8 @@ export type Database = {
           id?: string
           image_url: string
           is_active?: boolean
+          link_type?: string
+          link_url?: string | null
           order_index?: number
           subtitle?: string | null
           title: string
@@ -640,6 +644,8 @@ export type Database = {
           id?: string
           image_url?: string
           is_active?: boolean
+          link_type?: string
+          link_url?: string | null
           order_index?: number
           subtitle?: string | null
           title?: string

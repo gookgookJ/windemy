@@ -34,7 +34,6 @@ const HeroSection = () => {
       title: "실시간 강의 50개 완전 무료",
       subtitle: "지금 가장 주목받는 강의",
       description: "실시간 줌코딩 50개 강의 무료 >",
-      background_color: "from-pink-400 to-red-400",
       order_index: 1
     },
     {
@@ -43,7 +42,6 @@ const HeroSection = () => {
       title: "신혼부부가 1억으로",
       subtitle: "서울에서 내집마련하는 법",
       description: "실시간 줌코딩 50개 강의 무료 >",
-      background_color: "from-pink-300 to-pink-500",
       order_index: 2
     },
     {
@@ -52,7 +50,6 @@ const HeroSection = () => {
       title: "집 사기 전 꼭 알아야 할 A to Z",
       subtitle: "나나쌤의 내집마련 기초편",
       description: "추천인이 내집마련하는 법 알려드립니다 →",
-      background_color: "from-green-400 to-blue-500",
       order_index: 3
     }
   ];
