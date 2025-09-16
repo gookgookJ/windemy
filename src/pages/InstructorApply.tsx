@@ -105,284 +105,296 @@ const InstructorApply = () => {
         </div>
       </section>
 
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <main>
         {/* Value Section */}
-        <section className="py-24 lg:py-32 bg-muted/30">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-20">
-              <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
-                WHY WINDLY
+        <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-left mb-16">
+                <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
+                  WHY WINDLY
+                </div>
+                <h2 className="text-4xl sm:text-5xl font-black mb-8 leading-tight">
+                  콘텐츠에만 집중하세요
+                </h2>
+                <p className="text-xl text-muted-foreground max-w-4xl leading-relaxed">
+                  강사님의 성공을 위해 윈들리 아카데미가 제공하는 핵심 지원 시스템입니다.<br />
+                  <strong className="text-foreground">나머지는 저희가 책임지겠습니다.</strong>
+                </p>
               </div>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-8 leading-tight">
-                콘텐츠에만 집중하세요
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-                강사님의 성공을 위해 윈들리 아카데미가 제공하는 핵심 지원 시스템입니다.<br />
-                <strong className="text-foreground">나머지는 저희가 책임지겠습니다.</strong>
-              </p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              <article className="bg-card border border-border rounded-3xl p-8 lg:p-10 text-center hover:border-primary/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 text-primary rounded-2xl mb-8 group-hover:scale-110 transition-transform border border-primary/20">
-                  <Video className="h-10 w-10" />
-                </div>
-                <h3 className="text-2xl font-bold mb-6">All-in-One 제작</h3>
-                <p className="text-muted-foreground leading-relaxed text-lg">
-                  기획부터 촬영, 편집, 디자인까지 최고의 전문가들로 구성된 전담팀이 함께합니다.
-                </p>
-              </article>
-              <article className="bg-card border border-border rounded-3xl p-8 lg:p-10 text-center hover:border-primary/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 text-primary rounded-2xl mb-8 group-hover:scale-110 transition-transform border border-primary/20">
-                  <Target className="h-10 w-10" />
-                </div>
-                <h3 className="text-2xl font-bold mb-6">데이터 기반 마케팅</h3>
-                <p className="text-muted-foreground leading-relaxed text-lg">
-                  퍼포먼스 마케팅과 브랜딩을 통해 잠재 수강생에게 가장 효과적으로 도달합니다.
-                </p>
-              </article>
-              <article className="bg-card border border-border rounded-3xl p-8 lg:p-10 text-center hover:border-primary/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 text-primary rounded-2xl mb-8 group-hover:scale-110 transition-transform border border-primary/20">
-                  <Zap className="h-10 w-10" />
-                </div>
-                <h3 className="text-2xl font-bold mb-6">운영 자동화 시스템</h3>
-                <p className="text-muted-foreground leading-relaxed text-lg">
-                  수강생 관리, CS, 정산 등 복잡한 운영 업무를 자동화하여 교육에만 집중하도록 돕습니다.
-                </p>
-              </article>
+              <div className="grid md:grid-cols-3 gap-8">
+                <article className="bg-card border border-border rounded-3xl p-8 lg:p-10 text-center hover:border-primary/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group">
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 text-primary rounded-2xl mb-8 group-hover:scale-110 transition-transform border border-primary/20">
+                    <Video className="h-10 w-10" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-6">All-in-One 제작</h3>
+                  <p className="text-muted-foreground leading-relaxed text-lg">
+                    기획부터 촬영, 편집, 디자인까지 최고의 전문가들로 구성된 전담팀이 함께합니다.
+                  </p>
+                </article>
+                <article className="bg-card border border-border rounded-3xl p-8 lg:p-10 text-center hover:border-primary/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group">
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 text-primary rounded-2xl mb-8 group-hover:scale-110 transition-transform border border-primary/20">
+                    <Target className="h-10 w-10" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-6">데이터 기반 마케팅</h3>
+                  <p className="text-muted-foreground leading-relaxed text-lg">
+                    퍼포먼스 마케팅과 브랜딩을 통해 잠재 수강생에게 가장 효과적으로 도달합니다.
+                  </p>
+                </article>
+                <article className="bg-card border border-border rounded-3xl p-8 lg:p-10 text-center hover:border-primary/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group">
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 text-primary rounded-2xl mb-8 group-hover:scale-110 transition-transform border border-primary/20">
+                    <Zap className="h-10 w-10" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-6">운영 자동화 시스템</h3>
+                  <p className="text-muted-foreground leading-relaxed text-lg">
+                    수강생 관리, CS, 정산 등 복잡한 운영 업무를 자동화하여 교육에만 집중하도록 돕습니다.
+                  </p>
+                </article>
+              </div>
             </div>
           </div>
         </section>
 
         {/* Categories Section */}
-        <section className="py-24 lg:py-32 bg-white">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-20">
-              <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
-                CATEGORIES
-              </div>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-8 leading-tight">
-                어떤 분야의 전문가신가요?
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-                윈들리 아카데미에서는 이커머스 각 분야의 전문가를 기다리고 있습니다.
-              </p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              {categories.map((category, index) => (
-                <div 
-                  key={index} 
-                  className="bg-card border border-border rounded-3xl p-8 lg:p-10 text-center hover:border-primary/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group cursor-pointer"
-                >
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 text-primary rounded-2xl mb-8 group-hover:scale-110 transition-transform border border-primary/20">
-                    {category.icon}
-                  </div>
-                  <h3 className="text-xl font-bold mb-4">{category.name}</h3>
-                  <p className="text-muted-foreground">{category.desc}</p>
+        <section className="py-20">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-left mb-16">
+                <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
+                  CATEGORIES
                 </div>
-              ))}
+                <h2 className="text-4xl sm:text-5xl font-black mb-8 leading-tight">
+                  어떤 분야의 전문가신가요?
+                </h2>
+                <p className="text-xl text-muted-foreground max-w-4xl leading-relaxed">
+                  윈들리 아카데미에서는 이커머스 각 분야의 전문가를 기다리고 있습니다.
+                </p>
+              </div>
+              <div className="grid md:grid-cols-3 gap-8">
+                {categories.map((category, index) => (
+                  <div 
+                    key={index} 
+                    className="bg-card border border-border rounded-3xl p-8 lg:p-10 text-center hover:border-primary/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group cursor-pointer"
+                  >
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 text-primary rounded-2xl mb-8 group-hover:scale-110 transition-transform border border-primary/20">
+                      {category.icon}
+                    </div>
+                    <h3 className="text-xl font-bold mb-4">{category.name}</h3>
+                    <p className="text-muted-foreground">{category.desc}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
         {/* Who We Seek Section */}
-        <section className="py-24 lg:py-32 bg-muted/30">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-20">
-              <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
-                WHO WE SEEK
+        <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-left mb-16">
+                <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
+                  WHO WE SEEK
+                </div>
+                <h2 className="text-4xl sm:text-5xl font-black mb-8 leading-tight">
+                  이런 전문가를 기다립니다
+                </h2>
+                <p className="text-xl text-muted-foreground max-w-4xl leading-relaxed">
+                  자신의 분야에서 독보적인 성과와 노하우를 가졌으며,<br />
+                  그 경험을 나누는 것에 열정을 가진 분이라면 누구든 환영합니다.
+                </p>
               </div>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-8 leading-tight">
-                이런 전문가를 기다립니다
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-                자신의 분야에서 독보적인 성과와 노하우를 가졌으며,<br />
-                그 경험을 나누는 것에 열정을 가진 분이라면 누구든 환영합니다.
-              </p>
-            </div>
-            <div className="bg-card border border-border rounded-3xl p-12 lg:p-16 grid lg:grid-cols-2 gap-16">
-              <div>
-                <h3 className="text-3xl font-bold mb-8 flex items-center gap-3">
-                  <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center border border-primary/20">
-                    <Award className="h-6 w-6" />
-                  </div>
-                  지원 자격
-                </h3>
-                <ul className="space-y-6">
-                  {[
-                    "검증된 성과를 보유하고, 실제 사례 공유가 가능한 분",
-                    "자신만의 실행 중심 노하우를 명확하게 전달할 수 있는 분",
-                    "수강생과의 적극적인 소통에 의지가 있으신 분",
-                    "콘텐츠의 장기적인 성장과 확장에 관심이 있는 분"
-                  ].map((item, index) => (
-                    <li key={index} className="flex items-start gap-4">
-                      <div className="w-6 h-6 bg-primary rounded-full flex-shrink-0 mt-1 flex items-center justify-center">
-                        <CheckCircle className="w-4 h-4 text-white" />
-                      </div>
-                      <span className="text-muted-foreground leading-relaxed text-lg">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-3xl font-bold mb-8 flex items-center gap-3">
-                  <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center border border-primary/20">
-                    <Star className="h-6 w-6" />
-                  </div>
-                  제공 혜택
-                </h3>
-                <ul className="space-y-6">
-                  {[
-                    "기획·제작·마케팅·운영 풀 스택 전담팀 배정",
-                    "전환율을 높이는 카피라이팅 및 상세페이지 제작 지원",
-                    "수강생 데이터 분석을 위한 통합 대시보드 제공",
-                    "분야별 전문가와의 네트워킹 및 협업 기회"
-                  ].map((item, index) => (
-                    <li key={index} className="flex items-start gap-4">
-                      <div className="w-6 h-6 bg-primary rounded-full flex-shrink-0 mt-1 flex items-center justify-center">
-                        <CheckCircle className="w-4 h-4 text-white" />
-                      </div>
-                      <span className="text-muted-foreground leading-relaxed text-lg">{item}</span>
-                    </li>
-                  ))}
-                </ul>
+              <div className="bg-card border border-border rounded-3xl p-12 lg:p-16 grid lg:grid-cols-2 gap-16">
+                <div>
+                  <h3 className="text-3xl font-bold mb-8 flex items-center gap-3">
+                    <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center border border-primary/20">
+                      <Award className="h-6 w-6" />
+                    </div>
+                    지원 자격
+                  </h3>
+                  <ul className="space-y-6">
+                    {[
+                      "검증된 성과를 보유하고, 실제 사례 공유가 가능한 분",
+                      "자신만의 실행 중심 노하우를 명확하게 전달할 수 있는 분",
+                      "수강생과의 적극적인 소통에 의지가 있으신 분",
+                      "콘텐츠의 장기적인 성장과 확장에 관심이 있는 분"
+                    ].map((item, index) => (
+                      <li key={index} className="flex items-start gap-4">
+                        <div className="w-6 h-6 bg-primary rounded-full flex-shrink-0 mt-1 flex items-center justify-center">
+                          <CheckCircle className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="text-muted-foreground leading-relaxed text-lg">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-3xl font-bold mb-8 flex items-center gap-3">
+                    <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center border border-primary/20">
+                      <Star className="h-6 w-6" />
+                    </div>
+                    제공 혜택
+                  </h3>
+                  <ul className="space-y-6">
+                    {[
+                      "기획·제작·마케팅·운영 풀 스택 전담팀 배정",
+                      "전환율을 높이는 카피라이팅 및 상세페이지 제작 지원",
+                      "수강생 데이터 분석을 위한 통합 대시보드 제공",
+                      "분야별 전문가와의 네트워킹 및 협업 기회"
+                    ].map((item, index) => (
+                      <li key={index} className="flex items-start gap-4">
+                        <div className="w-6 h-6 bg-primary rounded-full flex-shrink-0 mt-1 flex items-center justify-center">
+                          <CheckCircle className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="text-muted-foreground leading-relaxed text-lg">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         {/* Process Section */}
-        <section className="py-24 lg:py-32 bg-white">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-20">
-              <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
-                HOW TO JOIN
-              </div>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-8 leading-tight">
-                합류 프로세스
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-                최고의 전문가를 모시는 과정은 신중하지만, 빠르고 투명하게 진행됩니다.
-              </p>
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[
-                { num: "1", title: "지원서 접수", desc: "기본 정보와 함께 전문 분야 및 강의 아이디어를 제출합니다." },
-                { num: "2", title: "내부 검토", desc: "시장성과 차별성을 중심으로 내부 전문가 그룹이 신중하게 검토합니다." },
-                { num: "3", title: "온라인 미팅", desc: "강의 커리큘럼과 방향성에 대해 심도 깊은 논의를 진행합니다." },
-                { num: "4", title: "계약 및 파트너십", desc: "세부적인 협력 조건과 일정을 조율하고 파트너십을 체결합니다." },
-                { num: "5", title: "콘텐츠 제작", desc: "전담팀과 함께 강의 콘텐츠 제작 및 런칭 준비에 착수합니다." },
-                { num: "6", title: "런칭 & 성장", desc: "성공적인 런칭 이후, 데이터 기반으로 함께 성장 방안을 모색합니다." }
-              ].map((item, index) => (
-                <div key={index} className="bg-card border border-border rounded-3xl p-8 hover:border-primary/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group">
-                  <div className="text-3xl font-black text-white bg-gradient-to-br from-primary to-secondary w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-200">
-                    {item.num}
-                  </div>
-                  <h4 className="text-xl font-bold mb-4">{item.title}</h4>
-                  <p className="text-muted-foreground leading-relaxed">{item.desc}</p>
+        <section className="py-20">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-left mb-16">
+                <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
+                  HOW TO JOIN
                 </div>
-              ))}
+                <h2 className="text-4xl sm:text-5xl font-black mb-8 leading-tight">
+                  합류 프로세스
+                </h2>
+                <p className="text-xl text-muted-foreground max-w-4xl leading-relaxed">
+                  최고의 전문가를 모시는 과정은 신중하지만, 빠르고 투명하게 진행됩니다.
+                </p>
+              </div>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[
+                  { num: "1", title: "지원서 접수", desc: "기본 정보와 함께 전문 분야 및 강의 아이디어를 제출합니다." },
+                  { num: "2", title: "내부 검토", desc: "시장성과 차별성을 중심으로 내부 전문가 그룹이 신중하게 검토합니다." },
+                  { num: "3", title: "온라인 미팅", desc: "강의 커리큘럼과 방향성에 대해 심도 깊은 논의를 진행합니다." },
+                  { num: "4", title: "계약 및 파트너십", desc: "세부적인 협력 조건과 일정을 조율하고 파트너십을 체결합니다." },
+                  { num: "5", title: "콘텐츠 제작", desc: "전담팀과 함께 강의 콘텐츠 제작 및 런칭 준비에 착수합니다." },
+                  { num: "6", title: "런칭 & 성장", desc: "성공적인 런칭 이후, 데이터 기반으로 함께 성장 방안을 모색합니다." }
+                ].map((item, index) => (
+                  <div key={index} className="bg-card border border-border rounded-3xl p-8 hover:border-primary/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group">
+                    <div className="text-3xl font-black text-white bg-gradient-to-br from-primary to-secondary w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-200">
+                      {item.num}
+                    </div>
+                    <h4 className="text-xl font-bold mb-4">{item.title}</h4>
+                    <p className="text-muted-foreground leading-relaxed">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
         {/* Compare Section */}
-        <section className="py-24 lg:py-32 bg-muted/30">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-20">
-              <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
-                DIFFERENCE
-              </div>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-8 leading-tight">
-                혼자 할 때와 무엇이 다를까요?
-              </h2>
-            </div>
-            <div className="grid lg:grid-cols-2 gap-8">
-              <div className="bg-muted/30 border border-border rounded-3xl p-10">
-                <h5 className="text-2xl font-black mb-8 flex items-center gap-3">
-                  <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center">
-                    <XCircle className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  단독 진행
-                </h5>
-                <ul className="space-y-6">
-                  {[
-                    "기획·촬영·편집·마케팅 등 모든 것을 직접 해결",
-                    "수강생 모집과 CS에 상당한 시간과 노력 소요",
-                    "객관적인 데이터 없이 감에 의존한 의사결정",
-                    "제한적인 네트워킹과 협업 기회"
-                  ].map((item, index) => (
-                    <li key={index} className="flex items-start gap-4 text-muted-foreground">
-                      <XCircle className="w-6 h-6 text-muted-foreground flex-shrink-0 mt-0.5" />
-                      <span className="leading-relaxed text-lg line-through">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="bg-card border-2 border-primary rounded-3xl p-10 shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-primary text-white px-4 py-2 text-sm font-bold rounded-bl-lg">
-                  RECOMMENDED
+        <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-left mb-16">
+                <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
+                  DIFFERENCE
                 </div>
-                <h5 className="text-2xl font-black mb-8 flex items-center gap-3">
-                  <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center border border-primary/20">
-                    <CheckCircle className="h-6 w-6" />
+                <h2 className="text-4xl sm:text-5xl font-black mb-8 leading-tight">
+                  혼자 할 때와 무엇이 다를까요?
+                </h2>
+              </div>
+              <div className="grid lg:grid-cols-2 gap-8">
+                <div className="bg-muted/30 border border-border rounded-3xl p-10">
+                  <h5 className="text-2xl font-black mb-8 flex items-center gap-3">
+                    <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center">
+                      <XCircle className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    단독 진행
+                  </h5>
+                  <ul className="space-y-6">
+                    {[
+                      "기획·촬영·편집·마케팅 등 모든 것을 직접 해결",
+                      "수강생 모집과 CS에 상당한 시간과 노력 소요",
+                      "객관적인 데이터 없이 감에 의존한 의사결정",
+                      "제한적인 네트워킹과 협업 기회"
+                    ].map((item, index) => (
+                      <li key={index} className="flex items-start gap-4 text-muted-foreground">
+                        <XCircle className="w-6 h-6 text-muted-foreground flex-shrink-0 mt-0.5" />
+                        <span className="leading-relaxed text-lg line-through">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="bg-card border-2 border-primary rounded-3xl p-10 shadow-xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-primary text-white px-4 py-2 text-sm font-bold rounded-bl-lg">
+                    RECOMMENDED
                   </div>
-                  윈들리 아카데미와 함께
-                </h5>
-                <ul className="space-y-6">
-                  {[
-                    "오직 강의 콘텐츠에만 집중, 나머지는 전담팀이 실행",
-                    "데이터 기반 마케팅으로 안정적인 수강생 확보",
-                    "성과 분석 대시보드를 통한 투명한 성과 공유",
-                    "최고 전문가 네트워크를 통한 무한한 성장 가능성"
-                  ].map((item, index) => (
-                    <li key={index} className="flex items-start gap-4">
-                      <CheckCircle className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-foreground leading-relaxed text-lg font-medium">{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                  <h5 className="text-2xl font-black mb-8 flex items-center gap-3">
+                    <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center border border-primary/20">
+                      <CheckCircle className="h-6 w-6" />
+                    </div>
+                    윈들리 아카데미와 함께
+                  </h5>
+                  <ul className="space-y-6">
+                    {[
+                      "오직 강의 콘텐츠에만 집중, 나머지는 전담팀이 실행",
+                      "데이터 기반 마케팅으로 안정적인 수강생 확보",
+                      "성과 분석 대시보드를 통한 투명한 성과 공유",
+                      "최고 전문가 네트워크를 통한 무한한 성장 가능성"
+                    ].map((item, index) => (
+                      <li key={index} className="flex items-start gap-4">
+                        <CheckCircle className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
+                        <span className="text-foreground leading-relaxed text-lg font-medium">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         {/* FAQ Section */}
-        <section className="py-24 lg:py-32 bg-white">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-20">
-              <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
-                FAQ
-              </div>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-8 leading-tight">
-                자주 묻는 질문
-              </h2>
-            </div>
-            <div className="space-y-4">
-              {faqData.map((faq, index) => (
-                <div 
-                  key={index} 
-                  className={`bg-card border rounded-2xl overflow-hidden transition-all duration-200 hover:bg-muted/30 ${
-                    activeFAQ === index ? 'border-primary shadow-lg' : 'border-border'
-                  }`}
-                >
-                  <button
-                    className="w-full p-8 flex justify-between items-center text-left font-bold text-xl hover:text-primary transition-colors"
-                    onClick={() => toggleFAQ(index)}
-                  >
-                    {faq.question}
-                    <ChevronDown 
-                      className={`h-6 w-6 transition-transform duration-300 text-primary ${
-                        activeFAQ === index ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </button>
-                  {activeFAQ === index && (
-                    <div className="px-8 pb-8 text-muted-foreground leading-relaxed text-lg">
-                      {faq.answer}
-                    </div>
-                  )}
+        <section className="py-20">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-left mb-16">
+                <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
+                  FAQ
                 </div>
-              ))}
+                <h2 className="text-4xl sm:text-5xl font-black mb-8 leading-tight">
+                  자주 묻는 질문
+                </h2>
+              </div>
+              <div className="space-y-4">
+                {faqData.map((faq, index) => (
+                  <div 
+                    key={index} 
+                    className={`bg-card border rounded-2xl overflow-hidden transition-all duration-200 hover:bg-muted/30 ${
+                      activeFAQ === index ? 'border-primary shadow-lg' : 'border-border'
+                    }`}
+                  >
+                    <button
+                      className="w-full p-8 flex justify-between items-center text-left font-bold text-xl hover:text-primary transition-colors"
+                      onClick={() => toggleFAQ(index)}
+                    >
+                      {faq.question}
+                      <ChevronDown 
+                        className={`h-6 w-6 transition-transform duration-300 text-primary ${
+                          activeFAQ === index ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                    {activeFAQ === index && (
+                      <div className="px-8 pb-8 text-muted-foreground leading-relaxed text-lg">
+                        {faq.answer}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
