@@ -176,42 +176,42 @@ const FeaturedCourses = () => {
 
     return (
       <div className="mb-16">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div className="flex items-center gap-2">
             {icon}
             <div>
-              <h2 className="text-2xl lg:text-3xl font-bold text-foreground">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
                 {title}
               </h2>
               {subtitle && (
-                <p className="text-muted-foreground mt-1">{subtitle}</p>
+                <p className="text-sm sm:text-base text-muted-foreground mt-1">{subtitle}</p>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {courses.length > 4 && (
-              <div className="flex gap-2">
+              <div className="hidden sm:flex gap-2">
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={scrollPrev}
-                  className="h-10 w-10"
+                  className="h-8 w-8 sm:h-10 sm:w-10 touch-target"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={scrollNext}
-                  className="h-10 w-10"
+                  className="h-8 w-8 sm:h-10 sm:w-10 touch-target"
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             )}
             <Link 
               to={viewAllLink}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm sm:text-base text-muted-foreground hover:text-foreground transition-colors touch-target"
             >
               더보기 →
             </Link>
@@ -219,16 +219,16 @@ const FeaturedCourses = () => {
         </div>
 
         {courses.length <= 4 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {courses.map((course, index) => (
               <CourseCard key={course.id} course={course} index={index} />
             ))}
           </div>
         ) : (
           <div className="overflow-hidden" ref={emblaRef}>
-            <div className="flex gap-6">
+            <div className="flex gap-4 sm:gap-6">
               {displayCourses.map((course, index) => (
-                <div key={course.id} className="flex-none w-[calc(25%-18px)]">
+                <div key={course.id} className="flex-none w-[calc(50%-8px)] sm:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)]">
                   <CourseCard course={course} index={index} />
                 </div>
               ))}
@@ -271,7 +271,7 @@ const FeaturedCourses = () => {
           <img
             src={course.thumbnail_url}
             alt={course.title}
-            className="w-full h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-[120px] sm:h-[140px] lg:h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300 responsive-image"
             style={{ aspectRatio: "283/159" }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
@@ -282,11 +282,11 @@ const FeaturedCourses = () => {
           {/* Favorite Heart Button */}
           <button
             onClick={handleFavoriteClick}
-            className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10"
+            className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10 touch-target"
             aria-label={isFavorite(course.id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
           >
             <Heart 
-              className={`w-4 h-4 transition-all duration-200 ${
+              className={`w-3 h-3 sm:w-4 sm:h-4 transition-all duration-200 ${
                 isFavorite(course.id) 
                   ? 'text-red-500 fill-red-500' 
                   : 'text-gray-400 hover:text-red-400'
@@ -295,29 +295,29 @@ const FeaturedCourses = () => {
           </button>
 
           {/* Tags */}
-          <div className="absolute top-3 left-3 flex gap-1">
+          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex gap-1">
             {course.is_hot && (
-              <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
+              <span className="bg-red-500 text-white text-xs font-semibold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
                 HOT
               </span>
             )}
             {course.is_new && (
-              <span className="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">
+              <span className="bg-green-500 text-white text-xs font-semibold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
                 NEW
               </span>
             )}
           </div>
         </div>
         
-        <div className="space-y-3">
-          <h3 className="font-bold text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+        <div className="space-y-2 sm:space-y-3">
+          <h3 className="font-bold text-sm sm:text-base text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors">
             {course.title}
           </h3>
           
           {course.instructor_name && 
            course.instructor_name !== "운영진" && 
            course.instructor_name !== "강사" && (
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               {course.instructor_name}
             </div>
           )}

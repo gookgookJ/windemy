@@ -246,7 +246,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md p-0 gap-0 bg-white">
+      <DialogContent className="w-[95vw] max-w-md p-0 gap-0 bg-white modal-open safe-area-padding">
         <div className="relative">
           {/* Header */}
           <DialogHeader className="px-6 pt-8 pb-6 text-center">
@@ -279,7 +279,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                 {/* Kakao Login Button */}
                 <Button 
                   onClick={handleKakaoLogin}
-                  className="w-full h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold text-base mb-6 rounded-lg"
+                  className="w-full h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold text-base mb-6 rounded-lg touch-target"
                 >
                   <div className="flex items-center justify-center space-x-2">
                     <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center">
@@ -297,7 +297,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                       placeholder="이메일 또는 아이디"
                       value={signInData.email}
                       onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
-                      className="h-12 border-gray-200 rounded-lg"
+                      className="h-12 border-gray-200 rounded-lg mobile-input touch-target"
                       required
                     />
                   </div>
@@ -307,13 +307,13 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                       placeholder="비밀번호"
                       value={signInData.password}
                       onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
-                      className="h-12 border-gray-200 rounded-lg"
+                      className="h-12 border-gray-200 rounded-lg mobile-input touch-target"
                       required
                     />
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-lg mt-6"
+                    className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-lg mt-6 touch-target"
                     disabled={isLoading}
                   >
                     {isLoading ? '로그인 중...' : '로그인'}

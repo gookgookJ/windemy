@@ -119,135 +119,192 @@ const HeroSection = () => {
 
   if (loading || slides.length === 0) {
     return (
-      <section className="relative h-[380px] overflow-hidden bg-white flex items-center justify-center">
+      <section className="relative h-[280px] md:h-[380px] overflow-hidden bg-white flex items-center justify-center">
         <div className="text-muted-foreground">로딩중...</div>
       </section>
     );
   }
 
   return (
-    <section className="relative h-[380px] overflow-hidden bg-white">
-      {/* Three Panel Layout */}
-      <div className="relative w-full h-full flex items-center justify-center">
-        <div className="flex w-full items-center justify-center">
-          
-          {/* Left Panel (Previous Slide) - Partially visible */}
-          <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-r-2xl"
-               onClick={prevSlide}
-               style={{ height: '340px' }}>
-            <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
-              <div className="relative w-full h-full">
+    <section className="relative h-[280px] md:h-[380px] overflow-hidden bg-white">
+      {/* Mobile Single Slide Layout */}
+      <div className="block md:hidden relative w-full h-full">
+        <div 
+          className="relative w-full h-full cursor-pointer"
+          onClick={() => handleSlideClick(slides[currentSlide])}
+        >
+          <img
+            src={slides[currentSlide].image_url}
+            alt={slides[currentSlide].title}
+            className="w-full h-full object-cover responsive-image"
+          />
+          <div className="absolute inset-0 bg-black/40 flex items-center">
+            <div className="text-white space-y-2 px-4 safe-area-padding flex-1">
+              <h2 className="text-xl font-bold leading-tight drop-shadow-lg">
+                {slides[currentSlide].title}
+              </h2>
+              <h3 className="text-sm font-medium opacity-90 drop-shadow-lg">
+                {slides[currentSlide].subtitle}
+              </h3>
+              <p className="text-xs opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
+                {slides[currentSlide].description}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Slide Indicators */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentSlide(index)}
+              className={cn(
+                "w-2 h-2 rounded-full transition-colors touch-target",
+                index === currentSlide ? "bg-white" : "bg-white/50"
+              )}
+            />
+          ))}
+        </div>
+
+        {/* Mobile Navigation */}
+        <button
+          onClick={prevSlide}
+          className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target z-20"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <button
+          onClick={nextSlide}
+          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target z-20"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Desktop Three Panel Layout */}
+      <div className="hidden md:block relative w-full h-full">
+        <div className="relative w-full h-full flex items-center justify-center">
+          <div className="flex w-full items-center justify-center">
+            
+            {/* Left Panel (Previous Slide) - Partially visible */}
+            <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-r-2xl"
+                 onClick={prevSlide}
+                 style={{ height: '340px' }}>
+              <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
+                <div className="relative w-full h-full">
+                  <img
+                    src={slides[getSlideIndex(-1)].image_url}
+                    alt={slides[getSlideIndex(-1)].title}
+                    className="w-full h-full object-cover responsive-image"
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center">
+                    <div className="text-white space-y-4 px-12 flex-1">
+                      <h3 className="text-2xl font-bold drop-shadow-lg">
+                        {slides[getSlideIndex(-1)].title}
+                      </h3>
+                      <p className="text-lg opacity-90 drop-shadow-lg">
+                        {slides[getSlideIndex(-1)].subtitle}
+                      </p>
+                      <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
+                        {slides[getSlideIndex(-1)].description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Center Panel (Current Slide) - Full visible */}
+            <div className="relative z-10 mx-4">
+              <div 
+                className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer"
+                onClick={() => handleSlideClick(slides[currentSlide])}
+              >
                 <img
-                  src={slides[getSlideIndex(-1)].image_url}
-                  alt={slides[getSlideIndex(-1)].title}
-                  className="w-full h-full object-cover"
+                  src={slides[currentSlide].image_url}
+                  alt={slides[currentSlide].title}
+                  className="w-full h-full object-cover responsive-image"
                 />
-                <div className="absolute inset-0 bg-black/40 flex items-center">
+                <div className="absolute inset-0 bg-black/30 flex items-center">
                   <div className="text-white space-y-4 px-12 flex-1">
-                    <h3 className="text-2xl font-bold drop-shadow-lg">
-                      {slides[getSlideIndex(-1)].title}
+                    <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
+                      {slides[currentSlide].title}
+                    </h2>
+                    <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
+                      {slides[currentSlide].subtitle}
                     </h3>
-                    <p className="text-lg opacity-90 drop-shadow-lg">
-                      {slides[getSlideIndex(-1)].subtitle}
-                    </p>
-                    <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
-                      {slides[getSlideIndex(-1)].description}
+                    <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
+                      {slides[currentSlide].description}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Center Panel (Current Slide) - Full visible */}
-          <div className="relative z-10 mx-4">
-            <div 
-              className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer"
-              onClick={() => handleSlideClick(slides[currentSlide])}
-            >
-              <img
-                src={slides[currentSlide].image_url}
-                alt={slides[currentSlide].title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/30 flex items-center">
-                <div className="text-white space-y-4 px-12 flex-1">
-                  <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
-                    {slides[currentSlide].title}
-                  </h2>
-                  <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
-                    {slides[currentSlide].subtitle}
-                  </h3>
-                  <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
-                    {slides[currentSlide].description}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Panel (Next Slide) - Partially visible */}
-          <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-l-2xl"
-               onClick={nextSlide}
-               style={{ height: '340px' }}>
-            <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
-              <div className="relative w-full h-full">
-                <img
-                  src={slides[getSlideIndex(1)].image_url}
-                  alt={slides[getSlideIndex(1)].title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center">
-                  <div className="text-white space-y-4 px-12 flex-1">
-                    <h3 className="text-2xl font-bold drop-shadow-lg">
-                      {slides[getSlideIndex(1)].title}
-                    </h3>
-                    <p className="text-lg opacity-90 drop-shadow-lg">
-                      {slides[getSlideIndex(1)].subtitle}
-                    </p>
-                    <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
-                      {slides[getSlideIndex(1)].description}
-                    </p>
+            {/* Right Panel (Next Slide) - Partially visible */}
+            <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-l-2xl"
+                 onClick={nextSlide}
+                 style={{ height: '340px' }}>
+              <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
+                <div className="relative w-full h-full">
+                  <img
+                    src={slides[getSlideIndex(1)].image_url}
+                    alt={slides[getSlideIndex(1)].title}
+                    className="w-full h-full object-cover responsive-image"
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center">
+                    <div className="text-white space-y-4 px-12 flex-1">
+                      <h3 className="text-2xl font-bold drop-shadow-lg">
+                        {slides[getSlideIndex(1)].title}
+                      </h3>
+                      <p className="text-lg opacity-90 drop-shadow-lg">
+                        {slides[getSlideIndex(1)].subtitle}
+                      </p>
+                      <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
+                        {slides[getSlideIndex(1)].description}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Control Buttons positioned at center panel bottom right */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
-        <div className="relative w-[760px]">
-          <div className="absolute bottom-4 right-8 flex items-center gap-3">
-            
-            {/* Navigation Arrows */}
-            <button
-              onClick={prevSlide}
-              className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            
-            {/* Play/Pause Button */}
-            <button
-              onClick={togglePlayPause}
-              className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
-            >
-              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
-            </button>
-            
-            {/* Slide Counter */}
-            <div className="bg-black/50 rounded-full px-3 py-1.5 text-white text-sm font-medium">
-              {currentSlide + 1} / {slides.length}
+        {/* Desktop Control Buttons positioned at center panel bottom right */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+          <div className="relative w-[760px]">
+            <div className="absolute bottom-4 right-8 flex items-center gap-3">
+              
+              {/* Navigation Arrows */}
+              <button
+                onClick={prevSlide}
+                className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              
+              {/* Play/Pause Button */}
+              <button
+                onClick={togglePlayPause}
+                className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
+              >
+                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+              </button>
+              
+              {/* Slide Counter */}
+              <div className="bg-black/50 rounded-full px-3 py-1.5 text-white text-sm font-medium">
+                {currentSlide + 1} / {slides.length}
+              </div>
+              
+              <button
+                onClick={nextSlide}
+                className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
-            
-            <button
-              onClick={nextSlide}
-              className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
           </div>
         </div>
       </div>

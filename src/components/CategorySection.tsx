@@ -102,14 +102,14 @@ const CategorySection = () => {
   return (
     <section className="py-12 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-6">
+        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
           {categories.map((category, index) => {
             const content = (
-              <div className="flex flex-col items-center group cursor-pointer">
-                <div className={`w-16 h-16 rounded-2xl ${category.color} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform duration-200`}>
-                  <category.icon className={`w-8 h-8 ${category.label === '유튜브' ? 'flex-shrink-0' : ''}`} />
+              <div className="flex flex-col items-center group cursor-pointer touch-target">
+                <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl ${category.color} flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-105 transition-transform duration-200`}>
+                  <category.icon className={`w-6 h-6 sm:w-8 sm:h-8 ${category.label === '유튜브' ? 'flex-shrink-0' : ''}`} />
                 </div>
-                <span className="text-sm font-medium text-foreground text-center">
+                <span className="text-xs sm:text-sm font-medium text-foreground text-center">
                   {category.label}
                 </span>
               </div>
