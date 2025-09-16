@@ -463,7 +463,6 @@ const HeroSlides = () => {
                   <Button 
                     onClick={() => setEditingSlide(null)} 
                     disabled={slides.length >= 10}
-                    size="lg"
                     className="shadow-md"
                   >
                     <Plus className="h-4 w-4 mr-2" />
