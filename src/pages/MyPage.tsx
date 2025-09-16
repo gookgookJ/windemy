@@ -329,23 +329,6 @@ const MyPage = () => {
                                   alt={enrollment.course.title}
                                   className="w-24 h-16 object-cover rounded-lg"
                                 />
-                                <Badge 
-                                  variant={enrollment.completed_at || enrollment.progress >= 100 ? "default" : enrollment.progress >= 5 ? "secondary" : "outline"}
-                                  className={`absolute -top-1 -right-1 text-xs ${
-                                    enrollment.completed_at || enrollment.progress >= 100 
-                                      ? "bg-green-600" 
-                                      : enrollment.progress >= 5 
-                                        ? "bg-blue-600" 
-                                        : "bg-gray-500"
-                                  }`}
-                                >
-                                  {enrollment.completed_at || enrollment.progress >= 100 
-                                    ? "완료" 
-                                    : enrollment.progress >= 5 
-                                      ? "진행중" 
-                                      : "시작 전"
-                                  }
-                                </Badge>
                               </div>
                               
                               <div className="flex-1 min-w-0">

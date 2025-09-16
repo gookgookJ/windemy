@@ -511,16 +511,10 @@ const Learn = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  if (fromPage === 'mypage') {
-                    navigate('/my-page');
-                  } else {
-                    navigate(`/course/${courseId}`);
-                  }
-                }}
+                onClick={() => navigate('/my-page')}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                {fromPage === 'mypage' ? '내 강의실로 돌아가기' : '강의로 돌아가기'}
+                내 강의실로 돌아가기
               </Button>
               <div>
                 <h1 className="text-xl font-semibold">{course?.title}</h1>
