@@ -141,8 +141,15 @@ All colors MUST be HSL.
   
   /* 모바일 터치 타겟 최소 크기 보장 */
   .touch-target {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 28px;
+    min-width: 28px;
+  }
+  
+  @media (min-width: 640px) {
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
   }
   
   /* 이미지 반응형 */
