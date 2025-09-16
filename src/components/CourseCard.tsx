@@ -64,11 +64,11 @@ const CourseCard = ({
         {/* Favorite Heart Button - 우측 하단으로 이동 */}
         <button
           onClick={handleFavoriteClick}
-          className="absolute bottom-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 touch-target"
+          className="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 touch-target flex items-center justify-center"
           aria-label={isFavorite(id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
         >
           <Heart 
-            className={`w-4 h-4 transition-all duration-200 ${
+            className={`w-3.5 h-3.5 transition-all duration-200 ${
               isFavorite(id) 
                 ? 'text-red-500 fill-red-500' 
                 : 'text-gray-400 hover:text-red-400'

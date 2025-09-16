@@ -219,7 +219,7 @@ const FeaturedCourses = () => {
         </div>
 
         {courses.length <= 4 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
             {courses.map((course, index) => (
               <CourseCard key={course.id} course={course} index={index} />
             ))}
@@ -282,11 +282,11 @@ const FeaturedCourses = () => {
           {/* Favorite Heart Button - 우측 하단으로 이동 */}
           <button
             onClick={handleFavoriteClick}
-            className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 p-1.5 sm:p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10 touch-target"
+            className="absolute bottom-2 right-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10 touch-target flex items-center justify-center"
             aria-label={isFavorite(course.id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
           >
             <Heart 
-              className={`w-3 h-3 sm:w-4 sm:h-4 transition-all duration-200 ${
+              className={`w-3 h-3 sm:w-3.5 sm:h-3.5 transition-all duration-200 ${
                 isFavorite(course.id) 
                   ? 'text-red-500 fill-red-500' 
                   : 'text-gray-400 hover:text-red-400'
