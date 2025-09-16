@@ -53,6 +53,11 @@ const CategorySection = () => {
       isExternal: true
     },
   ];
+  
+  const handleExternalClick = (e: React.MouseEvent, url: string) => {
+    e.preventDefault();
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <section className="py-12 bg-background">
@@ -71,7 +76,14 @@ const CategorySection = () => {
             );
 
             return category.isExternal ? (
-              <a key={index} href={category.link} target="_blank" rel="noopener noreferrer" className="block">
+              <a
+                key={index}
+                href={category.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+                onClick={(e) => handleExternalClick(e, category.link)}
+              >
                 {content}
               </a>
             ) : (
