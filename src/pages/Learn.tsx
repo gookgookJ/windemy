@@ -276,8 +276,8 @@ const Learn = () => {
       }
     }
 
-    // 진도 저장 (5초마다만 업데이트)
-    if (watchedSeconds % 5 === 0) {
+    // 진도 저장 (10초마다 업데이트)
+    if (watchedSeconds > 0 && watchedSeconds % 10 === 0) {
       try {
         await supabase
           .from('session_progress')
@@ -285,7 +285,10 @@ const Learn = () => {
             user_id: user.id,
             session_id: currentSession.id,
             watched_duration_seconds: watchedSeconds,
-            completed: progressPercent >= 80
+            completed: progressPercent >= 80,
+            completed_at: progressPercent >= 80 ? new Date().toISOString() : null
+          }, {
+            onConflict: 'user_id,session_id'
           });
       } catch (error) {
         console.error('Error saving progress:', error);
@@ -339,17 +342,25 @@ const Learn = () => {
       });
 
       // 4. 전체 진행률 계산 및 업데이트
-      const updatedProgress = progress.map(p => 
-        p.session_id === sessionId ? { ...p, completed: true } : p
-      );
-      if (!progress.find(p => p.session_id === sessionId)) {
-        updatedProgress.push({ session_id: sessionId, completed: true, watched_duration_seconds: validation.totalWatchedTime });
+      const updatedProgress = [...progress];
+      const existingIndex = updatedProgress.findIndex(p => p.session_id === sessionId);
+      
+      if (existingIndex >= 0) {
+        updatedProgress[existingIndex] = { ...updatedProgress[existingIndex], completed: true };
+      } else {
+        updatedProgress.push({ 
+          session_id: sessionId, 
+          completed: true, 
+          watched_duration_seconds: validation.totalWatchedTime,
+          user_id: user.id
+        });
       }
       
       const completedSessions = updatedProgress.filter(p => p.completed).length;
       const totalSessions = sessions.length;
-      const newProgress = Math.min((completedSessions / totalSessions) * 100, 100);
+      const newProgress = totalSessions > 0 ? Math.min((completedSessions / totalSessions) * 100, 100) : 0;
 
+      // 강의 전체 진도율 업데이트
       await supabase
         .from('enrollments')
         .update({ 
@@ -358,9 +369,19 @@ const Learn = () => {
         })
         .eq('id', enrollment.id);
 
+      // 로컬 enrollment 상태도 업데이트
+      setEnrollment(prev => prev ? { ...prev, progress: newProgress } : prev);
+
       toast({
         title: "세션 완료! 🎉",
-        description: `진정한 학습률: ${validation.watchedPercentage}%`,
+        description: `전체 진도율: ${newProgress.toFixed(1)}% (${completedSessions}/${totalSessions})`,
+      });
+
+      console.log('Progress updated:', {
+        completedSessions,
+        totalSessions,
+        newProgress,
+        enrollmentId: enrollment.id
       });
 
       // 5. 자동으로 다음 세션으로 이동
