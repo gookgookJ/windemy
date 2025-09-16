@@ -29,6 +29,9 @@ const HeroSection = () => {
   const [stride, setStride] = useState(800);
   const [isAnimating, setIsAnimating] = useState(false);
   const centerRef = useRef<HTMLDivElement>(null);
+  const dragStartX = useRef<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
   const navigate = useNavigate();
   
   // 기본 슬라이드 (데이터베이스에서 불러오지 못할 경우 사용)
@@ -127,12 +130,48 @@ const HeroSection = () => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
-  const togglePlayPause = () => {
-    setIsPlaying(!isPlaying);
+  // Drag / Swipe handlers
+  const onMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    dragStartX.current = e.clientX;
+    setIsPlaying(false);
   };
 
-  const getSlideIndex = (offset: number) => {
-    return (currentSlide + offset + slides.length) % slides.length;
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || dragStartX.current === null) return;
+    setDragOffset(e.clientX - dragStartX.current);
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    dragStartX.current = e.touches[0].clientX;
+    setIsPlaying(false);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || dragStartX.current === null) return;
+    setDragOffset(e.touches[0].clientX - dragStartX.current);
+  };
+
+  const endDrag = () => {
+    if (!isDragging) return;
+    const delta = dragOffset;
+    setIsDragging(false);
+    setDragOffset(0);
+    setIsPlaying(true);
+    dragStartX.current = null;
+    const threshold = 100;
+    if (Math.abs(delta) > threshold) {
+      if (delta < 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+    }
+  };
+
+  const togglePlayPause = () => {
+    setIsPlaying((p) => !p);
   };
 
   if (loading || slides.length === 0) {
@@ -143,17 +182,25 @@ const HeroSection = () => {
     );
   }
 
-  return (
     <section className="relative h-[380px] overflow-hidden bg-white">
       {/* Carousel Container */}
       <div className="relative w-full h-full flex items-center justify-center">
         {/* Viewport - shows 3 panels worth */}
-        <div className="relative w-full h-[340px] overflow-hidden flex items-center justify-center">
+        <div className="relative w-full h-[340px] overflow-hidden flex items-center justify-center select-none cursor-grab active:cursor-grabbing"
+             onMouseDown={onMouseDown}
+             onMouseMove={onMouseMove}
+             onMouseUp={endDrag}
+             onMouseLeave={endDrag}
+             onTouchStart={onTouchStart}
+             onTouchMove={onTouchMove}
+             onTouchEnd={endDrag}
+        >
           {/* Sliding Strip - infinite loop */}
           <div 
-            className="flex transition-transform duration-700 ease-out"
+            className="flex"
             style={{
-              transform: `translateX(-${(currentSlide + slides.length) * 800}px)`,
+              transform: `translateX(${-(currentSlide + slides.length) * 800 + dragOffset}px)`,
+              transition: isDragging ? 'none' : 'transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1)',
               width: `${slides.length * 3 * 800}px`
             }}
           >
