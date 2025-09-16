@@ -114,19 +114,22 @@ const CourseDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const rightColRef = useRef<HTMLDivElement | null>(null);
-  const [fixedLeft, setFixedLeft] = useState<number | null>(null);
+  const leftColRef = useRef<HTMLDivElement | null>(null);
+  const rightColWrapperRef = useRef<HTMLDivElement | null>(null);
+  const [rightMinHeight, setRightMinHeight] = useState<number>(0);
 
   useEffect(() => {
-    const updateLeft = () => {
-      if (rightColRef.current) {
-        const rect = rightColRef.current.getBoundingClientRect();
-        setFixedLeft(rect.left);
-      }
+    const el = leftColRef.current;
+    if (!el) return;
+    const update = () => setRightMinHeight(el.scrollHeight);
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    update();
+    window.addEventListener('resize', update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', update);
     };
-    updateLeft();
-    window.addEventListener('resize', updateLeft);
-    return () => window.removeEventListener('resize', updateLeft);
   }, []);
 
   useEffect(() => {
@@ -459,7 +462,7 @@ const CourseDetail = () => {
         {/* Desktop Layout: 2-column structure with fixed widths */}
         <div className="hidden lg:flex gap-8 justify-center min-h-screen">
           {/* Left Column: Video and Content - Fixed 757px width */}
-          <div className="w-[757px] flex-shrink-0 pb-20">
+          <div ref={leftColRef} className="w-[757px] flex-shrink-0 pb-20">
             {/* Thumbnail Section - Desktop: 757x426, Mobile: responsive */}
             <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
               <img
@@ -672,14 +675,12 @@ const CourseDetail = () => {
           </div>
 
           {/* Right Column: Fixed Purchase Card - Desktop Only */}
-          <div className="hidden lg:block w-[383px] flex-shrink-0">
-            <div ref={rightColRef} className="w-[383px] h-0" />
-          </div>
-          {fixedLeft !== null && (
-            <div
-              className="hidden lg:block z-30 overflow-y-auto"
-              style={{ position: 'fixed', left: fixedLeft ?? 0, top: 96, width: 383, maxHeight: 'calc(100vh - 96px)' }}
-            >
+          <div
+            ref={rightColWrapperRef}
+            className="hidden lg:block w-[383px] flex-shrink-0"
+            style={{ minHeight: rightMinHeight ? rightMinHeight : undefined }}
+          >
+            <div className="sticky top-24 h-fit max-h-[calc(100vh-6rem)] overflow-y-auto">
               <Card className="shadow-lg border border-border/50 p-6">
                 <div className="space-y-6">
                   {/* Course Title */}
@@ -774,7 +775,7 @@ const CourseDetail = () => {
                 </div>
               </Card>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Mobile/Tablet Layout */}
