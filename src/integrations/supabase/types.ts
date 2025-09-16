@@ -673,7 +673,6 @@ export type Database = {
           course_id: string
           created_at: string
           id: string
-          is_draft: boolean | null
           order_index: number
           section_id: string
         }
@@ -681,7 +680,6 @@ export type Database = {
           course_id: string
           created_at?: string
           id?: string
-          is_draft?: boolean | null
           order_index?: number
           section_id: string
         }
@@ -689,7 +687,6 @@ export type Database = {
           course_id?: string
           created_at?: string
           id?: string
-          is_draft?: boolean | null
           order_index?: number
           section_id?: string
         }
@@ -720,9 +717,7 @@ export type Database = {
           icon_value: string
           id: string
           is_active: boolean
-          is_draft: boolean | null
           order_index: number
-          published_at: string | null
           section_type: string
           subtitle: string | null
           title: string
@@ -737,9 +732,7 @@ export type Database = {
           icon_value?: string
           id?: string
           is_active?: boolean
-          is_draft?: boolean | null
           order_index?: number
-          published_at?: string | null
           section_type?: string
           subtitle?: string | null
           title: string
@@ -754,9 +747,7 @@ export type Database = {
           icon_value?: string
           id?: string
           is_active?: boolean
-          is_draft?: boolean | null
           order_index?: number
-          published_at?: string | null
           section_type?: string
           subtitle?: string | null
           title?: string

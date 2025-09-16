@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Trash2, Plus, GripVertical, Eye, EyeOff, Target, Zap, Crown, Monitor, Star, ChevronLeft, ChevronRight, Save, Upload } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Eye, EyeOff, Target, Zap, Crown, Monitor, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { AdminLayout } from '@/layouts/AdminLayout';
@@ -33,8 +33,6 @@ interface HomepageSection {
   section_type: string;
   display_limit: number;
   is_active: boolean;
-  is_draft: boolean;
-  published_at?: string;
 }
 
 interface SelectedCourse {
@@ -73,16 +71,12 @@ const sectionConfig = {
 
 const HomepageSectionManager = () => {
   const { sectionType } = useParams<{ sectionType: string }>();
-  const [draftSection, setDraftSection] = useState<HomepageSection | null>(null);
-  const [publishedSection, setPublishedSection] = useState<HomepageSection | null>(null);
+  const [section, setSection] = useState<HomepageSection | null>(null);
   const [selectedCourses, setSelectedCourses] = useState<SelectedCourse[]>([]);
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [publishing, setPublishing] = useState(false);
   const [showAvailable, setShowAvailable] = useState(false);
   const [previewCurrentCourse, setPreviewCurrentCourse] = useState(0);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const config = sectionConfig[sectionType as keyof typeof sectionConfig];
 
@@ -95,62 +89,61 @@ const HomepageSectionManager = () => {
 
   const fetchSectionData = async () => {
     try {
-      // Fetch draft section for editing
-      const { data: draftData, error: draftError } = await supabase
+      // Fetch existing section
+      const { data: sectionData, error } = await supabase
         .from('homepage_sections')
         .select('*')
         .eq('section_type', config.section_type)
-        .eq('is_draft', true)
         .single();
 
-      // Fetch published section for comparison
-      const { data: publishedData, error: publishedError } = await supabase
-        .from('homepage_sections')
-        .select('*')
-        .eq('section_type', config.section_type)
-        .eq('is_draft', false)
-        .single();
-
-      if (draftError && draftError.code !== 'PGRST116') {
-        console.error('Error fetching draft section:', draftError);
+      if (error) {
+        console.error('Error fetching section:', error);
         toast({
           title: "오류",
-          description: "임시저장 섹션을 찾을 수 없습니다.",
+          description: "섹션을 찾을 수 없습니다.",
           variant: "destructive"
         });
         return;
       }
 
-      setDraftSection(draftData);
-      setPublishedSection(publishedData);
-
-      if (draftData) {
-        // Fetch courses for draft section
-        const { data: sectionCourses, error: coursesError } = await supabase
-          .from('homepage_section_courses')
-          .select(`
-            *,
-            course:courses(
-              *,
-              profiles:instructor_id(full_name)
-            )
-          `)
-          .eq('section_id', draftData.id)
-          .order('order_index');
-
-        if (coursesError) throw coursesError;
-
-        const courses = (sectionCourses || []).map((sc: any) => ({
-          ...sc,
-          course: {
-            ...sc.course,
-            instructor_name: sc.course?.profiles?.full_name || '운영진',
-            thumbnail_url: sc.course?.thumbnail_url || sc.course?.thumbnail_path || '/placeholder.svg'
-          }
-        }));
-
-        setSelectedCourses(courses);
+      // 모든 섹션을 수동 관리로 설정
+      if (sectionData.filter_type !== 'manual') {
+        await supabase
+          .from('homepage_sections')
+          .update({ filter_type: 'manual', filter_value: null })
+          .eq('id', sectionData.id);
+        
+        sectionData.filter_type = 'manual';
+        sectionData.filter_value = null;
       }
+
+      setSection(sectionData);
+
+      // Fetch manually selected courses
+      const { data: sectionCourses, error: coursesError } = await supabase
+        .from('homepage_section_courses')
+        .select(`
+          *,
+          course:courses(
+            *,
+            profiles:instructor_id(full_name)
+          )
+        `)
+        .eq('section_id', sectionData.id)
+        .order('order_index');
+
+      if (coursesError) throw coursesError;
+
+      const courses = (sectionCourses || []).map((sc: any) => ({
+        ...sc,
+        course: {
+          ...sc.course,
+          instructor_name: sc.course?.profiles?.full_name || '운영진',
+          thumbnail_url: sc.course?.thumbnail_url || sc.course?.thumbnail_path || '/placeholder.svg'
+        }
+      }));
+
+      setSelectedCourses(courses);
 
     } catch (error) {
       console.error('Error fetching section data:', error);
@@ -195,7 +188,7 @@ const HomepageSectionManager = () => {
   };
 
   const addCourse = async (course: Course) => {
-    if (!draftSection) return;
+    if (!section) return;
 
     // Check if course is already selected
     if (selectedCourses.some(sc => sc.course_id === course.id)) {
@@ -211,10 +204,9 @@ const HomepageSectionManager = () => {
       const { data, error } = await supabase
         .from('homepage_section_courses')
         .insert({
-          section_id: draftSection.id,
+          section_id: section.id,
           course_id: course.id,
-          order_index: selectedCourses.length,
-          is_draft: true
+          order_index: selectedCourses.length
         })
         .select(`
           *,
@@ -237,11 +229,10 @@ const HomepageSectionManager = () => {
       };
 
       setSelectedCourses(prev => [...prev, newSelectedCourse]);
-      setHasUnsavedChanges(true);
       
       toast({
         title: "성공",
-        description: "강의가 추가되었습니다. 저장 후 적용하세요."
+        description: "강의가 추가되었습니다."
       });
     } catch (error) {
       console.error('Error adding course:', error);
@@ -254,7 +245,7 @@ const HomepageSectionManager = () => {
   };
 
   const removeCourse = async (courseId: string) => {
-    if (!draftSection) return;
+    if (!section) return;
 
     try {
       const { error } = await supabase
@@ -265,11 +256,10 @@ const HomepageSectionManager = () => {
       if (error) throw error;
 
       setSelectedCourses(prev => prev.filter(sc => sc.id !== courseId));
-      setHasUnsavedChanges(true);
       
       toast({
         title: "성공",
-        description: "강의가 제거되었습니다. 저장 후 적용하세요."
+        description: "강의가 제거되었습니다."
       });
     } catch (error) {
       console.error('Error removing course:', error);
@@ -281,115 +271,22 @@ const HomepageSectionManager = () => {
     }
   };
 
-  const saveDraft = async () => {
-    if (!draftSection) return;
-
-    setSaving(true);
-    try {
-      // Save section changes
-      const { error: sectionError } = await supabase
-        .from('homepage_sections')
-        .update({ 
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', draftSection.id);
-
-      if (sectionError) throw sectionError;
-
-      setHasUnsavedChanges(false);
-      
-      toast({
-        title: "저장 완료",
-        description: "변경사항이 임시저장되었습니다."
-      });
-    } catch (error) {
-      console.error('Error saving draft:', error);
-      toast({
-        title: "오류",
-        description: "저장에 실패했습니다.",
-        variant: "destructive"
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const publishChanges = async () => {
-    if (!draftSection || !publishedSection) return;
-
-    setPublishing(true);
-    try {
-      // 1. Delete existing published courses
-      await supabase
-        .from('homepage_section_courses')
-        .delete()
-        .eq('section_id', publishedSection.id);
-
-      // 2. Copy draft courses to published section
-      const coursesToPublish = selectedCourses.map(course => ({
-        section_id: publishedSection.id,
-        course_id: course.course_id,
-        order_index: course.order_index,
-        is_draft: false
-      }));
-
-      if (coursesToPublish.length > 0) {
-        const { error: coursesError } = await supabase
-          .from('homepage_section_courses')
-          .insert(coursesToPublish);
-
-        if (coursesError) throw coursesError;
-      }
-
-      // 3. Update published section metadata
-      const { error: sectionError } = await supabase
-        .from('homepage_sections')
-        .update({
-          is_active: draftSection.is_active,
-          published_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', publishedSection.id);
-
-      if (sectionError) throw sectionError;
-
-      // 4. Refresh data
-      await fetchSectionData();
-      setHasUnsavedChanges(false);
-      
-      toast({
-        title: "적용 완료",
-        description: "변경사항이 메인 페이지에 적용되었습니다."
-      });
-    } catch (error) {
-      console.error('Error publishing changes:', error);
-      toast({
-        title: "오류",
-        description: "적용에 실패했습니다.",
-        variant: "destructive"
-      });
-    } finally {
-      setPublishing(false);
-    }
-  };
-
   const updateSectionStatus = async (isActive: boolean) => {
-    if (!draftSection) return;
+    if (!section) return;
 
     try {
       const { error } = await supabase
         .from('homepage_sections')
         .update({ is_active: isActive })
-        .eq('id', draftSection.id);
+        .eq('id', section.id);
 
       if (error) throw error;
 
-      setDraftSection(prev => prev ? { ...prev, is_active: isActive } : null);
-      setHasUnsavedChanges(true);
+      setSection(prev => prev ? { ...prev, is_active: isActive } : null);
       
       toast({
-        title: "변경됨",
-        description: `섹션이 ${isActive ? '활성화' : '비활성화'}로 설정되었습니다. 적용하여 반영하세요.`
+        title: "성공",
+        description: `섹션이 ${isActive ? '활성화' : '비활성화'}되었습니다.`
       });
     } catch (error) {
       console.error('Error updating section status:', error);
@@ -409,7 +306,6 @@ const HomepageSectionManager = () => {
     items.splice(result.destination.index, 0, reorderedItem);
 
     setSelectedCourses(items);
-    setHasUnsavedChanges(true);
 
     // Update order in database
     try {
@@ -469,73 +365,39 @@ const HomepageSectionManager = () => {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">{config.title}</h1>
                 <p className="text-gray-600 mt-1">{config.subtitle}</p>
-                {hasUnsavedChanges && (
-                  <div className="mt-2">
-                    <Badge variant="outline" className="text-orange-600 border-orange-600">
-                      저장되지 않은 변경사항이 있습니다
-                    </Badge>
-                  </div>
-                )}
               </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center space-x-2">
                 <Switch
                   id="section-active"
-                  checked={draftSection?.is_active || false}
+                  checked={section?.is_active || false}
                   onCheckedChange={updateSectionStatus}
                 />
                 <Label htmlFor="section-active" className="flex items-center gap-2">
-                  {draftSection?.is_active ? (
+                  {section?.is_active ? (
                     <><Eye className="w-4 h-4" /> 활성화</>
                   ) : (
                     <><EyeOff className="w-4 h-4" /> 비활성화</>
                   )}
                 </Label>
               </div>
-              <div className="flex items-center gap-2">
-                <Button 
-                  onClick={saveDraft}
-                  disabled={saving || !hasUnsavedChanges}
-                  variant="outline"
-                  size="sm"
-                >
-                  <Save className="w-4 h-4 mr-1" />
-                  {saving ? '저장중...' : '임시저장'}
-                </Button>
-                <Button 
-                  onClick={publishChanges}
-                  disabled={publishing}
-                  size="sm"
-                >
-                  <Upload className="w-4 h-4 mr-1" />
-                  {publishing ? '적용중...' : '메인페이지에 적용'}
-                </Button>
-              </div>
             </div>
           </div>
           
-          {/* Status Information */}
-          <div className="mt-6 grid grid-cols-4 gap-4">
+          {/* Stats */}
+          <div className="mt-6 grid grid-cols-3 gap-4">
             <div className="bg-gray-50 rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-gray-900">{selectedCourses.length}</div>
-              <div className="text-sm text-gray-600">편집 중인 강의</div>
+              <div className="text-sm text-gray-600">선택된 강의</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-gray-900">{draftSection?.display_limit || 15}</div>
+              <div className="text-2xl font-bold text-gray-900">{section?.display_limit || 15}</div>
               <div className="text-sm text-gray-600">표시 제한</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-gray-900">{selectedCourses.reduce((sum, c) => sum + (c.course?.total_students || 0), 0)}</div>
               <div className="text-sm text-gray-600">총 수강생</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4 text-center">
-              <div className="text-sm text-gray-600">최종 적용</div>
-              <div className="text-lg font-medium text-gray-900">
-                {publishedSection?.published_at 
-                  ? new Date(publishedSection.published_at).toLocaleDateString() 
-                  : '미적용'}
-              </div>
             </div>
           </div>
         </div>
@@ -543,30 +405,30 @@ const HomepageSectionManager = () => {
         {/* Live Preview */}
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">미리보기 (편집 중)</h2>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setPreviewCurrentCourse(Math.max(0, previewCurrentCourse - 4))}
-                disabled={previewCurrentCourse === 0}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setPreviewCurrentCourse(Math.min(selectedCourses.length - 4, previewCurrentCourse + 4))}
-                disabled={previewCurrentCourse + 4 >= selectedCourses.length}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
+            <h2 className="text-xl font-semibold">실시간 미리보기</h2>
           </div>
           
           <div className="bg-gray-50 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">{config.title}</h3>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPreviewCurrentCourse(Math.max(0, previewCurrentCourse - 4))}
+                  disabled={previewCurrentCourse === 0}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPreviewCurrentCourse(Math.min(selectedCourses.length - 4, previewCurrentCourse + 4))}
+                  disabled={previewCurrentCourse + 4 >= selectedCourses.length}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -597,7 +459,7 @@ const HomepageSectionManager = () => {
           {/* Selected Courses */}
           <div className="bg-white rounded-xl shadow-sm border p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">편집 중인 강의 ({selectedCourses.length})</h2>
+              <h2 className="text-xl font-semibold">선택된 강의 ({selectedCourses.length})</h2>
               <Button 
                 onClick={() => setShowAvailable(!showAvailable)}
                 size="sm"

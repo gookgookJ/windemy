@@ -55,11 +55,9 @@ const HomepageSections = () => {
 
   const fetchSections = async () => {
     try {
-      // Fetch only published sections for the overview
       const { data, error } = await supabase
         .from('homepage_sections')
         .select('*')
-        .eq('is_draft', false)
         .order('order_index');
 
       if (error) throw error;
