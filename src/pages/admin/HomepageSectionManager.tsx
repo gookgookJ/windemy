@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Trash2, Plus, GripVertical, Eye, EyeOff, Target, Zap, Crown, Monitor, Star, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Eye, EyeOff, Target, Zap, Crown, Monitor, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { AdminLayout } from '@/layouts/AdminLayout';
@@ -77,7 +77,6 @@ const HomepageSectionManager = () => {
   const [loading, setLoading] = useState(true);
   const [showAvailable, setShowAvailable] = useState(false);
   const [previewCurrentCourse, setPreviewCurrentCourse] = useState(0);
-  const [isPreviewPlaying, setIsPreviewPlaying] = useState(true);
 
   const config = sectionConfig[sectionType as keyof typeof sectionConfig];
 
@@ -87,17 +86,6 @@ const HomepageSectionManager = () => {
       fetchAvailableCourses();
     }
   }, [sectionType]);
-
-  // 미리보기 자동 슬라이드
-  useEffect(() => {
-    if (!isPreviewPlaying || selectedCourses.length === 0) return;
-    
-    const timer = setInterval(() => {
-      setPreviewCurrentCourse((prev) => (prev + 1) % Math.min(selectedCourses.length, 4));
-    }, 3000);
-
-    return () => clearInterval(timer);
-  }, [selectedCourses.length, isPreviewPlaying]);
 
   const fetchSectionData = async () => {
     try {
