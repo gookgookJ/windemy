@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,11 @@ const HeroSection = () => {
   const [isPlaying, setIsPlaying] = useState(true);
   const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
   const navigate = useNavigate();
+  const startX = useRef(0);
+  const currentX = useRef(0);
+  const slideRef = useRef<HTMLDivElement>(null);
   
   // 기본 슬라이드 (데이터베이스에서 불러오지 못할 경우 사용)
   const defaultSlides = [
@@ -92,14 +96,14 @@ const HeroSection = () => {
   };
 
   useEffect(() => {
-    if (!isPlaying || slides.length === 0) return;
+    if (!isPlaying || slides.length === 0 || isDragging) return;
     
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [slides.length, isPlaying]);
+  }, [slides.length, isPlaying, isDragging]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -117,6 +121,60 @@ const HeroSection = () => {
     return (currentSlide + offset + slides.length) % slides.length;
   };
 
+  // Touch event handlers for mobile swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    startX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    currentX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    
+    const diffX = startX.current - currentX.current;
+    const threshold = 50; // minimum swipe distance
+    
+    if (Math.abs(diffX) > threshold) {
+      if (diffX > 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+    }
+  };
+
+  // Mouse event handlers for desktop swipe
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    startX.current = e.clientX;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    currentX.current = e.clientX;
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    
+    const diffX = startX.current - currentX.current;
+    const threshold = 50;
+    
+    if (Math.abs(diffX) > threshold) {
+      if (diffX > 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+    }
+  };
+
   if (loading || slides.length === 0) {
     return (
       <section className="relative h-[280px] md:h-[380px] overflow-hidden bg-white flex items-center justify-center">
@@ -130,8 +188,16 @@ const HeroSection = () => {
       {/* Mobile Single Slide Layout */}
       <div className="block md:hidden relative w-full h-full">
         <div 
-          className="relative w-full h-full cursor-pointer"
+          ref={slideRef}
+          className="relative w-full h-full cursor-pointer select-none"
           onClick={() => handleSlideClick(slides[currentSlide])}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
         >
           <img
             src={slides[currentSlide].image_url}
@@ -152,34 +218,6 @@ const HeroSection = () => {
             </div>
           </div>
         </div>
-
-        {/* Mobile Slide Indicators */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-          {slides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentSlide(index)}
-              className={cn(
-                "w-2 h-2 rounded-full transition-colors touch-target",
-                index === currentSlide ? "bg-white" : "bg-white/50"
-              )}
-            />
-          ))}
-        </div>
-
-        {/* Mobile Navigation */}
-        <button
-          onClick={prevSlide}
-          className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target z-20"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <button
-          onClick={nextSlide}
-          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target z-20"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
       </div>
 
       {/* Desktop Three Panel Layout */}

@@ -226,9 +226,9 @@ const FeaturedCourses = () => {
           </div>
         ) : (
           <div className="overflow-hidden" ref={emblaRef}>
-            <div className="flex gap-4 sm:gap-6">
+            <div className="flex gap-3 sm:gap-4">
               {displayCourses.map((course, index) => (
-                <div key={course.id} className="flex-none w-[calc(50%-8px)] sm:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)]">
+                <div key={course.id} className="flex-none w-[calc(40%-6px)] sm:w-[calc(33.333%-11px)] lg:w-[calc(25%-18px)]">
                   <CourseCard course={course} index={index} />
                 </div>
               ))}
@@ -279,10 +279,10 @@ const FeaturedCourses = () => {
             }}
           />
           
-          {/* Favorite Heart Button */}
+          {/* Favorite Heart Button - 우측 하단으로 이동 */}
           <button
             onClick={handleFavoriteClick}
-            className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10 touch-target"
+            className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 p-1.5 sm:p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10 touch-target"
             aria-label={isFavorite(course.id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
           >
             <Heart 

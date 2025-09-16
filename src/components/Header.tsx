@@ -98,15 +98,15 @@ const Header = () => {
               <div className="flex items-center space-x-2">
                 {isAdmin && (
                   <Link to="/admin">
-                    <Badge variant="destructive" className="text-xs">관리자</Badge>
+                    <Badge variant="destructive" className="text-xs whitespace-nowrap">관리자</Badge>
                   </Link>
                 )}
                 <Link to="/my-page">
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" className="touch-target">
                     <User className="w-5 h-5" />
                   </Button>
                 </Link>
-                <Button variant="ghost" size="icon" onClick={signOut}>
+                <Button variant="ghost" size="icon" onClick={signOut} className="touch-target">
                   <LogOut className="w-5 h-5" />
                 </Button>
               </div>
