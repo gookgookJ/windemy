@@ -134,7 +134,7 @@ const HeroSection = () => {
           <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-r-2xl"
                onClick={prevSlide}
                style={{ height: '340px' }}>
-            <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-lg">
+            <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
               <div className="relative w-full h-full">
                 <img
                   src={slides[getSlideIndex(-1)].image_url}
@@ -161,7 +161,7 @@ const HeroSection = () => {
           {/* Center Panel (Current Slide) - Full visible */}
           <div className="relative z-10 mx-4">
             <div 
-              className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer shadow-xl"
+              className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer"
               onClick={() => handleSlideClick(slides[currentSlide])}
             >
               <img
@@ -189,7 +189,7 @@ const HeroSection = () => {
           <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-l-2xl"
                onClick={nextSlide}
                style={{ height: '340px' }}>
-            <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-lg">
+            <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
               <div className="relative w-full h-full">
                 <img
                   src={slides[getSlideIndex(1)].image_url}
