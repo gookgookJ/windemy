@@ -2,16 +2,56 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 
 const About = () => {
-  const [currentText, setCurrentText] = useState(0);
-  const animatedTexts = ['이기는 전략이', '이기는 방법이', '이기는 길이'];
+  const [currentText, setCurrentText] = useState('');
+  const [currentParticle, setCurrentParticle] = useState('');
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const phrases = [
+    { text: "'이기는 전략'", particle: "은" },
+    { text: "'성공 설계도'", particle: "는" },
+    { text: "'수익화 시스템'", particle: "은" }
+  ];
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentText((prev) => (prev + 1) % animatedTexts.length);
-    }, 2000);
+    const type = () => {
+      const currentPhrase = phrases[phraseIndex];
+      let typeSpeed = isDeleting ? 60 : 120;
 
-    return () => clearInterval(interval);
-  }, []);
+      if (isDeleting) {
+        if (charIndex > currentPhrase.text.length) {
+          setCurrentParticle('');
+          setCharIndex(prev => prev - 1);
+        } else {
+          setCurrentText(currentPhrase.text.substring(0, charIndex - 1));
+          setCharIndex(prev => prev - 1);
+        }
+      } else {
+        if (charIndex < currentPhrase.text.length) {
+          setCurrentText(currentPhrase.text.substring(0, charIndex + 1));
+          setCharIndex(prev => prev + 1);
+        } else {
+          setCurrentParticle(currentPhrase.particle);
+          setCharIndex(prev => prev + 1);
+        }
+      }
+
+      if (!isDeleting && charIndex === (currentPhrase.text.length + 1)) {
+        typeSpeed = 2000;
+        setIsDeleting(true);
+      } else if (isDeleting && charIndex === 0) {
+        setIsDeleting(false);
+        setPhraseIndex(prev => (prev + 1) % phrases.length);
+        typeSpeed = 500;
+      }
+
+      setTimeout(type, typeSpeed);
+    };
+
+    const timeout = setTimeout(type, 120);
+    return () => clearTimeout(timeout);
+  }, [phraseIndex, charIndex, isDeleting]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -27,11 +67,11 @@ const About = () => {
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
             <span className="text-foreground">성공의 지름길은 없습니다.</span>
             <br />
-            <span className="text-foreground">그러나 '</span>
-            <span className="text-primary inline-block min-w-[200px] text-left transition-all duration-500 ease-in-out">
-              {animatedTexts[currentText]}
+            <span className="text-foreground">그러나 </span>
+            <span className="text-primary inline-block">
+              {currentText}
             </span>
-            <span className="text-foreground"> 존재합니다.</span>
+            <span className="text-foreground">{currentParticle} 존재합니다.</span>
           </h1>
           
           <p className="text-lg text-muted-foreground mb-4 max-w-2xl mx-auto">
