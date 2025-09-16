@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { 
   Play, 
@@ -113,6 +113,21 @@ const CourseDetail = () => {
   const { id: courseId } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
+
+  const rightColRef = useRef<HTMLDivElement | null>(null);
+  const [fixedLeft, setFixedLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    const updateLeft = () => {
+      if (rightColRef.current) {
+        const rect = rightColRef.current.getBoundingClientRect();
+        setFixedLeft(rect.left);
+      }
+    };
+    updateLeft();
+    window.addEventListener('resize', updateLeft);
+    return () => window.removeEventListener('resize', updateLeft);
+  }, []);
 
   useEffect(() => {
     if (courseId) {
@@ -442,9 +457,9 @@ const CourseDetail = () => {
         </div>
 
         {/* Desktop Layout: 2-column structure with fixed widths */}
-        <div className="hidden lg:flex gap-8 justify-center relative">
+        <div className="hidden lg:flex gap-8 justify-center min-h-screen">
           {/* Left Column: Video and Content - Fixed 757px width */}
-          <div className="w-[757px] flex-shrink-0 pb-20" style={{ minHeight: '200vh' }}>
+          <div className="w-[757px] flex-shrink-0 pb-20">
             {/* Thumbnail Section - Desktop: 757x426, Mobile: responsive */}
             <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
               <img
@@ -657,15 +672,20 @@ const CourseDetail = () => {
           </div>
 
           {/* Right Column: Fixed Purchase Card - Desktop Only */}
-          <div className="w-[383px] flex-shrink-0">
-            <div className="sticky top-24 z-30">
+          <div className="hidden lg:block w-[383px] flex-shrink-0">
+            <div ref={rightColRef} className="w-[383px] h-0" />
+          </div>
+          {fixedLeft !== null && (
+            <div
+              className="hidden lg:block z-30 overflow-y-auto"
+              style={{ position: 'fixed', left: fixedLeft ?? 0, top: 96, width: 383, maxHeight: 'calc(100vh - 96px)' }}
+            >
               <Card className="shadow-lg border border-border/50 p-6">
                 <div className="space-y-6">
                   {/* Course Title */}
                   <h1 className="text-xl font-bold leading-tight">
                     {courseData.title}
                   </h1>
-
 
                   {/* Course Price */}
                   <div className="space-y-2">
@@ -742,7 +762,6 @@ const CourseDetail = () => {
 
                   {/* Action Buttons */}
                   <div className="space-y-3">
-                    
                     <Button 
                       variant="default" 
                       size="lg" 
@@ -755,7 +774,7 @@ const CourseDetail = () => {
                 </div>
               </Card>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Mobile/Tablet Layout */}
