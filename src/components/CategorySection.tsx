@@ -7,9 +7,17 @@ import {
   FileText
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { InquiryModal } from "@/components/ui/inquiry-modal";
 
 const CategorySection = () => {
-  const categories = [
+  const categories: Array<{
+    icon: React.ComponentType<any>;
+    label: string;
+    color: string;
+    link: string;
+    isExternal: boolean;
+    isModal?: boolean;
+  }> = [
     { 
       icon: BookOpen, 
       label: "무료강의", 
@@ -35,8 +43,9 @@ const CategorySection = () => {
       icon: MessageCircle, 
       label: "1:1문의", 
       color: "bg-green-100 text-green-600",
-      link: "https://windemy.channel.io/home",
-      isExternal: true
+      link: "",
+      isExternal: false,
+      isModal: true
     },
     { 
       icon: Youtube, 
@@ -60,7 +69,7 @@ const CategorySection = () => {
         <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-6">
           {categories.map((category, index) => {
             const content = (
-              <div className="flex flex-col items-center group cursor-pointer">
+              <div className="flex flex-col items-center group cursor-pointer hover-scale transition-all duration-300">
                 <div className={`w-16 h-16 rounded-2xl ${category.color} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform duration-200`}>
                   <category.icon className={`w-8 h-8 ${category.label === '유튜브' ? 'flex-shrink-0' : ''}`} />
                 </div>
@@ -69,6 +78,15 @@ const CategorySection = () => {
                 </span>
               </div>
             );
+
+            // Handle 1:1 문의 with modal
+            if (category.isModal) {
+              return (
+                <InquiryModal key={index}>
+                  {content}
+                </InquiryModal>
+              );
+            }
 
             return category.isExternal ? (
               <a key={index} href={category.link} target="_blank" rel="noopener noreferrer" className="block">
