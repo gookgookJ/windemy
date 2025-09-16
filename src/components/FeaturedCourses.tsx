@@ -332,33 +332,6 @@ const FeaturedCourses = () => {
             icon={<span className="text-2xl">📺</span>}
           />
         )}
-
-        {/* Categories Overview */}
-        {categories.length > 0 && (
-          <div className="mt-16">
-            <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-8">
-              카테고리별 강의
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {categories.map((category) => (
-                <Link 
-                  key={category.id} 
-                  to={`/courses?category=${category.name}`}
-                  className="group"
-                >
-                  <div className="bg-card border rounded-xl p-6 hover:shadow-lg transition-shadow duration-200 group-hover:scale-105">
-                    <h3 className="font-bold text-foreground mb-2">
-                      {category.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {category.course_count}개의 강의
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </section>
   );
