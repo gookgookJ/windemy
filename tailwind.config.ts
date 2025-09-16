@@ -117,11 +117,11 @@ export default {
 				},
 				// Slide animations
 				'slide-in-right': {
-					'0%': { transform: 'translateX(30px)', opacity: '0.8' },
+					'0%': { transform: 'translateX(120px)', opacity: '0.8' },
 					'100%': { transform: 'translateX(0)', opacity: '1' }
 				},
 				'slide-in-left': {
-					'0%': { transform: 'translateX(-30px)', opacity: '0.8' },
+					'0%': { transform: 'translateX(-120px)', opacity: '0.8' },
 					'100%': { transform: 'translateX(0)', opacity: '1' }
 				},
 				'slide-out-right': {

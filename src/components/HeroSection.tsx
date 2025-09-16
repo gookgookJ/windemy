@@ -132,13 +132,13 @@ const HeroSection = () => {
     <section className="relative h-[380px] overflow-hidden bg-white">
       {/* Three Panel Layout */}
       <div className="relative w-full h-full flex items-center justify-center">
-        <div key={currentSlide} className={`flex w-full items-center justify-center transition-all duration-700 ease-out ${direction === 'next' ? 'animate-slide-in-right' : 'animate-slide-in-left'}`}>
+        <div key={currentSlide} className={`flex w-full items-center justify-center transition-all duration-700 ease-out transform ${direction === 'next' ? 'animate-slide-in-right' : 'animate-slide-in-left'}`}>
           
           {/* Left Panel (Previous Slide) - Partially visible */}
-          <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-r-2xl"
+          <div className="flex-1 relative opacity-40 transition-all duration-700 ease-out cursor-pointer overflow-hidden rounded-r-2xl"
                onClick={prevSlide}
                style={{ height: '340px' }}>
-            <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden transform transition-transform duration-700 ease-out">
+            <div className="absolute -right-40 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden transform transition-all duration-700 ease-out">
               <div className="relative w-full h-full">
                 <img
                   src={slides[getSlideIndex(-1)].image_url}
@@ -190,10 +190,10 @@ const HeroSection = () => {
           </div>
 
           {/* Right Panel (Next Slide) - Partially visible */}
-          <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-l-2xl"
+          <div className="flex-1 relative opacity-40 transition-all duration-700 ease-out cursor-pointer overflow-hidden rounded-l-2xl"
                onClick={nextSlide}
                style={{ height: '340px' }}>
-            <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden transform transition-transform duration-700 ease-out">
+            <div className="absolute -left-40 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden transform transition-all duration-700 ease-out">
               <div className="relative w-full h-full">
                 <img
                   src={slides[getSlideIndex(1)].image_url}
