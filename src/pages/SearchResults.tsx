@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Search, Filter, BookOpen, Clock, Star, Users } from 'lucide-react';
+import { Search, Filter, BookOpen, Heart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
+import { useFavorites } from '@/hooks/useFavorites';
 
 interface Course {
   id: string;
@@ -40,6 +39,7 @@ const SearchResults = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [levelFilter, setLevelFilter] = useState('all');
   const [categories, setCategories] = useState<any[]>([]);
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   useEffect(() => {
     const query = searchParams.get('q');
@@ -258,77 +258,93 @@ const SearchResults = () => {
             </div>
           ) : results.length > 0 ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {results.map((course) => (
-                <Link key={course.id} to={`/course/${course.id}`}>
-                  <Card className="group hover:shadow-lg transition-all duration-200 hover:scale-[1.02] overflow-hidden">
-                    <div className="relative">
-                      <div className="aspect-video bg-muted">
-                        <img
-                          src={course.thumbnail_url}
-                          alt={course.title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = '/placeholder.svg';
-                          }}
+              {results.map((course) => {
+                const handleFavoriteClick = (e: React.MouseEvent) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFavorite(course.id);
+                };
+
+                return (
+                  <Link key={course.id} to={`/course/${course.id}`} className="group cursor-pointer block">
+                    <div className="relative mb-4">
+                      <img
+                        src={course.thumbnail_url}
+                        alt={course.title}
+                        className="w-full h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+                        style={{ aspectRatio: "283/159" }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder.svg";
+                        }}
+                      />
+                      
+                      {/* Favorite Heart Button */}
+                      <button
+                        onClick={handleFavoriteClick}
+                        className="absolute top-3 left-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10"
+                        aria-label={isFavorite(course.id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
+                      >
+                        <Heart 
+                          className={`w-4 h-4 transition-all duration-200 ${
+                            isFavorite(course.id) 
+                              ? 'text-red-500 fill-red-500' 
+                              : 'text-gray-400 hover:text-red-400'
+                          }`}
                         />
+                      </button>
+
+                      {/* Tags */}
+                      <div className="absolute top-3 right-3 flex gap-1">
+                        {course.is_hot && (
+                          <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
+                            HOT
+                          </span>
+                        )}
+                        {course.is_new && (
+                          <span className="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">
+                            NEW
+                          </span>
+                        )}
                       </div>
-                      {course.is_hot && (
-                        <Badge className="absolute top-2 left-2 bg-red-500 text-white">
-                          HOT
-                        </Badge>
-                      )}
-                      {course.is_new && (
-                        <Badge className="absolute top-2 right-2 bg-blue-500 text-white">
-                          NEW
-                        </Badge>
-                      )}
                     </div>
                     
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                    <div className="space-y-3">
+                      <h3 className="font-bold text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors">
                         {course.title}
                       </h3>
                       
                       {course.short_description && (
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        <p className="text-sm text-muted-foreground line-clamp-2">
                           {course.short_description}
                         </p>
                       )}
                       
-                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-                        <span>{course.instructor_name}</span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {course.duration_hours || 0}시간
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {course.rating && course.rating > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                              <span className="text-xs font-medium">{course.rating}</span>
-                            </div>
-                          )}
-                          {course.total_students && course.total_students > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Users className="w-3 h-3" />
-                              <span className="text-xs">{course.total_students}</span>
-                            </div>
-                          )}
+                      {course.instructor_name && 
+                       course.instructor_name !== "운영진" && 
+                       course.instructor_name !== "강사" && (
+                        <div className="text-sm text-muted-foreground">
+                          {course.instructor_name}
                         </div>
-                        
-                        <div className="text-right">
-                          <span className="text-lg font-bold text-primary">
-                            {course.price === 0 ? '무료' : `₩${course.price.toLocaleString()}`}
+                      )}
+
+                      {(Number(course.rating) > 0 && Number(course.total_students) > 0) ? (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-yellow-500">★</span>
+                          <span className="font-semibold">{course.rating}</span>
+                          <span className="text-muted-foreground">
+                            ({Number(course.total_students).toLocaleString()}명)
                           </span>
                         </div>
+                      ) : null}
+
+                      <div className="text-lg font-bold text-foreground">
+                        {course.price === 0 ? '무료' : `₩${course.price.toLocaleString()}`}
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           ) : searchParams.get('q') ? (
             <div className="text-center py-16">

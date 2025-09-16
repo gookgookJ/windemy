@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Zap } from "lucide-react";
+import { ChevronLeft, ChevronRight, Zap, Heart } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useFavorites } from "@/hooks/useFavorites";
 
 interface Course {
   id: string;
@@ -207,66 +208,89 @@ const FeaturedCourses = () => {
     );
   };
 
-  const CourseCard = ({ course, index }: { course: Course, index: number }) => (
-    <Link to={`/course/${course.id}`} className="group cursor-pointer block">
-      <div className="relative mb-4">
-        <img
-          src={course.thumbnail_url}
-          alt={course.title}
-          className="w-full h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
-          style={{ aspectRatio: "283/159" }}
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = "/placeholder.svg";
-          }}
-        />
-        {course.is_hot && (
-          <div className="absolute top-3 right-3">
-            <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
-              HOT
-            </span>
+  const CourseCard = ({ course, index }: { course: Course, index: number }) => {
+    const { toggleFavorite, isFavorite } = useFavorites();
+
+    const handleFavoriteClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleFavorite(course.id);
+    };
+
+    return (
+      <Link to={`/course/${course.id}`} className="group cursor-pointer block">
+        <div className="relative mb-4">
+          <img
+            src={course.thumbnail_url}
+            alt={course.title}
+            className="w-full h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+            style={{ aspectRatio: "283/159" }}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = "/placeholder.svg";
+            }}
+          />
+          
+          {/* Favorite Heart Button */}
+          <button
+            onClick={handleFavoriteClick}
+            className="absolute top-3 left-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10"
+            aria-label={isFavorite(course.id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
+          >
+            <Heart 
+              className={`w-4 h-4 transition-all duration-200 ${
+                isFavorite(course.id) 
+                  ? 'text-red-500 fill-red-500' 
+                  : 'text-gray-400 hover:text-red-400'
+              }`}
+            />
+          </button>
+
+          {/* Tags */}
+          <div className="absolute top-3 right-3 flex gap-1">
+            {course.is_hot && (
+              <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
+                HOT
+              </span>
+            )}
+            {course.is_new && (
+              <span className="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">
+                NEW
+              </span>
+            )}
           </div>
-        )}
-        {course.is_new && (
-          <div className="absolute top-3 right-3">
-            <span className="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">
-              NEW
-            </span>
-          </div>
-        )}
-      </div>
-      
-      <div className="space-y-3">
-        <h3 className="font-bold text-foreground line-clamp-2 leading-tight">
-          {course.title}
-        </h3>
+        </div>
         
-        {course.instructor_name && 
-         course.instructor_name !== "운영진" && 
-         course.instructor_name !== "강사" && (
-          <div className="text-sm text-muted-foreground">
-            {course.instructor_name}
-          </div>
-        )}
+        <div className="space-y-3">
+          <h3 className="font-bold text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+            {course.title}
+          </h3>
+          
+          {course.instructor_name && 
+           course.instructor_name !== "운영진" && 
+           course.instructor_name !== "강사" && (
+            <div className="text-sm text-muted-foreground">
+              {course.instructor_name}
+            </div>
+          )}
 
-        {(Number(course.rating) > 0 && Number(course.total_students) > 0) ? (
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-yellow-500">★</span>
-            <span className="font-semibold">{course.rating}</span>
-            <span className="text-muted-foreground">
-              ({Number(course.total_students).toLocaleString()}명)
-            </span>
-          </div>
-        ) : null}
+          {(Number(course.rating) > 0 && Number(course.total_students) > 0) ? (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-yellow-500">★</span>
+              <span className="font-semibold">{course.rating}</span>
+              <span className="text-muted-foreground">
+                ({Number(course.total_students).toLocaleString()}명)
+              </span>
+            </div>
+          ) : null}
 
-        {course.price > 0 && (
           <div className="text-lg font-bold text-foreground">
-            ₩{course.price.toLocaleString()}
+            {course.price === 0 ? '무료' : `₩${course.price.toLocaleString()}`}
           </div>
-        )}
-      </div>
-    </Link>
-  );
+        </div>
+      </Link>
+    );
+  };
 
   if (loading) {
     return (
