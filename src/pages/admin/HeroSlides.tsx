@@ -44,7 +44,7 @@ const HeroSlides = () => {
     title: '',
     subtitle: '',
     description: '',
-    course_id: '',
+    course_id: 'none',
     background_color: 'from-blue-400 to-blue-600',
     is_active: true
   });
@@ -172,7 +172,7 @@ const HeroSlides = () => {
         title: formData.title,
         subtitle: formData.subtitle || null,
         description: formData.description || null,
-        course_id: formData.course_id || null,
+        course_id: formData.course_id === 'none' ? null : formData.course_id || null,
         background_color: formData.background_color,
         is_active: formData.is_active,
         ...(imageUrl && { image_url: imageUrl })
@@ -284,7 +284,7 @@ const HeroSlides = () => {
       title: '',
       subtitle: '',
       description: '',
-      course_id: '',
+      course_id: 'none',
       background_color: 'from-blue-400 to-blue-600',
       is_active: true
     });
@@ -298,7 +298,7 @@ const HeroSlides = () => {
       title: slide.title,
       subtitle: slide.subtitle || '',
       description: slide.description || '',
-      course_id: slide.course_id || '',
+      course_id: slide.course_id || 'none',
       background_color: slide.background_color,
       is_active: slide.is_active
     });
@@ -390,7 +390,7 @@ const HeroSlides = () => {
                     <SelectValue placeholder="강의를 선택하세요 (선택사항)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">연결 안함</SelectItem>
+                    <SelectItem value="none">연결 안함</SelectItem>
                     {courses.map((course) => (
                       <SelectItem key={course.id} value={course.id}>
                         {course.title}
