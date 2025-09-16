@@ -89,32 +89,83 @@ const HomepageSectionManager = () => {
 
   const fetchSectionData = async () => {
     try {
-      // Fetch existing section
-      const { data: sectionData, error } = await supabase
+      // First try to fetch draft section for editing
+      let { data: sectionData, error } = await supabase
         .from('homepage_sections')
         .select('*')
         .eq('section_type', config.section_type)
-        .single();
+        .eq('is_draft', true)
+        .maybeSingle();
+
+      // If no draft exists, try to get published section and create draft
+      if (!sectionData) {
+        const { data: publishedSection, error: publishedError } = await supabase
+          .from('homepage_sections')
+          .select('*')
+          .eq('section_type', config.section_type)
+          .eq('is_draft', false)
+          .maybeSingle();
+
+        if (publishedError) {
+          console.error('Error fetching published section:', publishedError);
+          toast({
+            title: "오류",
+            description: "섹션을 찾을 수 없습니다.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        if (publishedSection) {
+          // Create draft version from published
+          const { data: newDraft, error: draftError } = await supabase
+            .from('homepage_sections')
+            .insert({
+              title: publishedSection.title,
+              subtitle: publishedSection.subtitle,
+              icon_type: publishedSection.icon_type,
+              icon_value: publishedSection.icon_value,
+              section_type: publishedSection.section_type,
+              filter_type: 'manual',
+              filter_value: null,
+              display_limit: publishedSection.display_limit,
+              order_index: publishedSection.order_index,
+              is_active: publishedSection.is_active,
+              is_draft: true
+            })
+            .select()
+            .single();
+
+          if (draftError) {
+            console.error('Error creating draft section:', draftError);
+            toast({
+              title: "오류",
+              description: "드래프트 섹션 생성에 실패했습니다.",
+              variant: "destructive"
+            });
+            return;
+          }
+
+          sectionData = newDraft;
+        } else {
+          console.error('No section found for type:', config.section_type);
+          toast({
+            title: "오류",
+            description: "섹션을 찾을 수 없습니다.",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
 
       if (error) {
-        console.error('Error fetching section:', error);
+        console.error('Error fetching draft section:', error);
         toast({
           title: "오류",
           description: "섹션을 찾을 수 없습니다.",
           variant: "destructive"
         });
         return;
-      }
-
-      // 모든 섹션을 수동 관리로 설정
-      if (sectionData.filter_type !== 'manual') {
-        await supabase
-          .from('homepage_sections')
-          .update({ filter_type: 'manual', filter_value: null })
-          .eq('id', sectionData.id);
-        
-        sectionData.filter_type = 'manual';
-        sectionData.filter_value = null;
       }
 
       setSection(sectionData);

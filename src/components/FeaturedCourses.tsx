@@ -62,8 +62,6 @@ const FeaturedCourses = () => {
         .eq('is_active', true)
         .order('order_index');
 
-      if (sectionsError) throw sectionsError;
-
       setSections((sectionsData || []).map(section => ({
         ...section,
         icon_type: section.icon_type as 'emoji' | 'lucide' | 'custom',
