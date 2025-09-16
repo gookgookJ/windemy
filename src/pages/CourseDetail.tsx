@@ -331,15 +331,40 @@ const CourseDetail = () => {
   };
 
   const handlePurchase = async () => {
+    console.log('구매 버튼 클릭됨', { user, courseId, selectedOption });
+    
     if (!user) {
+      toast({
+        title: "로그인이 필요합니다",
+        description: "강의를 구매하려면 먼저 로그인해주세요.",
+        variant: "destructive"
+      });
       navigate('/');
       return;
     }
     
-    if (!courseId) return;
+    if (!courseId) {
+      console.error('Course ID가 없습니다');
+      toast({
+        title: "오류",
+        description: "강의 정보를 찾을 수 없습니다.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!selectedOption) {
+      toast({
+        title: "강의 옵션 선택",
+        description: "구매할 강의 옵션을 선택해주세요.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     // 먼저 이미 등록된 강의인지 확인
     try {
+      console.log('수강 등록 상태 확인 중...');
       const { data: existingEnrollment, error: enrollmentCheckError } = await supabase
         .from('enrollments')
         .select('id')
@@ -348,10 +373,12 @@ const CourseDetail = () => {
         .maybeSingle();
 
       if (enrollmentCheckError && enrollmentCheckError.code !== 'PGRST116') {
+        console.error('등록 상태 확인 오류:', enrollmentCheckError);
         throw enrollmentCheckError;
       }
 
       if (existingEnrollment) {
+        console.log('이미 등록된 강의입니다');
         // 이미 등록된 강의인 경우 모달 표시
         setShowAlreadyEnrolledModal(true);
         return;
@@ -371,7 +398,23 @@ const CourseDetail = () => {
       ? `/payment/${courseId}?option=${selectedOption}`
       : `/payment/${courseId}`;
     
-    navigate(paymentUrl);
+    console.log('결제 페이지로 이동:', paymentUrl);
+    
+    toast({
+      title: "결제 페이지로 이동 중...",
+      description: "잠시만 기다려주세요.",
+    });
+    
+    try {
+      navigate(paymentUrl);
+    } catch (error) {
+      console.error('네비게이션 오류:', error);
+      toast({
+        title: "이동 실패",
+        description: "결제 페이지로 이동 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
   };
 
   const selectedCourse = courseOptions.find(option => option.id === selectedOption);
