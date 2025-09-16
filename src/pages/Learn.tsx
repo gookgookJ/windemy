@@ -10,6 +10,7 @@ import { PlayCircle, CheckCircle, Clock, ArrowLeft, ArrowRight, File } from 'luc
 import { useToast } from '@/hooks/use-toast';
 import '@/types/vimeo.d.ts';
 import { VideoProgressTracker } from '@/utils/VideoProgressTracker';
+import Header from '@/components/Header';
 
 interface CourseSession {
   id: string;
@@ -504,6 +505,7 @@ const Learn = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header />
       <div className="border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">

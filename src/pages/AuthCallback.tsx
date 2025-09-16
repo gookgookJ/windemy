@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import Header from "@/components/Header";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -49,7 +50,9 @@ const AuthCallback = () => {
   }, [location.search]);
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 py-20">
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="min-h-screen flex items-center justify-center px-6 py-20">
       <article className="w-full max-w-md rounded-2xl border bg-background/50 backdrop-blur p-8 text-center shadow-sm">
         <header className="mb-4">
           <h1 className="text-2xl font-bold">{status === "success" ? "인증 완료" : status === "error" ? "인증 실패" : "인증 확인 중"}</h1>
@@ -65,7 +68,8 @@ const AuthCallback = () => {
           이메일을 열어 인증을 다시 시도하시거나, 문제가 지속되면 고객센터에 문의해주세요.
         </aside>
       </article>
-    </main>
+      </main>
+    </div>
   );
 };
 
