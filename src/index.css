@@ -79,6 +79,15 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Windemy About page palette (HSL) */
+    --wind-brand-blue: 217 100% 47%;
+    --wind-dark-blue: 216 80% 20%;
+    --wind-text-primary: 229 35% 16%;
+    --wind-text-secondary: 228 16% 42%;
+    --wind-border-color: 225 25% 91%;
+    --wind-bg-light: 225 22% 97%;
+    --wind-brand-light-blue: 220 100% 96%;
   }
 
   .dark {
