@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Filter, Download, Eye, MoreHorizontal, Calendar, CreditCard, Package } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Search, Filter, Download, Eye, MoreHorizontal, Calendar, CreditCard, Package, FileText, FileSpreadsheet, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import * as XLSX from 'xlsx';
 
 interface OrderItem {
   id: string;
@@ -41,6 +42,11 @@ const Orders = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [timeFilter, setTimeFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("created_at");
+  const [sortOrder, setSortOrder] = useState<string>("desc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [exporting, setExporting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,7 +55,11 @@ const Orders = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [orders, searchTerm, statusFilter, timeFilter]);
+  }, [orders, searchTerm, statusFilter, timeFilter, sortBy, sortOrder]);
+
+  useEffect(() => {
+    setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
+  }, [searchTerm, statusFilter, timeFilter]);
 
   const fetchOrders = async () => {
     try {
@@ -75,7 +85,8 @@ const Orders = () => {
             )
           )
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(1000); // 대용량 데이터 대비 제한
 
       if (error) throw error;
       setOrders(data || []);
@@ -136,6 +147,32 @@ const Orders = () => {
       }
     }
 
+    
+    // 정렬 적용
+    filtered.sort((a, b) => {
+      let aValue: any = a[sortBy as keyof Order];
+      let bValue: any = b[sortBy as keyof Order];
+      
+      if (sortBy === 'user_name') {
+        aValue = a.profiles?.full_name || '';
+        bValue = b.profiles?.full_name || '';
+      } else if (sortBy === 'course_title') {
+        aValue = a.order_items[0]?.course.title || '';
+        bValue = b.order_items[0]?.course.title || '';
+      }
+      
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
     setFilteredOrders(filtered);
   };
 
@@ -182,6 +219,139 @@ const Orders = () => {
     const cancelled = filteredOrders.filter(order => order.status === 'cancelled').length;
     
     return { total, completed, pending, cancelled };
+  };
+
+  // 페이지네이션 관련 함수
+  const getPaginatedOrders = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredOrders.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = () => {
+    return Math.ceil(filteredOrders.length / itemsPerPage);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('desc');
+    }
+  };
+
+  // CSV 내보내기 함수
+  const exportToCSV = () => {
+    setExporting(true);
+    try {
+      const csvData = filteredOrders.map(order => ({
+        '주문번호': order.id,
+        '고객명': order.profiles?.full_name || '이름 없음',
+        '이메일': order.profiles?.email || '',
+        '강의명': order.order_items.map(item => item.course.title).join(', '),
+        '결제방법': getPaymentMethodText(order.payment_method),
+        '상태': order.status === 'completed' ? '결제완료' : 
+                order.status === 'pending' ? '결제대기' :
+                order.status === 'cancelled' ? '취소됨' :
+                order.status === 'refunded' ? '환불됨' : order.status,
+        '주문금액': order.total_amount,
+        '주문일시': new Date(order.created_at).toLocaleString('ko-KR')
+      }));
+
+      const csv = [
+        Object.keys(csvData[0]).join(','),
+        ...csvData.map(row => Object.values(row).map(value => 
+          typeof value === 'string' && value.includes(',') ? `"${value}"` : value
+        ).join(','))
+      ].join('\n');
+
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `주문목록_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "내보내기 완료",
+        description: "CSV 파일이 다운로드되었습니다."
+      });
+    } catch (error) {
+      console.error('CSV export error:', error);
+      toast({
+        title: "내보내기 실패",
+        description: "CSV 파일 생성 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Excel 내보내기 함수
+  const exportToExcel = () => {
+    setExporting(true);
+    try {
+      const excelData = filteredOrders.map(order => ({
+        '주문번호': order.id,
+        '고객명': order.profiles?.full_name || '이름 없음',
+        '이메일': order.profiles?.email || '',
+        '강의명': order.order_items.map(item => item.course.title).join(', '),
+        '결제방법': getPaymentMethodText(order.payment_method),
+        '상태': order.status === 'completed' ? '결제완료' : 
+                order.status === 'pending' ? '결제대기' :
+                order.status === 'cancelled' ? '취소됨' :
+                order.status === 'refunded' ? '환불됨' : order.status,
+        '주문금액': order.total_amount,
+        '주문일시': new Date(order.created_at).toLocaleString('ko-KR')
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, '주문목록');
+
+      // 컬럼 너비 조정
+      const colWidths = [
+        { wch: 30 }, // 주문번호
+        { wch: 15 }, // 고객명
+        { wch: 25 }, // 이메일
+        { wch: 40 }, // 강의명
+        { wch: 12 }, // 결제방법
+        { wch: 12 }, // 상태
+        { wch: 15 }, // 주문금액
+        { wch: 20 }  // 주문일시
+      ];
+      worksheet['!cols'] = colWidths;
+
+      XLSX.writeFile(workbook, `주문목록_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+      toast({
+        title: "내보내기 완료",
+        description: "Excel 파일이 다운로드되었습니다."
+      });
+    } catch (error) {
+      console.error('Excel export error:', error);
+      toast({
+        title: "내보내기 실패",
+        description: "Excel 파일 생성 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const refreshData = () => {
+    setLoading(true);
+    fetchOrders();
   };
 
   const stats = getOrderStats();
@@ -303,10 +473,58 @@ const Orders = () => {
                 </SelectContent>
               </Select>
 
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                내보내기
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={refreshData}
+                disabled={loading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                새로고침
               </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={exporting || filteredOrders.length === 0}>
+                    <Download className="h-4 w-4 mr-2" />
+                    내보내기
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={exportToCSV} disabled={exporting}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    CSV 파일로 내보내기
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={exportToExcel} disabled={exporting}>
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Excel 파일로 내보내기
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* 결과 요약 */}
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-muted-foreground">
+                총 {filteredOrders.length}개의 주문 중 {Math.min(itemsPerPage, filteredOrders.length - (currentPage - 1) * itemsPerPage)}개 표시
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">페이지당 표시:</span>
+                <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                  setItemsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* 주문 테이블 */}
@@ -314,25 +532,81 @@ const Orders = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>주문번호</TableHead>
-                    <TableHead>고객</TableHead>
-                    <TableHead>강의</TableHead>
-                    <TableHead>결제방법</TableHead>
-                    <TableHead>상태</TableHead>
-                    <TableHead>금액</TableHead>
-                    <TableHead>주문일시</TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('id')}
+                    >
+                      주문번호
+                      {sortBy === 'id' && (
+                        <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('user_name')}
+                    >
+                      고객
+                      {sortBy === 'user_name' && (
+                        <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('course_title')}
+                    >
+                      강의
+                      {sortBy === 'course_title' && (
+                        <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('payment_method')}
+                    >
+                      결제방법
+                      {sortBy === 'payment_method' && (
+                        <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('status')}
+                    >
+                      상태
+                      {sortBy === 'status' && (
+                        <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('total_amount')}
+                    >
+                      금액
+                      {sortBy === 'total_amount' && (
+                        <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('created_at')}
+                    >
+                      주문일시
+                      {sortBy === 'created_at' && (
+                        <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.length === 0 ? (
+                  {getPaginatedOrders().length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                         조건에 맞는 주문이 없습니다.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredOrders.map((order) => (
+                    getPaginatedOrders().map((order) => (
                       <TableRow key={order.id}>
                         <TableCell className="font-mono text-sm">
                           {order.id.slice(0, 8)}...
@@ -396,6 +670,63 @@ const Orders = () => {
                 </TableBody>
               </Table>
             </div>
+
+            {/* 페이지네이션 */}
+            {getTotalPages() > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                  {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, filteredOrders.length)} / {filteredOrders.length}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    이전
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, getTotalPages()) }, (_, i) => {
+                      let pageNum;
+                      if (getTotalPages() <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= getTotalPages() - 2) {
+                        pageNum = getTotalPages() - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePageChange(pageNum)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === getTotalPages()}
+                  >
+                    다음
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
