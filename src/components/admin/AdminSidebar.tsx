@@ -72,6 +72,12 @@ const menuItems = [
     group: 'content'
   },
   {
+    title: '메인 페이지 섹션',
+    url: '/admin/homepage-sections',
+    icon: BookOpen,
+    group: 'content'
+  },
+  {
     title: '주문 관리',
     url: '/admin/orders',
     icon: ShoppingCart,

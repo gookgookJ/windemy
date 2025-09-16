@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Zap, Heart } from "lucide-react";
+import { ChevronLeft, ChevronRight, Zap, Heart, Crown, Monitor, BookOpen, Target } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,19 @@ interface Course {
   short_description?: string;
 }
 
+interface HomepageSection {
+  id: string;
+  title: string;
+  subtitle?: string;
+  icon_type: 'emoji' | 'lucide' | 'custom';
+  icon_value: string;
+  filter_type: 'manual' | 'category' | 'tag' | 'hot_new';
+  filter_value?: string;
+  display_limit: number;
+  order_index: number;
+  is_active: boolean;
+}
+
 interface Category {
   id: string;
   name: string;
@@ -30,109 +43,122 @@ interface Category {
 }
 
 const FeaturedCourses = () => {
-  const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
-  const [freeCourses, setFreeCourses] = useState<Course[]>([]);
-  const [premiumCourses, setPremiumCourses] = useState<Course[]>([]);
-  const [vodCourses, setVodCourses] = useState<Course[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [sections, setSections] = useState<HomepageSection[]>([]);
+  const [sectionCourses, setSectionCourses] = useState<Record<string, Course[]>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchCoursesData();
+    fetchHomepageSections();
   }, []);
 
-  const fetchCoursesData = async () => {
+  const fetchHomepageSections = async () => {
     try {
       setLoading(true);
 
-      // Fetch all published courses with instructor and category data
-      const { data: coursesData, error: coursesError } = await supabase
-        .from('courses')
-        .select(`
-          *,
-          profiles:instructor_id(full_name),
-          categories:category_id(name, slug)
-        `)
-        .eq('is_published', true)
-        .order('created_at', { ascending: false });
-
-      if (coursesError) {
-        console.error('Error fetching courses:', coursesError);
-        throw coursesError;
-      }
-
-      // Fetch categories for the category section
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('categories')
+      // Fetch homepage sections
+      const { data: sectionsData, error: sectionsError } = await supabase
+        .from('homepage_sections')
         .select('*')
-        .order('name');
+        .eq('is_active', true)
+        .order('order_index');
 
-      if (categoriesError) {
-        console.error('Error fetching categories:', categoriesError);
-        throw categoriesError;
+      if (sectionsError) throw sectionsError;
+
+      setSections((sectionsData || []).map(section => ({
+        ...section,
+        icon_type: section.icon_type as 'emoji' | 'lucide' | 'custom',
+        filter_type: section.filter_type as 'manual' | 'category' | 'tag' | 'hot_new'
+      })));
+
+      // Fetch courses for each section
+      const coursesData: Record<string, Course[]> = {};
+
+      for (const section of (sectionsData || [])) {
+        let courses: Course[] = [];
+
+        if (section.filter_type === 'manual') {
+          // Fetch manually selected courses
+          const { data: manualCourses } = await supabase
+            .from('homepage_section_courses')
+            .select(`
+              order_index,
+              courses:course_id(
+                *,
+                profiles:instructor_id(full_name),
+                categories:category_id(name)
+              )
+            `)
+            .eq('section_id', section.id)
+            .order('order_index');
+
+          courses = (manualCourses || [])
+            .map((mc: any) => ({
+              ...mc.courses,
+              instructor_name: mc.courses?.profiles?.full_name || '운영진',
+              category: mc.courses?.categories?.name || '기타',
+              thumbnail_url: mc.courses?.thumbnail_url || mc.courses?.thumbnail_path || '/placeholder.svg'
+            }))
+            .slice(0, section.display_limit);
+
+        } else if (section.filter_type === 'category' && section.filter_value) {
+          // Fetch courses by category
+          const { data: categoryCourses } = await supabase
+            .from('courses')
+            .select(`
+              *,
+              profiles:instructor_id(full_name),
+              categories:category_id(name)
+            `)
+            .eq('is_published', true)
+            .eq('categories.name', section.filter_value)
+            .order('created_at', { ascending: false })
+            .limit(section.display_limit);
+
+          courses = (categoryCourses || []).map(course => ({
+            ...course,
+            instructor_name: course.profiles?.full_name || '운영진',
+            category: course.categories?.name || '기타',
+            thumbnail_url: course.thumbnail_url || course.thumbnail_path || '/placeholder.svg'
+          }));
+
+        } else if (section.filter_type === 'hot_new') {
+          // Fetch hot/new courses
+          const { data: hotNewCourses } = await supabase
+            .from('courses')
+            .select(`
+              *,
+              profiles:instructor_id(full_name),
+              categories:category_id(name)
+            `)
+            .eq('is_published', true)
+            .or('is_hot.eq.true,is_new.eq.true')
+            .order('created_at', { ascending: false })
+            .limit(section.display_limit);
+
+          courses = (hotNewCourses || []).map(course => ({
+            ...course,
+            instructor_name: course.profiles?.full_name || '운영진',
+            category: course.categories?.name || '기타',
+            thumbnail_url: course.thumbnail_url || course.thumbnail_path || '/placeholder.svg'
+          }));
+        }
+
+        coursesData[section.id] = courses;
       }
 
-      // Process courses data with better handling
-      const processedCourses = coursesData?.map(course => ({
-        ...course,
-        instructor_name: course.profiles?.full_name || (course.instructor_id ? '강사' : '운영진'),
-        category: course.categories?.name || '기타',
-        // Prefer uploaded storage path when direct URL is missing
-        thumbnail_url: course.thumbnail_url || course.thumbnail_path || course.detail_image_path || '/placeholder.svg'
-      })) || [];
-
-      console.log('Processed courses:', processedCourses);
-
-      // Get featured courses - if none are marked as hot/new, get the latest ones
-      let featured = processedCourses.filter(course => course.is_hot || course.is_new);
-      if (featured.length === 0) {
-        featured = processedCourses.slice(0, 8);
-      } else {
-        featured = featured.slice(0, 8);
-      }
-
-      setFeaturedCourses(featured);
-
-      // Categorize courses by category name
-      const free = processedCourses.filter(course => 
-        course.category === '무료강의'
-      ).slice(0, 6);
-
-      const premium = processedCourses.filter(course => 
-        course.category === '프리미엄 강의'
-      ).slice(0, 6);
-
-      const vod = processedCourses.filter(course => 
-        course.category === 'VOD 강의'
-      ).slice(0, 6);
-
-      setFreeCourses(free);
-      setPremiumCourses(premium);
-      setVodCourses(vod);
-
-      // Process categories with course counts
-      const processedCategories = categoriesData?.map(category => ({
-        ...category,
-        course_count: processedCourses.filter(course => course.category === category.name).length
-      })) || [];
-
-      setCategories(processedCategories);
-
-      console.log('Categories with counts:', processedCategories);
-      console.log('Free courses:', free);
-      console.log('Premium courses:', premium);
-      console.log('VOD courses:', vod);
+      setSectionCourses(coursesData);
 
     } catch (error) {
-      console.error('Error fetching courses data:', error);
+      console.error('Error fetching homepage sections:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const CourseCarousel = ({ courses, title, viewAllLink, icon }: { 
+  const CourseCarousel = ({ courses, title, subtitle, viewAllLink, icon }: { 
     courses: Course[], 
     title: string, 
+    subtitle?: string,
     viewAllLink: string,
     icon?: React.ReactNode
   }) => {
@@ -153,9 +179,14 @@ const FeaturedCourses = () => {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
             {icon}
-            <h2 className="text-2xl lg:text-3xl font-bold text-foreground">
-              {title}
-            </h2>
+            <div>
+              <h2 className="text-2xl lg:text-3xl font-bold text-foreground">
+                {title}
+              </h2>
+              {subtitle && (
+                <p className="text-muted-foreground mt-1">{subtitle}</p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-4">
             {courses.length > 4 && (
@@ -206,6 +237,23 @@ const FeaturedCourses = () => {
         )}
       </div>
     );
+  };
+
+  const getIconComponent = (section: HomepageSection) => {
+    if (section.icon_type === 'emoji') {
+      return <span className="text-2xl">{section.icon_value}</span>;
+    } else if (section.icon_type === 'lucide') {
+      const iconMap: Record<string, React.ComponentType<any>> = {
+        Zap,
+        Crown,
+        Monitor,
+        BookOpen,
+        Target
+      };
+      const IconComponent = iconMap[section.icon_value] || BookOpen;
+      return <IconComponent className="w-7 h-7 text-blue-500" />;
+    }
+    return <span className="text-2xl">📚</span>;
   };
 
   const CourseCard = ({ course, index }: { course: Course, index: number }) => {
@@ -302,45 +350,31 @@ const FeaturedCourses = () => {
   return (
     <section className="py-16 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Featured Courses Section */}
-        {featuredCourses.length > 0 && (
-          <CourseCarousel 
-            courses={featuredCourses}
-            title="지금 가장 주목받는 강의"
-            viewAllLink="/courses"
-            icon={<span className="text-2xl">🔥</span>}
-          />
-        )}
+        {sections.map((section) => {
+          const courses = sectionCourses[section.id] || [];
+          if (courses.length === 0) return null;
 
-        {/* Free Courses Section */}
-        {freeCourses.length > 0 && (
-          <CourseCarousel 
-            courses={freeCourses}
-            title="무료로 배우는 이커머스"
-            viewAllLink="/courses/free-courses"
-            icon={<Zap className="w-7 h-7 text-blue-500" />}
-          />
-        )}
+          return (
+            <CourseCarousel 
+              key={section.id}
+              courses={courses}
+              title={section.title}
+              subtitle={section.subtitle}
+              viewAllLink="/courses"
+              icon={getIconComponent(section)}
+            />
+          );
+        })}
 
-        {/* Premium Courses Section */}
-        {premiumCourses.length > 0 && (
-          <CourseCarousel 
-            courses={premiumCourses}
-            title="프리미엄 강의"
-            viewAllLink="/courses/premium-courses"
-            icon={<span className="text-2xl">👑</span>}
-          />
-        )}
-
-        {/* VOD Courses Section */}
-        {vodCourses.length > 0 && (
-          <CourseCarousel 
-            courses={vodCourses}
-            title="VOD 강의"
-            viewAllLink="/courses/vod-courses"
-            icon={<span className="text-2xl">📺</span>}
-          />
+        {/* Fallback message if no sections are available */}
+        {sections.length === 0 && !loading && (
+          <div className="text-center py-12">
+            <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">강의 섹션이 없습니다</h3>
+            <p className="text-muted-foreground">
+              관리자 페이지에서 메인 페이지 섹션을 설정해주세요.
+            </p>
+          </div>
         )}
       </div>
     </section>
