@@ -179,13 +179,18 @@ const FeaturedCourses = () => {
                 {course.title}
               </h3>
               
-              {course.instructor_name && course.instructor_name !== "운영진" && (
+              {course.instructor_name && 
+               course.instructor_name !== "운영진" && 
+               course.instructor_name !== "강사" && (
                 <div className="text-sm text-muted-foreground">
                   {course.instructor_name}
                 </div>
               )}
 
-              {course.rating && course.rating > 0 && course.total_students && course.total_students > 0 && (
+              {course.rating && 
+               course.rating > 0 && 
+               course.total_students && 
+               course.total_students > 0 && (
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-yellow-500">★</span>
                   <span className="font-semibold">{course.rating}</span>
@@ -195,18 +200,11 @@ const FeaturedCourses = () => {
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
-                {course.price > 0 && (
-                  <div className="text-lg font-bold text-foreground">
-                    ₩{course.price.toLocaleString()}
-                  </div>
-                )}
-                {course.duration_hours && course.duration_hours > 0 && (
-                  <div className="text-sm text-muted-foreground ml-auto">
-                    {course.duration_hours}시간
-                  </div>
-                )}
-              </div>
+              {course.price > 0 && (
+                <div className="text-lg font-bold text-foreground">
+                  ₩{course.price.toLocaleString()}
+                </div>
+              )}
             </div>
           </Link>
         ))}
