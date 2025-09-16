@@ -249,8 +249,8 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
       <DialogContent className="w-[95vw] max-w-md max-h-[85vh] p-0 gap-0 bg-white modal-open safe-area-padding overflow-hidden">
         <div className="relative flex flex-col max-h-[85vh]">
           {/* Header */}
-          <DialogHeader className="px-6 pt-8 pb-6 text-center flex-shrink-0">
-            <div className="flex flex-col items-center space-y-4">
+          <DialogHeader className="px-6 pt-6 pb-4 text-center flex-shrink-0">
+            <div className="flex flex-col items-center space-y-3">
               {currentView !== 'main' && (
                 <button
                   onClick={() => setCurrentView('main')}
@@ -259,11 +259,11 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                   <ArrowLeft className="h-5 w-5 text-gray-600" />
                 </button>
               )}
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-                <BookOpen className="h-8 w-8 text-white" />
+              <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                <BookOpen className="h-7 w-7 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">윈들리아카데미</h2>
-              <DialogDescription className="text-gray-600 text-base">
+              <h2 className="text-xl font-bold text-gray-900">윈들리아카데미</h2>
+              <DialogDescription className="text-gray-600 text-sm">
                 {currentView === 'main' && "지금 가입 하고\n첫구매 할인쿠폰을 받으세요!"}
                 {currentView === 'signup' && "새 계정을 만들어보세요"}
                 {currentView === 'forgot-password' && "비밀번호를 재설정하세요"}
@@ -272,7 +272,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
             </div>
           </DialogHeader>
 
-          <div className="px-6 pb-8 overflow-y-auto flex-1 min-h-0">
+          <div className="px-6 pb-6 overflow-y-auto flex-1 min-h-0">
             {/* Main Login View */}
             {currentView === 'main' && (
               <>
