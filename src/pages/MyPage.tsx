@@ -15,10 +15,12 @@ interface EnrollmentWithCourse {
   id: string;
   progress: number;
   enrolled_at: string;
+  completed_at: string | null;
   course: {
     id: string;
     title: string;
     thumbnail_url: string;
+    duration_hours: number;
     instructor: {
       full_name: string;
     };
@@ -53,10 +55,43 @@ const MyPage = () => {
     fetchEnrollments();
   }, [user, navigate]);
 
-  // Refetch when page changes
+  // Refetch when page changes and set up real-time updates
   useEffect(() => {
     if (user) {
       fetchEnrollments();
+      
+      // Set up real-time subscription for enrollment progress updates
+      const channel = supabase
+        .channel('enrollment-progress-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'enrollments',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            fetchEnrollments(); // Refresh data when progress updates
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'session_progress',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            fetchEnrollments(); // Refresh when session progress updates
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [currentPage, user]);
 
@@ -80,10 +115,12 @@ const MyPage = () => {
           id,
           progress,
           enrolled_at,
+          completed_at,
           course:courses(
             id,
             title,
             thumbnail_url,
+            duration_hours,
             instructor:profiles(full_name)
           )
         `)
@@ -95,21 +132,43 @@ const MyPage = () => {
 
       setEnrollments(data || []);
       
-      // Calculate stats from all enrollments (not just current page)
+      // Calculate comprehensive stats
       const { data: allEnrollments } = await supabase
         .from('enrollments')
-        .select('progress')
+        .select(`
+          progress,
+          completed_at,
+          course:courses(duration_hours)
+        `)
+        .eq('user_id', user.id);
+
+      // Get actual watched time from session progress
+      const { data: sessionProgress } = await supabase
+        .from('session_progress')
+        .select('watched_duration_seconds')
         .eq('user_id', user.id);
       
       const totalCourses = allEnrollments?.length || 0;
-      const completedCourses = allEnrollments?.filter(e => e.progress >= 100).length || 0;
-      const inProgressCourses = allEnrollments?.filter(e => e.progress < 100 && e.progress > 0).length || 0;
+      const completedCourses = allEnrollments?.filter(e => e.completed_at || e.progress >= 100).length || 0;
+      
+      // 진행 중: 실제로 학습이 시작된 강의 (progress > 5% 이상)
+      const inProgressCourses = allEnrollments?.filter(e => 
+        !e.completed_at && 
+        e.progress >= 5 && 
+        e.progress < 100
+      ).length || 0;
+      
+      // 실제 학습시간 계산 (초 단위를 시간으로 변환)
+      const totalWatchedSeconds = sessionProgress?.reduce((sum, sp) => 
+        sum + (sp.watched_duration_seconds || 0), 0
+      ) || 0;
+      const totalHours = Math.round(totalWatchedSeconds / 3600 * 10) / 10; // 소수점 1자리
       
       setStats({
         totalCourses,
         completedCourses,
         inProgressCourses,
-        totalHours: totalCourses * 10 // 예시 계산
+        totalHours
       });
     } catch (error) {
       console.error('Error fetching enrollments:', error);
@@ -271,10 +330,21 @@ const MyPage = () => {
                                   className="w-24 h-16 object-cover rounded-lg"
                                 />
                                 <Badge 
-                                  variant={enrollment.progress >= 100 ? "default" : "secondary"}
-                                  className={`absolute -top-1 -right-1 text-xs ${enrollment.progress >= 100 ? "bg-green-600" : "bg-blue-600"}`}
+                                  variant={enrollment.completed_at || enrollment.progress >= 100 ? "default" : enrollment.progress >= 5 ? "secondary" : "outline"}
+                                  className={`absolute -top-1 -right-1 text-xs ${
+                                    enrollment.completed_at || enrollment.progress >= 100 
+                                      ? "bg-green-600" 
+                                      : enrollment.progress >= 5 
+                                        ? "bg-blue-600" 
+                                        : "bg-gray-500"
+                                  }`}
                                 >
-                                  {enrollment.progress >= 100 ? "완료" : "진행중"}
+                                  {enrollment.completed_at || enrollment.progress >= 100 
+                                    ? "완료" 
+                                    : enrollment.progress >= 5 
+                                      ? "진행중" 
+                                      : "시작 전"
+                                  }
                                 </Badge>
                               </div>
                               
