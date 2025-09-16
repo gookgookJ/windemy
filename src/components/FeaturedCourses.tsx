@@ -276,11 +276,11 @@ const FeaturedCourses = () => {
           {/* Favorite Heart Button - 원 크기를 하트의 1.5배로 축소 */}
           <button
             onClick={handleFavoriteClick}
-            className="absolute bottom-1 right-1 w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-sm hover:shadow-md hover:scale-110 z-10 touch-target flex items-center justify-center"
+            className="absolute bottom-1 right-1 w-2.5 h-2.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-sm hover:shadow-md hover:scale-110 z-10 touch-target flex items-center justify-center"
             aria-label={isFavorite(course.id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
           >
             <Heart 
-              className={`w-2 h-2 sm:w-2.5 sm:h-2.5 lg:w-3 lg:h-3 transition-all duration-200 ${
+              className={`w-3 h-3 sm:w-2.5 sm:h-2.5 lg:w-3 lg:h-3 transition-all duration-200 ${
                 isFavorite(course.id) 
                   ? 'text-red-500 fill-red-500' 
                   : 'text-gray-400 hover:text-red-400'
