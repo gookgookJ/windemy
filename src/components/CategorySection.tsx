@@ -14,21 +14,21 @@ const CategorySection = () => {
       icon: BookOpen, 
       label: "무료강의", 
       color: "bg-blue-100 text-blue-600",
-      link: "/courses/category/7c3b2929-c841-42b0-9047-a7c63abb40fa",
+      link: "/courses/free-courses",
       isExternal: false
     },
     { 
       icon: Crown, 
       label: "프리미엄 강의", 
       color: "bg-purple-100 text-purple-600",
-      link: "/courses/category/76496899-53c0-41d7-a716-ee0ebbab6a41",
+      link: "/courses/premium-courses",
       isExternal: false
     },
     { 
       icon: Play, 
       label: "VOD", 
       color: "bg-red-100 text-red-600",
-      link: "/courses/category/ce6f2ffc-96bf-4cf0-8f83-27ae2f2fc273",
+      link: "/courses/vod-courses",
       isExternal: false
     },
     { 
@@ -54,12 +54,6 @@ const CategorySection = () => {
     },
   ];
 
-  const handleCategoryClick = (category: typeof categories[0]) => {
-    if (category.isExternal) {
-      window.open(category.link, '_blank', 'noopener,noreferrer');
-    }
-  };
-
   return (
     <section className="py-12 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -77,9 +71,9 @@ const CategorySection = () => {
             );
 
             return category.isExternal ? (
-              <div key={index} onClick={() => handleCategoryClick(category)}>
+              <a key={index} href={category.link} target="_blank" rel="noopener noreferrer" className="block">
                 {content}
-              </div>
+              </a>
             ) : (
               <Link key={index} to={category.link}>
                 {content}
