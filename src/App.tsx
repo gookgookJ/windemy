@@ -11,6 +11,7 @@ import Payment from "./pages/Payment";
 import PurchaseHistory from "./pages/PurchaseHistory";
 import CourseCatalog from "./pages/CourseCatalog";
 import AuthCallback from "./pages/AuthCallback";
+import SearchResults from "./pages/SearchResults";
 
 import MyPage from "./pages/MyPage";
 import Admin from "./pages/Admin";
@@ -59,6 +60,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
             <Route path="/instructor-apply" element={<InstructorApply />} />
+            <Route path="/search" element={<SearchResults />} />
             <Route path="/courses" element={<CourseCatalog />} />
             <Route path="/courses/:category" element={<CategoryCourses />} />
             <Route path="/course/:id" element={<CourseDetail />} />
