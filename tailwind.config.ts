@@ -117,12 +117,16 @@ export default {
 				},
 				// Slide animations
 				'slide-in-right': {
-					'0%': { transform: 'translateX(100%)' },
-					'100%': { transform: 'translateX(0)' }
+					'0%': { transform: 'translateX(30px)', opacity: '0.8' },
+					'100%': { transform: 'translateX(0)', opacity: '1' }
+				},
+				'slide-in-left': {
+					'0%': { transform: 'translateX(-30px)', opacity: '0.8' },
+					'100%': { transform: 'translateX(0)', opacity: '1' }
 				},
 				'slide-out-right': {
-					'0%': { transform: 'translateX(0)' },
-					'100%': { transform: 'translateX(100%)' }
+					'0%': { transform: 'translateX(0)', opacity: '1' },
+					'100%': { transform: 'translateX(30px)', opacity: '0.8' }
 				},
 			},
 			animation: {
@@ -132,8 +136,9 @@ export default {
 				'fade-out': 'fade-out 0.3s ease-out',
 				'scale-in': 'scale-in 0.2s ease-out',
 				'scale-out': 'scale-out 0.2s ease-out',
-				'slide-in-right': 'slide-in-right 0.3s ease-out',
-				'slide-out-right': 'slide-out-right 0.3s ease-out',
+				'slide-in-right': 'slide-in-right 0.6s ease-out',
+				'slide-in-left': 'slide-in-left 0.6s ease-out',
+				'slide-out-right': 'slide-out-right 0.6s ease-out',
 				enter: 'fade-in 0.3s ease-out, scale-in 0.2s ease-out',
 				exit: 'fade-out 0.3s ease-out, scale-out 0.2s ease-out'
 			}
