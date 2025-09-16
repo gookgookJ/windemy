@@ -68,23 +68,13 @@ const InstructorApply = () => {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden border-b border-border bg-white -mt-16" style={{ padding: '120px 0' }}>
-        <div className="absolute inset-0 -z-10">
-          {/* Base gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-white to-blue-50/60" />
-          
-          {/* Dot pattern overlay */}
+      <section className="relative bg-white overflow-hidden border-b border-border">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 to-secondary/5">
           <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 2px 2px, rgba(59, 130, 246, 0.15) 1px, transparent 0)`,
-            backgroundSize: '32px 32px'
-          }} />
-          
-          {/* Additional subtle grid lines */}
-          <div className="absolute inset-0 opacity-30" style={{
-            backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='grid' patternUnits='userSpaceOnUse' width='60' height='60'%3E%3Cpath d='M30 0v60M0 30h60' stroke='%2393c5fd' stroke-width='0.5' fill='none'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23grid)'/%3E%3C/svg%3E\")",
+            backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='grid' patternUnits='userSpaceOnUse' width='100' height='100'%3E%3Cpath d='M25 50h50 M50 25v50' stroke='%23e1e4ed' stroke-width='0.5' fill='none'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23grid)'/%3E%3C/svg%3E\")"
           }} />
         </div>
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 relative z-10">
           <div className="max-w-7xl mx-auto text-left">
             <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
               WINDLY ACADEMY INSTRUCTOR
