@@ -64,7 +64,7 @@ const Payment = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate('/auth');
+      navigate('/');
       return;
     }
     

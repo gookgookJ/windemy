@@ -40,7 +40,7 @@ const PurchaseHistory = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate('/auth');
+      navigate('/');
       return;
     }
     fetchOrders();

@@ -44,7 +44,7 @@ const Inquiry = () => {
     if (meta) meta.setAttribute("content", "1:1 문의를 통해 궁금한 점을 해결하세요");
     
     if (!user) {
-      navigate('/auth');
+      navigate('/');
       return;
     }
     fetchTickets();

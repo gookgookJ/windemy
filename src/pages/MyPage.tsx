@@ -47,7 +47,7 @@ const MyPage = () => {
     if (meta) meta.setAttribute("content", "수강 중인 강의와 학습 진도를 확인하세요");
     
     if (!user) {
-      navigate('/auth');
+      navigate('/');
       return;
     }
     fetchEnrollments();

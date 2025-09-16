@@ -17,7 +17,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      navigate('/auth');
+      navigate('/');
       return;
     }
     // 임시로 관리자 권한 체크 제거 - 테스트용

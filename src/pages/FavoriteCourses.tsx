@@ -35,7 +35,7 @@ const FavoriteCourses = () => {
     if (meta) meta.setAttribute("content", "관심 있는 강의들을 모아서 확인하세요");
     
     if (!user) {
-      navigate('/auth');
+      navigate('/');
       return;
     }
     fetchFavorites();

@@ -18,7 +18,7 @@ const FAQ = () => {
     if (meta) meta.setAttribute("content", "자주 묻는 질문과 답변을 확인하세요");
     
     if (!user) {
-      navigate('/auth');
+      navigate('/');
     }
   }, [user, navigate]);
 

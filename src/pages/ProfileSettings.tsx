@@ -51,7 +51,7 @@ const ProfileSettings = () => {
     if (meta) meta.setAttribute("content", "회원정보를 관리하고 비밀번호를 변경하세요");
     
     if (!user) {
-      navigate('/auth');
+      navigate('/');
       return;
     }
 

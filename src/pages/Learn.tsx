@@ -57,7 +57,7 @@ const Learn = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate('/auth');
+      navigate('/');
       return;
     }
     if (courseId) {

@@ -30,7 +30,7 @@ const Cart = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate('/auth');
+      navigate('/');
       return;
     }
     fetchCartItems();

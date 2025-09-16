@@ -310,7 +310,7 @@ const CourseDetail = () => {
 
   const handlePurchase = async () => {
     if (!user) {
-      navigate('/auth');
+      navigate('/');
       return;
     }
     
