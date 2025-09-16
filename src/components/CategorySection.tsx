@@ -7,6 +7,7 @@ import {
   FileText
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const CategorySection = () => {
   const categories = [
@@ -54,9 +55,48 @@ const CategorySection = () => {
     },
   ];
   
-  const handleExternalClick = (e: React.MouseEvent, url: string) => {
+  const { toast } = useToast();
+  
+  const handleExternalClick = async (e: React.MouseEvent, url: string) => {
     e.preventDefault();
-    window.open(url, "_blank", "noopener,noreferrer");
+
+    // 1) Try to navigate the top window (escaping preview iframe)
+    try {
+      if (window.top && window.top !== window.self) {
+        // Only allow on direct user action
+        (window.top as Window).location.href = url;
+        return;
+      }
+    } catch (_) {
+      // Ignore and fallback
+    }
+
+    // 2) Try opening a new tab
+    const newWin = window.open(url, "_blank", "noopener,noreferrer");
+    if (newWin) return;
+
+    // 3) Programmatic anchor fallback
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    // 4) If still blocked, copy link and show guidance
+    try {
+      await navigator.clipboard?.writeText(url);
+      toast({
+        title: "새 탭 열기가 차단되었습니다",
+        description: "링크를 클립보드에 복사했어요. 새 탭에서 붙여넣어 열어주세요.",
+      });
+    } catch {
+      toast({
+        title: "새 탭 열기가 차단되었습니다",
+        description: "브라우저 보안정책으로 차단됐습니다. 링크를 길게 눌러 새 탭에서 열기를 선택하세요.",
+      });
+    }
   };
 
   return (
