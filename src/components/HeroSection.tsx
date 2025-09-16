@@ -97,8 +97,8 @@ const HeroSection = () => {
           </div>
 
           {/* Center Panel (Current Slide) - Full visible */}
-          <div className="relative z-10 mx-8">
-            <div className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-2xl">
+          <div className="relative z-10 mx-4">
+            <div className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden">
               <div className={cn("absolute inset-0 bg-gradient-to-br", slides[currentSlide].bgColor)}>
                 <div className="flex items-center h-full">
                   <div className="text-white space-y-4 px-12 flex-1">
