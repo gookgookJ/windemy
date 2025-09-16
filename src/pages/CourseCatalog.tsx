@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import CourseCard from "@/components/CourseCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const CourseCatalog = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -16,6 +17,7 @@ const CourseCatalog = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLevel, setFilterLevel] = useState("all");
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchCourses();
@@ -34,7 +36,8 @@ const CourseCatalog = () => {
 
   const fetchCourses = async () => {
     try {
-      const { data, error } = await supabase
+      // First get all published courses
+      const { data: publishedCourses, error: publishedError } = await supabase
         .from('courses')
         .select(`
           *,
@@ -44,9 +47,42 @@ const CourseCatalog = () => {
         `)
         .eq('is_published', true);
 
-      if (error) throw error;
+      if (publishedError) throw publishedError;
 
-      const coursesWithStats = data.map(course => ({
+      let allCourses = publishedCourses || [];
+
+      // If user is authenticated, also get their enrolled courses (even if not published)
+      if (user) {
+        const { data: enrolledCourses, error: enrolledError } = await supabase
+          .from('enrollments')
+          .select(`
+            course_id,
+            courses!inner(
+              *,
+              profiles:instructor_id(full_name),
+              categories:category_id(name),
+              course_reviews(rating)
+            )
+          `)
+          .eq('user_id', user.id);
+
+        if (enrolledError) throw enrolledError;
+
+        // Add enrolled courses that might not be published
+        const enrolledCourseData = enrolledCourses?.map(e => e.courses).filter(Boolean) || [];
+        const publishedCourseIds = new Set(publishedCourses?.map(c => c.id) || []);
+        
+        // Add non-published enrolled courses
+        enrolledCourseData.forEach(course => {
+          if (!publishedCourseIds.has(course.id)) {
+            allCourses.push(course);
+          }
+        });
+      }
+
+      if (!allCourses) allCourses = [];
+
+      const coursesWithStats = allCourses.map(course => ({
         id: course.id,
         title: course.title,
         instructor: course.profiles?.full_name || 'Unknown',
