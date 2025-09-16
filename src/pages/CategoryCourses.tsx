@@ -160,13 +160,13 @@ const CategoryCourses = () => {
 
     // Apply special category logic based on route FIRST
     if (category === "free-courses") {
-      filtered = filtered.filter(course => course.price === 0);
+      filtered = filtered.filter(course => course.category === "무료강의");
     } else if (category === "vod-courses") {
       // Filter by VOD category specifically
       filtered = filtered.filter(course => course.category === "VOD 강의");
     } else if (category === "premium-courses") {
-      // Filter by premium courses (paid courses)
-      filtered = filtered.filter(course => course.price > 0);
+      // Filter by premium courses category specifically
+      filtered = filtered.filter(course => course.category === "프리미엄 강의");
     }
 
     // Then apply additional category filter from sidebar (only if not "all")
