@@ -272,7 +272,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
             </div>
           </DialogHeader>
 
-          <div className="px-6 pb-6 overflow-y-auto flex-1 min-h-0">
+          <div className="px-6 pb-4 overflow-y-auto flex-1 min-h-0">
             {/* Main Login View */}
             {currentView === 'main' && (
               <>
@@ -313,7 +313,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-lg mt-6 touch-target"
+                    className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-lg mt-4 touch-target"
                     disabled={isLoading}
                   >
                     {isLoading ? '로그인 중...' : '로그인'}
@@ -321,7 +321,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                 </form>
 
                 {/* Footer Links */}
-                <div className="flex justify-center space-x-4 mt-6 text-sm text-gray-500">
+                <div className="flex justify-center space-x-4 mt-4 text-sm text-gray-500">
                   <button 
                     onClick={() => setCurrentView('find-id')}
                     className="hover:text-gray-700"
