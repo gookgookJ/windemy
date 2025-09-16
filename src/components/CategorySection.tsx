@@ -99,8 +99,6 @@ const CategorySection = () => {
     }
   };
 
-  const inIframe = typeof window !== "undefined" && window.self !== window.top;
-
   return (
     <section className="py-12 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -118,25 +116,16 @@ const CategorySection = () => {
             );
 
             return category.isExternal ? (
-              inIframe ? (
-                <Link
-                  key={index}
-                  to={`/external?u=${encodeURIComponent(category.link)}&label=${encodeURIComponent(category.label)}`}
-                >
-                  {content}
-                </Link>
-              ) : (
-                <a
-                  key={index}
-                  href={category.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                  onClick={(e) => handleExternalClick(e, category.link)}
-                >
-                  {content}
-                </a>
-              )
+              <a
+                key={index}
+                href={category.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+                onClick={(e) => handleExternalClick(e, category.link)}
+              >
+                {content}
+              </a>
             ) : (
               <Link key={index} to={category.link}>
                 {content}

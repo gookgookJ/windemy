@@ -43,7 +43,6 @@ import FAQ from "./pages/FAQ";
 import ProfileSettings from "./pages/ProfileSettings";
 import About from "./pages/About";
 import InstructorApply from "./pages/InstructorApply";
-import ExternalLink from "./pages/ExternalLink";
 
 console.log('Debug React in App.tsx', React, typeof (React as any)?.useEffect);
 
@@ -93,7 +92,6 @@ const App = () => (
             <Route path="/admin/instructor-profile/:id" element={<AdminInstructorProfile />} />
             <Route path="/admin/hero-slides" element={<AdminHeroSlides />} />
             <Route path="/learn/:courseId" element={<Learn />} />
-            <Route path="/external" element={<ExternalLink />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
