@@ -86,10 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setSession(null);
 
-      // 2) Supabase 로그아웃 시도
-      await supabase.auth.signOut();
-      
-      // 3) 로컬스토리지 정리
+      // 2) 로컬스토리지 정리 (토큰 제거)
       try {
         Object.keys(localStorage).forEach((key) => {
           if (key.startsWith('sb-') || key.includes('supabase.auth.token')) {
@@ -98,18 +95,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       } catch {}
 
+      // 3) Supabase 로그아웃은 백그라운드로 처리 (리다이렉트 지연 방지)
+      setTimeout(() => {
+        supabase.auth.signOut().catch(() => {});
+      }, 0);
+
       toast({
         title: "로그아웃",
         description: "성공적으로 로그아웃되었습니다."
       });
 
-      // 4) 홈으로 이동 (즉시 이동)
-      window.location.href = '/';
+      // 4) 즉시 홈으로 리다이렉트 (히스토리 대체로 뒤로가기 방지)
+      window.location.replace('/');
       
     } catch (error) {
       console.error('Logout error:', error);
-      // 에러가 발생해도 로컬 상태는 이미 초기화됨
-      window.location.href = '/';
+      window.location.replace('/');
     }
   };
 

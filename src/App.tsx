@@ -10,7 +10,6 @@ import CourseDetail from "./pages/CourseDetail";
 import Payment from "./pages/Payment";
 import PurchaseHistory from "./pages/PurchaseHistory";
 import CourseCatalog from "./pages/CourseCatalog";
-import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import Cart from "./pages/Cart";
 import MyPage from "./pages/MyPage";
@@ -59,7 +58,7 @@ const App = () => (
             <Route path="/courses/:category" element={<CategoryCourses />} />
             <Route path="/course/:id" element={<CourseDetail />} />
             <Route path="/payment/:id" element={<Payment />} />
-            <Route path="/auth" element={<Auth />} />
+            
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/purchase-history" element={<PurchaseHistory />} />
