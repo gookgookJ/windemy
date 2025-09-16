@@ -74,28 +74,28 @@ const InstructorApply = () => {
             backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='grid' patternUnits='userSpaceOnUse' width='100' height='100'%3E%3Cpath d='M25 50h50 M50 25v50' stroke='%23e1e4ed' stroke-width='0.5' fill='none'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23grid)'/%3E%3C/svg%3E\")"
           }} />
         </div>
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-40 relative z-10">
-          <div className="max-w-6xl mx-auto text-center">
-            <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-12 border border-primary/20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 relative z-10">
+          <div className="max-w-7xl mx-auto text-left">
+            <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
               WINDLY ACADEMY INSTRUCTOR
             </div>
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-tight mb-12">
+            <h1 className="text-5xl sm:text-6xl font-black leading-tight mb-8">
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 최고의 전문가
               </span>
               를 위한<br />
               최상의 파트너십
             </h1>
-            <div className="max-w-4xl mx-auto mb-16">
-              <p className="text-xl sm:text-2xl text-muted-foreground leading-relaxed mb-8">
+            <div className="max-w-4xl mb-12">
+              <p className="text-xl text-muted-foreground leading-relaxed mb-6">
                 윈들리 아카데미는 단순한 플랫폼이 아닙니다.
               </p>
-              <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed">
+              <p className="text-lg text-muted-foreground leading-relaxed">
                 강사님의 지식과 경험이 가장 빛나는 브랜드가 될 수 있도록<br />
                 <strong className="text-foreground">기획, 제작, 마케팅, 운영까지 전담</strong>합니다.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row justify-center gap-6">
+            <div className="flex flex-col sm:flex-row gap-6">
               <Button size="lg" className="text-lg px-10 py-6 h-auto font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105">
                 지금 바로 지원하기
                 <ArrowRight className="ml-3 h-6 w-6" />
@@ -359,7 +359,7 @@ const InstructorApply = () => {
         {/* FAQ Section */}
         <section className="py-20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-7xl mx-auto">
               <div className="text-left mb-16">
                 <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
                   FAQ
