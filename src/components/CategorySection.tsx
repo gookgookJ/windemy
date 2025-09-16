@@ -14,21 +14,21 @@ const CategorySection = () => {
       icon: BookOpen, 
       label: "무료강의", 
       color: "bg-blue-100 text-blue-600",
-      link: "/courses?type=free",
+      link: "/courses/category/7c3b2929-c841-42b0-9047-a7c63abb40fa",
       isExternal: false
     },
     { 
       icon: Crown, 
       label: "프리미엄 강의", 
       color: "bg-purple-100 text-purple-600",
-      link: "/courses?type=premium",
+      link: "/courses/category/76496899-53c0-41d7-a716-ee0ebbab6a41",
       isExternal: false
     },
     { 
       icon: Play, 
       label: "VOD", 
       color: "bg-red-100 text-red-600",
-      link: "/courses?type=vod",
+      link: "/courses/category/ce6f2ffc-96bf-4cf0-8f83-27ae2f2fc273",
       isExternal: false
     },
     { 
@@ -68,7 +68,7 @@ const CategorySection = () => {
             const content = (
               <div className="flex flex-col items-center group cursor-pointer">
                 <div className={`w-16 h-16 rounded-2xl ${category.color} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform duration-200`}>
-                  <category.icon className="w-8 h-8" />
+                  <category.icon className={`w-8 h-8 ${category.label === '유튜브' ? 'flex-shrink-0' : ''}`} />
                 </div>
                 <span className="text-sm font-medium text-foreground text-center">
                   {category.label}
