@@ -442,9 +442,9 @@ const CourseDetail = () => {
         </div>
 
         {/* Desktop Layout: 2-column structure with fixed widths */}
-        <div className="hidden lg:flex gap-8 justify-center min-h-screen">
+        <div className="hidden lg:flex gap-8 justify-center relative">
           {/* Left Column: Video and Content - Fixed 757px width */}
-          <div className="w-[757px] flex-shrink-0 pb-20">
+          <div className="w-[757px] flex-shrink-0 pb-20" style={{ minHeight: '200vh' }}>
             {/* Thumbnail Section - Desktop: 757x426, Mobile: responsive */}
             <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
               <img
@@ -657,8 +657,8 @@ const CourseDetail = () => {
           </div>
 
           {/* Right Column: Fixed Purchase Card - Desktop Only */}
-          <div className="hidden lg:block w-[383px] flex-shrink-0 relative">
-            <div className="sticky top-28 h-fit max-h-[calc(100vh-8rem)] overflow-y-auto">
+          <div className="w-[383px] flex-shrink-0">
+            <div className="sticky top-24 z-30">
               <Card className="shadow-lg border border-border/50 p-6">
                 <div className="space-y-6">
                   {/* Course Title */}
