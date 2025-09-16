@@ -9,6 +9,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
@@ -25,8 +28,14 @@ import {
   Calendar,
   Shield,
   PlusCircle,
-  Image
+  Image,
+  Target,
+  Zap,
+  Crown,
+  Monitor,
+  ChevronRight
 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const menuItems = [
   {
@@ -73,9 +82,31 @@ const menuItems = [
   },
   {
     title: '메인 페이지 섹션',
-    url: '/admin/homepage-sections',
+    url: '#',
     icon: BookOpen,
-    group: 'content'
+    group: 'content',
+    submenu: [
+      {
+        title: '지금 가장 주목받는 강의',
+        url: '/admin/homepage-sections/featured',
+        icon: Target
+      },
+      {
+        title: '무료로 배우는 이커머스',
+        url: '/admin/homepage-sections/free',
+        icon: Zap
+      },
+      {
+        title: '프리미엄 강의', 
+        url: '/admin/homepage-sections/premium',
+        icon: Crown
+      },
+      {
+        title: 'VOD 강의',
+        url: '/admin/homepage-sections/vod',
+        icon: Monitor
+      }
+    ]
   },
   {
     title: '주문 관리',
@@ -169,6 +200,7 @@ export const AdminSidebar = () => {
     if (path === '/admin') {
       return currentPath === '/admin';
     }
+    if (path === '#') return false;
     return currentPath.startsWith(path);
   };
 
@@ -183,6 +215,68 @@ export const AdminSidebar = () => {
     acc[item.group].push(item);
     return acc;
   }, {} as Record<string, typeof menuItems>);
+
+  const renderMenuItem = (item: any) => {
+    if (item.submenu) {
+      return (
+        <SidebarMenuItem key={item.title}>
+          <Collapsible defaultOpen={currentPath.includes('/admin/homepage-sections')}>
+            <CollapsibleTrigger asChild>
+              <SidebarMenuButton className="w-full justify-between">
+                <div className="flex items-center">
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {state !== "collapsed" && <span>{item.title}</span>}
+                </div>
+                {state !== "collapsed" && <ChevronRight className="h-4 w-4" />}
+              </SidebarMenuButton>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarMenuSub>
+                {item.submenu.map((subItem: any) => (
+                  <SidebarMenuSubItem key={subItem.title}>
+                    <SidebarMenuSubButton asChild>
+                      <NavLink 
+                        to={subItem.url} 
+                        className={getNavClassName(subItem.url)}
+                        onClick={() => {
+                          setTimeout(() => {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }, 100);
+                        }}
+                      >
+                        <subItem.icon className="mr-2 h-4 w-4" />
+                        {state !== "collapsed" && <span>{subItem.title}</span>}
+                      </NavLink>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                ))}
+              </SidebarMenuSub>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarMenuItem>
+      );
+    }
+
+    return (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton asChild>
+          <NavLink 
+            to={item.url} 
+            className={getNavClassName(item.url)}
+            end={item.url === '/admin'}
+            onClick={() => {
+              setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }, 100);
+            }}
+          >
+            <item.icon className="mr-2 h-4 w-4" />
+            {state !== "collapsed" && <span>{item.title}</span>}
+          </NavLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
 
   return (
     <Sidebar collapsible="icon" className="pt-16 border-r">
@@ -203,26 +297,7 @@ export const AdminSidebar = () => {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink 
-                        to={item.url} 
-                        className={getNavClassName(item.url)}
-                        end={item.url === '/admin'}
-                        onClick={() => {
-                          // Smooth scroll to top when navigating
-                          setTimeout(() => {
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }, 100);
-                        }}
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {state !== "collapsed" && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {items.map((item) => renderMenuItem(item))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

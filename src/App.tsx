@@ -33,6 +33,7 @@ import AdminLearningAnalytics from "./pages/admin/LearningAnalytics";
 import AdminProgressMonitoring from "./pages/admin/ProgressMonitoring";
 import AdminHeroSlides from "./pages/admin/HeroSlides";
 import AdminHomepageSections from "./pages/admin/HomepageSections";
+import AdminHomepageSectionManager from "./pages/admin/HomepageSectionManager";
 import CategoryCourses from "./pages/CategoryCourses";
 import Learn from "./pages/Learn";
 import NotFound from "./pages/NotFound";
@@ -97,6 +98,7 @@ const App = () => (
             <Route path="/admin/instructor-profile/:id" element={<AdminInstructorProfile />} />
             <Route path="/admin/hero-slides" element={<AdminHeroSlides />} />
             <Route path="/admin/homepage-sections" element={<AdminHomepageSections />} />
+            <Route path="/admin/homepage-sections/:sectionType" element={<AdminHomepageSectionManager />} />
             <Route path="/learn/:courseId" element={<Learn />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
