@@ -138,11 +138,7 @@ All colors MUST be HSL.
     -webkit-line-clamp: 2;
     line-height: 1.2;
   }
-  .hover-scale {
-    @apply transition-transform duration-200 hover:scale-105;
-  }
 }
-
 
 @layer base {
   * {
