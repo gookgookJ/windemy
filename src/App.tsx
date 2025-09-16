@@ -11,7 +11,7 @@ import Payment from "./pages/Payment";
 import PurchaseHistory from "./pages/PurchaseHistory";
 import CourseCatalog from "./pages/CourseCatalog";
 import AuthCallback from "./pages/AuthCallback";
-import Cart from "./pages/Cart";
+
 import MyPage from "./pages/MyPage";
 import Admin from "./pages/Admin";
 import AdminUsers from "./pages/admin/Users";
@@ -64,7 +64,7 @@ const App = () => (
             <Route path="/payment/:id" element={<Payment />} />
             
             <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/cart" element={<Cart />} />
+            
             <Route path="/purchase-history" element={<PurchaseHistory />} />
             <Route path="/my-page" element={<MyPage />} />
             <Route path="/favorite-courses" element={<FavoriteCourses />} />

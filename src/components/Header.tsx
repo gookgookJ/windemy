@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, ShoppingCart, User, Menu, X, LogOut } from "lucide-react";
+import { Search, User, Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -99,12 +99,6 @@ const Header = () => {
               <Search className="w-5 h-5" />
             </Button>
 
-            {/* Cart */}
-            <Link to="/cart">
-              <Button variant="ghost" size="icon" className="relative">
-                <ShoppingCart className="w-5 h-5" />
-              </Button>
-            </Link>
 
             {/* User Menu */}
             {user ? (
@@ -201,9 +195,6 @@ const Header = () => {
                     )}
                   </div>
                 ))}
-                <Link to="/cart" className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2">
-                  장바구니
-                </Link>
                 {user && (
                   <Link to="/my-page" className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2">
                     마이페이지
