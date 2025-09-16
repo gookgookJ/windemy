@@ -5,12 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Filter, Download, Eye, MoreHorizontal, Calendar, CreditCard, Package, FileText, FileSpreadsheet, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Search, Filter, Download, Eye, MoreHorizontal, Calendar, CreditCard, Package, FileText, FileSpreadsheet, ChevronLeft, ChevronRight, RefreshCw, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface OrderItem {
   id: string;
@@ -47,7 +53,31 @@ const Orders = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [exporting, setExporting] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedColumns, setSelectedColumns] = useState({
+    id: true,
+    customer: true,
+    email: true,
+    course: true,
+    payment_method: true,
+    status: true,
+    amount: true,
+    date: true
+  });
   const { toast } = useToast();
+
+  const exportColumns = [
+    { key: 'id', label: '주문번호' },
+    { key: 'customer', label: '고객명' },
+    { key: 'email', label: '이메일' },
+    { key: 'course', label: '강의명' },
+    { key: 'payment_method', label: '결제방법' },
+    { key: 'status', label: '상태' },
+    { key: 'amount', label: '주문금액' },
+    { key: 'date', label: '주문일시' }
+  ];
 
   useEffect(() => {
     fetchOrders();
@@ -245,23 +275,29 @@ const Orders = () => {
     }
   };
 
-  // CSV 내보내기 함수
+  // CSV 내보내기 함수 (선택된 컬럼만)
   const exportToCSV = () => {
     setExporting(true);
     try {
-      const csvData = filteredOrders.map(order => ({
-        '주문번호': order.id,
-        '고객명': order.profiles?.full_name || '이름 없음',
-        '이메일': order.profiles?.email || '',
-        '강의명': order.order_items.map(item => item.course.title).join(', '),
-        '결제방법': getPaymentMethodText(order.payment_method),
-        '상태': order.status === 'completed' ? '결제완료' : 
-                order.status === 'pending' ? '결제대기' :
-                order.status === 'cancelled' ? '취소됨' :
-                order.status === 'refunded' ? '환불됨' : order.status,
-        '주문금액': order.total_amount,
-        '주문일시': new Date(order.created_at).toLocaleString('ko-KR')
-      }));
+      const csvData = filteredOrders.map(order => {
+        const row: any = {};
+        
+        if (selectedColumns.id) row['주문번호'] = order.id;
+        if (selectedColumns.customer) row['고객명'] = order.profiles?.full_name || '이름 없음';
+        if (selectedColumns.email) row['이메일'] = order.profiles?.email || '';
+        if (selectedColumns.course) row['강의명'] = order.order_items.map(item => item.course.title).join(', ');
+        if (selectedColumns.payment_method) row['결제방법'] = getPaymentMethodText(order.payment_method);
+        if (selectedColumns.status) {
+          row['상태'] = order.status === 'completed' ? '결제완료' : 
+                      order.status === 'pending' ? '결제대기' :
+                      order.status === 'cancelled' ? '취소됨' :
+                      order.status === 'refunded' ? '환불됨' : order.status;
+        }
+        if (selectedColumns.amount) row['주문금액'] = order.total_amount;
+        if (selectedColumns.date) row['주문일시'] = new Date(order.created_at).toLocaleString('ko-KR');
+        
+        return row;
+      });
 
       const csv = [
         Object.keys(csvData[0]).join(','),
@@ -284,6 +320,7 @@ const Orders = () => {
         title: "내보내기 완료",
         description: "CSV 파일이 다운로드되었습니다."
       });
+      setShowExportModal(false);
     } catch (error) {
       console.error('CSV export error:', error);
       toast({
@@ -296,39 +333,45 @@ const Orders = () => {
     }
   };
 
-  // Excel 내보내기 함수
+  // Excel 내보내기 함수 (선택된 컬럼만)
   const exportToExcel = () => {
     setExporting(true);
     try {
-      const excelData = filteredOrders.map(order => ({
-        '주문번호': order.id,
-        '고객명': order.profiles?.full_name || '이름 없음',
-        '이메일': order.profiles?.email || '',
-        '강의명': order.order_items.map(item => item.course.title).join(', '),
-        '결제방법': getPaymentMethodText(order.payment_method),
-        '상태': order.status === 'completed' ? '결제완료' : 
-                order.status === 'pending' ? '결제대기' :
-                order.status === 'cancelled' ? '취소됨' :
-                order.status === 'refunded' ? '환불됨' : order.status,
-        '주문금액': order.total_amount,
-        '주문일시': new Date(order.created_at).toLocaleString('ko-KR')
-      }));
+      const excelData = filteredOrders.map(order => {
+        const row: any = {};
+        
+        if (selectedColumns.id) row['주문번호'] = order.id;
+        if (selectedColumns.customer) row['고객명'] = order.profiles?.full_name || '이름 없음';
+        if (selectedColumns.email) row['이메일'] = order.profiles?.email || '';
+        if (selectedColumns.course) row['강의명'] = order.order_items.map(item => item.course.title).join(', ');
+        if (selectedColumns.payment_method) row['결제방법'] = getPaymentMethodText(order.payment_method);
+        if (selectedColumns.status) {
+          row['상태'] = order.status === 'completed' ? '결제완료' : 
+                      order.status === 'pending' ? '결제대기' :
+                      order.status === 'cancelled' ? '취소됨' :
+                      order.status === 'refunded' ? '환불됨' : order.status;
+        }
+        if (selectedColumns.amount) row['주문금액'] = order.total_amount;
+        if (selectedColumns.date) row['주문일시'] = new Date(order.created_at).toLocaleString('ko-KR');
+        
+        return row;
+      });
 
       const worksheet = XLSX.utils.json_to_sheet(excelData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, '주문목록');
 
       // 컬럼 너비 조정
-      const colWidths = [
-        { wch: 30 }, // 주문번호
-        { wch: 15 }, // 고객명
-        { wch: 25 }, // 이메일
-        { wch: 40 }, // 강의명
-        { wch: 12 }, // 결제방법
-        { wch: 12 }, // 상태
-        { wch: 15 }, // 주문금액
-        { wch: 20 }  // 주문일시
-      ];
+      const colWidths: any[] = [];
+      if (selectedColumns.id) colWidths.push({ wch: 30 });
+      if (selectedColumns.customer) colWidths.push({ wch: 15 });
+      if (selectedColumns.email) colWidths.push({ wch: 25 });
+      if (selectedColumns.course) colWidths.push({ wch: 40 });
+      if (selectedColumns.payment_method) colWidths.push({ wch: 12 });
+      if (selectedColumns.status) colWidths.push({ wch: 12 });
+      if (selectedColumns.amount) colWidths.push({ wch: 15 });
+      if (selectedColumns.date) colWidths.push({ wch: 20 });
+      
       worksheet['!cols'] = colWidths;
 
       XLSX.writeFile(workbook, `주문목록_${new Date().toISOString().split('T')[0]}.xlsx`);
@@ -337,6 +380,7 @@ const Orders = () => {
         title: "내보내기 완료",
         description: "Excel 파일이 다운로드되었습니다."
       });
+      setShowExportModal(false);
     } catch (error) {
       console.error('Excel export error:', error);
       toast({
@@ -352,6 +396,124 @@ const Orders = () => {
   const refreshData = () => {
     setLoading(true);
     fetchOrders();
+  };
+
+  // 주문 상세보기 함수
+  const handleOrderDetail = (order: Order) => {
+    setSelectedOrder(order);
+    setShowDetailModal(true);
+  };
+
+  // 영수증 다운로드 함수
+  const downloadReceipt = async (order: Order) => {
+    try {
+      // 영수증 HTML 생성
+      const receiptHTML = `
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: 'Noto Sans KR', sans-serif; line-height: 1.6;">
+          <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px;">
+            <h1 style="color: #333; margin: 0;">결제 영수증</h1>
+            <p style="color: #666; margin: 5px 0;">Receipt</p>
+          </div>
+          
+          <div style="margin-bottom: 30px;">
+            <h2 style="color: #333; margin-bottom: 15px;">주문 정보</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; width: 30%;">주문번호:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${order.id}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">주문일시:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${new Date(order.created_at).toLocaleString('ko-KR')}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">고객명:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${order.profiles?.full_name || '이름 없음'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">이메일:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${order.profiles?.email || ''}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">결제방법:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${getPaymentMethodText(order.payment_method)}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="margin-bottom: 30px;">
+            <h2 style="color: #333; margin-bottom: 15px;">주문 상품</h2>
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
+              <thead>
+                <tr style="background-color: #f8f9fa;">
+                  <th style="padding: 12px; border-bottom: 1px solid #ddd; text-align: left;">강의명</th>
+                  <th style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right;">금액</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${order.order_items.map(item => `
+                  <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.course.title}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toLocaleString()}원</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <div style="border-top: 2px solid #333; padding-top: 20px;">
+            <div style="text-align: right;">
+              <p style="font-size: 18px; font-weight: bold; color: #333; margin: 0;">
+                총 결제금액: ${order.total_amount.toLocaleString()}원
+              </p>
+            </div>
+          </div>
+
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; font-size: 12px;">
+            <p>본 영수증은 전자상거래 결제 완료를 증명하는 서류입니다.</p>
+            <p>발행일: ${new Date().toLocaleString('ko-KR')}</p>
+          </div>
+        </div>
+      `;
+
+      // 임시 div 생성
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = receiptHTML;
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      document.body.appendChild(tempDiv);
+
+      // HTML을 Canvas로 변환
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true
+      });
+
+      // PDF 생성
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`영수증_${order.id.slice(0, 8)}.pdf`);
+
+      // 임시 div 제거
+      document.body.removeChild(tempDiv);
+
+      toast({
+        title: "영수증 다운로드 완료",
+        description: "PDF 파일이 다운로드되었습니다."
+      });
+    } catch (error) {
+      console.error('Receipt download error:', error);
+      toast({
+        title: "영수증 다운로드 실패",
+        description: "영수증 생성 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
   };
 
   const stats = getOrderStats();
@@ -491,13 +653,9 @@ const Orders = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={exportToCSV} disabled={exporting}>
+                  <DropdownMenuItem onClick={() => setShowExportModal(true)} disabled={exporting}>
                     <FileText className="h-4 w-4 mr-2" />
-                    CSV 파일로 내보내기
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={exportToExcel} disabled={exporting}>
-                    <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    Excel 파일로 내보내기
+                    데이터 내보내기
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -653,11 +811,11 @@ const Orders = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleOrderDetail(order)}>
                                 <Eye className="h-4 w-4 mr-2" />
                                 상세보기
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => downloadReceipt(order)}>
                                 <Download className="h-4 w-4 mr-2" />
                                 영수증 다운로드
                               </DropdownMenuItem>
@@ -729,6 +887,181 @@ const Orders = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* 데이터 내보내기 모달 */}
+        <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>데이터 내보내기</DialogTitle>
+              <DialogDescription>
+                내보낼 컬럼을 선택하고 파일 형식을 선택하세요.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div>
+                <Label className="text-base font-medium">내보낼 컬럼 선택</Label>
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  {exportColumns.map((column) => (
+                    <div key={column.key} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={column.key}
+                        checked={selectedColumns[column.key as keyof typeof selectedColumns]}
+                        onCheckedChange={(checked) => {
+                          setSelectedColumns(prev => ({
+                            ...prev,
+                            [column.key]: checked
+                          }));
+                        }}
+                      />
+                      <Label htmlFor={column.key} className="text-sm font-normal">
+                        {column.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <Label className="text-base font-medium">파일 형식</Label>
+                <div className="flex gap-3 mt-3">
+                  <Button
+                    onClick={exportToCSV}
+                    disabled={exporting || Object.values(selectedColumns).every(v => !v)}
+                    className="flex-1"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    CSV 파일
+                  </Button>
+                  <Button
+                    onClick={exportToExcel}
+                    disabled={exporting || Object.values(selectedColumns).every(v => !v)}
+                    className="flex-1"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Excel 파일
+                  </Button>
+                </div>
+              </div>
+
+              {Object.values(selectedColumns).every(v => !v) && (
+                <p className="text-sm text-red-500">최소 하나의 컬럼을 선택해주세요.</p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* 주문 상세보기 모달 */}
+        <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
+          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+            {selectedOrder && (
+              <>
+                <DialogHeader>
+                  <DialogTitle>주문 상세정보</DialogTitle>
+                  <DialogDescription>
+                    주문번호: {selectedOrder.id}
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-6">
+                  {/* 주문 기본 정보 */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">주문 정보</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm text-muted-foreground">주문일시</Label>
+                        <p className="text-sm font-medium">
+                          {new Date(selectedOrder.created_at).toLocaleString('ko-KR')}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">주문상태</Label>
+                        <div className="mt-1">
+                          {getStatusBadge(selectedOrder.status)}
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">결제방법</Label>
+                        <p className="text-sm font-medium">
+                          {getPaymentMethodText(selectedOrder.payment_method)}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">총 결제금액</Label>
+                        <p className="text-lg font-bold text-primary">
+                          {selectedOrder.total_amount.toLocaleString()}원
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* 고객 정보 */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">고객 정보</h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <Label className="text-sm text-muted-foreground">고객명</Label>
+                        <p className="text-sm font-medium">
+                          {selectedOrder.profiles?.full_name || '이름 없음'}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">이메일</Label>
+                        <p className="text-sm font-medium">
+                          {selectedOrder.profiles?.email || '이메일 없음'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* 주문 상품 */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">주문 상품</h3>
+                    <div className="space-y-3">
+                      {selectedOrder.order_items.map((item, index) => (
+                        <div key={item.id} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                          <div>
+                            <p className="font-medium">{item.course.title}</p>
+                            <p className="text-sm text-muted-foreground">강의 ID: {item.course.id}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">{item.price.toLocaleString()}원</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* 액션 버튼 */}
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={() => downloadReceipt(selectedOrder)}
+                      className="flex-1"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      영수증 다운로드
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowDetailModal(false)}
+                      className="flex-1"
+                    >
+                      닫기
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
