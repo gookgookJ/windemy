@@ -217,6 +217,11 @@ const HeroSection = () => {
               </p>
             </div>
           </div>
+          
+          {/* Mobile Slide Counter */}
+          <div className="absolute bottom-3 right-4 bg-black/50 rounded-full px-2.5 py-1 text-white text-xs font-medium">
+            {currentSlide + 1}/{slides.length}
+          </div>
         </div>
       </div>
 
