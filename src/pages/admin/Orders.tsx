@@ -48,6 +48,8 @@ const Orders = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [timeFilter, setTimeFilter] = useState<string>("all");
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>("all");
+  const [amountFilter, setAmountFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("created_at");
   const [sortOrder, setSortOrder] = useState<string>("desc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,7 +57,10 @@ const Orders = () => {
   const [exporting, setExporting] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [selectAll, setSelectAll] = useState(false);
   const [selectedColumns, setSelectedColumns] = useState({
     id: true,
     customer: true,
@@ -85,11 +90,22 @@ const Orders = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [orders, searchTerm, statusFilter, timeFilter, sortBy, sortOrder]);
+  }, [orders, searchTerm, statusFilter, timeFilter, paymentMethodFilter, amountFilter, sortBy, sortOrder]);
 
   useEffect(() => {
     setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
-  }, [searchTerm, statusFilter, timeFilter]);
+    setSelectedOrders(new Set()); // 필터 변경 시 선택 초기화
+    setSelectAll(false);
+  }, [searchTerm, statusFilter, timeFilter, paymentMethodFilter, amountFilter]);
+
+  useEffect(() => {
+    // 현재 페이지의 모든 항목이 선택되었는지 확인
+    const currentPageOrders = getPaginatedOrders();
+    if (currentPageOrders.length > 0) {
+      const allSelected = currentPageOrders.every(order => selectedOrders.has(order.id));
+      setSelectAll(allSelected);
+    }
+  }, [selectedOrders, filteredOrders, currentPage, itemsPerPage]);
 
   const fetchOrders = async () => {
     try {
@@ -150,6 +166,29 @@ const Orders = () => {
     // 상태 필터
     if (statusFilter !== "all") {
       filtered = filtered.filter(order => order.status === statusFilter);
+    }
+
+    // 결제방법 필터
+    if (paymentMethodFilter !== "all") {
+      filtered = filtered.filter(order => order.payment_method === paymentMethodFilter);
+    }
+
+    // 금액 필터
+    if (amountFilter !== "all") {
+      switch (amountFilter) {
+        case 'free':
+          filtered = filtered.filter(order => order.total_amount === 0);
+          break;
+        case 'under_50000':
+          filtered = filtered.filter(order => order.total_amount > 0 && order.total_amount < 50000);
+          break;
+        case '50000_100000':
+          filtered = filtered.filter(order => order.total_amount >= 50000 && order.total_amount < 100000);
+          break;
+        case 'over_100000':
+          filtered = filtered.filter(order => order.total_amount >= 100000);
+          break;
+      }
     }
 
     // 기간 필터
@@ -395,7 +434,140 @@ const Orders = () => {
 
   const refreshData = () => {
     setLoading(true);
+    setSelectedOrders(new Set());
+    setSelectAll(false);
     fetchOrders();
+  };
+
+  // 체크박스 관련 함수
+  const handleSelectAll = (checked: boolean) => {
+    const currentPageOrders = getPaginatedOrders();
+    const newSelectedOrders = new Set(selectedOrders);
+    
+    if (checked) {
+      currentPageOrders.forEach(order => newSelectedOrders.add(order.id));
+    } else {
+      currentPageOrders.forEach(order => newSelectedOrders.delete(order.id));
+    }
+    
+    setSelectedOrders(newSelectedOrders);
+    setSelectAll(checked);
+  };
+
+  const handleSelectOrder = (orderId: string, checked: boolean) => {
+    const newSelectedOrders = new Set(selectedOrders);
+    
+    if (checked) {
+      newSelectedOrders.add(orderId);
+    } else {
+      newSelectedOrders.delete(orderId);
+    }
+    
+    setSelectedOrders(newSelectedOrders);
+  };
+
+  // 일괄 액션 함수
+  const handleBulkAction = async (action: string) => {
+    if (selectedOrders.size === 0) {
+      toast({
+        title: "선택된 항목 없음",
+        description: "작업할 주문을 선택해주세요.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const selectedOrderIds = Array.from(selectedOrders);
+    
+    try {
+      switch (action) {
+        case 'export':
+          // 선택된 주문만 내보내기
+          const selectedOrdersData = filteredOrders.filter(order => selectedOrders.has(order.id));
+          exportSelectedOrders(selectedOrdersData);
+          break;
+        case 'delete':
+          // 주문 삭제 (실제로는 상태 변경)
+          await bulkUpdateOrderStatus(selectedOrderIds, 'cancelled');
+          toast({
+            title: "일괄 처리 완료",
+            description: `${selectedOrderIds.length}개 주문이 취소되었습니다.`
+          });
+          break;
+        case 'complete':
+          // 주문 완료 처리
+          await bulkUpdateOrderStatus(selectedOrderIds, 'completed');
+          toast({
+            title: "일괄 처리 완료",
+            description: `${selectedOrderIds.length}개 주문이 완료 처리되었습니다.`
+          });
+          break;
+      }
+      
+      setSelectedOrders(new Set());
+      setSelectAll(false);
+      refreshData();
+    } catch (error) {
+      console.error('Bulk action error:', error);
+      toast({
+        title: "일괄 처리 실패",
+        description: "작업 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const bulkUpdateOrderStatus = async (orderIds: string[], status: string) => {
+    // 실제 구현에서는 Supabase를 통해 일괄 업데이트
+    // 현재는 시뮬레이션
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  };
+
+  const exportSelectedOrders = (selectedOrdersData: Order[]) => {
+    try {
+      const csvData = selectedOrdersData.map(order => ({
+        '주문번호': order.id,
+        '고객명': order.profiles?.full_name || '이름 없음',
+        '이메일': order.profiles?.email || '',
+        '강의명': order.order_items.map(item => item.course.title).join(', '),
+        '결제방법': getPaymentMethodText(order.payment_method),
+        '상태': order.status === 'completed' ? '결제완료' : 
+                order.status === 'pending' ? '결제대기' :
+                order.status === 'cancelled' ? '취소됨' :
+                order.status === 'refunded' ? '환불됨' : order.status,
+        '주문금액': order.total_amount,
+        '주문일시': new Date(order.created_at).toLocaleString('ko-KR')
+      }));
+
+      const csv = [
+        Object.keys(csvData[0]).join(','),
+        ...csvData.map(row => Object.values(row).map(value => 
+          typeof value === 'string' && value.includes(',') ? `"${value}"` : value
+        ).join(','))
+      ].join('\n');
+
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `선택된주문_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "내보내기 완료",
+        description: `선택된 ${selectedOrdersData.length}개 주문이 내보내졌습니다.`
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "내보내기 실패",
+        description: "선택된 주문 내보내기 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
   };
 
   // 주문 상세보기 함수
@@ -592,11 +764,27 @@ const Orders = () => {
         {/* 필터 및 검색 */}
         <Card>
           <CardHeader>
-            <CardTitle>주문 목록</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              <span>주문 목록</span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowFilterPanel(!showFilterPanel)}
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  고급 필터
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  전체 {filteredOrders.length}개
+                </span>
+              </div>
+            </CardTitle>
             <CardDescription>주문을 검색하고 필터링하세요.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-4 mb-6">
+            {/* 기본 검색 및 빠른 필터 */}
+            <div className="flex flex-wrap gap-4 mb-4">
               <div className="flex-1 min-w-[200px]">
                 <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -644,44 +832,149 @@ const Orders = () => {
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 새로고침
               </Button>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" disabled={exporting || filteredOrders.length === 0}>
-                    <Download className="h-4 w-4 mr-2" />
-                    내보내기
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setShowExportModal(true)} disabled={exporting}>
-                    <FileText className="h-4 w-4 mr-2" />
-                    데이터 내보내기
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
 
-            {/* 결과 요약 */}
+            {/* 고급 필터 패널 */}
+            {showFilterPanel && (
+              <div className="mb-6 p-4 bg-muted/30 rounded-lg border">
+                <h3 className="font-medium mb-3">고급 필터</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">결제방법</Label>
+                    <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="전체" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">전체</SelectItem>
+                        <SelectItem value="card">신용카드</SelectItem>
+                        <SelectItem value="bank_transfer">계좌이체</SelectItem>
+                        <SelectItem value="kakao_pay">카카오페이</SelectItem>
+                        <SelectItem value="toss_pay">토스페이</SelectItem>
+                        <SelectItem value="free">무료</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm font-medium">주문금액</Label>
+                    <Select value={amountFilter} onValueChange={setAmountFilter}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="전체" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">전체 금액</SelectItem>
+                        <SelectItem value="free">무료 (0원)</SelectItem>
+                        <SelectItem value="under_50000">5만원 미만</SelectItem>
+                        <SelectItem value="50000_100000">5만원 - 10만원</SelectItem>
+                        <SelectItem value="over_100000">10만원 이상</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-end">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setPaymentMethodFilter("all");
+                        setAmountFilter("all");
+                        setStatusFilter("all");
+                        setTimeFilter("all");
+                        setSearchTerm("");
+                      }}
+                      className="w-full"
+                    >
+                      필터 초기화
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 선택된 항목 액션 바 */}
+            {selectedOrders.size > 0 && (
+              <div className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">
+                    {selectedOrders.size}개 항목 선택됨
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleBulkAction('export')}
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      선택 내보내기
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleBulkAction('complete')}
+                    >
+                      완료 처리
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleBulkAction('delete')}
+                    >
+                      일괄 취소
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedOrders(new Set());
+                        setSelectAll(false);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 일반 액션 바 */}
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-muted-foreground">
                 총 {filteredOrders.length}개의 주문 중 {Math.min(itemsPerPage, filteredOrders.length - (currentPage - 1) * itemsPerPage)}개 표시
               </p>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">페이지당 표시:</span>
-                <Select value={itemsPerPage.toString()} onValueChange={(value) => {
-                  setItemsPerPage(Number(value));
-                  setCurrentPage(1);
-                }}>
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" disabled={exporting || filteredOrders.length === 0}>
+                      <Download className="h-4 w-4 mr-2" />
+                      내보내기
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setShowExportModal(true)} disabled={exporting}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      데이터 내보내기
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">페이지당 표시:</span>
+                  <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                    setItemsPerPage(Number(value));
+                    setCurrentPage(1);
+                  }}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
@@ -690,6 +983,13 @@ const Orders = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[50px]">
+                      <Checkbox
+                        checked={selectAll}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="전체 선택"
+                      />
+                    </TableHead>
                     <TableHead 
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort('id')}
@@ -759,13 +1059,20 @@ const Orders = () => {
                 <TableBody>
                   {getPaginatedOrders().length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                         조건에 맞는 주문이 없습니다.
                       </TableCell>
                     </TableRow>
                   ) : (
                     getPaginatedOrders().map((order) => (
-                      <TableRow key={order.id}>
+                      <TableRow key={order.id} className={selectedOrders.has(order.id) ? 'bg-muted/50' : ''}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedOrders.has(order.id)}
+                            onCheckedChange={(checked) => handleSelectOrder(order.id, checked as boolean)}
+                            aria-label={`주문 ${order.id.slice(0, 8)} 선택`}
+                          />
+                        </TableCell>
                         <TableCell className="font-mono text-sm">
                           {order.id.slice(0, 8)}...
                         </TableCell>
