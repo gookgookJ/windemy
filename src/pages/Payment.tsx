@@ -53,7 +53,7 @@ const Payment = () => {
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank_transfer'>('card');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [showAlreadyEnrolledModal, setShowAlreadyEnrolledModal] = useState(false);
+  
   
   const navigate = useNavigate();
   const { id: courseId } = useParams();
@@ -150,33 +150,6 @@ const Payment = () => {
   };
 
   const handlePayment = async () => {
-    // 먼저 이미 등록된 강의인지 확인
-    try {
-      const { data: existingEnrollment, error: enrollmentCheckError } = await supabase
-        .from('enrollments')
-        .select('id')
-        .eq('user_id', user?.id)
-        .eq('course_id', courseId)
-        .maybeSingle();
-
-      if (enrollmentCheckError && enrollmentCheckError.code !== 'PGRST116') {
-        throw enrollmentCheckError;
-      }
-
-      if (existingEnrollment) {
-        // 이미 등록된 강의인 경우 모달 표시
-        setShowAlreadyEnrolledModal(true);
-        return;
-      }
-    } catch (error) {
-      console.error('Error checking enrollment:', error);
-      toast({
-        title: "확인 실패",
-        description: "수강 등록 상태 확인 중 오류가 발생했습니다.",
-        variant: "destructive"
-      });
-      return;
-    }
 
     if (totalPrice === 0) {
       // 무료 강의인 경우 즉시 완료
@@ -608,40 +581,6 @@ const Payment = () => {
           </div>
         </div>
 
-        {/* Already Enrolled Modal */}
-        <AlertDialog open={showAlreadyEnrolledModal} onOpenChange={setShowAlreadyEnrolledModal}>
-          <AlertDialogContent className="max-w-md">
-            <AlertDialogHeader>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <AlertDialogTitle className="text-left">이미 구매한 강의입니다</AlertDialogTitle>
-                </div>
-              </div>
-              <AlertDialogDescription className="text-left">
-                해당 강의는 이미 구매하여 수강 중인 강의입니다. 
-                내 강의실에서 수강을 계속 진행하세요.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowAlreadyEnrolledModal(false)}
-                className="w-full sm:w-auto"
-              >
-                닫기
-              </Button>
-              <AlertDialogAction
-                onClick={() => navigate('/my-page')}
-                className="w-full sm:w-auto bg-primary hover:bg-primary/90"
-              >
-                내 강의실로 이동
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </main>
     </div>
   );

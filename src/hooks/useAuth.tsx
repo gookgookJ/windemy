@@ -86,6 +86,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       title: "로그아웃",
       description: "성공적으로 로그아웃되었습니다."
     });
+    // 로그아웃 후 홈으로 리다이렉트
+    window.location.href = '/';
   };
 
   const isAdmin = profile?.role === 'admin';

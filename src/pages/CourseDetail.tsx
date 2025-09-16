@@ -306,13 +306,44 @@ const CourseDetail = () => {
     }
   };
 
-  const handlePurchase = () => {
+  const handlePurchase = async () => {
     if (!user) {
       navigate('/auth');
       return;
     }
     
     if (!courseId) return;
+    
+    // 먼저 이미 등록된 강의인지 확인
+    try {
+      const { data: existingEnrollment, error: enrollmentCheckError } = await supabase
+        .from('enrollments')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('course_id', courseId)
+        .maybeSingle();
+
+      if (enrollmentCheckError && enrollmentCheckError.code !== 'PGRST116') {
+        throw enrollmentCheckError;
+      }
+
+      if (existingEnrollment) {
+        // 이미 등록된 강의인 경우 알림 표시
+        toast({
+          title: "이미 수강 중인 강의",
+          description: "해당 강의는 이미 수강 중입니다.",
+        });
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking enrollment:', error);
+      toast({
+        title: "확인 실패",
+        description: "수강 등록 상태 확인 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     // 결제 페이지로 이동 (선택된 옵션이 있으면 쿼리 파라미터로 전달)
     const paymentUrl = selectedOption 
