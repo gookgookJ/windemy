@@ -135,6 +135,8 @@ const Orders = () => {
         .limit(1000); // 대용량 데이터 대비 제한
 
       if (error) throw error;
+      console.log('Fetched orders:', data);
+      console.log('Sample order items:', data?.[0]?.order_items);
       setOrders(data || []);
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -1181,20 +1183,28 @@ const Orders = () => {
                         </TableCell>
                          <TableCell>
                            <div className="max-w-[250px]">
-                             {order.order_items.map((item, index) => (
-                               <div key={item.id} className="mb-1">
-                                 <div className="text-sm font-medium text-foreground">
-                                   {item.course.title}
+                             {(() => {
+                               console.log('Order items for order:', order.id, order.order_items);
+                               return null;
+                             })()}
+                             {order.order_items && order.order_items.length > 0 ? (
+                               order.order_items.map((item, index) => (
+                                 <div key={item.id} className="mb-1">
+                                   <div className="text-sm font-medium text-foreground">
+                                     {item.course?.title || '강의 정보 없음'}
+                                   </div>
+                                   <div className="text-xs text-muted-foreground">
+                                     {item.price.toLocaleString()}원
+                                   </div>
+                                   {index < order.order_items.length - 1 && (
+                                     <div className="border-b border-muted my-1"></div>
+                                   )}
                                  </div>
-                                 <div className="text-xs text-muted-foreground">
-                                   {item.price.toLocaleString()}원
-                                 </div>
-                                 {index < order.order_items.length - 1 && (
-                                   <div className="border-b border-muted my-1"></div>
-                                 )}
-                               </div>
-                             ))}
-                             {order.order_items.length > 1 && (
+                               ))
+                             ) : (
+                               <div className="text-sm text-muted-foreground">주문 항목 없음</div>
+                             )}
+                             {order.order_items && order.order_items.length > 1 && (
                                <div className="text-xs text-primary font-medium mt-2">
                                  총 {order.order_items.length}개 강의
                                </div>
