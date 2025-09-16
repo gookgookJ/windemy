@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Trash2, Edit, Plus, Upload, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Eye } from 'lucide-react';
+import { Trash2, Edit, Plus, Upload, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Eye, ExternalLink, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
@@ -19,9 +19,10 @@ interface HeroSlide {
   description?: string;
   image_url: string;
   course_id?: string;
+  link_url?: string;
+  link_type: 'course' | 'url';
   order_index: number;
   is_active: boolean;
-  background_color: string;
   course?: {
     id: string;
     title: string;
@@ -48,18 +49,10 @@ const HeroSlides = () => {
     subtitle: '',
     description: '',
     course_id: 'none',
-    background_color: 'from-blue-400 to-blue-600',
+    link_url: '',
+    link_type: 'course' as 'course' | 'url',
     is_active: true
   });
-
-  const backgroundColors = [
-    { label: '블루 그라데이션', value: 'from-blue-400 to-blue-600' },
-    { label: '핑크 그라데이션', value: 'from-pink-400 to-red-400' },
-    { label: '핑크 파스텔', value: 'from-pink-300 to-pink-500' },
-    { label: '그린-블루', value: 'from-green-400 to-blue-500' },
-    { label: '퍼플 그라데이션', value: 'from-purple-400 to-purple-600' },
-    { label: '오렌지 그라데이션', value: 'from-orange-400 to-orange-600' }
-  ];
 
   useEffect(() => {
     fetchSlides();
@@ -88,7 +81,12 @@ const HeroSlides = () => {
         .order('order_index');
 
       if (error) throw error;
-      setSlides(data || []);
+      // Map data to include default values for missing fields
+      const mappedData = (data || []).map((slide: any) => ({
+        ...slide,
+        link_type: (slide.link_type || 'course') as 'course' | 'url'
+      }));
+      setSlides(mappedData);
     } catch (error) {
       console.error('Error fetching slides:', error);
       toast({
@@ -186,8 +184,9 @@ const HeroSlides = () => {
         title: formData.title,
         subtitle: formData.subtitle || null,
         description: formData.description || null,
-        course_id: formData.course_id === 'none' ? null : formData.course_id || null,
-        background_color: formData.background_color,
+        course_id: formData.link_type === 'course' && formData.course_id !== 'none' ? formData.course_id : null,
+        link_url: formData.link_type === 'url' ? formData.link_url : null,
+        link_type: formData.link_type,
         is_active: formData.is_active,
         ...(imageUrl && { image_url: imageUrl })
       };
@@ -299,7 +298,8 @@ const HeroSlides = () => {
       subtitle: '',
       description: '',
       course_id: 'none',
-      background_color: 'from-blue-400 to-blue-600',
+      link_url: '',
+      link_type: 'course',
       is_active: true
     });
     setEditingSlide(null);
@@ -313,14 +313,11 @@ const HeroSlides = () => {
       subtitle: slide.subtitle || '',
       description: slide.description || '',
       course_id: slide.course_id || 'none',
-      background_color: slide.background_color,
+      link_url: slide.link_url || '',
+      link_type: slide.link_type || 'course',
       is_active: slide.is_active
     });
     setIsDialogOpen(true);
-  };
-
-  const getSlideIndex = (offset: number) => {
-    return (previewCurrentSlide + offset + slides.length) % slides.length;
   };
 
   const activeSlides = slides.filter(slide => slide.is_active);
@@ -412,21 +409,48 @@ const HeroSlides = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="course" className="text-sm font-medium">연결할 강의</Label>
-                      <Select value={formData.course_id} onValueChange={(value) => setFormData({ ...formData, course_id: value })}>
+                      <Label htmlFor="link-type" className="text-sm font-medium">연결 방식</Label>
+                      <Select value={formData.link_type} onValueChange={(value: 'course' | 'url') => setFormData({ ...formData, link_type: value, course_id: 'none', link_url: '' })}>
                         <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="강의를 선택하세요 (선택사항)" />
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">연결 안함</SelectItem>
-                          {courses.map((course) => (
-                            <SelectItem key={course.id} value={course.id}>
-                              {course.title}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="course">강의 연결</SelectItem>
+                          <SelectItem value="url">링크 연결</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {formData.link_type === 'course' ? (
+                      <div>
+                        <Label htmlFor="course" className="text-sm font-medium">연결할 강의</Label>
+                        <Select value={formData.course_id} onValueChange={(value) => setFormData({ ...formData, course_id: value })}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="강의를 선택하세요" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">연결 안함</SelectItem>
+                            {courses.map((course) => (
+                              <SelectItem key={course.id} value={course.id}>
+                                {course.title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <div>
+                        <Label htmlFor="link-url" className="text-sm font-medium">링크 URL</Label>
+                        <Input
+                          id="link-url"
+                          type="url"
+                          value={formData.link_url}
+                          onChange={(e) => setFormData({ ...formData, link_url: e.target.value })}
+                          placeholder="https://example.com"
+                          className="mt-1"
+                        />
+                      </div>
+                    )}
 
                     <div className="md:col-span-2">
                       <Label htmlFor="description" className="text-sm font-medium">설명</Label>
@@ -439,27 +463,11 @@ const HeroSlides = () => {
                       />
                     </div>
 
-                    <div>
-                      <Label htmlFor="background-color" className="text-sm font-medium">배경 색상</Label>
-                      <Select value={formData.background_color} onValueChange={(value) => setFormData({ ...formData, background_color: value })}>
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {backgroundColors.map((color) => (
-                            <SelectItem key={color.value} value={color.value}>
-                              {color.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
+                    <div className="md:col-span-2">
                       <Label htmlFor="image-upload" className="text-sm font-medium">
                         이미지 업로드 {!editingSlide && '*'}
                         <span className="text-xs text-gray-500 ml-2">
-                          (권장: 760x340px, 최대 5MB)
+                          (권장: 1920x400px, 최대 5MB)
                         </span>
                       </Label>
                       <Input
@@ -507,124 +515,56 @@ const HeroSlides = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="relative h-[280px] overflow-hidden bg-white rounded-lg border">
-                <div className="relative w-full h-full flex items-center justify-center">
-                  <div className="flex w-full items-center justify-center">
-                    
-                    {/* Left Panel */}
-                    <div className="flex-1 relative opacity-40 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-r-lg"
-                         onClick={() => setPreviewCurrentSlide((prev) => (prev - 1 + activeSlides.length) % activeSlides.length)}
-                         style={{ height: '240px' }}>
-                      <div className="absolute -right-16 top-0 w-[500px] h-[240px] rounded-lg overflow-hidden shadow-md">
-                        <div className={cn("absolute inset-0 bg-gradient-to-br rounded-lg", activeSlides[getSlideIndex(-1)]?.background_color)}>
-                          <div className="flex items-center h-full">
-                            <div className="text-white space-y-2 px-8 flex-1">
-                              <h3 className="text-lg font-bold">
-                                {activeSlides[getSlideIndex(-1)]?.title}
-                              </h3>
-                              <p className="text-sm opacity-90">
-                                {activeSlides[getSlideIndex(-1)]?.subtitle}
-                              </p>
-                            </div>
-                            <div className="pr-8">
-                              <img
-                                src={activeSlides[getSlideIndex(-1)]?.image_url}
-                                alt={activeSlides[getSlideIndex(-1)]?.title}
-                                className="w-24 h-32 object-cover rounded-lg shadow-sm"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Center Panel */}
-                    <div className="relative z-10 mx-3">
-                      <div className="relative w-[500px] h-[240px] rounded-lg overflow-hidden shadow-lg">
-                        <div className={cn("absolute inset-0 bg-gradient-to-br", activeSlides[previewCurrentSlide]?.background_color)}>
-                          <div className="flex items-center h-full">
-                            <div className="text-white space-y-3 px-8 flex-1">
-                              <h2 className="text-xl font-bold leading-tight">
-                                {activeSlides[previewCurrentSlide]?.title}
-                              </h2>
-                              <h3 className="text-base font-medium opacity-90">
-                                {activeSlides[previewCurrentSlide]?.subtitle}
-                              </h3>
-                              <p className="text-xs opacity-80">
-                                {activeSlides[previewCurrentSlide]?.description}
-                              </p>
-                            </div>
-                            <div className="pr-8">
-                              <img
-                                src={activeSlides[previewCurrentSlide]?.image_url}
-                                alt={activeSlides[previewCurrentSlide]?.title}
-                                className="w-32 h-40 object-cover rounded-lg shadow-md"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right Panel */}
-                    <div className="flex-1 relative opacity-40 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-l-lg"
-                         onClick={() => setPreviewCurrentSlide((prev) => (prev + 1) % activeSlides.length)}
-                         style={{ height: '240px' }}>
-                      <div className="absolute -left-16 top-0 w-[500px] h-[240px] rounded-lg overflow-hidden shadow-md">
-                        <div className={cn("absolute inset-0 bg-gradient-to-br rounded-lg", activeSlides[getSlideIndex(1)]?.background_color)}>
-                          <div className="flex items-center h-full">
-                            <div className="text-white space-y-2 px-8 flex-1">
-                              <h3 className="text-lg font-bold">
-                                {activeSlides[getSlideIndex(1)]?.title}
-                              </h3>
-                              <p className="text-sm opacity-90">
-                                {activeSlides[getSlideIndex(1)]?.subtitle}
-                              </p>
-                            </div>
-                            <div className="pr-8">
-                              <img
-                                src={activeSlides[getSlideIndex(1)]?.image_url}
-                                alt={activeSlides[getSlideIndex(1)]?.title}
-                                className="w-24 h-32 object-cover rounded-lg shadow-sm"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+              <div className="relative h-[400px] overflow-hidden bg-gray-900 rounded-lg">
+                <img
+                  src={activeSlides[previewCurrentSlide]?.image_url}
+                  alt={activeSlides[previewCurrentSlide]?.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                  <div className="text-white text-center space-y-4 max-w-2xl px-6">
+                    <h2 className="text-4xl font-bold drop-shadow-lg">
+                      {activeSlides[previewCurrentSlide]?.title}
+                    </h2>
+                    {activeSlides[previewCurrentSlide]?.subtitle && (
+                      <h3 className="text-xl font-medium drop-shadow-lg opacity-90">
+                        {activeSlides[previewCurrentSlide]?.subtitle}
+                      </h3>
+                    )}
+                    {activeSlides[previewCurrentSlide]?.description && (
+                      <p className="text-lg drop-shadow-lg opacity-80">
+                        {activeSlides[previewCurrentSlide]?.description}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 {/* Control Buttons */}
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
-                  <div className="relative w-[500px]">
-                    <div className="absolute bottom-3 right-6 flex items-center gap-2">
-                      <button
-                        onClick={() => setPreviewCurrentSlide((prev) => (prev - 1 + activeSlides.length) % activeSlides.length)}
-                        className="w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-                      
-                      <button
-                        onClick={() => setIsPreviewPlaying(!isPreviewPlaying)}
-                        className="w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
-                      >
-                        {isPreviewPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
-                      </button>
-                      
-                      <div className="bg-black/50 rounded-full px-2 py-1 text-white text-xs font-medium">
-                        {previewCurrentSlide + 1} / {activeSlides.length}
-                      </div>
-                      
-                      <button
-                        onClick={() => setPreviewCurrentSlide((prev) => (prev + 1) % activeSlides.length)}
-                        className="w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
+                <div className="absolute bottom-4 right-4 flex items-center gap-2">
+                  <button
+                    onClick={() => setPreviewCurrentSlide((prev) => (prev - 1 + activeSlides.length) % activeSlides.length)}
+                    className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  
+                  <button
+                    onClick={() => setIsPreviewPlaying(!isPreviewPlaying)}
+                    className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+                  >
+                    {isPreviewPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+                  </button>
+                  
+                  <div className="bg-black/50 rounded-full px-3 py-1.5 text-white text-sm font-medium">
+                    {previewCurrentSlide + 1} / {activeSlides.length}
                   </div>
+                  
+                  <button
+                    onClick={() => setPreviewCurrentSlide((prev) => (prev + 1) % activeSlides.length)}
+                    className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
             </CardContent>
@@ -670,44 +610,64 @@ const HeroSlides = () => {
                       </Button>
                     </div>
 
-                    <div className="w-32 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                    <div className="relative">
                       <img
                         src={slide.image_url}
                         alt={slide.title}
-                        className="w-full h-full object-cover"
+                        className="w-32 h-20 object-cover rounded-lg shadow-sm"
                       />
+                      {!slide.is_active && (
+                        <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                          <span className="text-white text-xs font-medium">비활성</span>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg text-gray-900 truncate">{slide.title}</h3>
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-lg">{slide.title}</h3>
+                        {slide.course && (
+                          <div className="flex items-center gap-1 text-blue-600 text-sm">
+                            <BookOpen className="h-4 w-4" />
+                            <span>강의 연결</span>
+                          </div>
+                        )}
+                        {slide.link_url && (
+                          <div className="flex items-center gap-1 text-green-600 text-sm">
+                            <ExternalLink className="h-4 w-4" />
+                            <span>링크 연결</span>
+                          </div>
+                        )}
+                      </div>
                       {slide.subtitle && (
-                        <p className="text-sm text-gray-600 mt-1 truncate">{slide.subtitle}</p>
+                        <p className="text-gray-600">{slide.subtitle}</p>
                       )}
                       {slide.course && (
-                        <p className="text-xs text-blue-600 mt-2 truncate">
-                          📚 연결된 강의: {slide.course.title}
+                        <p className="text-sm text-gray-500">
+                          연결된 강의: {slide.course.title}
                         </p>
                       )}
-                      <div className="flex items-center gap-3 mt-3">
-                        <span className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full font-medium">
-                          순서: {slide.order_index}
-                        </span>
-                        <span className={`text-xs px-3 py-1 rounded-full font-medium ${
-                          slide.is_active 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {slide.is_active ? '✓ 활성' : '✕ 비활성'}
-                        </span>
-                      </div>
+                      {slide.link_url && (
+                        <p className="text-sm text-gray-500">
+                          링크: {slide.link_url}
+                        </p>
+                      )}
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "px-3 py-1 rounded-full text-xs font-medium",
+                        slide.is_active
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-600"
+                      )}>
+                        {slide.is_active ? '활성' : '비활성'}
+                      </div>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => openEditDialog(slide)}
-                        className="h-9 px-3"
+                        className="h-8 w-8 p-0"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -715,7 +675,7 @@ const HeroSlides = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => handleDelete(slide.id)}
-                        className="h-9 px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
