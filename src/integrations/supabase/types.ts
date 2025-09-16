@@ -723,7 +723,6 @@ export type Database = {
           is_draft: boolean | null
           order_index: number
           published_at: string | null
-          scheduled_publish_at: string | null
           section_type: string
           subtitle: string | null
           title: string
@@ -741,7 +740,6 @@ export type Database = {
           is_draft?: boolean | null
           order_index?: number
           published_at?: string | null
-          scheduled_publish_at?: string | null
           section_type?: string
           subtitle?: string | null
           title: string
@@ -759,7 +757,6 @@ export type Database = {
           is_draft?: boolean | null
           order_index?: number
           published_at?: string | null
-          scheduled_publish_at?: string | null
           section_type?: string
           subtitle?: string | null
           title?: string
@@ -1213,10 +1210,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      publish_scheduled_sections: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

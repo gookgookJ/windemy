@@ -5,9 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Trash2, Plus, GripVertical, Eye, EyeOff, Target, Zap, Crown, Monitor, Star, ChevronLeft, ChevronRight, Upload, Clock } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Eye, EyeOff, Target, Zap, Crown, Monitor, Star, ChevronLeft, ChevronRight, Upload } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { AdminLayout } from '@/layouts/AdminLayout';
@@ -40,7 +38,6 @@ interface HomepageSection {
   is_active: boolean;
   is_draft?: boolean;
   published_at?: string;
-  scheduled_publish_at?: string;
 }
 
 interface SelectedCourse {
@@ -85,8 +82,6 @@ const HomepageSectionManager = () => {
   const [loading, setLoading] = useState(true);
   const [showAvailable, setShowAvailable] = useState(false);
   const [previewCurrentCourse, setPreviewCurrentCourse] = useState(0);
-  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
-  const [scheduledDateTime, setScheduledDateTime] = useState('');
 
   const config = sectionConfig[sectionType as keyof typeof sectionConfig];
 
@@ -474,32 +469,6 @@ const HomepageSectionManager = () => {
     }
   };
 
-  const schedulePublish = async () => {
-    if (!section || !scheduledDateTime) return;
-
-    try {
-      await supabase
-        .from('homepage_sections')
-        .update({ scheduled_publish_at: scheduledDateTime })
-        .eq('id', section.id);
-
-      toast({
-        title: "성공",
-        description: `섹션이 ${new Date(scheduledDateTime).toLocaleString()}에 적용되도록 예약되었습니다.`
-      });
-
-      setShowScheduleDialog(false);
-      setScheduledDateTime('');
-    } catch (error) {
-      console.error('Error scheduling publish:', error);
-      toast({
-        title: "오류",
-        description: "예약 적용에 실패했습니다.",
-        variant: "destructive"
-      });
-    }
-  };
-
   const onDragEnd = async (result: any) => {
     if (!result.destination) return;
 
@@ -594,51 +563,12 @@ const HomepageSectionManager = () => {
                   <Upload className="w-4 h-4 mr-2" />
                   적용
                 </Button>
-                <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline">
-                      <Clock className="w-4 h-4 mr-2" />
-                      예약 적용
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>예약 적용 설정</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="schedule-datetime">적용 일시</Label>
-                        <Input
-                          id="schedule-datetime"
-                          type="datetime-local"
-                          value={scheduledDateTime}
-                          onChange={(e) => setScheduledDateTime(e.target.value)}
-                          min={new Date().toISOString().slice(0, 16)}
-                        />
-                      </div>
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowScheduleDialog(false)}
-                        >
-                          취소
-                        </Button>
-                        <Button
-                          onClick={schedulePublish}
-                          disabled={!scheduledDateTime}
-                        >
-                          예약 설정
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
               </div>
             </div>
           </div>
           
           {/* Stats */}
-          <div className="mt-6 grid grid-cols-4 gap-4">
+          <div className="mt-6 grid grid-cols-3 gap-4">
             <div className="bg-gray-50 rounded-lg p-4 text-center">
               <div className="text-sm text-gray-600 mb-1">드래프트 강의</div>
               <div className="text-2xl font-bold text-gray-900">{selectedCourses.length}</div>
@@ -650,12 +580,6 @@ const HomepageSectionManager = () => {
             <div className="bg-gray-50 rounded-lg p-4 text-center">
               <div className="text-sm text-gray-600 mb-1">총 수강생</div>
               <div className="text-2xl font-bold text-gray-900">{selectedCourses.reduce((sum, c) => sum + (c.course?.total_students || 0), 0)}</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4 text-center">
-              <div className="text-sm text-gray-600 mb-1">상태</div>
-              <div className="text-2xl font-bold text-blue-600">
-                {section?.scheduled_publish_at ? '예약됨' : '드래프트'}
-              </div>
             </div>
           </div>
         </div>
