@@ -81,15 +81,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      // 1) 우선 글로벌 로그아웃 시도 (서버 세션 만료 포함)
+      // 1) 로컬 상태 먼저 초기화 (즉시 UI 반영)
+      setProfile(null);
+      setUser(null);
+      setSession(null);
+
+      // 2) Supabase 로그아웃 시도
       await supabase.auth.signOut();
-    } catch (err) {
-      // 서버에 세션이 없을 수 있으므로 로컬만 정리하는 Fallback
-      try {
-        await supabase.auth.signOut({ scope: 'local' as any });
-      } catch {}
-    } finally {
-      // 2) 혹시 남아있을 수 있는 토큰 로컬스토리지 강제 정리
+      
+      // 3) 로컬스토리지 정리
       try {
         Object.keys(localStorage).forEach((key) => {
           if (key.startsWith('sb-') || key.includes('supabase.auth.token')) {
@@ -98,18 +98,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       } catch {}
 
-      // 3) 로컬 상태 초기화
-      setProfile(null);
-      setUser(null);
-      setSession(null);
-
       toast({
         title: "로그아웃",
         description: "성공적으로 로그아웃되었습니다."
       });
 
-      // 4) 홈으로 이동 (전체 리로드로 상태 초기화 보장)
-      window.location.assign('/');
+      // 4) 홈으로 이동 (즉시 이동)
+      window.location.href = '/';
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+      // 에러가 발생해도 로컬 상태는 이미 초기화됨
+      window.location.href = '/';
     }
   };
 

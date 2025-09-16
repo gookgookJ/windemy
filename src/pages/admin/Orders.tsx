@@ -614,12 +614,18 @@ const Orders = () => {
         if (enrollmentError) console.error('Enrollment deletion error:', enrollmentError);
       }
 
+      // 로컬 상태 즉시 업데이트
+      setOrders(prevOrders => 
+        prevOrders.map(o => 
+          o.id === orderId ? { ...o, status: 'cancelled' } : o
+        )
+      );
+
       toast({
         title: "주문 취소 완료",
         description: "주문이 취소되고 강의 등록이 해제되었습니다."
       });
       
-      refreshData();
     } catch (error) {
       console.error('Order cancel error:', error);
       toast({
@@ -640,12 +646,18 @@ const Orders = () => {
       
       if (error) throw error;
 
+      // 로컬 상태 즉시 업데이트
+      setOrders(prevOrders => 
+        prevOrders.map(o => 
+          o.id === orderId ? { ...o, status: 'completed' } : o
+        )
+      );
+
       toast({
         title: "결제 완료 처리",
         description: "주문이 완료 처리되었습니다."
       });
       
-      refreshData();
     } catch (error) {
       console.error('Order complete error:', error);
       toast({
