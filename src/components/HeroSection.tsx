@@ -64,12 +64,12 @@ const HeroSection = () => {
     <section className="relative h-[480px] overflow-hidden bg-gradient-to-r from-slate-100 to-slate-200">
       {/* Three Panel Layout */}
       <div className="relative w-full h-full flex items-center justify-center">
-        <div className="flex w-full max-w-[1400px] mx-auto px-4 items-center justify-center">
+        <div className="flex w-full items-center justify-center">
           
           {/* Left Panel (Previous Slide) - Partially visible */}
           <div className="relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden"
                onClick={prevSlide}
-               style={{ width: '200px', height: '340px' }}>
+               style={{ width: '300px', height: '340px' }}>
             <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-lg">
               <div className={cn("absolute inset-0 bg-gradient-to-br", slides[getSlideIndex(-1)].bgColor)}>
                 <div className="flex items-center h-full">
@@ -127,7 +127,7 @@ const HeroSection = () => {
           {/* Right Panel (Next Slide) - Partially visible */}
           <div className="relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden"
                onClick={nextSlide}
-               style={{ width: '200px', height: '340px' }}>
+               style={{ width: '300px', height: '340px' }}>
             <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-lg">
               <div className={cn("absolute inset-0 bg-gradient-to-br", slides[getSlideIndex(1)].bgColor)}>
                 <div className="flex items-center h-full">
@@ -156,36 +156,44 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* Play/Pause Button (Center) */}
-      <button
-        onClick={togglePlayPause}
-        className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 w-12 h-12 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center text-white transition-colors"
-      >
-        {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
-      </button>
-
-      {/* Slide Counter */}
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 translate-x-8 z-10 bg-black/40 rounded-full px-4 py-2 text-white text-sm font-medium">
-        {currentSlide + 1} / {slides.length}
+      {/* Control Buttons positioned at center panel bottom right */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+        <div className="relative w-[760px]">
+          <div className="absolute bottom-4 right-8 flex items-center gap-3">
+            
+            {/* Navigation Arrows */}
+            <button
+              onClick={prevSlide}
+              className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            
+            {/* Play/Pause Button */}
+            <button
+              onClick={togglePlayPause}
+              className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+            >
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+            </button>
+            
+            {/* Slide Counter */}
+            <div className="bg-black/50 rounded-full px-3 py-1.5 text-white text-sm font-medium">
+              {currentSlide + 1} / {slides.length}
+            </div>
+            
+            <button
+              onClick={nextSlide}
+              className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Navigation Arrows */}
-      <button
-        onClick={prevSlide}
-        className="absolute bottom-12 left-1/2 -translate-x-1/2 -translate-x-16 z-20 w-12 h-12 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center text-white transition-colors"
-      >
-        <ChevronLeft className="w-6 h-6" />
-      </button>
-      
-      <button
-        onClick={nextSlide}
-        className="absolute bottom-12 left-1/2 -translate-x-1/2 translate-x-16 z-20 w-12 h-12 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center text-white transition-colors"
-      >
-        <ChevronRight className="w-6 h-6" />
-      </button>
-
       {/* Pagination Dots */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex space-x-2">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex space-x-2">
         {slides.map((_, index) => (
           <button
             key={index}
