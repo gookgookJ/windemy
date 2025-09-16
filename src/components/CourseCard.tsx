@@ -61,14 +61,14 @@ const CourseCard = ({
           alt={title}
           className="w-full h-[160px] sm:h-[180px] object-cover transition-transform duration-300 group-hover:scale-105 responsive-image"
         />
-        {/* Favorite Heart Button - 원 크기를 하트의 1.5배로 축소 */}
+        {/* Favorite Heart Button - 모바일에서 매우 작게 */}
         <button
           onClick={handleFavoriteClick}
-          className="absolute bottom-1 right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-sm hover:shadow-md hover:scale-110 touch-target flex items-center justify-center"
+          className="absolute bottom-1 right-1 w-2.5 h-2.5 sm:w-4 sm:h-4 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-sm hover:shadow-md hover:scale-110 touch-target flex items-center justify-center"
           aria-label={isFavorite(id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
         >
           <Heart 
-            className={`w-2 h-2 sm:w-2.5 sm:h-2.5 transition-all duration-200 ${
+            className={`w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 transition-all duration-200 ${
               isFavorite(id) 
                 ? 'text-red-500 fill-red-500' 
                 : 'text-gray-400 hover:text-red-400'
