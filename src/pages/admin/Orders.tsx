@@ -266,6 +266,8 @@ const Orders = () => {
         return '신용/체크카드';
       case 'bank_transfer':
         return '실시간 계좌이체';
+      case 'free':
+        return '무료';
       default:
         return method || '-';
     }
@@ -927,6 +929,7 @@ const Orders = () => {
                          <SelectItem value="all">전체</SelectItem>
                          <SelectItem value="card">신용/체크카드</SelectItem>
                          <SelectItem value="bank_transfer">실시간 계좌이체</SelectItem>
+                         <SelectItem value="free">무료</SelectItem>
                        </SelectContent>
                     </Select>
                   </div>
