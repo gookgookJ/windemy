@@ -189,7 +189,8 @@ const FeaturedCourses = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
-            {courses.length > 4 && (
+            {/* 모든 섹션에 캐러셀 컨트롤 표시 */}
+            {courses.length > 1 && (
               <div className="hidden sm:flex gap-2">
                 <Button
                   variant="outline"
@@ -218,23 +219,16 @@ const FeaturedCourses = () => {
           </div>
         </div>
 
-        {courses.length <= 4 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-            {courses.map((course, index) => (
-              <CourseCard key={course.id} course={course} index={index} />
+        {/* 모든 섹션을 캐러셀로 표시 */}
+        <div className="overflow-hidden" ref={emblaRef}>
+          <div className="flex gap-3 sm:gap-4">
+            {displayCourses.map((course, index) => (
+              <div key={course.id} className="flex-none w-[calc(40%-6px)] sm:w-[calc(33.333%-11px)] lg:w-[calc(25%-18px)]">
+                <CourseCard course={course} index={index} />
+              </div>
             ))}
           </div>
-        ) : (
-          <div className="overflow-hidden" ref={emblaRef}>
-            <div className="flex gap-3 sm:gap-4">
-              {displayCourses.map((course, index) => (
-                <div key={course.id} className="flex-none w-[calc(40%-6px)] sm:w-[calc(33.333%-11px)] lg:w-[calc(25%-18px)]">
-                  <CourseCard course={course} index={index} />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -279,14 +273,14 @@ const FeaturedCourses = () => {
             }}
           />
           
-          {/* Favorite Heart Button - 우측 하단으로 이동 */}
+          {/* Favorite Heart Button - 모바일에서 더 작게 */}
           <button
             onClick={handleFavoriteClick}
-            className="absolute bottom-2 right-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10 touch-target flex items-center justify-center"
+            className="absolute bottom-1.5 right-1.5 w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10 touch-target flex items-center justify-center"
             aria-label={isFavorite(course.id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
           >
             <Heart 
-              className={`w-3 h-3 sm:w-3.5 sm:h-3.5 transition-all duration-200 ${
+              className={`w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-3.5 lg:h-3.5 transition-all duration-200 ${
                 isFavorite(course.id) 
                   ? 'text-red-500 fill-red-500' 
                   : 'text-gray-400 hover:text-red-400'
