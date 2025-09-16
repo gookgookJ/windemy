@@ -13,11 +13,12 @@ import UserSidebar from '@/components/UserSidebar';
 interface OrderItem {
   id: string;
   price: number;
-  course: {
+  course_id: string;
+  course?: {
     id: string;
     title: string;
     thumbnail_url: string;
-  };
+  } | null;
 }
 
 interface Order {
@@ -65,32 +66,48 @@ const PurchaseHistory = () => {
           order_items (
             id,
             price,
-            course:courses (
-              id,
-              title,
-              thumbnail_url
-            )
+            course_id
           )
         `)
         .eq('user_id', user.id)
-        .eq('status', 'completed') // Only show completed orders
+        .eq('status', 'completed')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Fetch course info for all items
+      const courseIds = Array.from(new Set(
+        (data || []).flatMap((o: any) => (o.order_items || []).map((i: any) => i.course_id))
+      ));
+
+      const { data: coursesData } = await supabase
+        .from('courses')
+        .select('id, title, thumbnail_url')
+        .in('id', courseIds.length > 0 ? courseIds : ['00000000-0000-0000-0000-000000000000']);
+
+      const courseMap = new Map<string, { id: string; title: string; thumbnail_url: string }>(
+        (coursesData || []).map((c: any) => [c.id, c])
+      );
       
       // Deduplicate orders by course - keep only the latest order for each course
       const deduplicatedOrders: Order[] = [];
       const seenCourses = new Set<string>();
       
-      for (const order of data || []) {
-        const orderCourseIds = order.order_items.map(item => item.course.id);
-        const hasNewCourse = orderCourseIds.some(courseId => !seenCourses.has(courseId));
+      for (const order of (data || [])) {
+        const augmentedItems = (order.order_items || []).map((item: any) => ({
+          id: item.id,
+          price: item.price,
+          course_id: item.course_id,
+          course: courseMap.get(item.course_id) || null,
+        }));
+
+        const hasNewCourse = augmentedItems.some((item: any) => !seenCourses.has(item.course_id));
         
         if (hasNewCourse) {
           // Filter out course items that we've already seen
-          const filteredOrderItems = order.order_items.filter(item => {
-            if (!seenCourses.has(item.course.id)) {
-              seenCourses.add(item.course.id);
+          const filteredOrderItems = augmentedItems.filter((item: any) => {
+            if (!seenCourses.has(item.course_id)) {
+              seenCourses.add(item.course_id);
               return true;
             }
             return false;
@@ -99,7 +116,7 @@ const PurchaseHistory = () => {
           if (filteredOrderItems.length > 0) {
             deduplicatedOrders.push({
               ...order,
-              order_items: filteredOrderItems
+              order_items: filteredOrderItems,
             });
           }
         }
@@ -308,12 +325,12 @@ const PurchaseHistory = () => {
                       {order.order_items.map((item) => (
                         <div key={item.id} className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg">
                           <img
-                            src={item.course.thumbnail_url || '/placeholder.svg'}
-                            alt={item.course.title}
+                            src={item.course?.thumbnail_url || '/placeholder.svg'}
+                            alt={item.course?.title || '강의'}
                             className="w-16 h-12 object-cover rounded flex-shrink-0"
                           />
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium line-clamp-2">{item.course.title}</h4>
+                            <h4 className="font-medium line-clamp-2">{item.course?.title || '강의'}</h4>
                             <p className="text-sm text-muted-foreground">
                               {item.price.toLocaleString()}원
                             </p>
@@ -321,7 +338,7 @@ const PurchaseHistory = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => navigate(`/learn/${item.course.id}?from=purchase`)}
+                            onClick={() => navigate(`/learn/${item.course?.id || item.course_id}?from=purchase`)}
                           >
                             학습하기
                           </Button>
