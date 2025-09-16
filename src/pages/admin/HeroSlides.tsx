@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Trash2, Edit, Plus, Upload, ChevronUp, ChevronDown } from 'lucide-react';
+import { Trash2, Edit, Plus, Upload, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface HeroSlide {
   id: string;
@@ -39,6 +40,8 @@ const HeroSlides = () => {
   const [editingSlide, setEditingSlide] = useState<HeroSlide | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [previewCurrentSlide, setPreviewCurrentSlide] = useState(0);
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState(true);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -62,6 +65,17 @@ const HeroSlides = () => {
     fetchSlides();
     fetchCourses();
   }, []);
+
+  // 미리보기 자동 슬라이드
+  useEffect(() => {
+    if (!isPreviewPlaying || slides.length === 0) return;
+    
+    const timer = setInterval(() => {
+      setPreviewCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, [slides.length, isPreviewPlaying]);
 
   const fetchSlides = async () => {
     try {
@@ -305,236 +319,414 @@ const HeroSlides = () => {
     setIsDialogOpen(true);
   };
 
+  const getSlideIndex = (offset: number) => {
+    return (previewCurrentSlide + offset + slides.length) % slides.length;
+  };
+
+  const activeSlides = slides.filter(slide => slide.is_active);
+
   if (loading) {
-    return <div className="flex items-center justify-center h-64">로딩중...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50/50 p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg font-medium text-muted-foreground">로딩중...</div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">히어로 슬라이드 관리</h1>
-          <p className="text-muted-foreground mt-2">
-            메인페이지 히어로 섹션에 표시될 슬라이드를 관리합니다. (최대 10개)
-          </p>
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEditingSlide(null)} disabled={slides.length >= 10}>
-              <Plus className="h-4 w-4 mr-2" />
-              슬라이드 추가
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingSlide ? '슬라이드 수정' : '새 슬라이드 추가'}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const fileInput = document.getElementById('image-upload') as HTMLInputElement;
-              const file = fileInput?.files?.[0];
-              
-              if (!editingSlide && !file) {
-                toast({
-                  title: "오류",
-                  description: "이미지를 선택해주세요.",
-                  variant: "destructive"
-                });
-                return;
-              }
-
-              if (file) {
-                handleImageUpload(file).then((imageUrl) => {
-                  if (imageUrl) {
-                    handleSubmit(e, imageUrl);
-                  }
-                });
-              } else {
-                handleSubmit(e);
-              }
-            }} className="space-y-4">
-              <div>
-                <Label htmlFor="title">제목 *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="subtitle">부제목</Label>
-                <Input
-                  id="subtitle"
-                  value={formData.subtitle}
-                  onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="description">설명</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="course">연결할 강의</Label>
-                <Select value={formData.course_id} onValueChange={(value) => setFormData({ ...formData, course_id: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="강의를 선택하세요 (선택사항)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">연결 안함</SelectItem>
-                    {courses.map((course) => (
-                      <SelectItem key={course.id} value={course.id}>
-                        {course.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="background-color">배경 색상</Label>
-                <Select value={formData.background_color} onValueChange={(value) => setFormData({ ...formData, background_color: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {backgroundColors.map((color) => (
-                      <SelectItem key={color.value} value={color.value}>
-                        {color.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="image-upload">
-                  이미지 업로드 {!editingSlide && '*'}
-                  <span className="text-sm text-muted-foreground ml-2">
-                    (권장: 760x340px, 최대 5MB)
-                  </span>
-                </Label>
-                <Input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  className="mt-1"
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="is-active"
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                />
-                <Label htmlFor="is-active">활성화</Label>
-              </div>
-
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  취소
-                </Button>
-                <Button type="submit" disabled={uploading}>
-                  {uploading ? '업로드 중...' : editingSlide ? '수정' : '추가'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>슬라이드 목록 ({slides.length}/10)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {slides.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              등록된 슬라이드가 없습니다.
+    <div className="min-h-screen bg-gray-50/50">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* Header */}
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">히어로 슬라이드 관리</h1>
+              <p className="text-gray-600">
+                메인페이지 히어로 섹션에 표시될 슬라이드를 관리합니다. (최대 10개)
+              </p>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {slides.map((slide, index) => (
-                <div key={slide.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                  <div className="flex flex-col gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => moveSlide(index, 'up')}
-                      disabled={index === 0}
-                    >
-                      <ChevronUp className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => moveSlide(index, 'down')}
-                      disabled={index === slides.length - 1}
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  onClick={() => setEditingSlide(null)} 
+                  disabled={slides.length >= 10}
+                  size="lg"
+                  className="shadow-md"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  슬라이드 추가
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-xl">
+                    {editingSlide ? '슬라이드 수정' : '새 슬라이드 추가'}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const fileInput = document.getElementById('image-upload') as HTMLInputElement;
+                  const file = fileInput?.files?.[0];
+                  
+                  if (!editingSlide && !file) {
+                    toast({
+                      title: "오류",
+                      description: "이미지를 선택해주세요.",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
 
-                  <div className="w-24 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                    <img
-                      src={slide.image_url}
-                      alt={slide.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  if (file) {
+                    handleImageUpload(file).then((imageUrl) => {
+                      if (imageUrl) {
+                        handleSubmit(e, imageUrl);
+                      }
+                    });
+                  } else {
+                    handleSubmit(e);
+                  }
+                }} className="space-y-6 pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <Label htmlFor="title" className="text-sm font-medium">제목 *</Label>
+                      <Input
+                        id="title"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        required
+                        className="mt-1"
+                      />
+                    </div>
 
-                  <div className="flex-1">
-                    <h3 className="font-semibold">{slide.title}</h3>
-                    {slide.subtitle && (
-                      <p className="text-sm text-muted-foreground">{slide.subtitle}</p>
-                    )}
-                    {slide.course && (
-                      <p className="text-xs text-blue-600">연결된 강의: {slide.course.title}</p>
-                    )}
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs px-2 py-1 bg-gray-100 rounded">
-                        순서: {slide.order_index}
-                      </span>
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        slide.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {slide.is_active ? '활성' : '비활성'}
-                      </span>
+                    <div>
+                      <Label htmlFor="subtitle" className="text-sm font-medium">부제목</Label>
+                      <Input
+                        id="subtitle"
+                        value={formData.subtitle}
+                        onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="course" className="text-sm font-medium">연결할 강의</Label>
+                      <Select value={formData.course_id} onValueChange={(value) => setFormData({ ...formData, course_id: value })}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="강의를 선택하세요 (선택사항)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">연결 안함</SelectItem>
+                          {courses.map((course) => (
+                            <SelectItem key={course.id} value={course.id}>
+                              {course.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <Label htmlFor="description" className="text-sm font-medium">설명</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="mt-1 resize-none"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="background-color" className="text-sm font-medium">배경 색상</Label>
+                      <Select value={formData.background_color} onValueChange={(value) => setFormData({ ...formData, background_color: value })}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {backgroundColors.map((color) => (
+                            <SelectItem key={color.value} value={color.value}>
+                              {color.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="image-upload" className="text-sm font-medium">
+                        이미지 업로드 {!editingSlide && '*'}
+                        <span className="text-xs text-gray-500 ml-2">
+                          (권장: 760x340px, 최대 5MB)
+                        </span>
+                      </Label>
+                      <Input
+                        id="image-upload"
+                        type="file"
+                        accept="image/*"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2 flex items-center space-x-3 pt-2">
+                      <Switch
+                        id="is-active"
+                        checked={formData.is_active}
+                        onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                      />
+                      <Label htmlFor="is-active" className="text-sm font-medium">활성화</Label>
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEditDialog(slide)}
-                    >
-                      <Edit className="h-4 w-4" />
+                  <div className="flex justify-end space-x-3 pt-6 border-t">
+                    <Button type="button" variant="outline" onClick={resetForm}>
+                      취소
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(slide.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
+                    <Button type="submit" disabled={uploading} className="min-w-[100px]">
+                      {uploading ? '업로드 중...' : editingSlide ? '수정' : '추가'}
                     </Button>
                   </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+
+        {/* 미리보기 섹션 */}
+        {activeSlides.length > 0 && (
+          <Card className="shadow-md">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                실시간 미리보기
+                <span className="text-sm font-normal text-muted-foreground">
+                  (메인페이지에서 보이는 모습)
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative h-[280px] overflow-hidden bg-white rounded-lg border">
+                <div className="relative w-full h-full flex items-center justify-center">
+                  <div className="flex w-full items-center justify-center">
+                    
+                    {/* Left Panel */}
+                    <div className="flex-1 relative opacity-40 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-r-lg"
+                         onClick={() => setPreviewCurrentSlide((prev) => (prev - 1 + activeSlides.length) % activeSlides.length)}
+                         style={{ height: '240px' }}>
+                      <div className="absolute -right-16 top-0 w-[500px] h-[240px] rounded-lg overflow-hidden shadow-md">
+                        <div className={cn("absolute inset-0 bg-gradient-to-br rounded-lg", activeSlides[getSlideIndex(-1)]?.background_color)}>
+                          <div className="flex items-center h-full">
+                            <div className="text-white space-y-2 px-8 flex-1">
+                              <h3 className="text-lg font-bold">
+                                {activeSlides[getSlideIndex(-1)]?.title}
+                              </h3>
+                              <p className="text-sm opacity-90">
+                                {activeSlides[getSlideIndex(-1)]?.subtitle}
+                              </p>
+                            </div>
+                            <div className="pr-8">
+                              <img
+                                src={activeSlides[getSlideIndex(-1)]?.image_url}
+                                alt={activeSlides[getSlideIndex(-1)]?.title}
+                                className="w-24 h-32 object-cover rounded-lg shadow-sm"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Center Panel */}
+                    <div className="relative z-10 mx-3">
+                      <div className="relative w-[500px] h-[240px] rounded-lg overflow-hidden shadow-lg">
+                        <div className={cn("absolute inset-0 bg-gradient-to-br", activeSlides[previewCurrentSlide]?.background_color)}>
+                          <div className="flex items-center h-full">
+                            <div className="text-white space-y-3 px-8 flex-1">
+                              <h2 className="text-xl font-bold leading-tight">
+                                {activeSlides[previewCurrentSlide]?.title}
+                              </h2>
+                              <h3 className="text-base font-medium opacity-90">
+                                {activeSlides[previewCurrentSlide]?.subtitle}
+                              </h3>
+                              <p className="text-xs opacity-80">
+                                {activeSlides[previewCurrentSlide]?.description}
+                              </p>
+                            </div>
+                            <div className="pr-8">
+                              <img
+                                src={activeSlides[previewCurrentSlide]?.image_url}
+                                alt={activeSlides[previewCurrentSlide]?.title}
+                                className="w-32 h-40 object-cover rounded-lg shadow-md"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Panel */}
+                    <div className="flex-1 relative opacity-40 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-l-lg"
+                         onClick={() => setPreviewCurrentSlide((prev) => (prev + 1) % activeSlides.length)}
+                         style={{ height: '240px' }}>
+                      <div className="absolute -left-16 top-0 w-[500px] h-[240px] rounded-lg overflow-hidden shadow-md">
+                        <div className={cn("absolute inset-0 bg-gradient-to-br rounded-lg", activeSlides[getSlideIndex(1)]?.background_color)}>
+                          <div className="flex items-center h-full">
+                            <div className="text-white space-y-2 px-8 flex-1">
+                              <h3 className="text-lg font-bold">
+                                {activeSlides[getSlideIndex(1)]?.title}
+                              </h3>
+                              <p className="text-sm opacity-90">
+                                {activeSlides[getSlideIndex(1)]?.subtitle}
+                              </p>
+                            </div>
+                            <div className="pr-8">
+                              <img
+                                src={activeSlides[getSlideIndex(1)]?.image_url}
+                                alt={activeSlides[getSlideIndex(1)]?.title}
+                                className="w-24 h-32 object-cover rounded-lg shadow-sm"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+                {/* Control Buttons */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
+                  <div className="relative w-[500px]">
+                    <div className="absolute bottom-3 right-6 flex items-center gap-2">
+                      <button
+                        onClick={() => setPreviewCurrentSlide((prev) => (prev - 1 + activeSlides.length) % activeSlides.length)}
+                        className="w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      
+                      <button
+                        onClick={() => setIsPreviewPlaying(!isPreviewPlaying)}
+                        className="w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+                      >
+                        {isPreviewPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                      </button>
+                      
+                      <div className="bg-black/50 rounded-full px-2 py-1 text-white text-xs font-medium">
+                        {previewCurrentSlide + 1} / {activeSlides.length}
+                      </div>
+                      
+                      <button
+                        onClick={() => setPreviewCurrentSlide((prev) => (prev + 1) % activeSlides.length)}
+                        className="w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 슬라이드 목록 */}
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle>슬라이드 목록 ({slides.length}/10)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {slides.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                  <Plus className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-lg font-medium mb-2">등록된 슬라이드가 없습니다</p>
+                <p className="text-sm">첫 번째 히어로 슬라이드를 추가해보세요.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {slides.map((slide, index) => (
+                  <div key={slide.id} className="flex items-center gap-4 p-6 border rounded-xl hover:shadow-md transition-all duration-200 bg-white">
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => moveSlide(index, 'up')}
+                        disabled={index === 0}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => moveSlide(index, 'down')}
+                        disabled={index === slides.length - 1}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <div className="w-32 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                      <img
+                        src={slide.image_url}
+                        alt={slide.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-lg text-gray-900 truncate">{slide.title}</h3>
+                      {slide.subtitle && (
+                        <p className="text-sm text-gray-600 mt-1 truncate">{slide.subtitle}</p>
+                      )}
+                      {slide.course && (
+                        <p className="text-xs text-blue-600 mt-2 truncate">
+                          📚 연결된 강의: {slide.course.title}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-3 mt-3">
+                        <span className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full font-medium">
+                          순서: {slide.order_index}
+                        </span>
+                        <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+                          slide.is_active 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {slide.is_active ? '✓ 활성' : '✕ 비활성'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditDialog(slide)}
+                        className="h-9 px-3"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(slide.id)}
+                        className="h-9 px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
