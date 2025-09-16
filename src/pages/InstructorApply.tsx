@@ -80,7 +80,7 @@ const InstructorApply = () => {
               WINDLY ACADEMY INSTRUCTOR
             </div>
             <h1 className="text-5xl sm:text-6xl font-black mb-8" style={{ lineHeight: 1.2 }}>
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">
                 최고의 전문가를 위한
               </span>
               <br />
