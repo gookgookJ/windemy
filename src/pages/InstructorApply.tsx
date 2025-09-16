@@ -418,10 +418,9 @@ const InstructorApply = () => {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="bg-white text-primary border-white hover:bg-white/90 text-xl px-12 py-6 h-auto font-bold"
+                className="bg-white text-primary border-white hover:bg-white/90 text-xl px-12 py-6 h-auto font-bold justify-center"
               >
                 강사 지원하기
-                <ArrowRight className="ml-3 h-6 w-6" />
               </Button>
             </div>
           </div>
@@ -432,9 +431,8 @@ const InstructorApply = () => {
       <div className={`fixed bottom-8 right-8 z-50 transition-all duration-500 ease-out ${
         showStickyButton ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95 pointer-events-none'
       }`}>
-        <Button className="shadow-2xl hover:scale-105 transition-all duration-200 text-lg px-8 py-4 h-auto font-bold hover:shadow-xl">
+        <Button className="shadow-2xl hover:scale-105 transition-all duration-200 text-lg px-8 py-4 h-auto font-bold hover:shadow-xl justify-center">
           강사 지원하기
-          <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
       </div>
     </div>
