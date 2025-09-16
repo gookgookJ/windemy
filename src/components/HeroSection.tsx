@@ -138,7 +138,7 @@ const HeroSection = () => {
           <div className="flex-1 relative opacity-40 transition-all duration-700 ease-out cursor-pointer overflow-hidden rounded-r-2xl"
                onClick={prevSlide}
                style={{ height: '340px' }}>
-            <div className="absolute -right-40 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden transform transition-all duration-700 ease-out">
+            <div className="absolute right-0 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden transform transition-all duration-700 ease-out">
               <div className="relative w-full h-full">
                 <img
                   src={slides[getSlideIndex(-1)].image_url}
@@ -193,7 +193,7 @@ const HeroSection = () => {
           <div className="flex-1 relative opacity-40 transition-all duration-700 ease-out cursor-pointer overflow-hidden rounded-l-2xl"
                onClick={nextSlide}
                style={{ height: '340px' }}>
-            <div className="absolute -left-40 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden transform transition-all duration-700 ease-out">
+            <div className="absolute left-0 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden transform transition-all duration-700 ease-out">
               <div className="relative w-full h-full">
                 <img
                   src={slides[getSlideIndex(1)].image_url}
