@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,7 @@ interface Course {
 
 const CategoryCourses = () => {
   const { category } = useParams<{ category: string }>();
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -63,14 +64,19 @@ const CategoryCourses = () => {
   useEffect(() => {
     // Set initial category selection based on route
     if (category && categories.length > 0) {
-      const routeCategoryMap: Record<string, string> = {
-        "free-courses": "7c3b2929-c841-42b0-9047-a7c63abb40fa", // 무료강의 category ID
-        "vod-courses": "ce6f2ffc-96bf-4cf0-8f83-27ae2f2fc273", // VOD 강의 category ID  
-        "premium-courses": "76496899-53c0-41d7-a716-ee0ebbab6a41" // 프리미엄 강의 category ID
+      const routeCategoryNameMap: Record<string, string> = {
+        "free-courses": "무료강의",
+        "vod-courses": "VOD 강의", 
+        "premium-courses": "프리미엄 강의"
       };
       
-      const initialCategory = routeCategoryMap[category] || "all";
-      setSelectedCategory(initialCategory);
+      const categoryName = routeCategoryNameMap[category];
+      if (categoryName) {
+        const matchingCategory = categories.find(cat => cat.name === categoryName);
+        if (matchingCategory) {
+          setSelectedCategory(matchingCategory.id);
+        }
+      }
     }
   }, [category, categories]);
 
@@ -158,22 +164,15 @@ const CategoryCourses = () => {
   const filterAndSortCourses = () => {
     let filtered = [...courses];
 
-    // If user selected a specific category from sidebar, use that instead of URL category
+    // Apply category filter based on sidebar selection
     if (selectedCategory !== "all") {
       const categoryObj = categories.find(cat => cat.id === selectedCategory);
       if (categoryObj) {
         filtered = filtered.filter(course => course.category === categoryObj.name);
       }
-    } else {
-      // Only apply URL-based category filter when no sidebar category is selected
-      if (category === "free-courses") {
-        filtered = filtered.filter(course => course.category === "무료강의");
-      } else if (category === "vod-courses") {
-        filtered = filtered.filter(course => course.category === "VOD 강의");
-      } else if (category === "premium-courses") {
-        filtered = filtered.filter(course => course.category === "프리미엄 강의");
-      }
     }
+    // If "전체" is selected, show all courses regardless of URL category
+    // No additional filtering needed for "all"
 
     // Search filter
     if (searchTerm) {
@@ -227,7 +226,13 @@ const CategoryCourses = () => {
                 {categories.map((categoryItem) => (
                   <button
                     key={categoryItem.id}
-                    onClick={() => setSelectedCategory(categoryItem.id)}
+                    onClick={() => {
+                      if (categoryItem.id === "all") {
+                        navigate("/courses");
+                      } else {
+                        setSelectedCategory(categoryItem.id);
+                      }
+                    }}
                     className={`w-full text-left p-3 rounded-xl transition-colors ${
                       selectedCategory === categoryItem.id
                         ? "bg-primary text-primary-foreground"
