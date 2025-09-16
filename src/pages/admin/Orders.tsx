@@ -1179,16 +1179,28 @@ const Orders = () => {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <div className="max-w-[200px]">
-                            {order.order_items.map((item, index) => (
-                              <div key={item.id} className="text-sm">
-                                {item.course.title}
-                                {index < order.order_items.length - 1 && ", "}
-                              </div>
-                            ))}
-                          </div>
-                        </TableCell>
+                         <TableCell>
+                           <div className="max-w-[250px]">
+                             {order.order_items.map((item, index) => (
+                               <div key={item.id} className="mb-1">
+                                 <div className="text-sm font-medium text-foreground">
+                                   {item.course.title}
+                                 </div>
+                                 <div className="text-xs text-muted-foreground">
+                                   {item.price.toLocaleString()}원
+                                 </div>
+                                 {index < order.order_items.length - 1 && (
+                                   <div className="border-b border-muted my-1"></div>
+                                 )}
+                               </div>
+                             ))}
+                             {order.order_items.length > 1 && (
+                               <div className="text-xs text-primary font-medium mt-2">
+                                 총 {order.order_items.length}개 강의
+                               </div>
+                             )}
+                           </div>
+                         </TableCell>
                         <TableCell>{getPaymentMethodText(order.payment_method)}</TableCell>
                         <TableCell>{getStatusBadge(order.status)}</TableCell>
                         <TableCell className="font-medium">
