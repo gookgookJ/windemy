@@ -2,40 +2,97 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import heroSlide1 from "@/assets/hero-slide-1.jpg";
 import heroSlide2 from "@/assets/hero-slide-2.jpg";
 import heroSlide3 from "@/assets/hero-slide-3.jpg";
 
+interface HeroSlide {
+  id: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  image_url: string;
+  course_id?: string;
+  background_color: string;
+  order_index: number;
+}
+
 const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   
-  const slides = [
+  // 기본 슬라이드 (데이터베이스에서 불러오지 못할 경우 사용)
+  const defaultSlides = [
     {
-      image: heroSlide1,
+      id: '1',
+      image_url: heroSlide1,
       title: "실시간 강의 50개 완전 무료",
       subtitle: "지금 가장 주목받는 강의",
       description: "실시간 줌코딩 50개 강의 무료 >",
-      bgColor: "from-pink-400 to-red-400"
+      background_color: "from-pink-400 to-red-400",
+      order_index: 1
     },
     {
-      image: heroSlide2,
+      id: '2',
+      image_url: heroSlide2,
       title: "신혼부부가 1억으로",
       subtitle: "서울에서 내집마련하는 법",
       description: "실시간 줌코딩 50개 강의 무료 >",
-      bgColor: "from-pink-300 to-pink-500"
+      background_color: "from-pink-300 to-pink-500",
+      order_index: 2
     },
     {
-      image: heroSlide3,
+      id: '3',
+      image_url: heroSlide3,
       title: "집 사기 전 꼭 알아야 할 A to Z",
       subtitle: "나나쌤의 내집마련 기초편",
       description: "추천인이 내집마련하는 법 알려드립니다 →",
-      bgColor: "from-green-400 to-blue-500"
+      background_color: "from-green-400 to-blue-500",
+      order_index: 3
     }
   ];
 
   useEffect(() => {
-    if (!isPlaying) return;
+    fetchSlides();
+  }, []);
+
+  const fetchSlides = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('hero_slides')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_index');
+
+      if (error) {
+        console.error('Error fetching slides:', error);
+        setSlides(defaultSlides);
+      } else if (data && data.length > 0) {
+        setSlides(data);
+      } else {
+        setSlides(defaultSlides);
+      }
+    } catch (error) {
+      console.error('Error fetching slides:', error);
+      setSlides(defaultSlides);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSlideClick = (slide: HeroSlide) => {
+    if (slide.course_id) {
+      navigate(`/course/${slide.course_id}`);
+    }
+  };
+
+  useEffect(() => {
+    if (!isPlaying || slides.length === 0) return;
     
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -60,6 +117,14 @@ const HeroSection = () => {
     return (currentSlide + offset + slides.length) % slides.length;
   };
 
+  if (loading || slides.length === 0) {
+    return (
+      <section className="relative h-[380px] overflow-hidden bg-white flex items-center justify-center">
+        <div className="text-muted-foreground">로딩중...</div>
+      </section>
+    );
+  }
+
   return (
     <section className="relative h-[380px] overflow-hidden bg-white">
       {/* Three Panel Layout */}
@@ -71,7 +136,7 @@ const HeroSection = () => {
                onClick={prevSlide}
                style={{ height: '340px' }}>
             <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-lg">
-              <div className={cn("absolute inset-0 bg-gradient-to-br rounded-2xl", slides[getSlideIndex(-1)].bgColor)}>
+              <div className={cn("absolute inset-0 bg-gradient-to-br rounded-2xl", slides[getSlideIndex(-1)].background_color)}>
                 <div className="flex items-center h-full">
                   <div className="text-white space-y-4 px-12 flex-1">
                     <h3 className="text-2xl font-bold">
@@ -86,7 +151,7 @@ const HeroSection = () => {
                   </div>
                   <div className="pr-12">
                     <img
-                      src={slides[getSlideIndex(-1)].image}
+                      src={slides[getSlideIndex(-1)].image_url}
                       alt={slides[getSlideIndex(-1)].title}
                       className="w-48 h-60 object-cover rounded-xl shadow-lg"
                     />
@@ -98,8 +163,11 @@ const HeroSection = () => {
 
           {/* Center Panel (Current Slide) - Full visible */}
           <div className="relative z-10 mx-4">
-            <div className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden">
-              <div className={cn("absolute inset-0 bg-gradient-to-br", slides[currentSlide].bgColor)}>
+            <div 
+              className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer"
+              onClick={() => handleSlideClick(slides[currentSlide])}
+            >
+              <div className={cn("absolute inset-0 bg-gradient-to-br", slides[currentSlide].background_color)}>
                 <div className="flex items-center h-full">
                   <div className="text-white space-y-4 px-12 flex-1">
                     <h2 className="text-3xl font-bold leading-tight">
@@ -114,7 +182,7 @@ const HeroSection = () => {
                   </div>
                   <div className="pr-12">
                     <img
-                      src={slides[currentSlide].image}
+                      src={slides[currentSlide].image_url}
                       alt={slides[currentSlide].title}
                       className="w-48 h-60 object-cover rounded-xl shadow-lg"
                     />
@@ -129,7 +197,7 @@ const HeroSection = () => {
                onClick={nextSlide}
                style={{ height: '340px' }}>
             <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-lg">
-              <div className={cn("absolute inset-0 bg-gradient-to-br rounded-2xl", slides[getSlideIndex(1)].bgColor)}>
+              <div className={cn("absolute inset-0 bg-gradient-to-br rounded-2xl", slides[getSlideIndex(1)].background_color)}>
                 <div className="flex items-center h-full">
                   <div className="text-white space-y-4 px-12 flex-1">
                     <h3 className="text-2xl font-bold">
@@ -144,7 +212,7 @@ const HeroSection = () => {
                   </div>
                   <div className="pr-12">
                     <img
-                      src={slides[getSlideIndex(1)].image}
+                      src={slides[getSlideIndex(1)].image_url}
                       alt={slides[getSlideIndex(1)].title}
                       className="w-48 h-60 object-cover rounded-xl shadow-lg"
                     />
@@ -191,7 +259,6 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
-
     </section>
   );
 };

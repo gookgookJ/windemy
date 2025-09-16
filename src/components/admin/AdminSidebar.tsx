@@ -24,7 +24,8 @@ import {
   DollarSign,
   Calendar,
   Shield,
-  PlusCircle
+  PlusCircle,
+  Image
 } from 'lucide-react';
 
 const menuItems = [
@@ -62,6 +63,12 @@ const menuItems = [
     title: '섹션 자료 관리',
     url: '/admin/section-management',
     icon: FileText,
+    group: 'content'
+  },
+  {
+    title: '히어로 슬라이드',
+    url: '/admin/hero-slides',
+    icon: Image,
     group: 'content'
   },
   {
