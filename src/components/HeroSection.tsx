@@ -22,6 +22,7 @@ interface HeroSlide {
 const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [direction, setDirection] = useState<'next' | 'prev'>('next');
   const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -94,6 +95,7 @@ const HeroSection = () => {
     if (!isPlaying || slides.length === 0) return;
     
     const timer = setInterval(() => {
+      setDirection('next');
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
 
@@ -101,10 +103,12 @@ const HeroSection = () => {
   }, [slides.length, isPlaying]);
 
   const nextSlide = () => {
+    setDirection('next');
     setCurrentSlide((prev) => (prev + 1) % slides.length);
   };
 
   const prevSlide = () => {
+    setDirection('prev');
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
@@ -162,7 +166,7 @@ const HeroSection = () => {
           <div className="relative z-10 mx-4 transform transition-all duration-500 ease-in-out">
             <div 
               key={slides[currentSlide].id}
-              className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer animate-slide-in-right hover-scale"
+              className={`relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer ${direction === 'next' ? 'animate-slide-in-right' : 'animate-fade-in'} hover-scale`}
               onClick={() => handleSlideClick(slides[currentSlide])}
             >
               <img
