@@ -183,6 +183,34 @@ const Payment = () => {
       setProcessing(true);
       
       try {
+        // Check if user already has a completed order for this course
+        const { data: existingOrderItems, error: orderCheckError } = await supabase
+          .from('order_items')
+          .select(`
+            id,
+            order:orders!inner(
+              id,
+              status,
+              user_id
+            )
+          `)
+          .eq('course_id', courseId)
+          .eq('order.user_id', user?.id)
+          .eq('order.status', 'completed');
+
+        if (orderCheckError) {
+          throw orderCheckError;
+        }
+
+        if (existingOrderItems && existingOrderItems.length > 0) {
+          toast({
+            title: "이미 구매한 강의",
+            description: "해당 강의는 이미 구매하셨습니다.",
+          });
+          navigate('/my-page');
+          return;
+        }
+
         // 주문 생성
         const { data: order, error: orderError } = await supabase
           .from('orders')

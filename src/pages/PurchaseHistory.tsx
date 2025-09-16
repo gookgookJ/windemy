@@ -73,10 +73,39 @@ const PurchaseHistory = () => {
           )
         `)
         .eq('user_id', user.id)
+        .eq('status', 'completed') // Only show completed orders
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOrders(data || []);
+      
+      // Deduplicate orders by course - keep only the latest order for each course
+      const deduplicatedOrders: Order[] = [];
+      const seenCourses = new Set<string>();
+      
+      for (const order of data || []) {
+        const orderCourseIds = order.order_items.map(item => item.course.id);
+        const hasNewCourse = orderCourseIds.some(courseId => !seenCourses.has(courseId));
+        
+        if (hasNewCourse) {
+          // Filter out course items that we've already seen
+          const filteredOrderItems = order.order_items.filter(item => {
+            if (!seenCourses.has(item.course.id)) {
+              seenCourses.add(item.course.id);
+              return true;
+            }
+            return false;
+          });
+          
+          if (filteredOrderItems.length > 0) {
+            deduplicatedOrders.push({
+              ...order,
+              order_items: filteredOrderItems
+            });
+          }
+        }
+      }
+      
+      setOrders(deduplicatedOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
