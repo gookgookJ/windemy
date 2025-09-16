@@ -234,7 +234,7 @@ const FeaturedCourses = () => {
           {/* Favorite Heart Button */}
           <button
             onClick={handleFavoriteClick}
-            className="absolute top-3 left-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10"
+            className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10"
             aria-label={isFavorite(course.id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
           >
             <Heart 
@@ -247,7 +247,7 @@ const FeaturedCourses = () => {
           </button>
 
           {/* Tags */}
-          <div className="absolute top-3 right-3 flex gap-1">
+          <div className="absolute top-3 left-3 flex gap-1">
             {course.is_hot && (
               <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
                 HOT
@@ -273,20 +273,6 @@ const FeaturedCourses = () => {
               {course.instructor_name}
             </div>
           )}
-
-          {(Number(course.rating) > 0 && Number(course.total_students) > 0) ? (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-yellow-500">★</span>
-              <span className="font-semibold">{course.rating}</span>
-              <span className="text-muted-foreground">
-                ({Number(course.total_students).toLocaleString()}명)
-              </span>
-            </div>
-          ) : null}
-
-          <div className="text-lg font-bold text-foreground">
-            {course.price === 0 ? '무료' : `₩${course.price.toLocaleString()}`}
-          </div>
         </div>
       </Link>
     );

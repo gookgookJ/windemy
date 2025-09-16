@@ -442,9 +442,9 @@ const CourseDetail = () => {
         </div>
 
         {/* Desktop Layout: 2-column structure with fixed widths */}
-        <div className="hidden lg:flex gap-8 justify-center">
+        <div className="hidden lg:flex gap-8 justify-center min-h-screen">
           {/* Left Column: Video and Content - Fixed 757px width */}
-          <div className="w-[757px] flex-shrink-0">
+          <div className="w-[757px] flex-shrink-0 pb-20">
             {/* Thumbnail Section - Desktop: 757x426, Mobile: responsive */}
             <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
               <img
@@ -455,7 +455,7 @@ const CourseDetail = () => {
             </div>
 
             {/* Sticky Navigation Bar - Full width 4-column layout */}
-            <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm mb-8">
+            <div className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm mb-8">
               <div className="w-full max-w-[757px] grid grid-cols-4 gap-0 border border-border rounded-md overflow-hidden">
                 <Button 
                   variant="outline" 
@@ -657,8 +657,8 @@ const CourseDetail = () => {
           </div>
 
           {/* Right Column: Fixed Purchase Card - Desktop Only */}
-          <div className="hidden lg:block w-[383px] flex-shrink-0">
-            <div className="sticky top-24">
+          <div className="hidden lg:block w-[383px] flex-shrink-0 relative">
+            <div className="sticky top-28 h-fit max-h-[calc(100vh-8rem)] overflow-y-auto">
               <Card className="shadow-lg border border-border/50 p-6">
                 <div className="space-y-6">
                   {/* Course Title */}
@@ -826,7 +826,7 @@ const CourseDetail = () => {
           </Card>
 
           {/* Mobile Content Navigation */}
-          <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm mb-8 mx-4">
+          <div className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm mb-8 mx-4">
             <div className="grid grid-cols-4 gap-0 py-3">
               <Button 
                 variant="outline" 
