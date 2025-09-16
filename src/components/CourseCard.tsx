@@ -1,8 +1,9 @@
-import { Star, Clock, Users, BookOpen } from "lucide-react";
+import { Star, Clock, Users, BookOpen, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { useFavorites } from "@/hooks/useFavorites";
 
 interface CourseCardProps {
   id: string;
@@ -38,11 +39,21 @@ const CourseCard = ({
   isNew,
 }: CourseCardProps) => {
   const navigate = useNavigate();
+  const { toggleFavorite, isFavorite } = useFavorites();
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation when clicking heart
+    toggleFavorite(id);
+  };
+
+  const handleCardClick = () => {
+    navigate(`/course/${id}`);
+  };
 
   return (
     <Card 
       className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 bg-white w-full max-w-[380px]"
-      onClick={() => navigate(`/course/${id}`)}
+      onClick={handleCardClick}
     >
       <div className="relative overflow-hidden">
         <img
@@ -50,6 +61,20 @@ const CourseCard = ({
           alt={title}
           className="w-full h-[160px] object-cover transition-transform duration-300 group-hover:scale-105"
         />
+        {/* Favorite Heart Button */}
+        <button
+          onClick={handleFavoriteClick}
+          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110"
+          aria-label={isFavorite(id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
+        >
+          <Heart 
+            className={`w-4 h-4 transition-all duration-200 ${
+              isFavorite(id) 
+                ? 'text-red-500 fill-red-500' 
+                : 'text-gray-400 hover:text-red-400'
+            }`}
+          />
+        </button>
       </div>
 
       <CardContent className="p-4">

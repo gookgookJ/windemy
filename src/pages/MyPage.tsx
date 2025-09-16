@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BookOpen, Play, Calendar, ArrowRight, TrendingUp, Clock, Award } from 'lucide-react';
+import { BookOpen, Play, Calendar, ArrowRight, TrendingUp, Clock, Award, Heart } from 'lucide-react';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
 
@@ -25,8 +25,22 @@ interface EnrollmentWithCourse {
   };
 }
 
+interface FavoriteCourse {
+  id: string;
+  course: {
+    id: string;
+    title: string;
+    thumbnail_url: string;
+    price: number;
+    instructor: {
+      full_name: string;
+    };
+  };
+}
+
 const MyPage = () => {
   const [enrollments, setEnrollments] = useState<EnrollmentWithCourse[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteCourse[]>([]);
   const [stats, setStats] = useState({
     totalCourses: 0,
     completedCourses: 0,
@@ -47,6 +61,7 @@ const MyPage = () => {
       return;
     }
     fetchEnrollments();
+    fetchFavorites();
   }, [user, navigate]);
 
   const fetchEnrollments = async () => {
@@ -88,6 +103,65 @@ const MyPage = () => {
       console.error('Error fetching enrollments:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFavorites = async () => {
+    if (!user) return;
+
+    try {
+      // First get favorite course IDs
+      const { data: favoriteData, error: favoriteError } = await supabase
+        .from('course_favorites')
+        .select('id, course_id, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (favoriteError) throw favoriteError;
+
+      if (!favoriteData || favoriteData.length === 0) {
+        setFavorites([]);
+        return;
+      }
+
+      // Then get course details
+      const courseIds = favoriteData.map(f => f.course_id);
+      const { data: coursesData, error: coursesError } = await supabase
+        .from('courses')
+        .select('id, title, thumbnail_url, price, instructor_id')
+        .in('id', courseIds);
+
+      if (coursesError) throw coursesError;
+
+      // Get instructor names
+      const instructorIds = coursesData?.map(c => c.instructor_id).filter(Boolean) || [];
+      const { data: instructorsData } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', instructorIds);
+
+      // Combine the data
+      const favorites = favoriteData.map(fav => {
+        const course = coursesData?.find(c => c.id === fav.course_id);
+        const instructor = instructorsData?.find(i => i.id === course?.instructor_id);
+        
+        return {
+          id: fav.id,
+          course: {
+            id: course?.id || '',
+            title: course?.title || '',
+            thumbnail_url: course?.thumbnail_url || '',
+            price: course?.price || 0,
+            instructor: {
+              full_name: instructor?.full_name || '강사명'
+            }
+          }
+        };
+      });
+
+      setFavorites(favorites);
+    } catch (error) {
+      console.error('Error fetching favorites:', error);
     }
   };
 
@@ -268,6 +342,67 @@ const MyPage = () => {
                                   </div>
                                   <Progress value={enrollment.progress} className="h-2" />
                                 </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* 관심 강의 */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Heart className="h-5 w-5" />
+                    관심 강의
+                  </CardTitle>
+                  {favorites.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => navigate('/favorite-courses')}>
+                      더 보기
+                      <ArrowRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent className="p-6">
+                  {favorites.length === 0 ? (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Heart className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">관심 강의가 없습니다</h3>
+                      <p className="text-muted-foreground mb-4">마음에 드는 강의에 하트를 눌러보세요</p>
+                      <Button onClick={() => navigate('/courses')}>
+                        강의 둘러보기
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {favorites.slice(0, 4).map((favorite) => (
+                        <Card key={favorite.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/course/${favorite.course.id}`)}>
+                          <CardContent className="p-3">
+                            <div className="flex gap-3">
+                              <div className="relative flex-shrink-0">
+                                <img
+                                  src={favorite.course.thumbnail_url || '/placeholder.svg'}
+                                  alt={favorite.course.title}
+                                  className="w-16 h-12 object-cover rounded"
+                                />
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-sm line-clamp-2 mb-1">
+                                  {favorite.course.title}
+                                </h4>
+                                <p className="text-xs text-muted-foreground mb-1">
+                                  {favorite.course.instructor?.full_name}
+                                </p>
+                                <p className="text-xs font-semibold text-primary">
+                                  {favorite.course.price === 0 ? '무료' : `${favorite.course.price.toLocaleString()}원`}
+                                </p>
                               </div>
                             </div>
                           </CardContent>
