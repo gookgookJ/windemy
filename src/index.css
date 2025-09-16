@@ -148,10 +148,12 @@ All colors MUST be HSL.
 
   html {
     scroll-behavior: smooth;
+    overflow-y: scroll; /* 항상 스크롤바 공간 예약 */
   }
 
   body {
     @apply bg-background text-foreground;
     scroll-behavior: smooth;
+    overflow-x: hidden; /* 가로 스크롤 방지 */
   }
 }
