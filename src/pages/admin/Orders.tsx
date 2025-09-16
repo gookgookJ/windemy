@@ -263,13 +263,9 @@ const Orders = () => {
   const getPaymentMethodText = (method?: string) => {
     switch (method) {
       case 'card':
-        return '신용카드';
+        return '신용/체크카드';
       case 'bank_transfer':
-        return '계좌이체';
-      case 'kakao_pay':
-        return '카카오페이';
-      case 'toss_pay':
-        return '토스페이';
+        return '실시간 계좌이체';
       default:
         return method || '-';
     }
@@ -518,9 +514,26 @@ const Orders = () => {
   };
 
   const bulkUpdateOrderStatus = async (orderIds: string[], status: string) => {
-    // 실제 구현에서는 Supabase를 통해 일괄 업데이트
-    // 현재는 시뮬레이션
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const { error } = await supabase
+      .from('orders')
+      .update({ status })
+      .in('id', orderIds);
+    
+    if (error) throw error;
+
+    // 주문이 취소되면 연관된 enrollments 삭제
+    if (status === 'cancelled') {
+      const { error: enrollmentError } = await supabase
+        .from('enrollments')
+        .delete()
+        .in('course_id', 
+          orders
+            .filter(order => orderIds.includes(order.id))
+            .flatMap(order => order.order_items.map(item => item.course.id))
+        );
+      
+      if (enrollmentError) console.error('Enrollment deletion error:', enrollmentError);
+    }
   };
 
   const exportSelectedOrders = (selectedOrdersData: Order[]) => {
@@ -574,6 +587,71 @@ const Orders = () => {
   const handleOrderDetail = (order: Order) => {
     setSelectedOrder(order);
     setShowDetailModal(true);
+  };
+
+  // 개별 주문 취소 함수
+  const handleOrderCancel = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'cancelled' })
+        .eq('id', orderId);
+      
+      if (error) throw error;
+
+      // 해당 주문의 강의 등록 삭제
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        const courseIds = order.order_items.map(item => item.course.id);
+        const { error: enrollmentError } = await supabase
+          .from('enrollments')
+          .delete()
+          .eq('user_id', order.user_id)
+          .in('course_id', courseIds);
+        
+        if (enrollmentError) console.error('Enrollment deletion error:', enrollmentError);
+      }
+
+      toast({
+        title: "주문 취소 완료",
+        description: "주문이 취소되고 강의 등록이 해제되었습니다."
+      });
+      
+      refreshData();
+    } catch (error) {
+      console.error('Order cancel error:', error);
+      toast({
+        title: "주문 취소 실패",
+        description: "주문 취소 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // 개별 주문 완료 처리 함수
+  const handleOrderComplete = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'completed' })
+        .eq('id', orderId);
+      
+      if (error) throw error;
+
+      toast({
+        title: "결제 완료 처리",
+        description: "주문이 완료 처리되었습니다."
+      });
+      
+      refreshData();
+    } catch (error) {
+      console.error('Order complete error:', error);
+      toast({
+        title: "처리 실패",
+        description: "주문 완료 처리 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
   };
 
   // 영수증 다운로드 함수
@@ -710,7 +788,7 @@ const Orders = () => {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">주문 관리</h2>
           <p className="text-muted-foreground">
-            전체 주문을 관리하고 매출을 확인하세요.
+            고객 주문을 관리하고 매출을 확인하세요. 결제대기는 주문 생성 후 실제 결제가 완료되지 않은 상태입니다.
           </p>
         </div>
 
@@ -745,7 +823,7 @@ const Orders = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
-              <p className="text-xs text-muted-foreground">결제 대기</p>
+              <p className="text-xs text-muted-foreground">주문 후 미결제</p>
             </CardContent>
           </Card>
           
@@ -845,14 +923,11 @@ const Orders = () => {
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="전체" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">전체</SelectItem>
-                        <SelectItem value="card">신용카드</SelectItem>
-                        <SelectItem value="bank_transfer">계좌이체</SelectItem>
-                        <SelectItem value="kakao_pay">카카오페이</SelectItem>
-                        <SelectItem value="toss_pay">토스페이</SelectItem>
-                        <SelectItem value="free">무료</SelectItem>
-                      </SelectContent>
+                       <SelectContent>
+                         <SelectItem value="all">전체</SelectItem>
+                         <SelectItem value="card">신용/체크카드</SelectItem>
+                         <SelectItem value="bank_transfer">실시간 계좌이체</SelectItem>
+                       </SelectContent>
                     </Select>
                   </div>
                   
@@ -908,20 +983,23 @@ const Orders = () => {
                       <Download className="h-4 w-4 mr-1" />
                       선택 내보내기
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleBulkAction('complete')}
-                    >
-                      완료 처리
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleBulkAction('delete')}
-                    >
-                      일괄 취소
-                    </Button>
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       onClick={() => handleBulkAction('complete')}
+                       className="bg-green-50 hover:bg-green-100 text-green-700 border-green-300"
+                     >
+                       완료 처리
+                     </Button>
+                     <Button
+                       variant="destructive"
+                       size="sm"
+                       onClick={() => handleBulkAction('delete')}
+                       className="bg-red-50 hover:bg-red-100 text-red-700 border-red-300"
+                     >
+                       <X className="h-4 w-4 mr-1" />
+                       주문취소
+                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1117,16 +1195,35 @@ const Orders = () => {
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleOrderDetail(order)}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                상세보기
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => downloadReceipt(order)}>
-                                <Download className="h-4 w-4 mr-2" />
-                                영수증 다운로드
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
+                             <DropdownMenuContent align="end">
+                               <DropdownMenuItem onClick={() => handleOrderDetail(order)}>
+                                 <Eye className="h-4 w-4 mr-2" />
+                                 상세보기
+                               </DropdownMenuItem>
+                               <DropdownMenuItem onClick={() => downloadReceipt(order)}>
+                                 <FileText className="h-4 w-4 mr-2" />
+                                 영수증 다운로드
+                               </DropdownMenuItem>
+                               <DropdownMenuSeparator />
+                               {order.status === 'pending' && (
+                                 <DropdownMenuItem 
+                                   onClick={() => handleOrderCancel(order.id)}
+                                   className="flex items-center cursor-pointer text-red-600"
+                                 >
+                                   <X className="h-4 w-4 mr-2" />
+                                   주문 취소
+                                 </DropdownMenuItem>
+                               )}
+                               {order.status === 'pending' && (
+                                 <DropdownMenuItem 
+                                   onClick={() => handleOrderComplete(order.id)}
+                                   className="flex items-center cursor-pointer text-green-600"
+                                 >
+                                   <CreditCard className="h-4 w-4 mr-2" />
+                                   결제 완료 처리
+                                 </DropdownMenuItem>
+                               )}
+                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
                       </TableRow>
