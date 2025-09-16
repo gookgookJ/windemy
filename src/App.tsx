@@ -35,7 +35,6 @@ import AdminHeroSlides from "./pages/admin/HeroSlides";
 import CategoryCourses from "./pages/CategoryCourses";
 import Learn from "./pages/Learn";
 import NotFound from "./pages/NotFound";
-import ScrollToTop from "./components/ScrollToTop";
 
 // User pages
 import FavoriteCourses from "./pages/FavoriteCourses";
@@ -57,7 +56,6 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
