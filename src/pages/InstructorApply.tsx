@@ -273,7 +273,7 @@ const InstructorApply = () => {
                 { num: "5", title: "콘텐츠 제작", desc: "전담팀과 함께 강의 콘텐츠 제작 및 런칭 준비에 착수합니다." },
                 { num: "6", title: "런칭 & 성장", desc: "성공적인 런칭 이후, 데이터 기반으로 함께 성장 방안을 모색합니다." }
               ].map((item, index) => (
-                <div key={index} className="bg-card border border-border rounded-3xl p-8 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group">
+                <div key={index} className="bg-card border border-border rounded-3xl p-8 hover:border-primary/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group">
                   <div className="text-3xl font-black text-white bg-gradient-to-br from-primary to-secondary w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-200">
                     {item.num}
                   </div>
