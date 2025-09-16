@@ -158,22 +158,20 @@ const CategoryCourses = () => {
   const filterAndSortCourses = () => {
     let filtered = [...courses];
 
-    // Apply special category logic based on route FIRST
-    if (category === "free-courses") {
-      filtered = filtered.filter(course => course.category === "무료강의");
-    } else if (category === "vod-courses") {
-      // Filter by VOD category specifically
-      filtered = filtered.filter(course => course.category === "VOD 강의");
-    } else if (category === "premium-courses") {
-      // Filter by premium courses category specifically
-      filtered = filtered.filter(course => course.category === "프리미엄 강의");
-    }
-
-    // Then apply additional category filter from sidebar (only if not "all")
+    // If user selected a specific category from sidebar, use that instead of URL category
     if (selectedCategory !== "all") {
       const categoryObj = categories.find(cat => cat.id === selectedCategory);
       if (categoryObj) {
         filtered = filtered.filter(course => course.category === categoryObj.name);
+      }
+    } else {
+      // Only apply URL-based category filter when no sidebar category is selected
+      if (category === "free-courses") {
+        filtered = filtered.filter(course => course.category === "무료강의");
+      } else if (category === "vod-courses") {
+        filtered = filtered.filter(course => course.category === "VOD 강의");
+      } else if (category === "premium-courses") {
+        filtered = filtered.filter(course => course.category === "프리미엄 강의");
       }
     }
 
