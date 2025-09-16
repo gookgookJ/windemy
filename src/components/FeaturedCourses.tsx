@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { ChevronLeft, ChevronRight, Zap } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 interface Course {
   id: string;
@@ -126,87 +129,143 @@ const FeaturedCourses = () => {
     }
   };
 
-  const CourseGrid = ({ courses, title, viewAllLink }: { 
+  const CourseCarousel = ({ courses, title, viewAllLink, icon }: { 
     courses: Course[], 
     title: string, 
-    viewAllLink: string 
-  }) => (
-    <div className="mb-16">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl lg:text-3xl font-bold text-foreground">
-          {title}
-        </h2>
-        <Link 
-          to={viewAllLink}
-          className="text-muted-foreground hover:text-foreground transition-colors"
-        >
-          더보기 →
-        </Link>
-      </div>
+    viewAllLink: string,
+    icon?: React.ReactNode
+  }) => {
+    const [emblaRef, emblaApi] = useEmblaCarousel({ 
+      align: 'start',
+      slidesToScroll: 1,
+      loop: false
+    });
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {courses.map((course, index) => (
-          <Link key={course.id} to={`/course/${course.id}`} className="group cursor-pointer">
-            <div className="relative mb-4">
-              <img
-                src={course.thumbnail_url}
-                alt={course.title}
-                className="w-full h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
-                style={{ aspectRatio: "283/159" }}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/placeholder.svg";
-                }}
-              />
-              {course.is_hot && (
-                <div className="absolute top-3 right-3">
-                  <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                    HOT
-                  </span>
+    const scrollPrev = () => emblaApi && emblaApi.scrollPrev();
+    const scrollNext = () => emblaApi && emblaApi.scrollNext();
+
+    // Show only first 4 courses initially, rest in carousel
+    const displayCourses = courses.slice(0, Math.min(courses.length, 8));
+
+    return (
+      <div className="mb-16">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-2">
+            {icon}
+            <h2 className="text-2xl lg:text-3xl font-bold text-foreground">
+              {title}
+            </h2>
+          </div>
+          <div className="flex items-center gap-4">
+            {courses.length > 4 && (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={scrollPrev}
+                  className="h-10 w-10"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={scrollNext}
+                  className="h-10 w-10"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            <Link 
+              to={viewAllLink}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              더보기 →
+            </Link>
+          </div>
+        </div>
+
+        {courses.length <= 4 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {courses.map((course, index) => (
+              <CourseCard key={course.id} course={course} index={index} />
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex gap-6">
+              {displayCourses.map((course, index) => (
+                <div key={course.id} className="flex-none w-[calc(25%-18px)]">
+                  <CourseCard course={course} index={index} />
                 </div>
-              )}
-              {course.is_new && (
-                <div className="absolute top-3 right-3">
-                  <span className="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                    NEW
-                  </span>
-                </div>
-              )}
+              ))}
             </div>
-            
-            <div className="space-y-3">
-              <h3 className="font-bold text-foreground line-clamp-2 leading-tight">
-                {course.title}
-              </h3>
-              
-              {course.instructor_name && 
-               course.instructor_name !== "운영진" && 
-               course.instructor_name !== "강사" && (
-                <div className="text-sm text-muted-foreground">
-                  {course.instructor_name}
-                </div>
-              )}
-
-              {(Number(course.rating) > 0 && Number(course.total_students) > 0) ? (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-yellow-500">★</span>
-                  <span className="font-semibold">{course.rating}</span>
-                  <span className="text-muted-foreground">
-                    ({Number(course.total_students).toLocaleString()}명)
-                  </span>
-                </div>
-              ) : null}
-
-              {course.price > 0 && (
-                <div className="text-lg font-bold text-foreground">
-                  ₩{course.price.toLocaleString()}
-                </div>
-              )}
-            </div>
-          </Link>
-        ))}
+          </div>
+        )}
       </div>
-    </div>
+    );
+  };
+
+  const CourseCard = ({ course, index }: { course: Course, index: number }) => (
+    <Link to={`/course/${course.id}`} className="group cursor-pointer block">
+      <div className="relative mb-4">
+        <img
+          src={course.thumbnail_url}
+          alt={course.title}
+          className="w-full h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+          style={{ aspectRatio: "283/159" }}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "/placeholder.svg";
+          }}
+        />
+        {course.is_hot && (
+          <div className="absolute top-3 right-3">
+            <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
+              HOT
+            </span>
+          </div>
+        )}
+        {course.is_new && (
+          <div className="absolute top-3 right-3">
+            <span className="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">
+              NEW
+            </span>
+          </div>
+        )}
+      </div>
+      
+      <div className="space-y-3">
+        <h3 className="font-bold text-foreground line-clamp-2 leading-tight">
+          {course.title}
+        </h3>
+        
+        {course.instructor_name && 
+         course.instructor_name !== "운영진" && 
+         course.instructor_name !== "강사" && (
+          <div className="text-sm text-muted-foreground">
+            {course.instructor_name}
+          </div>
+        )}
+
+        {(Number(course.rating) > 0 && Number(course.total_students) > 0) ? (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-yellow-500">★</span>
+            <span className="font-semibold">{course.rating}</span>
+            <span className="text-muted-foreground">
+              ({Number(course.total_students).toLocaleString()}명)
+            </span>
+          </div>
+        ) : null}
+
+        {course.price > 0 && (
+          <div className="text-lg font-bold text-foreground">
+            ₩{course.price.toLocaleString()}
+          </div>
+        )}
+      </div>
+    </Link>
   );
 
   if (loading) {
@@ -236,37 +295,41 @@ const FeaturedCourses = () => {
         
         {/* Featured Courses Section */}
         {featuredCourses.length > 0 && (
-          <CourseGrid 
+          <CourseCarousel 
             courses={featuredCourses}
             title="지금 가장 주목받는 강의"
             viewAllLink="/courses"
+            icon={<span className="text-2xl">🔥</span>}
           />
         )}
 
         {/* Free Courses Section */}
         {freeCourses.length > 0 && (
-          <CourseGrid 
+          <CourseCarousel 
             courses={freeCourses}
-            title="🆓 무료로 배우는 아카데미"
+            title="무료로 배우는 이커머스"
             viewAllLink="/courses/free-courses"
+            icon={<Zap className="w-7 h-7 text-blue-500" />}
           />
         )}
 
         {/* Premium Courses Section */}
         {premiumCourses.length > 0 && (
-          <CourseGrid 
+          <CourseCarousel 
             courses={premiumCourses}
-            title="👑 프리미엄 강의"
+            title="프리미엄 강의"
             viewAllLink="/courses/premium-courses"
+            icon={<span className="text-2xl">👑</span>}
           />
         )}
 
         {/* VOD Courses Section */}
         {vodCourses.length > 0 && (
-          <CourseGrid 
+          <CourseCarousel 
             courses={vodCourses}
-            title="📺 VOD 강의"
+            title="VOD 강의"
             viewAllLink="/courses/vod-courses"
+            icon={<span className="text-2xl">📺</span>}
           />
         )}
 
