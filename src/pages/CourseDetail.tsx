@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { CourseDetailImages } from "@/components/CourseDetailImages";
 import { Progress } from "@/components/ui/progress";
 import Header from "@/components/Header";
@@ -105,6 +106,7 @@ const CourseDetail = () => {
   const [groupedSections, setGroupedSections] = useState<any[]>([]); // Add state for sections
   const [loading, setLoading] = useState(true);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [showAlreadyEnrolledModal, setShowAlreadyEnrolledModal] = useState(false);
   const [instructorInfo, setInstructorInfo] = useState<InstructorInfo | null>(null);
   
   const navigate = useNavigate();
@@ -328,11 +330,8 @@ const CourseDetail = () => {
       }
 
       if (existingEnrollment) {
-        // 이미 등록된 강의인 경우 알림 표시
-        toast({
-          title: "이미 수강 중인 강의",
-          description: "해당 강의는 이미 수강 중입니다.",
-        });
+        // 이미 등록된 강의인 경우 모달 표시
+        setShowAlreadyEnrolledModal(true);
         return;
       }
     } catch (error) {
@@ -1036,6 +1035,41 @@ const CourseDetail = () => {
             <ChevronUp className="w-5 h-5" />
           </Button>
         )}
+
+        {/* Already Enrolled Modal */}
+        <AlertDialog open={showAlreadyEnrolledModal} onOpenChange={setShowAlreadyEnrolledModal}>
+          <AlertDialogContent className="max-w-md">
+            <AlertDialogHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <AlertDialogTitle className="text-left">이미 구매한 강의입니다</AlertDialogTitle>
+                </div>
+              </div>
+              <AlertDialogDescription className="text-left">
+                해당 강의는 이미 구매하여 수강 중인 강의입니다. 
+                내 강의실에서 수강을 계속 진행하세요.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAlreadyEnrolledModal(false)}
+                className="w-full sm:w-auto"
+              >
+                닫기
+              </Button>
+              <AlertDialogAction
+                onClick={() => navigate('/my-page')}
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90"
+              >
+                내 강의실로 이동
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );
