@@ -79,11 +79,11 @@ const InstructorApply = () => {
             <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
               WINDLY ACADEMY INSTRUCTOR
             </div>
-            <h1 className="text-5xl sm:text-6xl font-black leading-relaxed mb-8">
+            <h1 className="text-5xl sm:text-6xl font-black mb-8" style={{ lineHeight: 1.4 }}>
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                최고의 전문가
+                최고의 전문가를 위한
               </span>
-              를 위한<br />
+              <br />
               최상의 파트너십
             </h1>
             <div className="max-w-4xl mb-12">
@@ -96,10 +96,16 @@ const InstructorApply = () => {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-6">
-              <Button size="lg" className="text-lg px-10 py-6 h-auto font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105">
-                지금 바로 지원하기
-                <ArrowRight className="ml-3 h-6 w-6" />
-              </Button>
+              <a 
+                href="https://docs.google.com/forms/d/e/1FAIpQLSe7hXtY3eCsw2Owdxgz3yX1RTI6tgeBHJy1dI0oK0mVcBeXbQ/viewform?usp=send_form"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button size="lg" className="text-lg px-10 py-6 h-auto font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105">
+                  지금 바로 지원하기
+                  <ArrowRight className="ml-3 h-6 w-6" />
+                </Button>
+              </a>
             </div>
           </div>
         </div>
@@ -415,13 +421,19 @@ const InstructorApply = () => {
               더 큰 성장을 경험하세요.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-6">
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="bg-white text-primary border-white hover:bg-white/90 text-xl px-12 py-6 h-auto font-bold justify-center"
+              <a 
+                href="https://docs.google.com/forms/d/e/1FAIpQLSe7hXtY3eCsw2Owdxgz3yX1RTI6tgeBHJy1dI0oK0mVcBeXbQ/viewform?usp=send_form"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                강사 지원하기
-              </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="bg-white text-primary border-white hover:bg-white/90 text-xl px-12 py-6 h-auto font-bold justify-center"
+                >
+                  강사 지원하기
+                </Button>
+              </a>
             </div>
           </div>
         </div>
@@ -431,9 +443,15 @@ const InstructorApply = () => {
       <div className={`fixed bottom-8 right-8 z-50 transition-all duration-500 ease-out ${
         showStickyButton ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95 pointer-events-none'
       }`}>
-        <Button className="shadow-2xl hover:scale-105 transition-all duration-200 text-lg px-8 py-4 h-auto font-bold hover:shadow-xl justify-center">
-          강사 지원하기
-        </Button>
+        <a 
+          href="https://docs.google.com/forms/d/e/1FAIpQLSe7hXtY3eCsw2Owdxgz3yX1RTI6tgeBHJy1dI0oK0mVcBeXbQ/viewform?usp=send_form"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button className="shadow-2xl hover:scale-105 transition-all duration-200 text-lg px-8 py-4 h-auto font-bold hover:shadow-xl justify-center">
+            강사 지원하기
+          </Button>
+        </a>
       </div>
     </div>
   );
