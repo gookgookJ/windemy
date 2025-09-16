@@ -658,9 +658,9 @@ const CourseDetail = () => {
 
           {/* Right Column: Fixed Purchase Card - Desktop Only */}
           <div className="hidden lg:block w-[383px] flex-shrink-0 relative">
-            <div className="sticky top-28 h-fit max-h-[calc(100vh-8rem)] overflow-y-auto">
+            <div className="sticky top-28">
               <Card className="shadow-lg border border-border/50 p-6">
-                <div className="space-y-6">
+                <div className="space-y-6 max-h-[calc(100vh-8rem)] overflow-y-auto">
                   {/* Course Title */}
                   <h1 className="text-xl font-bold leading-tight">
                     {courseData.title}
