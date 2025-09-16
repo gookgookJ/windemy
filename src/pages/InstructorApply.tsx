@@ -118,7 +118,7 @@ const InstructorApply = () => {
             <div className="max-w-7xl mx-auto">
               <div className="text-left mb-16">
                 <div className="inline-block px-6 py-3 bg-primary/10 text-primary text-sm font-bold tracking-wide rounded-full mb-8 border border-primary/20">
-                  WHY WINDLY
+                  WHY WINDLY ACADEMY
                 </div>
                 <h2 className="text-4xl sm:text-5xl font-black mb-8 leading-tight">
                   콘텐츠에만 집중하세요
