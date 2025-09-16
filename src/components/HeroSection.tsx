@@ -177,14 +177,14 @@ const HeroSection = () => {
 
   if (loading || slides.length === 0) {
     return (
-      <section className="relative h-[200px] md:h-[380px] overflow-hidden bg-white flex items-center justify-center">
+      <section className="relative h-[180px] md:h-[380px] overflow-hidden bg-white flex items-center justify-center">
         <div className="text-muted-foreground">로딩중...</div>
       </section>
     );
   }
 
   return (
-    <section className="relative h-[200px] md:h-[380px] overflow-hidden bg-white">
+    <section className="relative h-[180px] md:h-[380px] overflow-hidden bg-white">
       {/* Mobile Single Slide Layout */}
       <div className="block md:hidden relative w-full h-full">
         <div 
@@ -205,7 +205,7 @@ const HeroSection = () => {
             className="w-full h-full object-cover responsive-image"
           />
           <div className="absolute inset-0 flex items-center">
-            <div className="text-white space-y-1 px-8 safe-area-padding flex-1">
+            <div className="text-white space-y-1 px-12 safe-area-padding flex-1">
               <h2 className="text-base font-bold leading-tight drop-shadow-lg">
                 {slides[currentSlide].title}
               </h2>
