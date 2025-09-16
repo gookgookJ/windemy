@@ -446,14 +446,7 @@ const HomepageSectionManager = () => {
                   </div>
                   <CardContent className="p-4">
                     <h4 className="font-medium text-sm line-clamp-2 mb-2">{course.course.title}</h4>
-                    <p className="text-xs text-gray-600 mb-2">{course.course.instructor_name}</p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                        <span className="text-xs">{course.course.rating || 5.0}</span>
-                      </div>
-                      <span className="text-xs font-bold">{course.course.price.toLocaleString()}원</span>
-                    </div>
+                    <p className="text-xs text-gray-600">{course.course.instructor_name}</p>
                   </CardContent>
                 </Card>
               ))}
