@@ -135,10 +135,10 @@ const HeroSection = () => {
         <div key={currentSlide} className={`flex w-full items-center justify-center transition-all duration-700 ease-out transform ${direction === 'next' ? 'animate-slide-in-right' : 'animate-slide-in-left'}`}>
           
           {/* Left Panel (Previous Slide) - Partially visible */}
-          <div className="flex-1 relative opacity-40 transition-all duration-700 ease-out cursor-pointer overflow-hidden rounded-r-2xl"
+          <div className="flex-1 relative opacity-40 transition-all duration-700 ease-out cursor-pointer overflow-hidden"
                onClick={prevSlide}
                style={{ height: '340px' }}>
-            <div className="absolute right-0 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden transform transition-all duration-700 ease-out">
+            <div className="absolute -right-[200px] top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden transform transition-all duration-700 ease-out">
               <div className="relative w-full h-full">
                 <img
                   src={slides[getSlideIndex(-1)].image_url}
@@ -147,13 +147,13 @@ const HeroSection = () => {
                 />
                 <div className="absolute inset-0 bg-black/40 flex items-center transition-opacity duration-300">
                   <div className="text-white space-y-4 px-12 flex-1 transform transition-transform duration-300">
-                    <h3 className="text-2xl font-bold drop-shadow-lg animate-fade-in">
+                    <h3 className="text-2xl font-bold drop-shadow-lg">
                       {slides[getSlideIndex(-1)].title}
                     </h3>
-                    <p className="text-lg opacity-90 drop-shadow-lg animate-fade-in">
+                    <p className="text-lg opacity-90 drop-shadow-lg">
                       {slides[getSlideIndex(-1)].subtitle}
                     </p>
-                    <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg animate-fade-in">
+                    <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
                       {slides[getSlideIndex(-1)].description}
                     </p>
                   </div>
@@ -174,7 +174,7 @@ const HeroSection = () => {
                 className="w-full h-full object-cover transition-all duration-700 ease-out"
               />
               <div className="absolute inset-0 bg-black/30 flex items-center">
-                <div className="text-white space-y-4 px-12 flex-1 animate-fade-in">
+                <div className="text-white space-y-4 px-12 flex-1">
                   <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
                     {slides[currentSlide].title}
                   </h2>
@@ -190,10 +190,10 @@ const HeroSection = () => {
           </div>
 
           {/* Right Panel (Next Slide) - Partially visible */}
-          <div className="flex-1 relative opacity-40 transition-all duration-700 ease-out cursor-pointer overflow-hidden rounded-l-2xl"
+          <div className="flex-1 relative opacity-40 transition-all duration-700 ease-out cursor-pointer overflow-hidden"
                onClick={nextSlide}
                style={{ height: '340px' }}>
-            <div className="absolute left-0 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden transform transition-all duration-700 ease-out">
+            <div className="absolute -left-[200px] top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden transform transition-all duration-700 ease-out">
               <div className="relative w-full h-full">
                 <img
                   src={slides[getSlideIndex(1)].image_url}
@@ -202,13 +202,13 @@ const HeroSection = () => {
                 />
                 <div className="absolute inset-0 bg-black/40 flex items-center transition-opacity duration-300">
                   <div className="text-white space-y-4 px-12 flex-1 transform transition-transform duration-300">
-                    <h3 className="text-2xl font-bold drop-shadow-lg animate-fade-in">
+                    <h3 className="text-2xl font-bold drop-shadow-lg">
                       {slides[getSlideIndex(1)].title}
                     </h3>
-                    <p className="text-lg opacity-90 drop-shadow-lg animate-fade-in">
+                    <p className="text-lg opacity-90 drop-shadow-lg">
                       {slides[getSlideIndex(1)].subtitle}
                     </p>
-                    <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg animate-fade-in">
+                    <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
                       {slides[getSlideIndex(1)].description}
                     </p>
                   </div>
