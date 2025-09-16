@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { AdminLayout } from '@/layouts/AdminLayout';
 
 interface HeroSlide {
   id: string;
@@ -320,21 +321,25 @@ const HeroSlides = () => {
     setIsDialogOpen(true);
   };
 
+  const getSlideIndex = (offset: number) => {
+    return (previewCurrentSlide + offset + activeSlides.length) % activeSlides.length;
+  };
+
   const activeSlides = slides.filter(slide => slide.is_active);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50/50 p-6">
+      <AdminLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-lg font-medium text-muted-foreground">로딩중...</div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      <div className="max-w-7xl mx-auto p-6 space-y-8">
+    <AdminLayout>
+      <div className="space-y-8">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <div className="flex justify-between items-start">
@@ -515,56 +520,127 @@ const HeroSlides = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="relative h-[400px] overflow-hidden bg-gray-900 rounded-lg">
-                <img
-                  src={activeSlides[previewCurrentSlide]?.image_url}
-                  alt={activeSlides[previewCurrentSlide]?.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                  <div className="text-white text-center space-y-4 max-w-2xl px-6">
-                    <h2 className="text-4xl font-bold drop-shadow-lg">
-                      {activeSlides[previewCurrentSlide]?.title}
-                    </h2>
-                    {activeSlides[previewCurrentSlide]?.subtitle && (
-                      <h3 className="text-xl font-medium drop-shadow-lg opacity-90">
-                        {activeSlides[previewCurrentSlide]?.subtitle}
-                      </h3>
-                    )}
-                    {activeSlides[previewCurrentSlide]?.description && (
-                      <p className="text-lg drop-shadow-lg opacity-80">
-                        {activeSlides[previewCurrentSlide]?.description}
-                      </p>
-                    )}
+              <div className="relative h-[380px] overflow-hidden bg-white rounded-lg border">
+                {/* Three Panel Layout - 실제 메인페이지와 동일한 구조 */}
+                <div className="relative w-full h-full flex items-center justify-center">
+                  <div className="flex w-full items-center justify-center">
+                    
+                    {/* Left Panel (Previous Slide) - Partially visible */}
+                    <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-r-2xl"
+                         onClick={() => setPreviewCurrentSlide((prev) => (prev - 1 + activeSlides.length) % activeSlides.length)}
+                         style={{ height: '340px' }}>
+                      <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
+                        <div className="relative w-full h-full">
+                          <img
+                            src={activeSlides[getSlideIndex(-1)]?.image_url}
+                            alt={activeSlides[getSlideIndex(-1)]?.title}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/40 flex items-center">
+                            <div className="text-white space-y-4 px-12 flex-1">
+                              <h3 className="text-2xl font-bold drop-shadow-lg">
+                                {activeSlides[getSlideIndex(-1)]?.title}
+                              </h3>
+                              <p className="text-lg opacity-90 drop-shadow-lg">
+                                {activeSlides[getSlideIndex(-1)]?.subtitle}
+                              </p>
+                              <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
+                                {activeSlides[getSlideIndex(-1)]?.description}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Center Panel (Current Slide) - Full visible */}
+                    <div className="relative z-10 mx-4">
+                      <div className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer">
+                        <img
+                          src={activeSlides[previewCurrentSlide]?.image_url}
+                          alt={activeSlides[previewCurrentSlide]?.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/30 flex items-center">
+                          <div className="text-white space-y-4 px-12 flex-1">
+                            <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
+                              {activeSlides[previewCurrentSlide]?.title}
+                            </h2>
+                            <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
+                              {activeSlides[previewCurrentSlide]?.subtitle}
+                            </h3>
+                            <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
+                              {activeSlides[previewCurrentSlide]?.description}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Panel (Next Slide) - Partially visible */}
+                    <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-l-2xl"
+                         onClick={() => setPreviewCurrentSlide((prev) => (prev + 1) % activeSlides.length)}
+                         style={{ height: '340px' }}>
+                      <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
+                        <div className="relative w-full h-full">
+                          <img
+                            src={activeSlides[getSlideIndex(1)]?.image_url}
+                            alt={activeSlides[getSlideIndex(1)]?.title}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/40 flex items-center">
+                            <div className="text-white space-y-4 px-12 flex-1">
+                              <h3 className="text-2xl font-bold drop-shadow-lg">
+                                {activeSlides[getSlideIndex(1)]?.title}
+                              </h3>
+                              <p className="text-lg opacity-90 drop-shadow-lg">
+                                {activeSlides[getSlideIndex(1)]?.subtitle}
+                              </p>
+                              <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
+                                {activeSlides[getSlideIndex(1)]?.description}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Control Buttons */}
-                <div className="absolute bottom-4 right-4 flex items-center gap-2">
-                  <button
-                    onClick={() => setPreviewCurrentSlide((prev) => (prev - 1 + activeSlides.length) % activeSlides.length)}
-                    className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  
-                  <button
-                    onClick={() => setIsPreviewPlaying(!isPreviewPlaying)}
-                    className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
-                  >
-                    {isPreviewPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
-                  </button>
-                  
-                  <div className="bg-black/50 rounded-full px-3 py-1.5 text-white text-sm font-medium">
-                    {previewCurrentSlide + 1} / {activeSlides.length}
+                {/* Control Buttons positioned at center panel bottom right */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+                  <div className="relative w-[760px]">
+                    <div className="absolute bottom-4 right-8 flex items-center gap-3">
+                      
+                      {/* Navigation Arrows */}
+                      <button
+                        onClick={() => setPreviewCurrentSlide((prev) => (prev - 1 + activeSlides.length) % activeSlides.length)}
+                        className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      
+                      {/* Play/Pause Button */}
+                      <button
+                        onClick={() => setIsPreviewPlaying(!isPreviewPlaying)}
+                        className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+                      >
+                        {isPreviewPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+                      </button>
+                      
+                      {/* Slide Counter */}
+                      <div className="bg-black/50 rounded-full px-3 py-1.5 text-white text-sm font-medium">
+                        {previewCurrentSlide + 1} / {activeSlides.length}
+                      </div>
+                      
+                      <button
+                        onClick={() => setPreviewCurrentSlide((prev) => (prev + 1) % activeSlides.length)}
+                        className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
-                  
-                  <button
-                    onClick={() => setPreviewCurrentSlide((prev) => (prev + 1) % activeSlides.length)}
-                    className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
                 </div>
               </div>
             </CardContent>
@@ -687,7 +763,7 @@ const HeroSlides = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
