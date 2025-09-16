@@ -6,9 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, CreditCard, Package, Filter } from 'lucide-react';
+import { Calendar, CreditCard, Package, Filter, FileText } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface OrderItem {
   id: string;
@@ -38,6 +41,7 @@ const PurchaseHistory = () => {
   const [timeFilter, setTimeFilter] = useState<string>('all');
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!user) {
@@ -191,8 +195,119 @@ const PurchaseHistory = () => {
         return '카카오페이';
       case 'toss_pay':
         return '토스페이';
+      case 'free':
+        return '무료';
       default:
         return method || '-';
+    }
+  };
+
+  // 영수증 다운로드 함수
+  const downloadReceipt = async (order: Order) => {
+    try {
+      // 영수증 HTML 생성
+      const receiptHTML = `
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: 'Noto Sans KR', sans-serif; line-height: 1.6;">
+          <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px;">
+            <h1 style="color: #333; margin: 0;">결제 영수증</h1>
+            <p style="color: #666; margin: 5px 0;">Receipt</p>
+          </div>
+          
+          <div style="margin-bottom: 30px;">
+            <h2 style="color: #333; margin-bottom: 15px;">주문 정보</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 8px 0; font-weight: bold; width: 30%;">주문번호</td>
+                <td style="padding: 8px 0;">${order.id}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 8px 0; font-weight: bold;">주문일시</td>
+                <td style="padding: 8px 0;">${new Date(order.created_at).toLocaleString('ko-KR')}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 8px 0; font-weight: bold;">결제수단</td>
+                <td style="padding: 8px 0;">${getPaymentMethodText(order.payment_method)}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 8px 0; font-weight: bold;">결제상태</td>
+                <td style="padding: 8px 0;">결제완료</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="margin-bottom: 30px;">
+            <h2 style="color: #333; margin-bottom: 15px;">구매 상품</h2>
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
+              <thead>
+                <tr style="background-color: #f8f9fa;">
+                  <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">상품명</th>
+                  <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd; width: 100px;">금액</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${order.order_items.map(item => `
+                  <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 12px;">${item.course?.title || '강의'}</td>
+                    <td style="padding: 12px; text-align: right;">${item.price.toLocaleString()}원</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <div style="text-align: right; margin-bottom: 30px;">
+            <p style="font-size: 18px; font-weight: bold; color: #333; margin: 0;">
+              총 결제금액: ${order.total_amount.toLocaleString()}원
+            </p>
+          </div>
+
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; font-size: 12px;">
+            <p>본 영수증은 전자상거래 결제 완료를 증명하는 서류입니다.</p>
+            <p>발행일: ${new Date().toLocaleString('ko-KR')}</p>
+          </div>
+        </div>
+      `;
+
+      // 임시 div 생성
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = receiptHTML;
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '0';
+      tempDiv.style.width = '600px';
+      tempDiv.style.backgroundColor = 'white';
+      document.body.appendChild(tempDiv);
+
+      // html2canvas로 이미지 생성
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+      });
+
+      // PDF 생성
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`영수증_${order.id.slice(0, 8)}.pdf`);
+
+      // 임시 div 제거
+      document.body.removeChild(tempDiv);
+
+      toast({
+        title: "영수증 다운로드 완료",
+        description: "PDF 파일이 다운로드되었습니다."
+      });
+    } catch (error) {
+      console.error('Receipt download error:', error);
+      toast({
+        title: "영수증 다운로드 실패",
+        description: "영수증 생성 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -338,9 +453,10 @@ const PurchaseHistory = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => navigate(`/learn/${item.course?.id || item.course_id}?from=purchase`)}
+                            onClick={() => downloadReceipt(order)}
                           >
-                            학습하기
+                            <FileText className="h-4 w-4 mr-1" />
+                            영수증
                           </Button>
                         </div>
                       ))}
