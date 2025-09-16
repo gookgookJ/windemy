@@ -101,13 +101,6 @@ const HomepageSectionManager = () => {
     return () => clearInterval(timer);
   }, [selectedCourses.length, isPreviewPlaying]);
 
-  useEffect(() => {
-    if (config) {
-      fetchSectionData();
-      fetchAvailableCourses();
-    }
-  }, [sectionType]);
-
   const fetchSectionData = async () => {
     try {
       // Fetch existing section
@@ -238,22 +231,35 @@ const HomepageSectionManager = () => {
 
       setAvailableCourses(processedCourses);
     } catch (error) {
-      console.error('Error fetching courses:', error);
+      console.error('Error fetching available courses:', error);
+      toast({
+        title: "오류",
+        description: "강의 목록을 불러오는데 실패했습니다.",
+        variant: "destructive"
+      });
     }
   };
 
   const addCourse = async (course: Course) => {
-    if (!section) return;
+    if (!section || section.filter_type !== 'manual') return;
+
+    // Check if course is already selected
+    if (selectedCourses.some(sc => sc.course_id === course.id)) {
+      toast({
+        title: "알림",
+        description: "이미 추가된 강의입니다.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
-      const maxOrder = Math.max(...selectedCourses.map(sc => sc.order_index), -1);
-      
       const { data, error } = await supabase
         .from('homepage_section_courses')
         .insert({
           section_id: section.id,
           course_id: course.id,
-          order_index: maxOrder + 1
+          order_index: selectedCourses.length
         })
         .select(`
           *,
@@ -292,6 +298,8 @@ const HomepageSectionManager = () => {
   };
 
   const removeCourse = async (courseId: string) => {
+    if (!section || section.filter_type !== 'manual') return;
+
     try {
       const { error } = await supabase
         .from('homepage_section_courses')
@@ -420,7 +428,7 @@ const HomepageSectionManager = () => {
   };
 
   const onDragEnd = async (result: any) => {
-    if (!result.destination) return;
+    if (!result.destination || section?.filter_type !== 'manual') return;
 
     const items = Array.from(selectedCourses);
     const [reorderedItem] = items.splice(result.source.index, 1);
@@ -691,183 +699,174 @@ const HomepageSectionManager = () => {
                     </Button>
                   </div>
                 </CardHeader>
-              <CardContent>
-                {selectedCourses.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <IconComponent className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>선택된 강의가 없습니다.</p>
-                    <p className="text-sm">강의 추가 버튼을 클릭하여 강의를 추가해보세요.</p>
-                  </div>
-                ) : (
-                  <DragDropContext onDragEnd={onDragEnd}>
-                    <Droppable droppableId="selected-courses">
-                      {(provided) => (
-                        <div
-                          {...provided.droppableProps}
-                          ref={provided.innerRef}
-                          className="space-y-3"
-                        >
-                          {selectedCourses.map((selectedCourse, index) => (
-                            <Draggable
-                              key={selectedCourse.id}
-                              draggableId={selectedCourse.id}
-                              index={index}
-                            >
-                              {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  className={`flex items-center p-4 border rounded-lg bg-white transition-all ${
-                                    snapshot.isDragging ? 'shadow-lg rotate-1' : 'shadow-sm'
-                                  }`}
-                                >
+                <CardContent>
+                  {selectedCourses.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <IconComponent className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>선택된 강의가 없습니다.</p>
+                      <p className="text-sm">강의 추가 버튼을 클릭하여 강의를 추가해보세요.</p>
+                    </div>
+                  ) : (
+                    <DragDropContext onDragEnd={onDragEnd}>
+                      <Droppable droppableId="selected-courses">
+                        {(provided) => (
+                          <div
+                            {...provided.droppableProps}
+                            ref={provided.innerRef}
+                            className="space-y-3"
+                          >
+                            {selectedCourses.map((selectedCourse, index) => (
+                              <Draggable
+                                key={selectedCourse.id}
+                                draggableId={selectedCourse.id}
+                                index={index}
+                              >
+                                {(provided, snapshot) => (
                                   <div
-                                    {...provided.dragHandleProps}
-                                    className="mr-3 text-muted-foreground hover:text-foreground cursor-grab"
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    className={`flex items-center p-4 border rounded-lg bg-white transition-all ${
+                                      snapshot.isDragging ? 'shadow-lg rotate-1' : 'shadow-sm'
+                                    }`}
                                   >
-                                    <GripVertical className="w-4 h-4" />
-                                  </div>
-                                  
-                                  <div className="flex items-center gap-3 flex-1">
-                                    <div className="relative">
-                                      <img 
-                                        src={selectedCourse.course.thumbnail_url} 
-                                        alt={selectedCourse.course.title}
-                                        className="w-20 h-14 object-cover rounded"
-                                      />
-                                      <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full font-medium">
-                                        {index + 1}
+                                    <div
+                                      {...provided.dragHandleProps}
+                                      className="mr-3 text-muted-foreground hover:text-foreground cursor-grab"
+                                    >
+                                      <GripVertical className="w-4 h-4" />
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-3 flex-1">
+                                      <div className="relative">
+                                        <img 
+                                          src={selectedCourse.course.thumbnail_url} 
+                                          alt={selectedCourse.course.title}
+                                          className="w-20 h-14 object-cover rounded"
+                                        />
+                                        <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full font-medium">
+                                          {index + 1}
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className="font-semibold text-sm mb-1 line-clamp-1">{selectedCourse.course.title}</h4>
+                                        <p className="text-xs text-muted-foreground mb-2">{selectedCourse.course.instructor_name}</p>
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-sm font-medium text-primary">{selectedCourse.course.price.toLocaleString()}원</span>
+                                          {selectedCourse.course.is_hot && (
+                                            <Badge variant="destructive" className="text-xs">HOT</Badge>
+                                          )}
+                                          {selectedCourse.course.is_new && (
+                                            <Badge variant="default" className="text-xs">NEW</Badge>
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
                                     
-                                    <div className="flex-1 min-w-0">
-                                      <h4 className="font-semibold text-sm mb-1 line-clamp-1">{selectedCourse.course.title}</h4>
-                                      <p className="text-xs text-muted-foreground mb-2">{selectedCourse.course.instructor_name}</p>
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium text-primary">{selectedCourse.course.price.toLocaleString()}원</span>
-                                        {selectedCourse.course.is_hot && (
-                                          <Badge variant="destructive" className="text-xs">HOT</Badge>
-                                        )}
-                                        {selectedCourse.course.is_new && (
-                                          <Badge variant="default" className="text-xs">NEW</Badge>
-                                        )}
-                                      </div>
-                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => removeCourse(selectedCourse.id)}
+                                      className="hover:bg-destructive hover:text-destructive-foreground"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
                                   </div>
-                                  
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => removeCourse(selectedCourse.id)}
-                                    className="hover:bg-destructive hover:text-destructive-foreground"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              )}
-                            </Draggable>
-                          ))}
-                          {provided.placeholder}
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Available Courses */}
+            {showAvailable && (
+              <div className="lg:col-span-1">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>사용 가능한 강의</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {availableCourses
+                        .filter(course => !selectedCourses.some(sc => sc.course_id === course.id))
+                        .map((course) => (
+                          <div key={course.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                            <img 
+                              src={course.thumbnail_url} 
+                              alt={course.title}
+                              className="w-16 h-12 object-cover rounded"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm line-clamp-2 mb-1">{course.title}</h4>
+                              <p className="text-xs text-muted-foreground">{course.instructor_name}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs font-medium text-primary">{course.price.toLocaleString()}원</span>
+                                {course.is_hot && <Badge variant="destructive" className="text-xs">HOT</Badge>}
+                                {course.is_new && <Badge variant="default" className="text-xs">NEW</Badge>}
+                              </div>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addCourse(course)}
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      {availableCourses.filter(course => !selectedCourses.some(sc => sc.course_id === course.id)).length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <p>추가할 수 있는 강의가 없습니다.</p>
                         </div>
                       )}
-                    </Droppable>
-                  </DragDropContext>
-                )}
-              </CardContent>
-            </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Statistics */}
+            {!showAvailable && (
+              <div className="lg:col-span-1">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>섹션 통계</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                        <span className="text-sm font-medium">선택된 강의</span>
+                        <Badge variant="outline">{selectedCourses.length}개</Badge>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                        <span className="text-sm font-medium">섹션 상태</span>
+                        <Badge variant={section?.is_active ? "default" : "secondary"}>
+                          {section?.is_active ? "활성" : "비활성"}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                        <span className="text-sm font-medium">필터 타입</span>
+                        <Badge variant="outline">수동 선택</Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
-
-          {/* Available Courses */}
-          {showAvailable && (
-            <div className="lg:col-span-1">
-              <Card>
-                <CardHeader>
-                  <CardTitle>강의 추가</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {availableCourses
-                      .filter(course => !selectedCourses.some(sc => sc.course_id === course.id))
-                      .map((course) => (
-                        <div
-                          key={course.id}
-                          className="flex items-center p-3 border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer"
-                          onClick={() => addCourse(course)}
-                        >
-                          <img 
-                            src={course.thumbnail_url} 
-                            alt={course.title}
-                            className="w-14 h-10 object-cover rounded mr-3"
-                          />
-                          
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm truncate">{course.title}</h4>
-                            <p className="text-xs text-muted-foreground">{course.instructor_name}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <p className="text-xs font-medium text-primary">{course.price.toLocaleString()}원</p>
-                              {course.is_hot && (
-                                <Badge variant="destructive" className="text-xs">HOT</Badge>
-                              )}
-                              {course.is_new && (
-                                <Badge variant="default" className="text-xs">NEW</Badge>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <Plus className="w-4 h-4 text-muted-foreground ml-2" />
-                        </div>
-                      ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Quick Stats */}
-          {!showAvailable && (
-            <div className="lg:col-span-1">
-              <Card>
-                <CardHeader>
-                  <CardTitle>섹션 통계</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm font-medium">선택된 강의</span>
-                      <Badge variant="outline">{selectedCourses.length}개</Badge>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm font-medium">섹션 상태</span>
-                      <Badge variant={section?.is_active ? "default" : "secondary"}>
-                        {section?.is_active ? "활성" : "비활성"}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm font-medium">추가 가능</span>
-                      <Badge variant="outline">
-                        {availableCourses.filter(course => !selectedCourses.some(sc => sc.course_id === course.id)).length}개
-                      </Badge>
-                    </div>
-                    
-                    <div className="pt-4 border-t">
-                      <p className="text-xs text-muted-foreground mb-3">
-                        💡 드래그앤드롭으로 순서를 변경할 수 있습니다
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        🎯 메인 페이지에서는 최대 8개 강의가 표시됩니다
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
         ) : (
           <div className="text-center py-12 bg-gray-50 rounded-xl">
             <IconComponent className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
             <h3 className="text-lg font-semibold text-muted-foreground mb-2">자동 필터링 모드</h3>
             <p className="text-muted-foreground mb-4">
-              현재 {section.filter_type === 'category' ? '카테고리' : '인기/신규'} 필터로 자동 관리되고 있습니다.
+              현재 {section?.filter_type === 'category' ? '카테고리' : '인기/신규'} 필터로 자동 관리되고 있습니다.
             </p>
             <Button onClick={convertToManual} variant="outline">
               수동 선택으로 전환
