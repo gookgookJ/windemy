@@ -580,7 +580,7 @@ const HeroSlides = () => {
                       <Label htmlFor="image-upload" className="text-sm font-medium">
                         이미지 업로드 {!editingSlide && '*'}
                         <span className="text-xs text-gray-500 ml-2">
-                          (권장: 1920x400px, 최대 5MB)
+                          (권장: 760x340px, 최대 5MB)
                         </span>
                       </Label>
                       <Input
