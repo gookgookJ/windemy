@@ -182,6 +182,7 @@ const HeroSection = () => {
     );
   }
 
+  return (
     <section className="relative h-[380px] overflow-hidden bg-white">
       {/* Carousel Container */}
       <div className="relative w-full h-full flex items-center justify-center">
