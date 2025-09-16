@@ -71,7 +71,7 @@ const HeroSection = () => {
                onClick={prevSlide}
                style={{ height: '340px' }}>
             <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-lg">
-              <div className={cn("absolute inset-0 bg-gradient-to-br", slides[getSlideIndex(-1)].bgColor)}>
+              <div className={cn("absolute inset-0 bg-gradient-to-br rounded-2xl", slides[getSlideIndex(-1)].bgColor)}>
                 <div className="flex items-center h-full">
                   <div className="text-white space-y-4 px-12 flex-1">
                     <h3 className="text-2xl font-bold">
@@ -129,7 +129,7 @@ const HeroSection = () => {
                onClick={nextSlide}
                style={{ height: '340px' }}>
             <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-lg">
-              <div className={cn("absolute inset-0 bg-gradient-to-br", slides[getSlideIndex(1)].bgColor)}>
+              <div className={cn("absolute inset-0 bg-gradient-to-br rounded-2xl", slides[getSlideIndex(1)].bgColor)}>
                 <div className="flex items-center h-full">
                   <div className="text-white space-y-4 px-12 flex-1">
                     <h3 className="text-2xl font-bold">
