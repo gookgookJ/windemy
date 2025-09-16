@@ -392,7 +392,7 @@ const HomepageSectionManager = () => {
               <div className="text-sm text-gray-600">선택된 강의</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-gray-900">{section?.display_limit || 8}</div>
+              <div className="text-2xl font-bold text-gray-900">{section?.display_limit || 15}</div>
               <div className="text-sm text-gray-600">표시 제한</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4 text-center">
