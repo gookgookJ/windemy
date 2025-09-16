@@ -55,11 +55,12 @@ const FeaturedCourses = () => {
     try {
       setLoading(true);
 
-      // Fetch homepage sections
+      // Fetch homepage sections (only published ones)
       const { data: sectionsData, error: sectionsError } = await supabase
         .from('homepage_sections')
         .select('*')
         .eq('is_active', true)
+        .eq('is_draft', false)
         .order('order_index');
 
       if (sectionsError) throw sectionsError;
