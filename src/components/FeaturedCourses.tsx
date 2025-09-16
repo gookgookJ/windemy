@@ -152,10 +152,10 @@ const FeaturedCourses = () => {
                 src={course.thumbnail_url}
                 alt={course.title}
                 className="w-full h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
-                style={{ aspectRatio: '283/159' }}
+                style={{ aspectRatio: "283/159" }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = '/placeholder.svg';
+                  target.src = "/placeholder.svg";
                 }}
               />
               {course.is_hot && (
@@ -172,11 +172,6 @@ const FeaturedCourses = () => {
                   </span>
                 </div>
               )}
-              <div className="absolute top-3 left-3">
-                <span className="bg-white text-foreground text-sm font-bold px-2 py-1 rounded shadow-md">
-                  {index + 1}
-                </span>
-              </div>
             </div>
             
             <div className="space-y-3">
@@ -184,16 +179,18 @@ const FeaturedCourses = () => {
                 {course.title}
               </h3>
               
-              <div className="text-sm text-muted-foreground">
-                {course.instructor_name}
-              </div>
+              {course.instructor_name && course.instructor_name !== "운영진" && (
+                <div className="text-sm text-muted-foreground">
+                  {course.instructor_name}
+                </div>
+              )}
 
-              {course.rating && (
+              {course.rating && course.rating > 0 && course.total_students && course.total_students > 0 && (
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-yellow-500">★</span>
                   <span className="font-semibold">{course.rating}</span>
                   <span className="text-muted-foreground">
-                    ({course.total_students?.toLocaleString() || 0}명)
+                    ({course.total_students.toLocaleString()}명)
                   </span>
                 </div>
               )}
