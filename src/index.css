@@ -155,5 +155,6 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
     scroll-behavior: smooth;
     overflow-x: hidden; /* 가로 스크롤 방지 */
+    padding-top: 64px; /* 헤더 높이만큼 여백 확보 */
   }
 }

@@ -29,7 +29,7 @@ const Header = () => {
   ];
 
   return (
-    <header className="bg-white border-b border-border sticky top-0 z-50 shadow-soft font-sans" style={{ fontFamily: "Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Roboto, 'Noto Sans KR', 'Segoe UI', sans-serif" }}>
+    <header className="bg-white border-b border-border fixed top-0 left-0 right-0 z-50 shadow-soft font-sans" style={{ fontFamily: "Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Roboto, 'Noto Sans KR', 'Segoe UI', sans-serif" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}

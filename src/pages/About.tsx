@@ -101,7 +101,7 @@ const About = () => {
       <Header />
       
       {/* Hero Section */}
-      <section className="relative overflow-hidden border-b border-border bg-white opacity-0 translate-y-8 transition-all duration-700" style={{ padding: '140px 0' }} data-animate>
+      <section className="relative overflow-hidden border-b border-border bg-white opacity-0 translate-y-8 transition-all duration-700 -mt-16" style={{ padding: '140px 0' }} data-animate>
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 to-secondary/5">
           <div className="absolute inset-0" style={{
             backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='grid' patternUnits='userSpaceOnUse' width='100' height='100'%3E%3Cpath d='M25 50h50 M50 25v50' stroke='%23e1e4ed' stroke-width='0.5' fill='none'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23grid)'/%3E%3C/svg%3E\")"
