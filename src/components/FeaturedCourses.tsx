@@ -71,10 +71,10 @@ const FeaturedCourses = () => {
       // Process courses data with better handling
       const processedCourses = coursesData?.map(course => ({
         ...course,
-        instructor_name: course.profiles?.full_name || course.instructor_id ? '강사' : '운영진',
+        instructor_name: course.profiles?.full_name || (course.instructor_id ? '강사' : '운영진'),
         category: course.categories?.name || '기타',
-        // Ensure thumbnail_url is properly handled
-        thumbnail_url: course.thumbnail_url || '/placeholder.svg'
+        // Prefer uploaded storage path when direct URL is missing
+        thumbnail_url: course.thumbnail_url || course.thumbnail_path || course.detail_image_path || '/placeholder.svg'
       })) || [];
 
       console.log('Processed courses:', processedCourses);
