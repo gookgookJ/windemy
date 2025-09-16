@@ -280,7 +280,7 @@ const FeaturedCourses = () => {
             aria-label={isFavorite(course.id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
           >
             <Heart 
-              className={`w-3 h-3 sm:w-2.5 sm:h-2.5 lg:w-3 lg:h-3 transition-all duration-200 ${
+              className={`w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 transition-all duration-200 ${
                 isFavorite(course.id) 
                   ? 'text-red-500 fill-red-500' 
                   : 'text-gray-400 hover:text-red-400'

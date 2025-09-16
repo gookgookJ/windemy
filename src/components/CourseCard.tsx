@@ -68,7 +68,7 @@ const CourseCard = ({
           aria-label={isFavorite(id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
         >
           <Heart 
-            className={`w-2 h-2 sm:w-2.5 sm:h-2.5 transition-all duration-200 ${
+            className={`w-2 h-2 sm:w-4 sm:h-4 transition-all duration-200 ${
               isFavorite(id) 
                 ? 'text-red-500 fill-red-500' 
                 : 'text-gray-400 hover:text-red-400'
