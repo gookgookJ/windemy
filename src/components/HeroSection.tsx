@@ -67,12 +67,12 @@ const HeroSection = () => {
         <div className="flex w-full items-center justify-center">
           
           {/* Left Panel (Previous Slide) - Partially visible */}
-          <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer"
+          <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden"
                onClick={prevSlide}
                style={{ height: '340px' }}>
-            <div className="h-[340px] overflow-hidden rounded-2xl shadow-lg" style={{ marginRight: '400px' }}>
-              <div className={cn("w-[760px] h-[340px] bg-gradient-to-br rounded-2xl", slides[getSlideIndex(-1)].bgColor)}>
-                <div className="flex items-center h-full" style={{ marginRight: '-400px' }}>
+            <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-lg">
+              <div className={cn("absolute inset-0 bg-gradient-to-br rounded-2xl", slides[getSlideIndex(-1)].bgColor)}>
+                <div className="flex items-center h-full">
                   <div className="text-white space-y-4 px-12 flex-1">
                     <h3 className="text-2xl font-bold">
                       {slides[getSlideIndex(-1)].title}
@@ -125,12 +125,12 @@ const HeroSection = () => {
           </div>
 
           {/* Right Panel (Next Slide) - Partially visible */}
-          <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer"
+          <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden"
                onClick={nextSlide}
                style={{ height: '340px' }}>
-            <div className="h-[340px] overflow-hidden rounded-2xl shadow-lg" style={{ marginLeft: '400px' }}>
-              <div className={cn("w-[760px] h-[340px] bg-gradient-to-br rounded-2xl", slides[getSlideIndex(1)].bgColor)}>
-                <div className="flex items-center h-full" style={{ marginLeft: '-400px' }}>
+            <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-lg">
+              <div className={cn("absolute inset-0 bg-gradient-to-br rounded-2xl", slides[getSlideIndex(1)].bgColor)}>
+                <div className="flex items-center h-full">
                   <div className="text-white space-y-4 px-12 flex-1">
                     <h3 className="text-2xl font-bold">
                       {slides[getSlideIndex(1)].title}
