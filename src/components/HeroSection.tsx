@@ -118,27 +118,13 @@ const HeroSection = () => {
   }, [slides.length, isPlaying, isAnimating, stride]);
 
   const nextSlide = () => {
-    if (isAnimating || slides.length === 0) return;
     setDirection('next');
-    setIsAnimating(true);
-    setTranslateX(-stride);
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
   };
 
   const prevSlide = () => {
-    if (isAnimating || slides.length === 0) return;
     setDirection('prev');
-    setIsAnimating(true);
-    setTranslateX(stride);
-  };
-
-  const handleTransitionEnd = () => {
-    if (!isAnimating) return;
-    setIsAnimating(false);
-    setTranslateX(0);
-    setCurrentSlide((prev) => {
-      if (direction === 'next') return (prev + 1) % slides.length;
-      return (prev - 1 + slides.length) % slides.length;
-    });
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
   const togglePlayPause = () => {
@@ -159,97 +145,53 @@ const HeroSection = () => {
 
   return (
     <section className="relative h-[380px] overflow-hidden bg-white">
-      {/* Three Panel Layout */}
+      {/* Carousel Container */}
       <div className="relative w-full h-full flex items-center justify-center">
-        <div
-          key={currentSlide}
-          className="flex w-full items-center justify-center transition-all duration-1000 ease-out"
-          style={{ transform: `translateX(${translateX}px)`, transition: isAnimating ? 'transform 1000ms ease-out' : undefined }}
-          onTransitionEnd={handleTransitionEnd}
-        >
+        {/* Viewport - shows 3 panels worth */}
+        <div className="relative w-full h-[340px] overflow-hidden flex items-center justify-center">
+          {/* Sliding Strip - all images in one continuous row */}
+          <div 
+            className="flex transition-transform duration-700 ease-out"
+            style={{
+              transform: `translateX(-${currentSlide * 800}px)`,
+              width: `${slides.length * 800}px`
+            }}
+          >
+            {slides.map((slide, index) => (
+              <div
+                key={slide.id}
+                className="relative flex-shrink-0 w-[760px] h-[340px] mx-5"
+              >
+                <div 
+                  className="relative w-full h-full rounded-2xl overflow-hidden cursor-pointer"
+                  onClick={() => handleSlideClick(slide)}
+                >
+                  <img
+                    src={slide.image_url}
+                    alt={slide.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/30 flex items-center">
+                    <div className="text-white space-y-4 px-12 flex-1">
+                      <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
+                        {slide.title}
+                      </h2>
+                      <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
+                        {slide.subtitle}
+                      </h3>
+                      <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
+                        {slide.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
           
-          {/* Left Panel (Previous Slide) - Partially visible */}  
-          <div className="flex-1 relative opacity-40 transition-all duration-1000 ease-out cursor-pointer overflow-hidden"
-               onClick={prevSlide}
-               style={{ height: '340px' }}>
-            <div className="absolute -right-[200px] top-0 w-[760px] h-[340px] rounded-l-2xl overflow-hidden transform transition-all duration-1000 ease-out">
-              <div className="relative w-full h-full">
-                <img
-                  src={slides[getSlideIndex(-1)].image_url}
-                  alt={slides[getSlideIndex(-1)].title}
-                  className="w-full h-full object-cover transition-all duration-1000 ease-out"
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center">
-                  <div className="text-white space-y-4 px-12 flex-1">
-                    <h3 className="text-2xl font-bold drop-shadow-lg">
-                      {slides[getSlideIndex(-1)].title}
-                    </h3>
-                    <p className="text-lg opacity-90 drop-shadow-lg">
-                      {slides[getSlideIndex(-1)].subtitle}
-                    </p>
-                    <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
-                      {slides[getSlideIndex(-1)].description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Center Panel (Current Slide) - Full visible */}
-          <div className="relative z-10 mx-4 transform transition-all duration-1000 ease-out">
-            <div 
-              className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer"
-              onClick={() => handleSlideClick(slides[currentSlide])}
-            >
-              <img
-                src={slides[currentSlide].image_url}
-                alt={slides[currentSlide].title}
-                className="w-full h-full object-cover transition-all duration-1000 ease-out"
-              />
-              <div className="absolute inset-0 bg-black/30 flex items-center">
-                <div className="text-white space-y-4 px-12 flex-1">
-                  <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
-                    {slides[currentSlide].title}
-                  </h2>
-                  <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
-                    {slides[currentSlide].subtitle}
-                  </h3>
-                  <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
-                    {slides[currentSlide].description}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Panel (Next Slide) - Partially visible */}
-          <div className="flex-1 relative opacity-40 transition-all duration-1000 ease-out cursor-pointer overflow-hidden"
-               onClick={nextSlide}
-               style={{ height: '340px' }}>
-            <div className="absolute -left-[200px] top-0 w-[760px] h-[340px] rounded-r-2xl overflow-hidden transform transition-all duration-1000 ease-out">
-              <div className="relative w-full h-full">
-                <img
-                  src={slides[getSlideIndex(1)].image_url}
-                  alt={slides[getSlideIndex(1)].title}
-                  className="w-full h-full object-cover transition-all duration-1000 ease-out"
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center">
-                  <div className="text-white space-y-4 px-12 flex-1">
-                    <h3 className="text-2xl font-bold drop-shadow-lg">
-                      {slides[getSlideIndex(1)].title}
-                    </h3>
-                    <p className="text-lg opacity-90 drop-shadow-lg">
-                      {slides[getSlideIndex(1)].subtitle}
-                    </p>
-                    <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
-                      {slides[getSlideIndex(1)].description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Overlay masks for side panels */}
+          <div className="absolute left-0 top-0 w-1/3 h-full bg-gradient-to-r from-white via-white/20 to-transparent pointer-events-none z-10"></div>
+          <div className="absolute right-0 top-0 w-1/3 h-full bg-gradient-to-l from-white via-white/20 to-transparent pointer-events-none z-10"></div>
         </div>
       </div>
 
