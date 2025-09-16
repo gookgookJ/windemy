@@ -67,7 +67,7 @@ const HeroSection = () => {
         <div className="flex w-full items-center justify-center">
           
           {/* Left Panel (Previous Slide) - Partially visible */}
-          <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-2xl"
+          <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-r-2xl"
                onClick={prevSlide}
                style={{ height: '340px' }}>
             <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-lg">
@@ -125,7 +125,7 @@ const HeroSection = () => {
           </div>
 
           {/* Right Panel (Next Slide) - Partially visible */}
-          <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-2xl"
+          <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-l-2xl"
                onClick={nextSlide}
                style={{ height: '340px' }}>
             <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-lg">
