@@ -80,14 +80,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
-    toast({
-      title: "로그아웃",
-      description: "성공적으로 로그아웃되었습니다."
-    });
-    // 로그아웃 후 홈으로 리다이렉트
-    window.location.href = '/';
+    try {
+      // 현재 세션이 있는지 확인
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // 세션이 있을 때만 로그아웃 시도
+        await supabase.auth.signOut();
+      }
+      
+      // 로컬 상태 정리
+      setProfile(null);
+      setUser(null);
+      setSession(null);
+      
+      toast({
+        title: "로그아웃",
+        description: "성공적으로 로그아웃되었습니다."
+      });
+      
+      // 로그아웃 후 홈으로 리다이렉트
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // 에러가 발생해도 로컬 상태는 정리
+      setProfile(null);
+      setUser(null);
+      setSession(null);
+      window.location.href = '/';
+    }
   };
 
   const isAdmin = profile?.role === 'admin';
