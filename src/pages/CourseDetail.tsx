@@ -115,19 +115,26 @@ const CourseDetail = () => {
   const { toast } = useToast();
 
   const rightColRef = useRef<HTMLDivElement | null>(null);
+  const thumbnailRef = useRef<HTMLDivElement | null>(null);
   const [fixedLeft, setFixedLeft] = useState<number | null>(null);
+  const [fixedTop, setFixedTop] = useState<number>(96);
 
   useEffect(() => {
-    const updateLeft = () => {
+    const updatePos = () => {
       if (rightColRef.current) {
-        const rect = rightColRef.current.getBoundingClientRect();
-        setFixedLeft(rect.left);
+        setFixedLeft(rightColRef.current.getBoundingClientRect().left);
+      }
+      if (thumbnailRef.current) {
+        const top = Math.max(0, Math.round(thumbnailRef.current.getBoundingClientRect().top));
+        setFixedTop(top);
       }
     };
-    updateLeft();
-    window.addEventListener('resize', updateLeft);
-    return () => window.removeEventListener('resize', updateLeft);
-  }, []);
+    requestAnimationFrame(updatePos);
+    window.addEventListener('resize', updatePos);
+    return () => {
+      window.removeEventListener('resize', updatePos);
+    };
+  }, [loading]);
 
   useEffect(() => {
     if (courseId) {
@@ -461,7 +468,7 @@ const CourseDetail = () => {
           {/* Left Column: Video and Content - Fixed 757px width */}
           <div className="w-[757px] flex-shrink-0 pb-20">
             {/* Thumbnail Section - Desktop: 757x426, Mobile: responsive */}
-            <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
+            <div ref={thumbnailRef} className="relative rounded-xl overflow-hidden shadow-lg mb-6">
               <img
                 src={courseData.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
                 alt={courseData.title}
@@ -678,7 +685,7 @@ const CourseDetail = () => {
           {fixedLeft !== null && (
             <div
               className="hidden lg:block z-30 overflow-y-auto"
-              style={{ position: 'fixed', left: fixedLeft ?? 0, top: 96, width: 383, maxHeight: 'calc(100vh - 96px)' }}
+              style={{ position: 'fixed', left: fixedLeft ?? 0, top: fixedTop, width: 383, maxHeight: `calc(100vh - ${fixedTop}px)` }}
             >
               <Card className="shadow-lg border border-border/50 p-6">
                 <div className="space-y-6">
