@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Search, Filter, Download, Eye, MoreHorizontal, Calendar, CreditCard, Package, FileText, FileSpreadsheet, ChevronLeft, ChevronRight, RefreshCw, X } from "lucide-react";
+import { Search, Filter, Download, Eye, MoreHorizontal, Calendar, CreditCard, Package, FileText, FileSpreadsheet, ChevronLeft, ChevronRight, RefreshCw, X, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,8 @@ import html2canvas from 'html2canvas';
 interface OrderItem {
   id: string;
   price: number;
-  course: {
+  course_id: string;
+  courses: {
     id: string;
     title: string;
   };
@@ -125,7 +126,8 @@ const Orders = () => {
           order_items (
             id,
             price,
-            course:courses (
+            course_id,
+            courses (
               id,
               title
             )
@@ -160,7 +162,7 @@ const Orders = () => {
         order.profiles?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.order_items.some(item => 
-          item.course.title.toLowerCase().includes(searchTerm.toLowerCase())
+          item.courses.title.toLowerCase().includes(searchTerm.toLowerCase())
         )
       );
     }
@@ -228,8 +230,8 @@ const Orders = () => {
         aValue = a.profiles?.full_name || '';
         bValue = b.profiles?.full_name || '';
       } else if (sortBy === 'course_title') {
-        aValue = a.order_items[0]?.course.title || '';
-        bValue = b.order_items[0]?.course.title || '';
+        aValue = a.order_items[0]?.courses.title || '';
+        bValue = b.order_items[0]?.courses.title || '';
       }
       
       if (typeof aValue === 'string') {
@@ -324,7 +326,7 @@ const Orders = () => {
         if (selectedColumns.id) row['주문번호'] = order.id;
         if (selectedColumns.customer) row['고객명'] = order.profiles?.full_name || '이름 없음';
         if (selectedColumns.email) row['이메일'] = order.profiles?.email || '';
-        if (selectedColumns.course) row['강의명'] = order.order_items.map(item => item.course.title).join(', ');
+        if (selectedColumns.course) row['강의명'] = order.order_items.map(item => item.courses.title).join(', ');
         if (selectedColumns.payment_method) row['결제방법'] = getPaymentMethodText(order.payment_method);
         if (selectedColumns.status) {
           row['상태'] = order.status === 'completed' ? '결제완료' : 
@@ -382,7 +384,7 @@ const Orders = () => {
         if (selectedColumns.id) row['주문번호'] = order.id;
         if (selectedColumns.customer) row['고객명'] = order.profiles?.full_name || '이름 없음';
         if (selectedColumns.email) row['이메일'] = order.profiles?.email || '';
-        if (selectedColumns.course) row['강의명'] = order.order_items.map(item => item.course.title).join(', ');
+        if (selectedColumns.course) row['강의명'] = order.order_items.map(item => item.courses.title).join(', ');
         if (selectedColumns.payment_method) row['결제방법'] = getPaymentMethodText(order.payment_method);
         if (selectedColumns.status) {
           row['상태'] = order.status === 'completed' ? '결제완료' : 
@@ -533,7 +535,7 @@ const Orders = () => {
         .in('course_id', 
           orders
             .filter(order => orderIds.includes(order.id))
-            .flatMap(order => order.order_items.map(item => item.course.id))
+            .flatMap(order => order.order_items.map(item => item.course_id))
         );
       
       if (enrollmentError) console.error('Enrollment deletion error:', enrollmentError);
@@ -546,7 +548,7 @@ const Orders = () => {
         '주문번호': order.id,
         '고객명': order.profiles?.full_name || '이름 없음',
         '이메일': order.profiles?.email || '',
-        '강의명': order.order_items.map(item => item.course.title).join(', '),
+        '강의명': order.order_items.map(item => item.courses.title).join(', '),
         '결제방법': getPaymentMethodText(order.payment_method),
         '상태': order.status === 'completed' ? '결제완료' : 
                 order.status === 'pending' ? '결제대기' :
@@ -606,7 +608,7 @@ const Orders = () => {
       // 해당 주문의 강의 등록 삭제
       const order = orders.find(o => o.id === orderId);
       if (order) {
-        const courseIds = order.order_items.map(item => item.course.id);
+        const courseIds = order.order_items.map(item => item.course_id);
         const { error: enrollmentError } = await supabase
           .from('enrollments')
           .delete()
@@ -670,6 +672,67 @@ const Orders = () => {
     }
   };
 
+  // 주문 완전 삭제 함수 (테스트용)
+  const handleOrderDelete = async (orderId: string) => {
+    if (!confirm('이 주문을 완전히 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+      return;
+    }
+
+    try {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+
+      // 1. enrollments 테이블에서 강의 등록 삭제
+      if (order.order_items && order.order_items.length > 0) {
+        const courseIds = order.order_items.map(item => item.course_id);
+        const { error: enrollmentError } = await supabase
+          .from('enrollments')
+          .delete()
+          .eq('user_id', order.user_id)
+          .in('course_id', courseIds);
+        
+        if (enrollmentError) console.error('Enrollment deletion error:', enrollmentError);
+      }
+
+      // 2. order_items 테이블에서 주문 항목 삭제
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .delete()
+        .eq('order_id', orderId);
+      
+      if (itemsError) throw itemsError;
+
+      // 3. orders 테이블에서 주문 삭제
+      const { error: orderError } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId);
+      
+      if (orderError) throw orderError;
+
+      // 4. 로컬 상태에서 제거
+      setOrders(prevOrders => prevOrders.filter(o => o.id !== orderId));
+      setSelectedOrders(prevSelected => {
+        const newSelected = new Set(prevSelected);
+        newSelected.delete(orderId);
+        return newSelected;
+      });
+
+      toast({
+        title: "주문 삭제 완료",
+        description: "주문이 완전히 삭제되었습니다. 고객의 강의 등록도 해제되었습니다."
+      });
+      
+    } catch (error) {
+      console.error('Order delete error:', error);
+      toast({
+        title: "주문 삭제 실패",
+        description: "주문 삭제 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // 영수증 다운로드 함수
   const downloadReceipt = async (order: Order) => {
     try {
@@ -719,7 +782,7 @@ const Orders = () => {
               <tbody>
                 ${order.order_items.map(item => `
                   <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.course.title}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.courses.title}</td>
                     <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toLocaleString()}원</td>
                   </tr>
                 `).join('')}
@@ -1191,7 +1254,7 @@ const Orders = () => {
                                order.order_items.map((item, index) => (
                                  <div key={item.id} className="mb-1">
                                    <div className="text-sm font-medium text-foreground">
-                                     {item.course?.title || '강의 정보 없음'}
+                                     {item.courses?.title || '강의 정보 없음'}
                                    </div>
                                    <div className="text-xs text-muted-foreground">
                                      {item.price.toLocaleString()}원
@@ -1252,14 +1315,22 @@ const Orders = () => {
                                  </DropdownMenuItem>
                                )}
                                {order.status === 'pending' && (
-                                 <DropdownMenuItem 
-                                   onClick={() => handleOrderComplete(order.id)}
-                                   className="flex items-center cursor-pointer text-green-600"
-                                 >
-                                   <CreditCard className="h-4 w-4 mr-2" />
-                                   결제 완료 처리
-                                 </DropdownMenuItem>
+                               <DropdownMenuItem 
+                                 onClick={() => handleOrderComplete(order.id)}
+                                 className="flex items-center cursor-pointer text-green-600"
+                               >
+                                 <CreditCard className="h-4 w-4 mr-2" />
+                                 결제 완료 처리
+                               </DropdownMenuItem>
                                )}
+                               <DropdownMenuSeparator />
+                               <DropdownMenuItem 
+                                 onClick={() => handleOrderDelete(order.id)}
+                                 className="flex items-center cursor-pointer text-red-600"
+                               >
+                                 <Trash2 className="h-4 w-4 mr-2" />
+                                 주문 삭제 (테스트용)
+                               </DropdownMenuItem>
                              </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -1468,8 +1539,8 @@ const Orders = () => {
                       {selectedOrder.order_items.map((item, index) => (
                         <div key={item.id} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
                           <div>
-                            <p className="font-medium">{item.course.title}</p>
-                            <p className="text-sm text-muted-foreground">강의 ID: {item.course.id}</p>
+                             <p className="font-medium">{item.courses.title}</p>
+                             <p className="text-sm text-muted-foreground">강의 ID: {item.courses.id}</p>
                           </div>
                           <div className="text-right">
                             <p className="font-medium">{item.price.toLocaleString()}원</p>
