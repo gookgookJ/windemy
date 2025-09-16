@@ -48,14 +48,13 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    if (query.trim()) {
-      searchCourses(query);
-    }
+    // 실시간 검색은 하지 않고, 엔터키나 버튼 클릭시에만 검색
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && searchQuery.trim()) {
       searchCourses(searchQuery);
+      setIsOpen(false);
     }
   };
 
@@ -102,9 +101,12 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
                     <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                       {(course.thumbnail_url || course.thumbnail_path) && (
                         <img
-                          src={course.thumbnail_url || `/storage/v1/object/public/course-thumbnails/${course.thumbnail_path}`}
+                          src={course.thumbnail_url || course.thumbnail_path}
                           alt={course.title}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder.svg';
+                          }}
                         />
                       )}
                     </div>
@@ -156,7 +158,8 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
                         <button
                           className="flex-1 text-left text-sm text-foreground"
                           onClick={() => {
-                            handleSearch(term);
+                            setSearchQuery(term);
+                            searchCourses(term);
                             setIsOpen(false);
                           }}
                         >
@@ -189,7 +192,8 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
                         key={index}
                         className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-muted/50 transition-colors text-left"
                         onClick={() => {
-                          handleSearch(term);
+                          setSearchQuery(term);
+                          searchCourses(term);
                           setIsOpen(false);
                         }}
                       >
@@ -226,9 +230,12 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
                         <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                           {(course.thumbnail_url || course.thumbnail_path) && (
                             <img
-                              src={course.thumbnail_url || `/storage/v1/object/public/course-thumbnails/${course.thumbnail_path}`}
+                              src={course.thumbnail_url || course.thumbnail_path}
                               alt={course.title}
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = '/placeholder.svg';
+                              }}
                             />
                           )}
                         </div>

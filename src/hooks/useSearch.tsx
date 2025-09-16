@@ -106,7 +106,10 @@ export const useSearch = () => {
         .slice(0, 20);
 
       setSearchResults(results);
-      addToRecentSearches(query);
+      // 검색 결과가 있을 때만 최근 검색어에 추가
+      if (results.length > 0) {
+        addToRecentSearches(query);
+      }
     } catch (error) {
       console.error('Error searching courses:', error);
       setSearchResults([]);
@@ -116,13 +119,22 @@ export const useSearch = () => {
   };
 
   const getPopularSearchTerms = () => {
-    // Generate popular search terms from course titles
-    const terms = recommendedCourses
-      .map(course => course.title.split(' ').filter(word => word.length > 2))
-      .flat()
-      .slice(0, 8);
+    // Generate popular search terms from course titles - more relevant keywords
+    const keywords = [
+      '이커머스', '쇼핑몰', '온라인사업', '창업', 
+      '마케팅', '광고', '브랜딩', '콘텐츠',
+      '소셜미디어', 'SNS', '인플루언서', '유튜브',
+      '데이터분석', '트렌드', '고객관리', '판매전략'
+    ];
     
-    return Array.from(new Set(terms)).slice(0, 6);
+    // Also include terms from actual course titles
+    const courseTerms = recommendedCourses
+      .map(course => course.title.split(/[\s,\-\(\)]+/))
+      .flat()
+      .filter(word => word.length > 2 && !['강의', '패키지', '모든', '것은', '위한'].includes(word))
+      .slice(0, 4);
+    
+    return [...keywords.slice(0, 6), ...Array.from(new Set(courseTerms)).slice(0, 2)].slice(0, 8);
   };
 
   return {
