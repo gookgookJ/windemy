@@ -161,7 +161,8 @@ const HeroSection = () => {
           {/* Center Panel (Current Slide) - Full visible */}
           <div className="relative z-10 mx-4 transform transition-all duration-500 ease-in-out">
             <div 
-              className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer hover-scale"
+              key={slides[currentSlide].id}
+              className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer animate-slide-in-right hover-scale"
               onClick={() => handleSlideClick(slides[currentSlide])}
             >
               <img
