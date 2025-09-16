@@ -25,7 +25,7 @@ const Header = () => {
         { name: "프리미엄 강의", href: "/courses/premium-courses" },
       ]
     },
-    { name: "강사 지원", href: "/instructor-support" },
+    { name: "강사 지원", href: "/instructor-apply" },
   ];
 
   return (

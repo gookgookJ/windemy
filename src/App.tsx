@@ -41,6 +41,7 @@ import Inquiry from "./pages/Inquiry";
 import FAQ from "./pages/FAQ";
 import ProfileSettings from "./pages/ProfileSettings";
 import About from "./pages/About";
+import InstructorApply from "./pages/InstructorApply";
 
 console.log('Debug React in App.tsx', React, typeof (React as any)?.useEffect);
 
@@ -56,6 +57,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
+            <Route path="/instructor-apply" element={<InstructorApply />} />
             <Route path="/courses" element={<CourseCatalog />} />
             <Route path="/courses/:category" element={<CategoryCourses />} />
             <Route path="/course/:id" element={<CourseDetail />} />
