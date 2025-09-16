@@ -20,6 +20,7 @@ interface SearchResult extends Course {
 export const useSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [recommendedCourses, setRecommendedCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Load recent searches from localStorage
@@ -29,6 +30,27 @@ export const useSearch = () => {
       setRecentSearches(JSON.parse(saved));
     }
   }, []);
+
+  // Load recommended courses on mount
+  useEffect(() => {
+    loadRecommendedCourses();
+  }, []);
+
+  const loadRecommendedCourses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('id, title, short_description, category_id, thumbnail_url, thumbnail_path, price, level, is_published')
+        .eq('is_published', true)
+        .order('total_students', { ascending: false })
+        .limit(6);
+
+      if (error) throw error;
+      setRecommendedCourses(data || []);
+    } catch (error) {
+      console.error('Error loading recommended courses:', error);
+    }
+  };
 
   const addToRecentSearches = (query: string) => {
     if (!query.trim()) return;
@@ -53,6 +75,7 @@ export const useSearch = () => {
     searchQuery,
     setSearchQuery,
     recentSearches,
+    recommendedCourses,
     isLoading,
     addToRecentSearches,
     removeFromRecentSearches,

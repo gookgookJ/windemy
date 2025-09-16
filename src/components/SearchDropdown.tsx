@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Clock, X } from 'lucide-react';
+import { Search, Clock, X, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useSearch } from '@/hooks/useSearch';
@@ -21,6 +21,7 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
     searchQuery,
     setSearchQuery,
     recentSearches,
+    recommendedCourses,
     removeFromRecentSearches,
     clearRecentSearches,
   } = useSearch();
@@ -141,11 +142,55 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
             )}
 
             {recentSearches.length === 0 && (
-              <div className="text-center py-8">
-                <Search className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+              <div className="text-center py-4">
+                <Search className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">
                   검색어를 입력하고 엔터를 눌러보세요
                 </p>
+              </div>
+            )}
+
+            {/* Recommended Courses */}
+            {recommendedCourses.length > 0 && (
+              <div className={recentSearches.length > 0 ? "mt-6 pt-4 border-t border-border" : ""}>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                  <Star className="w-4 h-4" />
+                  추천 강의
+                </h3>
+                <div className="space-y-2">
+                  {recommendedCourses.slice(0, 4).map((course) => (
+                    <Link
+                      key={course.id}
+                      to={`/course/${course.id}`}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                      onClick={() => {
+                        setIsOpen(false);
+                        onClose?.();
+                      }}
+                    >
+                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                        {(course.thumbnail_url || course.thumbnail_path) && (
+                          <img
+                            src={course.thumbnail_url || course.thumbnail_path}
+                            alt={course.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder.svg';
+                            }}
+                          />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {course.title}
+                        </p>
+                        <p className="text-xs text-primary font-medium">
+                          {course.price === 0 ? '무료' : `₩${course.price.toLocaleString()}`}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
             )}
           </div>
