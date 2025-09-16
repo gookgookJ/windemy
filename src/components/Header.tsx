@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, User, Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { SearchDropdown } from "@/components/SearchDropdown";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -82,14 +82,7 @@ const Header = () => {
 
           {/* Search Bar */}
           <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                type="text"
-                placeholder="강의를 검색해보세요"
-                className="pl-10 bg-muted/50 border-none rounded-xl focus:bg-white focus:shadow-medium transition-all duration-200"
-              />
-            </div>
+            <SearchDropdown />
           </div>
 
           {/* Right Side Actions */}
@@ -160,14 +153,7 @@ const Header = () => {
             <div className="px-4 py-6 space-y-4">
               {/* Mobile Search */}
               <div className="md:hidden">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                  <Input
-                    type="text"
-                    placeholder="강의를 검색해보세요"
-                    className="pl-10 bg-muted/50 border-none rounded-xl"
-                  />
-                </div>
+                <SearchDropdown />
               </div>
 
               {/* Mobile Navigation */}
