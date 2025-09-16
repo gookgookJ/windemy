@@ -351,8 +351,7 @@ const Learn = () => {
         updatedProgress.push({ 
           session_id: sessionId, 
           completed: true, 
-          watched_duration_seconds: validation.totalWatchedTime,
-          user_id: user.id
+          watched_duration_seconds: validation.totalWatchedTime
         });
       }
       
