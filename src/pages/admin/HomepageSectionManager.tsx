@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Trash2, Plus, GripVertical, Eye, EyeOff, Target, Zap, Crown, Monitor, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Trash2, Plus, GripVertical, Eye, EyeOff, Target, Zap, Crown, Monitor, Star, ChevronLeft, ChevronRight, Upload, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { AdminLayout } from '@/layouts/AdminLayout';
@@ -31,8 +33,14 @@ interface HomepageSection {
   icon_type: string;
   icon_value: string;
   section_type: string;
+  filter_type: string;
+  filter_value?: string;
   display_limit: number;
+  order_index: number;
   is_active: boolean;
+  is_draft?: boolean;
+  published_at?: string;
+  scheduled_publish_at?: string;
 }
 
 interface SelectedCourse {
@@ -77,6 +85,8 @@ const HomepageSectionManager = () => {
   const [loading, setLoading] = useState(true);
   const [showAvailable, setShowAvailable] = useState(false);
   const [previewCurrentCourse, setPreviewCurrentCourse] = useState(0);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [scheduledDateTime, setScheduledDateTime] = useState('');
 
   const config = sectionConfig[sectionType as keyof typeof sectionConfig];
 
@@ -89,15 +99,115 @@ const HomepageSectionManager = () => {
 
   const fetchSectionData = async () => {
     try {
-      // Fetch existing section
-      const { data: sectionData, error } = await supabase
+      // First try to fetch draft section for editing
+      let { data: sectionData, error } = await supabase
         .from('homepage_sections')
         .select('*')
         .eq('section_type', config.section_type)
-        .single();
+        .eq('is_draft', true)
+        .maybeSingle();
+
+      // If no draft exists, create one from published section or create new
+      if (!sectionData) {
+        const { data: publishedSection, error: publishedError } = await supabase
+          .from('homepage_sections')
+          .select('*')
+          .eq('section_type', config.section_type)
+          .eq('is_draft', false)
+          .maybeSingle();
+
+        if (publishedError) {
+          console.error('Error fetching published section:', publishedError);
+        }
+
+        if (publishedSection) {
+          // Create draft version from published
+          const { data: newDraft, error: draftError } = await supabase
+            .from('homepage_sections')
+            .insert({
+              title: publishedSection.title,
+              subtitle: publishedSection.subtitle,
+              icon_type: publishedSection.icon_type,
+              icon_value: publishedSection.icon_value,
+              section_type: publishedSection.section_type,
+              filter_type: 'manual',
+              filter_value: null,
+              display_limit: publishedSection.display_limit,
+              order_index: publishedSection.order_index,
+              is_active: publishedSection.is_active,
+              is_draft: true
+            })
+            .select()
+            .single();
+
+          if (draftError) {
+            console.error('Error creating draft section:', draftError);
+            toast({
+              title: "오류",
+              description: "드래프트 섹션 생성에 실패했습니다.",
+              variant: "destructive"
+            });
+            return;
+          }
+
+          sectionData = newDraft;
+
+          // Copy section courses to draft
+          const { data: publishedCourses } = await supabase
+            .from('homepage_section_courses')
+            .select('*')
+            .eq('section_id', publishedSection.id)
+            .eq('is_draft', false);
+
+          if (publishedCourses && publishedCourses.length > 0) {
+            const draftCourses = publishedCourses.map(course => ({
+              section_id: newDraft.id,
+              course_id: course.course_id,
+              order_index: course.order_index,
+              is_draft: true
+            }));
+
+            await supabase
+              .from('homepage_section_courses')
+              .insert(draftCourses);
+          }
+
+        } else {
+          // Create new section
+          const { data: newSection, error: newSectionError } = await supabase
+            .from('homepage_sections')
+            .insert({
+              title: config.title,
+              subtitle: config.subtitle,
+              icon_type: 'lucide',
+              icon_value: config.icon.name,
+              section_type: config.section_type,
+              filter_type: 'manual',
+              filter_value: null,
+              display_limit: 15,
+              order_index: 0,
+              is_active: true,
+              is_draft: true
+            })
+            .select()
+            .single();
+
+          if (newSectionError) {
+            console.error('Error creating new section:', newSectionError);
+            toast({
+              title: "오류",
+              description: "새 섹션 생성에 실패했습니다.",
+              variant: "destructive"
+            });
+            return;
+          }
+
+          sectionData = newSection;
+        }
+      }
 
       if (error) {
-        console.error('Error fetching section:', error);
+        console.error('Error fetching draft section:', error);
         toast({
           title: "오류",
           description: "섹션을 찾을 수 없습니다.",
@@ -106,20 +216,9 @@ const HomepageSectionManager = () => {
         return;
       }
 
-      // 모든 섹션을 수동 관리로 설정
-      if (sectionData.filter_type !== 'manual') {
-        await supabase
-          .from('homepage_sections')
-          .update({ filter_type: 'manual', filter_value: null })
-          .eq('id', sectionData.id);
-        
-        sectionData.filter_type = 'manual';
-        sectionData.filter_value = null;
-      }
-
       setSection(sectionData);
 
-      // Fetch manually selected courses
+      // Fetch manually selected courses for draft
       const { data: sectionCourses, error: coursesError } = await supabase
         .from('homepage_section_courses')
         .select(`
@@ -130,6 +229,7 @@ const HomepageSectionManager = () => {
           )
         `)
         .eq('section_id', sectionData.id)
+        .eq('is_draft', true)
         .order('order_index');
 
       if (coursesError) throw coursesError;
@@ -206,7 +306,8 @@ const HomepageSectionManager = () => {
         .insert({
           section_id: section.id,
           course_id: course.id,
-          order_index: selectedCourses.length
+          order_index: selectedCourses.length,
+          is_draft: true
         })
         .select(`
           *,
@@ -271,28 +372,129 @@ const HomepageSectionManager = () => {
     }
   };
 
-  const updateSectionStatus = async (isActive: boolean) => {
+  const publishSection = async () => {
     if (!section) return;
 
     try {
-      const { error } = await supabase
+      // Check if published version exists
+      const { data: publishedSection } = await supabase
         .from('homepage_sections')
-        .update({ is_active: isActive })
-        .eq('id', section.id);
+        .select('id')
+        .eq('section_type', section.section_type)
+        .eq('is_draft', false)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (publishedSection) {
+        // Update existing published section
+        await supabase
+          .from('homepage_sections')
+          .update({
+            title: section.title,
+            subtitle: section.subtitle,
+            icon_type: section.icon_type,
+            icon_value: section.icon_value,
+            filter_type: section.filter_type,
+            filter_value: section.filter_value,
+            display_limit: section.display_limit,
+            order_index: section.order_index,
+            is_active: section.is_active,
+            published_at: new Date().toISOString()
+          })
+          .eq('id', publishedSection.id);
 
-      setSection(prev => prev ? { ...prev, is_active: isActive } : null);
-      
+        // Delete existing published courses
+        await supabase
+          .from('homepage_section_courses')
+          .delete()
+          .eq('section_id', publishedSection.id)
+          .eq('is_draft', false);
+
+        // Copy draft courses to published
+        const draftCourses = selectedCourses.map(course => ({
+          section_id: publishedSection.id,
+          course_id: course.course_id,
+          order_index: course.order_index,
+          is_draft: false
+        }));
+
+        if (draftCourses.length > 0) {
+          await supabase
+            .from('homepage_section_courses')
+            .insert(draftCourses);
+        }
+      } else {
+        // Create new published section
+        const { data: newPublished, error: publishError } = await supabase
+          .from('homepage_sections')
+          .insert({
+            title: section.title,
+            subtitle: section.subtitle,
+            icon_type: section.icon_type,
+            icon_value: section.icon_value,
+            section_type: section.section_type,
+            filter_type: section.filter_type,
+            filter_value: section.filter_value,
+            display_limit: section.display_limit,
+            order_index: section.order_index,
+            is_active: section.is_active,
+            is_draft: false,
+            published_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (publishError) throw publishError;
+
+        // Copy draft courses to published
+        const draftCourses = selectedCourses.map(course => ({
+          section_id: newPublished.id,
+          course_id: course.course_id,
+          order_index: course.order_index,
+          is_draft: false
+        }));
+
+        if (draftCourses.length > 0) {
+          await supabase
+            .from('homepage_section_courses')
+            .insert(draftCourses);
+        }
+      }
+
       toast({
         title: "성공",
-        description: `섹션이 ${isActive ? '활성화' : '비활성화'}되었습니다.`
+        description: "섹션이 라이브에 적용되었습니다."
       });
     } catch (error) {
-      console.error('Error updating section status:', error);
+      console.error('Error publishing section:', error);
       toast({
         title: "오류",
-        description: "섹션 상태 변경에 실패했습니다.",
+        description: "섹션 적용에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const schedulePublish = async () => {
+    if (!section || !scheduledDateTime) return;
+
+    try {
+      await supabase
+        .from('homepage_sections')
+        .update({ scheduled_publish_at: scheduledDateTime })
+        .eq('id', section.id);
+
+      toast({
+        title: "성공",
+        description: `섹션이 ${new Date(scheduledDateTime).toLocaleString()}에 적용되도록 예약되었습니다.`
+      });
+
+      setShowScheduleDialog(false);
+      setScheduledDateTime('');
+    } catch (error) {
+      console.error('Error scheduling publish:', error);
+      toast({
+        title: "오류",
+        description: "예약 적용에 실패했습니다.",
         variant: "destructive"
       });
     }
@@ -372,7 +574,9 @@ const HomepageSectionManager = () => {
                 <Switch
                   id="section-active"
                   checked={section?.is_active || false}
-                  onCheckedChange={updateSectionStatus}
+                  onCheckedChange={(checked) => {
+                    setSection(prev => prev ? { ...prev, is_active: checked } : null);
+                  }}
                 />
                 <Label htmlFor="section-active" className="flex items-center gap-2">
                   {section?.is_active ? (
@@ -382,22 +586,76 @@ const HomepageSectionManager = () => {
                   )}
                 </Label>
               </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={publishSection}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  적용
+                </Button>
+                <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Clock className="w-4 h-4 mr-2" />
+                      예약 적용
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>예약 적용 설정</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="schedule-datetime">적용 일시</Label>
+                        <Input
+                          id="schedule-datetime"
+                          type="datetime-local"
+                          value={scheduledDateTime}
+                          onChange={(e) => setScheduledDateTime(e.target.value)}
+                          min={new Date().toISOString().slice(0, 16)}
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowScheduleDialog(false)}
+                        >
+                          취소
+                        </Button>
+                        <Button
+                          onClick={schedulePublish}
+                          disabled={!scheduledDateTime}
+                        >
+                          예약 설정
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
           </div>
           
           {/* Stats */}
-          <div className="mt-6 grid grid-cols-3 gap-4">
+          <div className="mt-6 grid grid-cols-4 gap-4">
             <div className="bg-gray-50 rounded-lg p-4 text-center">
+              <div className="text-sm text-gray-600 mb-1">드래프트 강의</div>
               <div className="text-2xl font-bold text-gray-900">{selectedCourses.length}</div>
-              <div className="text-sm text-gray-600">선택된 강의</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4 text-center">
+              <div className="text-sm text-gray-600 mb-1">표시 제한</div>
               <div className="text-2xl font-bold text-gray-900">{section?.display_limit || 15}</div>
-              <div className="text-sm text-gray-600">표시 제한</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4 text-center">
+              <div className="text-sm text-gray-600 mb-1">총 수강생</div>
               <div className="text-2xl font-bold text-gray-900">{selectedCourses.reduce((sum, c) => sum + (c.course?.total_students || 0), 0)}</div>
-              <div className="text-sm text-gray-600">총 수강생</div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4 text-center">
+              <div className="text-sm text-gray-600 mb-1">상태</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {section?.scheduled_publish_at ? '예약됨' : '드래프트'}
+              </div>
             </div>
           </div>
         </div>

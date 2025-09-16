@@ -55,11 +55,12 @@ const FeaturedCourses = () => {
     try {
       setLoading(true);
 
-      // Fetch homepage sections
+      // Fetch homepage sections (published only)
       const { data: sectionsData, error: sectionsError } = await supabase
         .from('homepage_sections')
         .select('*')
         .eq('is_active', true)
+        .eq('is_draft', false)
         .order('order_index');
 
       setSections((sectionsData || []).map(section => ({
@@ -75,7 +76,7 @@ const FeaturedCourses = () => {
         let courses: Course[] = [];
 
         if (section.filter_type === 'manual') {
-          // Fetch manually selected courses
+          // Fetch manually selected courses (published only)
           const { data: manualCourses } = await supabase
             .from('homepage_section_courses')
             .select(`
@@ -87,6 +88,7 @@ const FeaturedCourses = () => {
               )
             `)
             .eq('section_id', section.id)
+            .eq('is_draft', false)
             .order('order_index');
 
           courses = (manualCourses || [])
