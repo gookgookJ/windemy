@@ -204,7 +204,7 @@ const HeroSection = () => {
             alt={slides[currentSlide].title}
             className="w-full h-full object-cover responsive-image"
           />
-          <div className="absolute inset-0 bg-black/40 flex items-center">
+          <div className="absolute inset-0 flex items-center">
             <div className="text-white space-y-2 px-4 safe-area-padding flex-1">
               <h2 className="text-xl font-bold leading-tight drop-shadow-lg">
                 {slides[currentSlide].title}
