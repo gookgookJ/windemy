@@ -64,30 +64,31 @@ const HeroSection = () => {
     <section className="relative h-[480px] overflow-hidden bg-gradient-to-r from-slate-100 to-slate-200">
       {/* Three Panel Layout */}
       <div className="relative w-full h-full flex items-center justify-center">
-        <div className="flex w-full max-w-7xl mx-auto px-4 items-center justify-center gap-8">
+        <div className="flex w-full max-w-[1400px] mx-auto px-4 items-center justify-center">
           
-          {/* Left Panel (Previous Slide) */}
-          <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer"
-               onClick={prevSlide}>
-            <div className="relative h-[360px] rounded-2xl overflow-hidden shadow-lg">
+          {/* Left Panel (Previous Slide) - Partially visible */}
+          <div className="relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden"
+               onClick={prevSlide}
+               style={{ width: '200px', height: '340px' }}>
+            <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-lg">
               <div className={cn("absolute inset-0 bg-gradient-to-br", slides[getSlideIndex(-1)].bgColor)}>
-                <div className="flex items-center h-full p-8">
-                  <div className="text-white space-y-4">
-                    <h3 className="text-xl font-bold line-clamp-2">
+                <div className="flex items-center h-full">
+                  <div className="text-white space-y-4 px-12 flex-1">
+                    <h3 className="text-2xl font-bold">
                       {slides[getSlideIndex(-1)].title}
                     </h3>
-                    <p className="text-sm opacity-90 line-clamp-2">
+                    <p className="text-lg opacity-90">
                       {slides[getSlideIndex(-1)].subtitle}
                     </p>
-                    <p className="text-xs opacity-80 cursor-pointer hover:opacity-100">
+                    <p className="text-sm opacity-80 cursor-pointer hover:opacity-100">
                       {slides[getSlideIndex(-1)].description}
                     </p>
                   </div>
-                  <div className="ml-auto">
+                  <div className="pr-12">
                     <img
                       src={slides[getSlideIndex(-1)].image}
                       alt={slides[getSlideIndex(-1)].title}
-                      className="w-32 h-40 object-cover rounded-lg"
+                      className="w-48 h-60 object-cover rounded-xl"
                     />
                   </div>
                 </div>
@@ -95,23 +96,23 @@ const HeroSection = () => {
             </div>
           </div>
 
-          {/* Center Panel (Current Slide) */}
-          <div className="flex-1 relative z-10">
-            <div className="relative h-[400px] rounded-2xl overflow-hidden shadow-2xl">
+          {/* Center Panel (Current Slide) - Full visible */}
+          <div className="relative z-10 mx-8">
+            <div className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-2xl">
               <div className={cn("absolute inset-0 bg-gradient-to-br", slides[currentSlide].bgColor)}>
-                <div className="flex items-center h-full p-12">
-                  <div className="text-white space-y-6 flex-1">
-                    <h2 className="text-3xl lg:text-4xl font-bold leading-tight">
+                <div className="flex items-center h-full">
+                  <div className="text-white space-y-4 px-12 flex-1">
+                    <h2 className="text-3xl font-bold leading-tight">
                       {slides[currentSlide].title}
                     </h2>
-                    <h3 className="text-xl lg:text-2xl font-medium opacity-90">
+                    <h3 className="text-xl font-medium opacity-90">
                       {slides[currentSlide].subtitle}
                     </h3>
                     <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity">
                       {slides[currentSlide].description}
                     </p>
                   </div>
-                  <div className="ml-8">
+                  <div className="pr-12">
                     <img
                       src={slides[currentSlide].image}
                       alt={slides[currentSlide].title}
@@ -123,28 +124,29 @@ const HeroSection = () => {
             </div>
           </div>
 
-          {/* Right Panel (Next Slide) */}
-          <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer"
-               onClick={nextSlide}>
-            <div className="relative h-[360px] rounded-2xl overflow-hidden shadow-lg">
+          {/* Right Panel (Next Slide) - Partially visible */}
+          <div className="relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden"
+               onClick={nextSlide}
+               style={{ width: '200px', height: '340px' }}>
+            <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden shadow-lg">
               <div className={cn("absolute inset-0 bg-gradient-to-br", slides[getSlideIndex(1)].bgColor)}>
-                <div className="flex items-center h-full p-8">
-                  <div className="text-white space-y-4">
-                    <h3 className="text-xl font-bold line-clamp-2">
+                <div className="flex items-center h-full">
+                  <div className="text-white space-y-4 px-12 flex-1">
+                    <h3 className="text-2xl font-bold">
                       {slides[getSlideIndex(1)].title}
                     </h3>
-                    <p className="text-sm opacity-90 line-clamp-2">
+                    <p className="text-lg opacity-90">
                       {slides[getSlideIndex(1)].subtitle}
                     </p>
-                    <p className="text-xs opacity-80 cursor-pointer hover:opacity-100">
+                    <p className="text-sm opacity-80 cursor-pointer hover:opacity-100">
                       {slides[getSlideIndex(1)].description}
                     </p>
                   </div>
-                  <div className="ml-auto">
+                  <div className="pr-12">
                     <img
                       src={slides[getSlideIndex(1)].image}
                       alt={slides[getSlideIndex(1)].title}
-                      className="w-32 h-40 object-cover rounded-lg"
+                      className="w-48 h-60 object-cover rounded-xl"
                     />
                   </div>
                 </div>
