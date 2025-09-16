@@ -144,14 +144,15 @@ const FeaturedCourses = () => {
         </Link>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {courses.map((course, index) => (
           <Link key={course.id} to={`/course/${course.id}`} className="group cursor-pointer">
             <div className="relative mb-4">
               <img
                 src={course.thumbnail_url}
                 alt={course.title}
-                className="w-full h-48 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+                style={{ aspectRatio: '283/159' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = '/placeholder.svg';
@@ -198,11 +199,13 @@ const FeaturedCourses = () => {
               )}
 
               <div className="flex items-center justify-between">
-                <div className="text-lg font-bold text-foreground">
-                  {course.price === 0 ? '무료' : `₩${course.price.toLocaleString()}`}
-                </div>
-                {course.duration_hours && (
-                  <div className="text-sm text-muted-foreground">
+                {course.price > 0 && (
+                  <div className="text-lg font-bold text-foreground">
+                    ₩{course.price.toLocaleString()}
+                  </div>
+                )}
+                {course.duration_hours && course.duration_hours > 0 && (
+                  <div className="text-sm text-muted-foreground ml-auto">
                     {course.duration_hours}시간
                   </div>
                 )}
