@@ -441,34 +441,33 @@ const HeroSlides = () => {
     <AdminLayout>
       <div className="space-y-8">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">히어로 슬라이드 관리</h1>
-              <p className="text-gray-600">
-                메인페이지 히어로 섹션에 표시될 슬라이드를 관리합니다. (최대 10개)
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={publishSlides}
-                className="bg-green-600 hover:bg-green-700"
-                disabled={slides.length === 0}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                적용
-              </Button>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    onClick={() => setEditingSlide(null)} 
-                    disabled={slides.length >= 10}
-                    className="shadow-md"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    슬라이드 추가
-                  </Button>
-                </DialogTrigger>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">히어로 슬라이드 관리</h1>
+            <p className="text-muted-foreground">
+              메인페이지 히어로 섹션에 표시될 슬라이드를 관리합니다. (최대 10개)
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={publishSlides}
+              className="bg-green-600 hover:bg-green-700"
+              disabled={slides.length === 0}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              적용
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  onClick={() => setEditingSlide(null)} 
+                  disabled={slides.length >= 10}
+                  className="shadow-md"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  슬라이드 추가
+                </Button>
+              </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="text-xl">
@@ -611,8 +610,7 @@ const HeroSlides = () => {
                   </div>
                 </form>
               </DialogContent>
-              </Dialog>
-            </div>
+            </Dialog>
           </div>
         </div>
 
