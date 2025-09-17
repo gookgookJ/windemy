@@ -10,29 +10,29 @@ interface AdminLayoutProps {
 }
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
-  const { user, loading: authLoading, isAdmin } = useAuth();
+  const { user, loading, profile, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (authLoading) return;
+    if (loading) return;
     if (!user) {
       navigate('/');
       return;
     }
     // 관리자가 아닌 경우 홈으로 리다이렉트
-    if (user && !authLoading && !isAdmin) {
+    if (user && !loading && !isAdmin) {
       navigate('/');
       return;
     }
-  }, [user, authLoading, navigate, isAdmin]);
+  }, [user, loading, navigate, isAdmin]);
 
   // Prevent scroll jumping when navigating between admin pages
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
 
-  if (authLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
