@@ -52,7 +52,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     <div className="min-h-screen bg-background relative">
       <Header />
       <SidebarProvider>
-        <div className="flex min-h-[calc(100vh-64px)] w-full pt-16">
+        <div className="flex min-h-[calc(100vh-64px)] w-full">
           <AdminSidebar />
           <main className="flex-1 overflow-auto relative">
             <div className="container mx-auto p-6 pt-8">
