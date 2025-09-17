@@ -98,13 +98,30 @@ All colors MUST be HSL.
   z-index: 200 !important;
 }
 
-/* Prevent body scroll lock that causes layout shift */
-body[style*="overflow: hidden"] {
+/* Prevent body/html scroll lock that causes layout shift */
+body[style*="overflow: hidden"],
+html[style*="overflow: hidden"],
+body.react-remove-scroll,
+html.react-remove-scroll,
+body.react-remove-scroll-body,
+html.react-remove-scroll-body,
+body.react-remove-scroll-bar,
+html.react-remove-scroll-bar {
   overflow: auto !important;
 }
-/* Neutralize injected scrollbar compensation paddings */
-body[style*="padding-right"] {
+/* Neutralize injected scrollbar compensation paddings/margins */
+body[style*="padding-right"],
+html[style*="padding-right"],
+body[style*="margin-right"],
+html[style*="margin-right"],
+body.react-remove-scroll,
+html.react-remove-scroll,
+body.react-remove-scroll-body,
+html.react-remove-scroll-body,
+body.react-remove-scroll-bar,
+html.react-remove-scroll-bar {
   padding-right: 0 !important;
+  margin-right: 0 !important;
 }
 /* Maintain consistent viewport */
 html {
@@ -115,12 +132,13 @@ html {
 body {
   scrollbar-gutter: stable both-edges;
 }
-/* Prevent focus jump */
-[data-radix-dropdown-menu-content],
-[data-radix-dialog-content] {
-  outline: none !important;
+/* While dropdowns/selects are open, force no scroll lock */
+body:has([data-radix-dropdown-menu-content][data-state="open"]),
+body:has([data-radix-select-content][data-state="open"]) {
+  overflow: auto !important;
+  padding-right: 0 !important;
+  margin-right: 0 !important;
 }
-
 /* Ensure dropdown positioning doesn't affect layout */
 [data-radix-popper-content-wrapper] {
   z-index: 200 !important;
