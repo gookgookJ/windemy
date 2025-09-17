@@ -21,20 +21,20 @@ const InfoBanner = () => {
       url: "https://www.windly.cc/blog/mercari-japan-guide"
     },
     {
-      title: "'쿠팡 파트너스' 시작 가이드 - 가입방법, 정산, 주의사항까지",
-      url: "https://www.windly.cc/blog/kupang-pateuneoseu-sijag-gaideu-gaibbangbeob-jeongsan-juyisahangggaji"
+      title: "쿠팡파트너스 시작가이드ㅣ가입방법, 정산, 주의사항까지",
+      url: "https://www.windly.cc/blog"
     },
     {
-      title: "떠오르는 유통업계 위기론, 사실일까?",
-      url: "https://www.windly.cc/blog/ecommerce-crisis"
+      title: "네이버 스마트스토어 상위노출 완벽 가이드",
+      url: "https://www.windly.cc/blog"
     },
     {
-      title: "일본 구매대행, '라쿠텐'으로 쉽고 빠르게ㅣ가입부터 상품소싱 팁까지",
-      url: "https://www.windly.cc/blog/japan-rakuten-sourcing-guide"
+      title: "중국 직구 사업 시작하기 - 알리바바 완전정복",
+      url: "https://www.windly.cc/blog"
     },
     {
-      title: "쿠팡에서 잘 팔리는 상세페이지, '이것' 하나면 된다",
-      url: "https://www.windly.cc/blog/coupang-product-detail-page-tips"
+      title: "온라인 쇼핑몰 마케팅 전략 - ROI 200% 달성법",
+      url: "https://www.windly.cc/blog"
     }
   ];
 
