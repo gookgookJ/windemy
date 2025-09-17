@@ -1213,9 +1213,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      instructors_public: {
+        Row: {
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          instructor_avatar_url: string | null
+          instructor_bio: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          instructor_avatar_url?: string | null
+          instructor_bio?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          instructor_avatar_url?: string | null
+          instructor_bio?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_instructor_public_info: {
         Args: { instructor_uuid: string }
         Returns: {
