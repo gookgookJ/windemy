@@ -5,6 +5,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/hooks/useFavorites";
+import InfoBanner from "@/components/InfoBanner";
 
 interface Course {
   id: string;
@@ -349,14 +350,20 @@ const FeaturedCourses = () => {
           if (courses.length === 0) return null;
 
           return (
-            <CourseCarousel 
-              key={section.id}
-              courses={courses}
-              title={section.title}
-              subtitle={section.subtitle}
-              viewAllLink="/courses"
-              icon={getIconComponent(section)}
-            />
+            <div key={section.id}>
+              <CourseCarousel 
+                courses={courses}
+                title={section.title}
+                subtitle={section.subtitle}
+                viewAllLink="/courses"
+                icon={getIconComponent(section)}
+              />
+              {section.title?.includes('무료로 배우는 이커머스') && (
+                <div className="my-10">
+                  <InfoBanner />
+                </div>
+              )}
+            </div>
           );
         })}
 

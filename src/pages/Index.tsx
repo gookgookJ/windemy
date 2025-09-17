@@ -2,7 +2,7 @@ import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import CategorySection from "@/components/CategorySection";
 import FeaturedCourses from "@/components/FeaturedCourses";
-import InfoBanner from "@/components/InfoBanner";
+
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -12,7 +12,6 @@ const Index = () => {
       <main>
         <HeroSection />
         <CategorySection />
-        <InfoBanner />
         <FeaturedCourses />
       </main>
       <Footer />
