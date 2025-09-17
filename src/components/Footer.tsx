@@ -111,7 +111,6 @@ const Footer = () => {
 
           {/* 다섯 번째 컬럼 - 문의하기 */}
           <div className="space-y-4">
-            <h3 className="font-medium text-white text-sm mb-6">문의하기</h3>
             <div className="space-y-4">
               <Link to="/inquiry">
                 <Button 
