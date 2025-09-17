@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFavorites } from '@/hooks/useFavorites';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 interface Course {
   id: string;

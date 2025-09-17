@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { useFavorites } from "@/hooks/useFavorites";
+import { useFavorites } from "@/contexts/FavoritesContext";
 
 interface CourseCardProps {
   id: string;

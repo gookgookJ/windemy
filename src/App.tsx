@@ -49,7 +49,7 @@ import ProfileSettings from "./pages/ProfileSettings";
 import About from "./pages/About";
 import InstructorApply from "./pages/InstructorApply";
 
-console.log('Debug React in App.tsx', React, typeof (React as any)?.useEffect);
+
 
 const queryClient = new QueryClient();
 

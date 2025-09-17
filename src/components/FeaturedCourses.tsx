@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Zap, Heart, Crown, Monitor, BookOpen, Target
 import useEmblaCarousel from "embla-carousel-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useFavorites } from "@/hooks/useFavorites";
+import { useFavorites } from "@/contexts/FavoritesContext";
 import InfoBanner from "@/components/InfoBanner";
 
 interface Course {
