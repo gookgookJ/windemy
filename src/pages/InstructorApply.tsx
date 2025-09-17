@@ -450,11 +450,12 @@ const InstructorApply = () => {
           rel="noopener noreferrer"
         >
           <Button className="shadow-2xl hover:scale-105 transition-all duration-200 text-lg px-8 py-4 h-auto font-bold hover:shadow-xl justify-center">
-          강사 지원하기
-        </Button>
-      </a>
+            강사 지원하기
+          </Button>
+        </a>
+      </div>
+
       <Footer />
-    </div>
     </div>
   );
 };

@@ -5,6 +5,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/hooks/useFavorites";
+import InfoBanner from "@/components/InfoBanner";
 
 interface Course {
   id: string;
@@ -42,7 +43,7 @@ interface Category {
   course_count: number;
 }
 
-const FeaturedCourses = ({ filterSections }: { filterSections?: string[] } = {}) => {
+const FeaturedCourses = () => {
   const [sections, setSections] = useState<HomepageSection[]>([]);
   const [sectionCourses, setSectionCourses] = useState<Record<string, Course[]>>({});
   const [loading, setLoading] = useState(true);
@@ -341,39 +342,76 @@ const FeaturedCourses = ({ filterSections }: { filterSections?: string[] } = {})
     );
   }
 
-  return (
-    <section className="py-16 bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {sections
-          .filter(section => !filterSections || filterSections.includes(section.title))
-          .map((section) => {
-          const courses = sectionCourses[section.id] || [];
-          if (courses.length === 0) return null;
+  // Compute split so InfoBanner can be full-width between sections
+  const sectionsWithCourses = sections.filter((s) => (sectionCourses[s.id] || []).length > 0);
+  const splitIdx = sectionsWithCourses.findIndex((s) => (s.title || '').includes('무료'));
+  const hasSplit = splitIdx !== -1 && splitIdx < sectionsWithCourses.length - 1;
 
-          return (
-            <CourseCarousel 
+  if (!hasSplit) {
+    return (
+      <section className="py-16 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {sectionsWithCourses.map((section) => (
+            <CourseCarousel
               key={section.id}
-              courses={courses}
+              courses={sectionCourses[section.id] || []}
               title={section.title}
               subtitle={section.subtitle}
               viewAllLink="/courses"
               icon={getIconComponent(section)}
             />
-          );
-        })}
+          ))}
 
-        {/* Fallback message if no sections are available */}
-        {sections.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">강의 섹션이 없습니다</h3>
-            <p className="text-muted-foreground">
-              관리자 페이지에서 메인 페이지 섹션을 설정해주세요.
-            </p>
-          </div>
-        )}
-      </div>
-    </section>
+          {sections.length === 0 && !loading && (
+            <div className="text-center py-12">
+              <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">강의 섹션이 없습니다</h3>
+              <p className="text-muted-foreground">관리자 페이지에서 메인 페이지 섹션을 설정해주세요.</p>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  const firstPart = sectionsWithCourses.slice(0, splitIdx + 1);
+  const secondPart = sectionsWithCourses.slice(splitIdx + 1);
+
+  return (
+    <>
+      <section className="py-16 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {firstPart.map((section) => (
+            <CourseCarousel
+              key={section.id}
+              courses={sectionCourses[section.id] || []}
+              title={section.title}
+              subtitle={section.subtitle}
+              viewAllLink="/courses"
+              icon={getIconComponent(section)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Full-width banner between sections */}
+      <InfoBanner />
+
+      <section className="py-16 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {secondPart.map((section) => (
+            <CourseCarousel
+              key={section.id}
+              courses={sectionCourses[section.id] || []}
+              title={section.title}
+              subtitle={section.subtitle}
+              viewAllLink="/courses"
+              icon={getIconComponent(section)}
+            />
+          ))}
+        </div>
+      </section>
+    </>
   );
 };
 
