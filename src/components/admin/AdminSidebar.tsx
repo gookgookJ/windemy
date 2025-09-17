@@ -222,12 +222,12 @@ export const AdminSidebar = () => {
         <SidebarMenuItem key={item.title}>
           <Collapsible defaultOpen={currentPath.includes('/admin/homepage-sections')}>
             <CollapsibleTrigger asChild>
-              <SidebarMenuButton className="w-full justify-between">
+              <SidebarMenuButton className={`w-full ${getNavClassName('#')}`}>
                 <div className="flex items-center">
                   <item.icon className="mr-2 h-4 w-4" />
                   {state !== "collapsed" && <span>{item.title}</span>}
                 </div>
-                {state !== "collapsed" && <ChevronRight className="h-4 w-4" />}
+                {state !== "collapsed" && <ChevronRight className="h-4 w-4 ml-auto" />}
               </SidebarMenuButton>
             </CollapsibleTrigger>
             <CollapsibleContent>
