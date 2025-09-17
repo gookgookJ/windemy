@@ -109,11 +109,11 @@ body[style*="padding-right"] {
 /* Maintain consistent viewport */
 html {
   overflow-y: scroll !important;
-  scrollbar-gutter: stable;
+  scrollbar-gutter: stable both-edges;
 }
 
 body {
-  scrollbar-gutter: stable;
+  scrollbar-gutter: stable both-edges;
 }
 /* Prevent focus jump */
 [data-radix-dropdown-menu-content],
@@ -129,7 +129,7 @@ body {
 
 /* Prevent scrollbar width changes */
 :root {
-  scrollbar-gutter: stable;
+  scrollbar-gutter: stable both-edges;
 }
 
 /* Additional dropdown stability */
