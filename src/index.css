@@ -92,6 +92,7 @@ All colors MUST be HSL.
 
 /* GLOBAL LAYOUT SHIFT PREVENTION */
 /* Prevent layout shift when dropdowns/dialogs open */
+/* Prevent layout shift when dropdowns/dialogs open */
 [data-radix-portal] {
   position: fixed !important;
   z-index: 200 !important;
@@ -103,16 +104,15 @@ body[style*="overflow: hidden"] {
   padding-right: 0 !important;
 }
 
-/* Always reserve scrollbar space to prevent horizontal shift */
+/* Maintain consistent viewport */
 html {
   overflow-y: scroll !important;
-  scrollbar-gutter: stable both-edges;
+  scrollbar-gutter: stable;
 }
 
 /* Prevent focus jump */
 [data-radix-dropdown-menu-content],
-[data-radix-dialog-content],
-[data-radix-select-content] {
+[data-radix-dialog-content] {
   outline: none !important;
 }
 
@@ -122,23 +122,14 @@ html {
   transform-origin: var(--radix-dropdown-menu-content-transform-origin) !important;
 }
 
-/* Prevent scrollbar width changes that cause horizontal shift */
+/* Prevent scrollbar width changes */
 :root {
-  scrollbar-gutter: stable both-edges;
-}
-
-body {
-  scrollbar-gutter: stable both-edges;
+  scrollbar-gutter: stable;
 }
 
 /* Additional dropdown stability */
 [data-state="open"][data-radix-dropdown-menu-content] {
   animation-fill-mode: forwards !important;
-}
-
-/* Force consistent scrollbar visibility */
-* {
-  scrollbar-gutter: inherit;
 }
 
   .dark {
