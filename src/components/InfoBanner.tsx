@@ -39,19 +39,19 @@ const InfoBanner = () => {
   ];
 
   return (
-    <section className="w-full py-6 bg-gradient-to-br from-slate-900 to-slate-800">
+    <section className="w-full py-10 bg-gradient-to-br from-slate-900 to-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 중앙 강조 텍스트 */}
-        <div className="text-center mb-4">
-          <h2 className="text-xl md:text-2xl font-bold text-white mb-1">
+        <div className="text-center mb-6">
+          <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
             보기만해도 매출 상승하는, 사업 꿀팁
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full"></div>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
           {/* 왼쪽 - 최신 트렌드 (더 넓게) */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-7">
             <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl h-full">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-4">
@@ -82,7 +82,8 @@ const InfoBanner = () => {
           </div>
 
           {/* 오른쪽 - 구독하기 */}
-          <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-xl text-white h-full">
+          <div className="lg:col-span-3">
+            <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-xl text-white h-full">
             <CardContent className="p-4">
               <div className="text-center mb-3">
                 <Mail className="h-7 w-7 mx-auto mb-2 text-white/90" />
@@ -114,6 +115,7 @@ const InfoBanner = () => {
               </div>
             </CardContent>
           </Card>
+          </div>
         </div>
       </div>
     </section>
