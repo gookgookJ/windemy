@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.delete-user]
 verify_jwt = true
+
+[functions.manage-instructor]
+verify_jwt = true

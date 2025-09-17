@@ -733,83 +733,31 @@ const Orders = () => {
     }
   };
 
-  // 영수증 다운로드 함수
+  // 영수증 다운로드 함수 - 보안 강화 버전
   const downloadReceipt = async (order: Order) => {
     try {
-      // 영수증 HTML 생성
-      const receiptHTML = `
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: 'Noto Sans KR', sans-serif; line-height: 1.6;">
-          <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px;">
-            <h1 style="color: #333; margin: 0;">결제 영수증</h1>
-            <p style="color: #666; margin: 5px 0;">Receipt</p>
-          </div>
-          
-          <div style="margin-bottom: 30px;">
-            <h2 style="color: #333; margin-bottom: 15px;">주문 정보</h2>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; width: 30%;">주문번호:</td>
-                <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${order.id}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">주문일시:</td>
-                <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${new Date(order.created_at).toLocaleString('ko-KR')}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">고객명:</td>
-                <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${order.profiles?.full_name || '이름 없음'}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">이메일:</td>
-                <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${order.profiles?.email || ''}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">결제방법:</td>
-                <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${getPaymentMethodText(order.payment_method)}</td>
-              </tr>
-            </table>
-          </div>
+      // 보안 강화: 영수증 데이터 구조화
+      const receiptData: ReceiptData = {
+        orderNumber: order.id,
+        customerName: order.profiles?.full_name || 'N/A',
+        customerEmail: order.profiles?.email || 'N/A',
+        orderDate: new Date(order.created_at).toLocaleString('ko-KR'),
+        items: order.order_items.map(item => ({
+          name: item.courses.title,
+          price: item.price,
+          quantity: 1
+        })),
+        totalAmount: order.total_amount,
+        paymentMethod: order.payment_method || '카드결제'
+      };
 
-          <div style="margin-bottom: 30px;">
-            <h2 style="color: #333; margin-bottom: 15px;">주문 상품</h2>
-            <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
-              <thead>
-                <tr style="background-color: #f8f9fa;">
-                  <th style="padding: 12px; border-bottom: 1px solid #ddd; text-align: left;">강의명</th>
-                  <th style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right;">금액</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${order.order_items.map(item => `
-                  <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.courses.title}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toLocaleString()}원</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-
-          <div style="border-top: 2px solid #333; padding-top: 20px;">
-            <div style="text-align: right;">
-              <p style="font-size: 18px; font-weight: bold; color: #333; margin: 0;">
-                총 결제금액: ${order.total_amount.toLocaleString()}원
-              </p>
-            </div>
-          </div>
-
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; font-size: 12px;">
-            <p>본 영수증은 전자상거래 결제 완료를 증명하는 서류입니다.</p>
-            <p>발행일: ${new Date().toLocaleString('ko-KR')}</p>
-          </div>
-        </div>
-      `;
-
-      // 임시 div 생성
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = receiptHTML;
+      // 보안 DOM 생성 (XSS 방지)
+      const tempDiv = createSecureReceipt(receiptData);
       tempDiv.style.position = 'absolute';
       tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '0';
+      tempDiv.style.width = '600px';
+      tempDiv.style.backgroundColor = 'white';
       document.body.appendChild(tempDiv);
 
       // HTML을 Canvas로 변환

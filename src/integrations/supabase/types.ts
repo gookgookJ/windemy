@@ -985,6 +985,33 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          action_type: string
+          count: number | null
+          created_at: string | null
+          id: string
+          user_id: string | null
+          window_start: string | null
+        }
+        Insert: {
+          action_type: string
+          count?: number | null
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          action_type?: string
+          count?: number | null
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       role_change_logs: {
         Row: {
           changed_at: string | null
@@ -1012,6 +1039,36 @@ export type Database = {
           old_role?: string | null
           reason?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      security_audit_logs: {
+        Row: {
+          created_at: string | null
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1334,33 +1391,6 @@ export type Database = {
       }
     }
     Views: {
-      instructors_public: {
-        Row: {
-          created_at: string | null
-          full_name: string | null
-          id: string | null
-          instructor_avatar_url: string | null
-          instructor_bio: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          full_name?: string | null
-          id?: string | null
-          instructor_avatar_url?: string | null
-          instructor_bio?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          full_name?: string | null
-          id?: string | null
-          instructor_avatar_url?: string | null
-          instructor_bio?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       instructors_public_safe: {
         Row: {
           created_at: string | null
