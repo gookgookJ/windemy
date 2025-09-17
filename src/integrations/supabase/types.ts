@@ -922,6 +922,36 @@ export type Database = {
         }
         Relationships: []
       }
+      role_change_logs: {
+        Row: {
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          new_role: string | null
+          old_role: string | null
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          new_role?: string | null
+          old_role?: string | null
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          new_role?: string | null
+          old_role?: string | null
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       session_file_downloads: {
         Row: {
           downloaded_at: string
