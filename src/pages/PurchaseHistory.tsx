@@ -12,6 +12,7 @@ import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { createSecureReceipt, type ReceiptData } from "@/utils/secureReceiptGenerator";
 
 interface OrderItem {
   id: string;

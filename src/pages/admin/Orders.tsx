@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { createSecureReceipt, type ReceiptData } from "@/utils/secureReceiptGenerator";
 
 interface OrderItem {
   id: string;
