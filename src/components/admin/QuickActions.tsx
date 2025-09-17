@@ -1,19 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Users, BookOpen, MessageSquare, Settings } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Users, BookOpen, MessageSquare, Settings } from 'lucide-react';
 
 export const QuickActions = () => {
-  const navigate = useNavigate();
 
   const actions = [
-    {
-      title: '새 코스 생성',
-      description: '새로운 강의 코스를 만들어보세요',
-      icon: Plus,
-      onClick: () => navigate('/course-management'),
-      color: 'primary'
-    },
     {
       title: '사용자 관리',
       description: '회원 정보를 확인하고 관리하세요',
