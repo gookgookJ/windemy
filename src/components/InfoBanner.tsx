@@ -51,7 +51,7 @@ const InfoBanner = () => {
         
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
           {/* 왼쪽 - 최신 트렌드 (더 넓게) */}
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-6">
             <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl h-full">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-4">
@@ -82,7 +82,7 @@ const InfoBanner = () => {
           </div>
 
           {/* 오른쪽 - 구독하기 */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-4">
             <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-xl text-white h-full">
             <CardContent className="p-4">
               <div className="text-center mb-3">
