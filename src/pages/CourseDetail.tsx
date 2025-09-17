@@ -169,12 +169,12 @@ const CourseDetail = () => {
     
     setLoading(true);
     try {
-      // Fetch course details with basic instructor reference (profile for email)
+      // Fetch course details with secure instructor reference (no email)
       const { data: course, error: courseError } = await supabase
         .from('courses')
         .select(`
           *,
-          profiles:instructor_id(full_name, email),
+          profiles:instructor_id(full_name),
           categories:category_id(name)
         `)
         .eq('id', courseId)
