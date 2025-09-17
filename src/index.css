@@ -101,15 +101,20 @@ All colors MUST be HSL.
 /* Prevent body scroll lock that causes layout shift */
 body[style*="overflow: hidden"] {
   overflow: auto !important;
+}
+/* Neutralize injected scrollbar compensation paddings */
+body[style*="padding-right"] {
   padding-right: 0 !important;
 }
-
 /* Maintain consistent viewport */
 html {
   overflow-y: scroll !important;
   scrollbar-gutter: stable;
 }
 
+body {
+  scrollbar-gutter: stable;
+}
 /* Prevent focus jump */
 [data-radix-dropdown-menu-content],
 [data-radix-dialog-content] {
