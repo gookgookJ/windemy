@@ -133,7 +133,7 @@ const Footer = () => {
         {/* 하단 회사 정보 */}
         <div className="border-t border-slate-800 mt-16 pt-8">
           <div className="text-xs text-slate-500 space-y-2 leading-relaxed">
-            <p>(주) 어베어 | 대표: 김승진 | 개인정보관리책임자: 김승진</p>
+            <p>(주) 어베어 | 대표: 김승현 | 개인정보관리책임자: 김승현</p>
             <p>사업자등록번호: 885-88-02289 | 통신판매업 신고번호: 2021-서울송파-3469</p>
             <p>주소: 서울특별시 강남구 테헤란로 252길 6-9, 4층 434호 | 전화번호: 1661-4939</p>
           </div>
