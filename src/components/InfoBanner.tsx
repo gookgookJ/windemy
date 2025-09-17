@@ -44,7 +44,7 @@ const InfoBanner = () => {
         {/* 중앙 강조 텍스트 */}
         <div className="text-center mb-6">
           <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
-            보기만해도 매출 상승하는, 사업 꿀팁
+            보기만해도 매출 상승하는 이커머스 사업 꿀팁!
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full"></div>
         </div>
