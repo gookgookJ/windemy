@@ -79,7 +79,10 @@ const SelectContent = React.forwardRef<
         className
       )}
       position={position}
-      {...props}
+      // Prevent focus-driven scroll jumps
+      onOpenAutoFocus={(e: Event) => e.preventDefault()}
+      onCloseAutoFocus={(e: Event) => e.preventDefault()}
+      {...(props as any)}
     >
       <SelectScrollUpButton />
       <SelectPrimitive.Viewport
