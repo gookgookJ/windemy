@@ -29,6 +29,14 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     }
   }, [user, loading, navigate, isAdmin]);
 
+  // Ensure admin pages manage top offset via internal padding
+  useEffect(() => {
+    document.body.classList.add('admin-fixed-offset');
+    return () => {
+      document.body.classList.remove('admin-fixed-offset');
+    };
+  }, []);
+
   // Prevent scroll jumping when navigating between admin pages
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });

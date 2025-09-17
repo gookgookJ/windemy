@@ -250,4 +250,10 @@ html {
     /* 100vh 버그 회피 */
     min-height: 100dvh;
   }
+
+  /* Admin pages manage offset internally */
+  body.admin-fixed-offset {
+    padding-top: 0 !important;
+  }
+
 }
