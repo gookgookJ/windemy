@@ -272,7 +272,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
             </div>
           </DialogHeader>
 
-          <div className="px-6 pb-2">
+          <div className="px-6 pb-6">
             {/* Main Login View */}
             {currentView === 'main' && (
               <>
