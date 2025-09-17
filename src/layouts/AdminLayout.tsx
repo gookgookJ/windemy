@@ -10,7 +10,7 @@ interface AdminLayoutProps {
 }
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -20,8 +20,12 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       navigate('/');
       return;
     }
-    // 임시로 관리자 권한 체크 제거 - 테스트용
-  }, [user, authLoading, navigate]);
+    // 관리자가 아닌 경우 홈으로 리다이렉트
+    if (user && !authLoading && !isAdmin) {
+      navigate('/');
+      return;
+    }
+  }, [user, authLoading, navigate, isAdmin]);
 
   // Prevent scroll jumping when navigating between admin pages
   useEffect(() => {
