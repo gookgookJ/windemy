@@ -53,6 +53,13 @@ export type Database = {
             foreignKeyName: "activity_logs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "instructors_public_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -103,6 +110,13 @@ export type Database = {
             foreignKeyName: "announcements_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "instructors_public_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -133,6 +147,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "instructors_public_safe"
             referencedColumns: ["id"]
           },
           {
@@ -224,6 +245,13 @@ export type Database = {
           valid_until?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "coupons_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "instructors_public_safe"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "coupons_created_by_fkey"
             columns: ["created_by"]
@@ -364,6 +392,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "instructors_public_safe"
             referencedColumns: ["id"]
           },
           {
@@ -555,6 +590,13 @@ export type Database = {
             foreignKeyName: "courses_instructor_id_fkey"
             columns: ["instructor_id"]
             isOneToOne: false
+            referencedRelation: "instructors_public_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courses_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -591,6 +633,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "instructors_public_safe"
             referencedColumns: ["id"]
           },
           {
@@ -663,6 +712,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hero_slides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "instructors_public_safe"
             referencedColumns: ["id"]
           },
           {
@@ -875,6 +931,13 @@ export type Database = {
             foreignKeyName: "orders_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "instructors_public_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1024,6 +1087,13 @@ export type Database = {
             foreignKeyName: "session_progress_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "instructors_public_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1074,7 +1144,21 @@ export type Database = {
             foreignKeyName: "support_tickets_assigned_to_fkey"
             columns: ["assigned_to"]
             isOneToOne: false
+            referencedRelation: "instructors_public_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "instructors_public_safe"
             referencedColumns: ["id"]
           },
           {
@@ -1118,6 +1202,13 @@ export type Database = {
           value?: Json
         }
         Relationships: [
+          {
+            foreignKeyName: "system_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "instructors_public_safe"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "system_settings_updated_by_fkey"
             columns: ["updated_by"]
@@ -1244,6 +1335,33 @@ export type Database = {
     }
     Views: {
       instructors_public: {
+        Row: {
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          instructor_avatar_url: string | null
+          instructor_bio: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          instructor_avatar_url?: string | null
+          instructor_bio?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          instructor_avatar_url?: string | null
+          instructor_bio?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      instructors_public_safe: {
         Row: {
           created_at: string | null
           full_name: string | null
