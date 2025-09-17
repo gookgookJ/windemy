@@ -98,7 +98,9 @@ const Header = () => {
               <div className="flex items-center space-x-2">
                 {isAdmin && (
                   <Link to="/admin">
-                    <Badge variant="destructive" className="text-xs whitespace-nowrap">관리자</Badge>
+                    <Button variant="destructive" size="sm" className="text-xs whitespace-nowrap">
+                      관리자
+                    </Button>
                   </Link>
                 )}
                 <Link to="/my-page">
