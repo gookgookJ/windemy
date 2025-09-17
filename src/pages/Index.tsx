@@ -12,8 +12,8 @@ const Index = () => {
       <main>
         <HeroSection />
         <CategorySection />
-        <FeaturedCourses />
         <InfoBanner />
+        <FeaturedCourses />
       </main>
       <Footer />
     </div>
