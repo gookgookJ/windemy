@@ -1216,7 +1216,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_instructor_public_info: {
+        Args: { instructor_uuid: string }
+        Returns: {
+          created_at: string
+          full_name: string
+          id: string
+          instructor_avatar_url: string
+          instructor_bio: string
+          updated_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
