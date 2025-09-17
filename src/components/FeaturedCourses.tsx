@@ -5,7 +5,6 @@ import useEmblaCarousel from "embla-carousel-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/hooks/useFavorites";
-import InfoBanner from "@/components/InfoBanner";
 
 interface Course {
   id: string;
@@ -43,7 +42,7 @@ interface Category {
   course_count: number;
 }
 
-const FeaturedCourses = () => {
+const FeaturedCourses = ({ filterSections }: { filterSections?: string[] } = {}) => {
   const [sections, setSections] = useState<HomepageSection[]>([]);
   const [sectionCourses, setSectionCourses] = useState<Record<string, Course[]>>({});
   const [loading, setLoading] = useState(true);
@@ -345,25 +344,21 @@ const FeaturedCourses = () => {
   return (
     <section className="py-16 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {sections.map((section) => {
+        {sections
+          .filter(section => !filterSections || filterSections.includes(section.title))
+          .map((section) => {
           const courses = sectionCourses[section.id] || [];
           if (courses.length === 0) return null;
 
           return (
-            <div key={section.id}>
-              <CourseCarousel 
-                courses={courses}
-                title={section.title}
-                subtitle={section.subtitle}
-                viewAllLink="/courses"
-                icon={getIconComponent(section)}
-              />
-              {section.title?.includes('무료로 배우는 이커머스') && (
-                <div className="my-10">
-                  <InfoBanner />
-                </div>
-              )}
-            </div>
+            <CourseCarousel 
+              key={section.id}
+              courses={courses}
+              title={section.title}
+              subtitle={section.subtitle}
+              viewAllLink="/courses"
+              icon={getIconComponent(section)}
+            />
           );
         })}
 
