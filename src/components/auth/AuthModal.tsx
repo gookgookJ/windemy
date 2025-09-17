@@ -246,8 +246,8 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-[95vw] max-w-md max-h-[85vh] p-0 gap-0 bg-white modal-open safe-area-padding overflow-hidden">
-        <div className="relative flex flex-col max-h-[85vh]">
+      <DialogContent className="w-[95vw] max-w-md p-0 gap-0 bg-white modal-open safe-area-padding overflow-hidden">
+        <div className="relative flex flex-col">
           {/* Header */}
           <DialogHeader className="px-6 pt-6 pb-4 text-center flex-shrink-0">
             <div className="flex flex-col items-center space-y-3">
@@ -272,7 +272,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
             </div>
           </DialogHeader>
 
-          <div className="px-6 pb-4 overflow-y-auto flex-1 min-h-0">
+          <div className="px-6 pb-6">
             {/* Main Login View */}
             {currentView === 'main' && (
               <>
@@ -313,7 +313,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                    </div>
                    <Button 
                      type="submit" 
-                     className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-lg mt-3 touch-target"
+                     className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-lg mt-4 touch-target"
                      disabled={isLoading}
                    >
                      {isLoading ? '로그인 중...' : '로그인'}
@@ -321,7 +321,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                  </form>
 
                  {/* Footer Links */}
-                 <div className="flex justify-center space-x-4 mt-3 text-sm text-gray-500">
+                 <div className="flex justify-center space-x-4 mt-4 text-sm text-gray-500">
                   <button 
                     onClick={() => setCurrentView('find-id')}
                     className="hover:text-gray-700"
