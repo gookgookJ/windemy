@@ -112,7 +112,7 @@ const Footer = () => {
           {/* 다섯 번째 컬럼 - 문의하기 */}
           <div className="space-y-4">
             <h3 className="font-medium text-white text-sm mb-6">문의하기</h3>
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 space-y-4">
+            <div className="space-y-4">
               <Link to="/inquiry">
                 <Button 
                   size="sm"
@@ -133,8 +133,9 @@ const Footer = () => {
         {/* 하단 회사 정보 */}
         <div className="border-t border-slate-800 mt-16 pt-8">
           <div className="text-xs text-slate-500 space-y-2 leading-relaxed">
-            <p>윈들리아카데미(주) | 대표 이정원 | 사업자등록번호 321-86-00842 | 통신판매업 신고번호 제2022-서울서초-2692호</p>
-            <p>주소 서울특별시 강남구 역삼로17길 57 | 개인정보관리책임자 김태훈 | 대표번호 02-6392-0000</p>
+            <p>(주) 어베어 | 대표: 김승진 | 개인정보관리책임자: 김승진</p>
+            <p>사업자등록번호: 885-88-02289 | 통신판매업 신고번호: 2021-서울송파-3469</p>
+            <p>주소: 서울특별시 강남구 테헤란로 252길 6-9, 4층 434호 | 전화번호: 1661-4939</p>
           </div>
         </div>
       </div>
