@@ -272,14 +272,14 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
             </div>
           </DialogHeader>
 
-          <div className="px-6 pb-6">
+          <div className="px-6 pb-2">
             {/* Main Login View */}
             {currentView === 'main' && (
               <>
                 {/* Kakao Login Button */}
                 <Button 
                   onClick={handleKakaoLogin}
-                  className="w-full h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold text-base mb-6 rounded-lg touch-target"
+                  className="w-full h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold text-base mb-4 rounded-lg touch-target"
                 >
                   <div className="flex items-center justify-center space-x-2">
                     <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center">
@@ -290,7 +290,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                 </Button>
 
                 {/* Email Login Form */}
-                <form onSubmit={handleSignIn} className="space-y-4">
+                <form onSubmit={handleSignIn} className="space-y-3">
                   <div className="space-y-2">
                     <Input
                       type="email"
@@ -313,7 +313,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                    </div>
                    <Button 
                      type="submit" 
-                     className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-lg mt-4 touch-target"
+                     className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-lg mt-2 touch-target"
                      disabled={isLoading}
                    >
                      {isLoading ? '로그인 중...' : '로그인'}
@@ -321,7 +321,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                  </form>
 
                  {/* Footer Links */}
-                 <div className="flex justify-center space-x-4 mt-4 text-sm text-gray-500">
+                 <div className="flex justify-center space-x-4 mt-2 text-sm text-gray-500">
                   <button 
                     onClick={() => setCurrentView('find-id')}
                     className="hover:text-gray-700"
