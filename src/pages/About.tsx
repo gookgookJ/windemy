@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ThumbsUp, BarChart, Target, Edit, Shield, Settings, Users, Layers, SquareCheck } from 'lucide-react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 const About = () => {
   const [currentText, setCurrentText] = useState('');
@@ -206,6 +207,7 @@ const About = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </div>
   );
 };

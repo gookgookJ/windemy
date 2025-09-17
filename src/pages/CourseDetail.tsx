@@ -25,6 +25,7 @@ import { CourseDetailImages } from "@/components/CourseDetailImages";
 import { Progress } from "@/components/ui/progress";
 import Header from "@/components/Header";
 import courseDetailLong from "@/assets/course-detail-long.jpg";
+import Footer from "@/components/Footer";
 
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -1140,6 +1141,7 @@ const CourseDetail = () => {
           </AlertDialogContent>
         </AlertDialog>
       </main>
+      <Footer />
     </div>
   );
 };

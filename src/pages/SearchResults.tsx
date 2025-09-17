@@ -4,6 +4,7 @@ import { Search, Filter, BookOpen, Heart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import { Input } from '@/components/ui/input';
+import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -355,6 +356,7 @@ const SearchResults = () => {
           )}
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

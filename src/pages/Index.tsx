@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import CategorySection from "@/components/CategorySection";
 import FeaturedCourses from "@/components/FeaturedCourses";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   return (
@@ -12,6 +13,7 @@ const Index = () => {
         <CategorySection />
         <FeaturedCourses />
       </main>
+      <Footer />
     </div>
   );
 };

@@ -13,6 +13,7 @@ import { Clock, MessageCircle, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
+import Footer from '@/components/Footer';
 
 interface SupportTicket {
   id: string;
@@ -313,6 +314,7 @@ const Inquiry = () => {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

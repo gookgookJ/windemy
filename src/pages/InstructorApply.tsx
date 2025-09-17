@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight, Video, Target, Zap, ChevronDown, Award, Star, CheckCircle, XCircle, ShoppingBag, TrendingUp, Globe, Package, Factory, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 const InstructorApply = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -449,10 +450,11 @@ const InstructorApply = () => {
           rel="noopener noreferrer"
         >
           <Button className="shadow-2xl hover:scale-105 transition-all duration-200 text-lg px-8 py-4 h-auto font-bold hover:shadow-xl justify-center">
-            강사 지원하기
-          </Button>
-        </a>
-      </div>
+          강사 지원하기
+        </Button>
+      </a>
+      <Footer />
+    </div>
     </div>
   );
 };

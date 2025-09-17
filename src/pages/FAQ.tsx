@@ -7,6 +7,7 @@ import { HelpCircle, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
+import Footer from '@/components/Footer';
 
 const FAQ = () => {
   const { user } = useAuth();
@@ -151,6 +152,7 @@ const FAQ = () => {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

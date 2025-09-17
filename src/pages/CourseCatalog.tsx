@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Header from "@/components/Header";
 import CourseCard from "@/components/CourseCard";
+import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -253,6 +254,7 @@ const CourseCatalog = () => {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };
