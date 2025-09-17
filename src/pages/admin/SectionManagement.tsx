@@ -222,7 +222,7 @@ export const SectionManagement = () => {
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuContent align="end">
                                 <DropdownMenuItem 
                                   onClick={() => removeAttachment(section)}
                                   className="text-destructive focus:text-destructive cursor-pointer"

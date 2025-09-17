@@ -90,21 +90,45 @@ All colors MUST be HSL.
     --wind-brand-light-blue: 220 100% 96%;
 }
 
-/* Prevent layout shift when dialog opens */
+/* GLOBAL LAYOUT SHIFT PREVENTION */
+/* Prevent layout shift when dropdowns/dialogs open */
 [data-radix-portal] {
   position: fixed !important;
   z-index: 9999 !important;
 }
 
-/* Maintain scroll position when dialog opens */
-.ReactModal__Body--open {
-  overflow: auto !important;
-}
-
-/* Prevent body from jumping when dialog opens */
+/* Prevent body scroll lock that causes layout shift */
 body[style*="overflow: hidden"] {
   overflow: auto !important;
   padding-right: 0 !important;
+}
+
+/* Maintain consistent viewport */
+html {
+  overflow-y: scroll !important;
+  scrollbar-gutter: stable;
+}
+
+/* Prevent focus jump */
+[data-radix-dropdown-menu-content],
+[data-radix-dialog-content] {
+  outline: none !important;
+}
+
+/* Ensure dropdown positioning doesn't affect layout */
+[data-radix-popper-content-wrapper] {
+  z-index: 200 !important;
+  transform-origin: var(--radix-dropdown-menu-content-transform-origin) !important;
+}
+
+/* Prevent scrollbar width changes */
+:root {
+  scrollbar-gutter: stable;
+}
+
+/* Additional dropdown stability */
+[data-state="open"][data-radix-dropdown-menu-content] {
+  animation-fill-mode: forwards !important;
 }
 
   .dark {

@@ -326,7 +326,7 @@ export const AdminCourses = () => {
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40 bg-background border shadow-lg z-50">
+                          <DropdownMenuContent align="end" className="w-40">
                             <DropdownMenuItem 
                               onClick={() => toggleCoursePublication(course.id, course.is_published)}
                               className="cursor-pointer"
