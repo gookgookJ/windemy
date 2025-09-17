@@ -162,7 +162,7 @@ export const SessionTable = ({
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40 bg-background border shadow-lg z-50">
+                      <DropdownMenuContent align="end" className="w-40 bg-background border shadow-lg z-[100]" sideOffset={5}>
                         <DropdownMenuItem 
                           onClick={() => onEdit(session)}
                           className="cursor-pointer"
@@ -248,7 +248,11 @@ export const SessionTable = ({
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent 
+          className="z-[110] max-w-lg"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>세션 삭제 확인</AlertDialogTitle>
             <AlertDialogDescription>

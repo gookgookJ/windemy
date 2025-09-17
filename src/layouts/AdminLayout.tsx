@@ -49,13 +49,13 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
       <Header />
       <SidebarProvider>
         <div className="flex min-h-[calc(100vh-64px)] w-full pt-16">
           <AdminSidebar />
-          <main className="flex-1 overflow-auto">
-            <div className="container mx-auto p-6 pt-8" style={{ scrollBehavior: 'smooth' }}>
+          <main className="flex-1 overflow-auto relative">
+            <div className="container mx-auto p-6 pt-8">
               {children}
             </div>
           </main>

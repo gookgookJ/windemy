@@ -88,7 +88,24 @@ All colors MUST be HSL.
     --wind-border-color: 225 25% 91%;
     --wind-bg-light: 225 22% 97%;
     --wind-brand-light-blue: 220 100% 96%;
-  }
+}
+
+/* Prevent layout shift when dialog opens */
+[data-radix-portal] {
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+/* Maintain scroll position when dialog opens */
+.ReactModal__Body--open {
+  overflow: auto !important;
+}
+
+/* Prevent body from jumping when dialog opens */
+body[style*="overflow: hidden"] {
+  overflow: auto !important;
+  padding-right: 0 !important;
+}
 
   .dark {
     --background: 222.2 84% 4.9%;
