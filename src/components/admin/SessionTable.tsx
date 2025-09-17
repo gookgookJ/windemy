@@ -2,8 +2,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Eye, Edit, MoreHorizontal, Play, Pause, Trash2, Upload, ChevronLeft, ChevronRight, File } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 interface CourseSession {
   id: string;
@@ -43,6 +45,21 @@ export const SessionTable = ({
   onDelete
 }: SessionTableProps) => {
   const navigate = useNavigate();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<{ id: string; title: string } | null>(null);
+
+  const handleDeleteClick = (sessionId: string, sessionTitle: string) => {
+    setSessionToDelete({ id: sessionId, title: sessionTitle });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (sessionToDelete) {
+      onDelete(sessionToDelete.id, sessionToDelete.title);
+    }
+    setDeleteDialogOpen(false);
+    setSessionToDelete(null);
+  };
 
   const formatDuration = (minutes: number) => {
     if (!minutes) return '미설정';
@@ -154,7 +171,7 @@ export const SessionTable = ({
                           편집
                         </DropdownMenuItem>
                         <DropdownMenuItem 
-                          onClick={() => onDelete(session.id, session.title)}
+                          onClick={() => handleDeleteClick(session.id, session.title)}
                           className="text-destructive focus:text-destructive cursor-pointer"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
@@ -227,7 +244,30 @@ export const SessionTable = ({
             </Button>
           </div>
         </div>
-      )}
+        )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>세션 삭제 확인</AlertDialogTitle>
+            <AlertDialogDescription>
+              정말로 "{sessionToDelete?.title}" 세션을 삭제하시겠습니까?
+              <br />
+              이 작업은 되돌릴 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

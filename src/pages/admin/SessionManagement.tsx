@@ -155,10 +155,6 @@ export const SessionManagement = () => {
   };
 
   const deleteSession = async (sessionId: string, sessionTitle: string) => {
-    if (!confirm(`정말로 "${sessionTitle}" 세션을 삭제하시겠습니까?`)) {
-      return;
-    }
-
     try {
       const { error } = await supabase
         .from('course_sessions')
