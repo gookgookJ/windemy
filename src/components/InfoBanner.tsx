@@ -39,15 +39,23 @@ const InfoBanner = () => {
   ];
 
   return (
-    <section className="w-full py-16 bg-gradient-to-br from-slate-900 to-slate-800">
+    <section className="w-full py-12 bg-gradient-to-br from-slate-900 to-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* 왼쪽 - 베스트글 */}
+        {/* 중앙 강조 텍스트 */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+            보기만해도 매출 상승하는, 사업 꿀팁
+          </h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full"></div>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          {/* 왼쪽 - 최신 트렌드 */}
           <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl">
             <CardContent className="p-6">
               <div className="flex items-center gap-2 mb-6">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-bold text-foreground">오늘의 베스트글</h3>
+                <h3 className="text-lg font-bold text-foreground">최신 이커머스 시장 트렌드</h3>
               </div>
               <div className="space-y-4">
                 {bestPosts.map((post, index) => (
@@ -67,31 +75,6 @@ const InfoBanner = () => {
                     </a>
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 가운데 - 정보 카드 */}
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 border-0 shadow-xl text-white">
-            <CardContent className="p-6 text-center">
-              <div className="mb-4">
-                <DollarSign className="h-12 w-12 mx-auto mb-3 text-white/90" />
-              </div>
-              <div className="space-y-2 mb-6">
-                <div className="text-white/90 text-sm font-medium">
-                  보기만해도 매출 상승하는
-                </div>
-                <div className="text-lg font-bold">사업 꿀팁</div>
-                <div className="text-white/90 text-sm">
-                  최신 이커머스 시장 트렌드
-                </div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-                <BarChart3 className="h-8 w-8 mx-auto mb-2 text-white/80" />
-                <div className="text-xs text-white/80">
-                  전문가들이 공유하는<br />
-                  검증된 수익 전략
-                </div>
               </div>
             </CardContent>
           </Card>
