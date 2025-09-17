@@ -5,6 +5,8 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import Header from '@/components/Header';
 
+// Fixed: All authLoading references replaced with loading
+
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
