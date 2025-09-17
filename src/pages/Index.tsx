@@ -11,8 +11,8 @@ const Index = () => {
       <Header />
       <main>
         <HeroSection />
-        <CategorySection />
         <InfoBanner />
+        <CategorySection />
         <FeaturedCourses />
       </main>
       <Footer />
