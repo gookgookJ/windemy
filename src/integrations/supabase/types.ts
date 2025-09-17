@@ -1405,6 +1405,17 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_instructor_safe: {
+        Args: { instructor_uuid: string }
+        Returns: {
+          created_at: string
+          full_name: string
+          id: string
+          instructor_avatar_url: string
+          instructor_bio: string
+          updated_at: string
+        }[]
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
