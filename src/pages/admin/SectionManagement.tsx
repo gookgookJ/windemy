@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Upload, MoreHorizontal, File, Edit, Trash2, Plus } from 'lucide-react';
+import { Search, Upload, MoreHorizontal, File, Edit, Trash2, Plus, X } from 'lucide-react';
 import { SectionUploadModal } from '@/components/admin/SectionUploadModal';
 
 interface CourseSection {
@@ -32,6 +33,7 @@ export const SectionManagement = () => {
   const [sections, setSections] = useState<CourseSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState<string>('all');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadingSection, setUploadingSection] = useState<CourseSection | null>(null);
   
@@ -101,11 +103,27 @@ export const SectionManagement = () => {
     }
   };
 
-  // 검색 필터링
-  const filteredSections = sections.filter(section =>
-    section.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    section.course?.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // 검색 및 필터링
+  const filteredSections = sections.filter(section => {
+    const matchesSearch = searchTerm === '' || 
+      section.title.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCourse = selectedCourse === 'all' || 
+      section.course?.id === selectedCourse;
+    
+    return matchesSearch && matchesCourse;
+  });
+
+  // 고유한 강의 목록 추출
+  const uniqueCourses = Array.from(
+    new Map(sections.map(section => [section.course?.id, section.course]))
+      .values()
+  ).filter(course => course);
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedCourse('all');
+  };
 
   if (loading) {
     return (
@@ -135,17 +153,61 @@ export const SectionManagement = () => {
         {/* 검색 및 필터 */}
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-md">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="relative flex-1 min-w-[280px]">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  placeholder="섹션명 또는 강의명으로 검색..."
+                  placeholder="섹션명으로 검색..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
+              
+              <div className="min-w-[200px]">
+                <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="강의 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체 강의</SelectItem>
+                    {uniqueCourses.map((course) => (
+                      <SelectItem key={course.id} value={course.id}>
+                        {course.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {(searchTerm || selectedCourse !== 'all') && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={clearFilters}
+                  className="flex items-center gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  필터 초기화
+                </Button>
+              )}
             </div>
+            
+            {(searchTerm || selectedCourse !== 'all') && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                <span>활성 필터:</span>
+                {searchTerm && (
+                  <Badge variant="secondary" className="text-xs">
+                    섹션명: "{searchTerm}"
+                  </Badge>
+                )}
+                {selectedCourse !== 'all' && (
+                  <Badge variant="secondary" className="text-xs">
+                    강의: "{uniqueCourses.find(c => c.id === selectedCourse)?.title}"
+                  </Badge>
+                )}
+              </div>
+            )}
           </CardHeader>
         </Card>
 
