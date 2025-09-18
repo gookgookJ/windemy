@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import InfoBanner from "@/components/InfoBanner";
+import { getOptimizedImageForContext } from "@/utils/imageOptimization";
 
 interface Course {
   id: string;
@@ -264,14 +265,14 @@ const FeaturedCourses = () => {
       <Link to={`/course/${course.id}`} className="group cursor-pointer block">
         <div className="relative mb-4">
           <img
-            src={course.thumbnail_url}
+            src={getOptimizedImageForContext(course.thumbnail_url, 'course-card')}
             alt={course.title}
             className="w-full h-[120px] sm:h-[140px] lg:h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300 responsive-image"
-            style={{ aspectRatio: "283/159" }}
+            style={{ aspectRatio: "320/180" }}
             loading="lazy"
             sizes="(max-width: 640px) 40vw, (max-width: 1024px) 33vw, 25vw"
-            width="286"
-            height="161"
+            width="320"
+            height="180"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = "/placeholder.svg";
