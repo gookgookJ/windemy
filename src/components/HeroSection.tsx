@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import heroSlide1 from "@/assets/hero-slide-1.jpg";
 import heroSlide2 from "@/assets/hero-slide-2.jpg";
 import heroSlide3 from "@/assets/hero-slide-3.jpg";
-import { imagePresets } from "@/utils/imageOptimization";
 
 interface HeroSlide {
   id: string;
@@ -200,17 +199,14 @@ const HeroSection = () => {
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
-          <picture>
-            <source media="(max-width: 768px)" srcSet={imagePresets.heroMobile(slides[currentSlide].image_url)} />
-            <img
-              src={imagePresets.hero(slides[currentSlide].image_url)}
-              alt={slides[currentSlide].title}
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="eager"
-              fetchPriority="high"
-              sizes="100vw"
-            />
-          </picture>
+          <img
+            src={slides[currentSlide].image_url}
+            alt={slides[currentSlide].title}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="eager"
+            fetchPriority="high"
+            sizes="100vw"
+          />
           <div className="absolute inset-0 flex">
             {/* Left side - Text content */}
             <div className="flex-1 p-4 flex flex-col justify-center space-y-2">

@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
-import { imagePresets } from "@/utils/imageOptimization";
 
 interface CourseCardProps {
   id: string;
@@ -58,8 +57,7 @@ const CourseCard = ({
     >
       <div className="relative overflow-hidden">
         <img
-          src={imagePresets.thumbnail(thumbnail)}
-          srcSet={`${imagePresets.thumbnail(thumbnail)} 1x, ${imagePresets.thumbnailRetina(thumbnail)} 2x`}
+          src={thumbnail}
           alt={title}
           className="w-full h-[160px] sm:h-[180px] object-cover transition-transform duration-300 group-hover:scale-105 responsive-image"
           loading="lazy"
