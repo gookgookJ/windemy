@@ -269,7 +269,8 @@ const FeaturedCourses = () => {
             alt={course.title}
             className="w-full h-[120px] sm:h-[140px] lg:h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300 responsive-image"
             style={{ aspectRatio: "320/180" }}
-            loading="lazy"
+            loading={index < 4 ? "eager" : "lazy"}
+            fetchPriority={index < 4 ? "high" : "auto"}
             sizes="(max-width: 640px) 40vw, (max-width: 1024px) 33vw, 25vw"
             width="320"
             height="180"

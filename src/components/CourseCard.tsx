@@ -21,6 +21,7 @@ interface CourseCardProps {
   category: string;
   isHot?: boolean;
   isNew?: boolean;
+  priority?: boolean; // Add priority prop for LCP optimization
 }
 
 const CourseCard = ({
@@ -38,6 +39,7 @@ const CourseCard = ({
   category,
   isHot,
   isNew,
+  priority = false,
 }: CourseCardProps) => {
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
@@ -61,7 +63,8 @@ const CourseCard = ({
           src={getOptimizedImageForContext(thumbnail, 'course-card')}
           alt={title}
           className="w-full h-[160px] sm:h-[180px] object-cover transition-transform duration-300 group-hover:scale-105 responsive-image"
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
           sizes="(max-width: 640px) 40vw, (max-width: 1024px) 33vw, 25vw"
           width="320"
           height="180"

@@ -247,8 +247,12 @@ const CourseCatalog = () => {
 
             {/* Course Grid */}
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 justify-items-center">
-              {filteredCourses.map((course) => (
-                <CourseCard key={course.id} {...course} />
+              {filteredCourses.map((course, index) => (
+                <CourseCard 
+                  key={course.id} 
+                  {...course} 
+                  priority={index < 6} // Prioritize first 6 visible courses
+                />
               ))}
             </div>
           </div>
