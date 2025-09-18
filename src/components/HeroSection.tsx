@@ -49,15 +49,32 @@ const HeroSection = () => {
     fetchSlidesImmediately();
   }, []);
 
-  // Preload the first hero image for better LCP
+  // Immediate preload of the first hero image for better LCP
   useEffect(() => {
     if (slides.length > 0 && slides[0].image_url) {
+      // Create preload link with highest priority
       const preloadLink = document.createElement('link');
       preloadLink.rel = 'preload';
       preloadLink.as = 'image';
       preloadLink.href = getOptimizedImageForContext(slides[0].image_url, 'hero-slide');
       preloadLink.fetchPriority = 'high';
-      document.head.appendChild(preloadLink);
+      
+      // Add crossorigin for external images
+      if (slides[0].image_url.includes('supabase.co')) {
+        preloadLink.crossOrigin = 'anonymous';
+      }
+      
+      // Insert at the very beginning of head for highest priority
+      const firstChild = document.head.firstChild;
+      if (firstChild) {
+        document.head.insertBefore(preloadLink, firstChild);
+      } else {
+        document.head.appendChild(preloadLink);
+      }
+      
+      // Also trigger immediate image load in the background
+      const img = new Image();
+      img.src = getOptimizedImageForContext(slides[0].image_url, 'hero-slide');
       
       return () => {
         // Cleanup preload link if component unmounts
