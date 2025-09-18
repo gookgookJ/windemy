@@ -203,6 +203,9 @@ const HeroSection = () => {
             src={slides[currentSlide].image_url}
             alt={slides[currentSlide].title}
             className="absolute inset-0 w-full h-full object-cover"
+            loading="eager"
+            fetchPriority="high"
+            sizes="100vw"
           />
           <div className="absolute inset-0 flex">
             {/* Left side - Text content */}
@@ -246,6 +249,8 @@ const HeroSection = () => {
                     src={slides[getSlideIndex(-1)].image_url}
                     alt={slides[getSlideIndex(-1)].title}
                     className="w-full h-full object-cover responsive-image"
+                    loading="lazy"
+                    sizes="50vw"
                   />
                   <div className="absolute inset-0 bg-black/40 flex items-center">
                     <div className="text-white space-y-4 px-12 flex-1">
@@ -274,6 +279,9 @@ const HeroSection = () => {
                   src={slides[currentSlide].image_url}
                   alt={slides[currentSlide].title}
                   className="w-full h-full object-cover responsive-image"
+                  loading="eager"
+                  fetchPriority="high"
+                  sizes="760px"
                 />
                 <div className="absolute inset-0 bg-black/30 flex items-center">
                   <div className="text-white space-y-4 px-12 flex-1">
@@ -301,6 +309,8 @@ const HeroSection = () => {
                     src={slides[getSlideIndex(1)].image_url}
                     alt={slides[getSlideIndex(1)].title}
                     className="w-full h-full object-cover responsive-image"
+                    loading="lazy"
+                    sizes="50vw"
                   />
                   <div className="absolute inset-0 bg-black/40 flex items-center">
                     <div className="text-white space-y-4 px-12 flex-1">

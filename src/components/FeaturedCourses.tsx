@@ -268,6 +268,10 @@ const FeaturedCourses = () => {
             alt={course.title}
             className="w-full h-[120px] sm:h-[140px] lg:h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300 responsive-image"
             style={{ aspectRatio: "283/159" }}
+            loading="lazy"
+            sizes="(max-width: 640px) 40vw, (max-width: 1024px) 33vw, 25vw"
+            width="286"
+            height="161"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = "/placeholder.svg";

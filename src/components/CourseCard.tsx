@@ -60,6 +60,10 @@ const CourseCard = ({
           src={thumbnail}
           alt={title}
           className="w-full h-[160px] sm:h-[180px] object-cover transition-transform duration-300 group-hover:scale-105 responsive-image"
+          loading="lazy"
+          sizes="(max-width: 640px) 40vw, (max-width: 1024px) 33vw, 25vw"
+          width="286"
+          height="161"
         />
         {/* Favorite Heart Button - 원 크기를 하트의 1.5배로 축소 */}
         <button
