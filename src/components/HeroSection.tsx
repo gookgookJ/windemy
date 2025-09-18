@@ -63,6 +63,25 @@ const HeroSection = () => {
     fetchSlides();
   }, []);
 
+  // Preload the first hero image for better LCP
+  useEffect(() => {
+    if (slides.length > 0 && slides[0].image_url) {
+      const preloadLink = document.createElement('link');
+      preloadLink.rel = 'preload';
+      preloadLink.as = 'image';
+      preloadLink.href = getOptimizedImageForContext(slides[0].image_url, 'hero-slide');
+      preloadLink.fetchPriority = 'high';
+      document.head.appendChild(preloadLink);
+      
+      return () => {
+        // Cleanup preload link if component unmounts
+        if (document.head.contains(preloadLink)) {
+          document.head.removeChild(preloadLink);
+        }
+      };
+    }
+  }, [slides]);
+
   const fetchSlides = async () => {
     try {
       const { data, error } = await supabase
@@ -209,6 +228,7 @@ const HeroSection = () => {
             sizes="100vw"
             width="800"
             height="450"
+            decoding="sync"
           />
           <div className="absolute inset-0 flex">
             {/* Left side - Text content */}
@@ -289,6 +309,7 @@ const HeroSection = () => {
                   sizes="760px"
                   width="800"
                   height="450"
+                  decoding="sync"
                 />
                 <div className="absolute inset-0 bg-black/30 flex items-center">
                   <div className="text-white space-y-4 px-12 flex-1">
