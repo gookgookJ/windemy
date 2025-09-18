@@ -71,10 +71,11 @@ const FeaturedCourses = () => {
         filter_type: section.filter_type as 'manual' | 'category' | 'tag' | 'hot_new'
       })));
 
-      // Fetch courses for each section
+      // Fetch courses for each section IN PARALLEL for better performance
       const coursesData: Record<string, Course[]> = {};
 
-      for (const section of (sectionsData || [])) {
+      // Create all promises for parallel execution
+      const sectionPromises = (sectionsData || []).map(async (section) => {
         let courses: Course[] = [];
 
         if (section.filter_type === 'manual') {
@@ -145,8 +146,16 @@ const FeaturedCourses = () => {
           }));
         }
 
-        coursesData[section.id] = courses;
-      }
+        return { sectionId: section.id, courses };
+      });
+
+      // Execute all promises in parallel
+      const sectionResults = await Promise.all(sectionPromises);
+      
+      // Map results back to coursesData object
+      sectionResults.forEach(({ sectionId, courses }) => {
+        coursesData[sectionId] = courses;
+      });
 
       setSectionCourses(coursesData);
 
