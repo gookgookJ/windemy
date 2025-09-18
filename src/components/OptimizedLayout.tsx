@@ -4,14 +4,15 @@ interface OptimizedLayoutProps {
   children: React.ReactNode;
 }
 
-// Component to handle performance optimizations
+// Component to handle performance optimizations and caching
 const OptimizedLayout = ({ children }: OptimizedLayoutProps) => {
   useEffect(() => {
-    // Preload critical resources after initial render
+    // Enhanced resource preloading with cache optimization
     const preloadCriticalResources = () => {
-      // Preload common images
+      // Preload and cache critical images
       const imagesToPreload = [
         '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png', // Default thumbnail
+        '/src/assets/hero-lms.jpg',
       ];
 
       imagesToPreload.forEach(src => {
@@ -20,22 +21,38 @@ const OptimizedLayout = ({ children }: OptimizedLayoutProps) => {
         link.as = 'image';
         link.href = src;
         link.crossOrigin = 'anonymous';
+        // Add cache control hints
+        link.setAttribute('importance', 'high');
         document.head.appendChild(link);
+        
+        // Also create img element to trigger browser cache
+        const img = new Image();
+        img.src = src;
       });
 
-      // Prefetch likely navigation targets
+      // Prefetch likely navigation targets with cache hints  
       const routesToPrefetch = ['/courses', '/about'];
       
       routesToPrefetch.forEach(route => {
         const link = document.createElement('link');
         link.rel = 'prefetch';
         link.href = route;
+        link.setAttribute('importance', 'low');
         document.head.appendChild(link);
       });
+
+      // Preload critical fonts with long cache
+      const fontLink = document.createElement('link');
+      fontLink.rel = 'preload';
+      fontLink.as = 'font';
+      fontLink.type = 'font/woff2';
+      fontLink.href = 'https://fonts.gstatic.com/s/notosanskr/v36/PbykFmXiEBPT4ITbgNA5Cgm20xz64px_1hVWr0wuPNGmlQNMEfD4.woff2';
+      fontLink.crossOrigin = 'anonymous';
+      document.head.appendChild(fontLink);
     };
 
     // Delay preloading to not interfere with critical path
-    const timer = setTimeout(preloadCriticalResources, 2000);
+    const timer = setTimeout(preloadCriticalResources, 1000);
     
     return () => clearTimeout(timer);
   }, []);
