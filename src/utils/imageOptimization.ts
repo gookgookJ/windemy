@@ -25,9 +25,37 @@ export const optimizeSupabaseImage = (
     return imageUrl;
   }
 
-  // Since Supabase transformation isn't available, we'll handle format optimization
-  // at the component level with <picture> element and WebP fallbacks
+  // For now, return original URL since Supabase image transformation 
+  // might not be available on this instance
+  // TODO: Test if transformation endpoint works and re-enable if available
   return imageUrl;
+
+  /* 
+  // Future implementation when transformation is confirmed to work:
+  const {
+    width,
+    height,
+    quality = 80,
+    format = 'webp',
+    resize = 'cover'
+  } = options;
+
+  const publicIndex = imageUrl.indexOf('/storage/v1/object/public/');
+  if (publicIndex === -1) return imageUrl;
+
+  const baseUrl = imageUrl.substring(0, publicIndex);
+  const path = imageUrl.substring(publicIndex + '/storage/v1/object/public/'.length);
+
+  const params = new URLSearchParams();
+  
+  if (width) params.append('width', width.toString());
+  if (height) params.append('height', height.toString());
+  if (quality) params.append('quality', quality.toString());
+  if (format) params.append('format', format);
+  if (resize) params.append('resize', resize);
+
+  return `${baseUrl}/storage/v1/render/image/public/${path}?${params.toString()}`;
+  */
 };
 
 /**
