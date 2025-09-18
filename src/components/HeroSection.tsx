@@ -21,7 +21,6 @@ const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [slides, setSlides] = useState<HeroSlide[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const navigate = useNavigate();
   const startX = useRef(0);
@@ -29,7 +28,25 @@ const HeroSection = () => {
   const slideRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchSlides();
+    // 즉시 데이터를 가져와서 로딩 시간 최소화
+    const fetchSlidesImmediately = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('hero_slides')
+          .select('*')
+          .eq('is_active', true)
+          .eq('is_draft', false)
+          .order('order_index');
+
+        if (!error && data && data.length > 0) {
+          setSlides(data);
+        }
+      } catch (error) {
+        console.error('Error fetching slides:', error);
+      }
+    };
+    
+    fetchSlidesImmediately();
   }, []);
 
   // Preload the first hero image for better LCP
@@ -51,26 +68,6 @@ const HeroSection = () => {
     }
   }, [slides]);
 
-  const fetchSlides = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('hero_slides')
-        .select('*')
-        .eq('is_active', true)
-        .eq('is_draft', false)
-        .order('order_index');
-
-      if (error) {
-        console.error('Error fetching slides:', error);
-      } else if (data && data.length > 0) {
-        setSlides(data);
-      }
-    } catch (error) {
-      console.error('Error fetching slides:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSlideClick = (slide: HeroSlide) => {
     if (slide.course_id) {
@@ -160,10 +157,10 @@ const HeroSection = () => {
     }
   };
 
-  if (loading || slides.length === 0) {
+  if (slides.length === 0) {
     return (
       <section className="relative h-[200px] md:h-[380px] overflow-hidden bg-white flex items-center justify-center">
-        <div className="text-muted-foreground">로딩중...</div>
+        <div className="text-muted-foreground">슬라이드를 불러오는 중...</div>
       </section>
     );
   }
