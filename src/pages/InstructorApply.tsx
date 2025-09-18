@@ -10,14 +10,23 @@ const InstructorApply = () => {
   const [activeFAQ, setActiveFAQ] = useState<number | null>(null);
 
   useEffect(() => {
+    let ticking = false;
+    
     const handleScroll = () => {
-      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const scrolled = (winScroll / height) * 100;
-      setScrollProgress(scrolled);
+      if (!ticking) {
+        // Use requestAnimationFrame to batch DOM reads and avoid forced reflows
+        requestAnimationFrame(() => {
+          const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+          const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+          const scrolled = (winScroll / height) * 100;
+          setScrollProgress(scrolled);
 
-      // Show sticky button when scrolled past hero
-      setShowStickyButton(winScroll > 600);
+          // Show sticky button when scrolled past hero
+          setShowStickyButton(winScroll > 600);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });

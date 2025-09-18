@@ -122,18 +122,28 @@ const CourseDetail = () => {
 
   useEffect(() => {
     const updatePos = () => {
-      if (rightColRef.current) {
-        setFixedLeft(rightColRef.current.getBoundingClientRect().left);
-      }
-      if (thumbnailRef.current) {
-        const top = Math.max(0, Math.round(thumbnailRef.current.getBoundingClientRect().top));
-        setFixedTop(top);
-      }
+      // Use requestAnimationFrame to batch DOM reads and avoid forced reflows
+      requestAnimationFrame(() => {
+        if (rightColRef.current) {
+          setFixedLeft(rightColRef.current.getBoundingClientRect().left);
+        }
+        if (thumbnailRef.current) {
+          const top = Math.max(0, Math.round(thumbnailRef.current.getBoundingClientRect().top));
+          setFixedTop(top);
+        }
+      });
     };
-    requestAnimationFrame(updatePos);
-    window.addEventListener('resize', updatePos);
+    
+    updatePos();
+    
+    const handleResize = () => {
+      // Debounce resize events to prevent excessive reflows
+      requestAnimationFrame(updatePos);
+    };
+    
+    window.addEventListener('resize', handleResize, { passive: true });
     return () => {
-      window.removeEventListener('resize', updatePos);
+      window.removeEventListener('resize', handleResize);
     };
   }, [loading]);
 
