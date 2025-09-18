@@ -24,26 +24,22 @@
       * { font-family: inherit; }
     </style>
     
-    <!-- Async font loading script -->
+    <!-- Non-blocking font loading with preload hints -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"></noscript>
+    
+    <link rel="preload" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"></noscript>
+    
+    <!-- Fallback for older browsers -->
     <script>
       (function() {
-        function loadCSS(href, media) {
-          var link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = href;
-          link.media = media || 'all';
-          document.head.appendChild(link);
-        }
-        
-        // Load fonts after DOM is ready
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', function() {
-            loadCSS('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
-            loadCSS('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-          });
-        } else {
-          loadCSS('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
-          loadCSS('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        var links = document.querySelectorAll('link[rel="preload"][as="style"]');
+        for (var i = 0; i < links.length; i++) {
+          var link = links[i];
+          if (!link.onload) {
+            link.rel = 'stylesheet';
+          }
         }
       })();
     </script>
