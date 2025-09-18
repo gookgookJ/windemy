@@ -177,7 +177,7 @@ const HeroSection = () => {
   const hasSlides = slides.length > 0;
 
   return (
-    <section className="relative h-[200px] md:h-[380px] overflow-hidden bg-white px-4">
+    <section className="hero-section relative h-[200px] md:h-[380px] overflow-hidden bg-white px-4">
       {hasSlides && (
         <>
           {/* Mobile Single Slide Layout */}

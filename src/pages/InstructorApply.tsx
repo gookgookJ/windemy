@@ -66,8 +66,7 @@ const InstructorApply = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans"
-         style={{ fontFamily: "Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Roboto, 'Noto Sans KR', 'Segoe UI', sans-serif" }}>
+    <div className="min-h-screen bg-background text-foreground font-sans">
       {/* Progress Bar */}
       <div 
         className="fixed top-0 left-0 h-1 bg-primary z-50 transition-all duration-300"

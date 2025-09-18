@@ -97,8 +97,7 @@ const About = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans"
-         style={{ fontFamily: "Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Roboto, 'Noto Sans KR', 'Segoe UI', sans-serif" }}>
+    <div className="min-h-screen bg-background text-foreground font-sans">
       <Header />
       
       {/* Hero Section */}
