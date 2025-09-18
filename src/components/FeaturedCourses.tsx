@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import InfoBanner from "@/components/InfoBanner";
+import { imagePresets } from "@/utils/imageOptimization";
 
 interface Course {
   id: string;
@@ -264,7 +265,8 @@ const FeaturedCourses = () => {
       <Link to={`/course/${course.id}`} className="group cursor-pointer block">
         <div className="relative mb-4">
           <img
-            src={course.thumbnail_url}
+            src={imagePresets.card(course.thumbnail_url)}
+            srcSet={`${imagePresets.card(course.thumbnail_url)} 1x, ${imagePresets.thumbnailRetina(course.thumbnail_url)} 2x`}
             alt={course.title}
             className="w-full h-[120px] sm:h-[140px] lg:h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300 responsive-image"
             style={{ aspectRatio: "283/159" }}
