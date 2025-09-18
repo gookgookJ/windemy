@@ -5,9 +5,6 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { getOptimizedImageForContext } from "@/utils/imageOptimization";
-import heroSlide1 from "@/assets/hero-slide-1.jpg";
-import heroSlide2 from "@/assets/hero-slide-2.jpg";
-import heroSlide3 from "@/assets/hero-slide-3.jpg";
 
 interface HeroSlide {
   id: string;
@@ -30,34 +27,6 @@ const HeroSection = () => {
   const startX = useRef(0);
   const currentX = useRef(0);
   const slideRef = useRef<HTMLDivElement>(null);
-  
-  // 기본 슬라이드 (데이터베이스에서 불러오지 못할 경우 사용)
-  const defaultSlides = [
-    {
-      id: '1',
-      image_url: heroSlide1,
-      title: "실시간 강의 50개 완전 무료",
-      subtitle: "지금 가장 주목받는 강의",
-      description: "실시간 줌코딩 50개 강의 무료 >",
-      order_index: 1
-    },
-    {
-      id: '2',
-      image_url: heroSlide2,
-      title: "신혼부부가 1억으로",
-      subtitle: "서울에서 내집마련하는 법",
-      description: "실시간 줌코딩 50개 강의 무료 >",
-      order_index: 2
-    },
-    {
-      id: '3',
-      image_url: heroSlide3,
-      title: "집 사기 전 꼭 알아야 할 A to Z",
-      subtitle: "나나쌤의 내집마련 기초편",
-      description: "추천인이 내집마련하는 법 알려드립니다 →",
-      order_index: 3
-    }
-  ];
 
   useEffect(() => {
     fetchSlides();
@@ -93,15 +62,11 @@ const HeroSection = () => {
 
       if (error) {
         console.error('Error fetching slides:', error);
-        setSlides(defaultSlides);
       } else if (data && data.length > 0) {
         setSlides(data);
-      } else {
-        setSlides(defaultSlides);
       }
     } catch (error) {
       console.error('Error fetching slides:', error);
-      setSlides(defaultSlides);
     } finally {
       setLoading(false);
     }
@@ -195,78 +160,10 @@ const HeroSection = () => {
     }
   };
 
-  // Show default first slide immediately for LCP optimization
-  const currentSlideData = slides.length > 0 ? slides[currentSlide] : defaultSlides[0];
-
-  if (loading && slides.length === 0) {
-    // Render with default slide immediately for LCP
+  if (loading || slides.length === 0) {
     return (
-      <section className="relative h-[200px] md:h-[380px] overflow-hidden bg-white px-4">
-        {/* Mobile Single Slide Layout */}
-        <div className="block md:hidden relative w-full h-full">
-          <div className="relative w-full h-full cursor-pointer select-none">
-            <img
-              src={getOptimizedImageForContext(defaultSlides[0].image_url, 'hero-slide')}
-              alt={defaultSlides[0].title}
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="eager"
-              fetchPriority="high"
-              sizes="100vw"
-              width="800"
-              height="450"
-              decoding="sync"
-            />
-            <div className="absolute inset-0 flex">
-              <div className="flex-1 p-4 flex flex-col justify-center space-y-2">
-                <h2 className="text-white text-base font-bold leading-tight drop-shadow-lg">
-                  {defaultSlides[0].title}
-                </h2>
-                <h3 className="text-white/90 text-sm font-medium drop-shadow-lg">
-                  {defaultSlides[0].subtitle}
-                </h3>
-                <p className="text-white/80 text-xs drop-shadow-lg">
-                  {defaultSlides[0].description}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop Three Panel Layout */}
-        <div className="hidden md:block relative w-full h-full">
-          <div className="relative w-full h-full flex items-center justify-center">
-            <div className="flex w-full items-center justify-center">
-              <div className="relative z-10 mx-4">
-                <div className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer">
-                  <img
-                    src={getOptimizedImageForContext(defaultSlides[0].image_url, 'hero-slide')}
-                    alt={defaultSlides[0].title}
-                    className="w-full h-full object-cover responsive-image"
-                    loading="eager"
-                    fetchPriority="high"
-                    sizes="760px"
-                    width="800"
-                    height="450"
-                    decoding="sync"
-                  />
-                  <div className="absolute inset-0 bg-black/30 flex items-center">
-                    <div className="text-white space-y-4 px-12 flex-1">
-                      <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
-                        {defaultSlides[0].title}
-                      </h2>
-                      <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
-                        {defaultSlides[0].subtitle}
-                      </h3>
-                      <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
-                        {defaultSlides[0].description}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <section className="relative h-[200px] md:h-[380px] overflow-hidden bg-white flex items-center justify-center">
+        <div className="text-muted-foreground">로딩중...</div>
       </section>
     );
   }
@@ -288,8 +185,8 @@ const HeroSection = () => {
           onMouseLeave={handleMouseUp}
         >
           <img
-            src={getOptimizedImageForContext(currentSlideData.image_url, 'hero-slide')}
-            alt={currentSlideData.title}
+            src={getOptimizedImageForContext(slides[currentSlide].image_url, 'hero-slide')}
+            alt={slides[currentSlide].title}
             className="absolute inset-0 w-full h-full object-cover"
             loading="eager"
             fetchPriority="high"
@@ -303,24 +200,24 @@ const HeroSection = () => {
             <div className="flex-1 p-4 flex flex-col justify-center space-y-2">
               {/* Title */}
               <h2 className="text-white text-base font-bold leading-tight drop-shadow-lg">
-                {currentSlideData.title}
+                {slides[currentSlide].title}
               </h2>
               
               {/* Subtitle */}
               <h3 className="text-white/90 text-sm font-medium drop-shadow-lg">
-                {currentSlideData.subtitle}
+                {slides[currentSlide].subtitle}
               </h3>
               
               {/* Description with arrow */}
               <p className="text-white/80 text-xs drop-shadow-lg">
-                {currentSlideData.description}
+                {slides[currentSlide].description}
               </p>
             </div>
           </div>
           
           {/* Mobile Slide Counter */}
           <div className="absolute bottom-3 right-4 bg-black/40 rounded-full px-2.5 py-1 text-white text-xs font-medium">
-            {currentSlide + 1}/{slides.length || 1}
+            {currentSlide + 1}/{slides.length}
           </div>
         </div>
       </div>
@@ -369,8 +266,8 @@ const HeroSection = () => {
                 onClick={() => handleSlideClick(slides[currentSlide])}
               >
                 <img
-                  src={getOptimizedImageForContext(currentSlideData.image_url, 'hero-slide')}
-                  alt={currentSlideData.title}
+                  src={getOptimizedImageForContext(slides[currentSlide].image_url, 'hero-slide')}
+                  alt={slides[currentSlide].title}
                   className="w-full h-full object-cover responsive-image"
                   loading="eager"
                   fetchPriority="high"
@@ -382,13 +279,13 @@ const HeroSection = () => {
                 <div className="absolute inset-0 bg-black/30 flex items-center">
                   <div className="text-white space-y-4 px-12 flex-1">
                     <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
-                      {currentSlideData.title}
+                      {slides[currentSlide].title}
                     </h2>
                     <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
-                      {currentSlideData.subtitle}
+                      {slides[currentSlide].subtitle}
                     </h3>
                     <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
-                      {currentSlideData.description}
+                      {slides[currentSlide].description}
                     </p>
                   </div>
                 </div>
