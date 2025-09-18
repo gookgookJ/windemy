@@ -68,7 +68,6 @@ const HeroSection = () => {
     }
   }, [slides]);
 
-
   const handleSlideClick = (slide: HeroSlide) => {
     if (slide.course_id) {
       navigate(`/course/${slide.course_id}`);
@@ -157,208 +156,207 @@ const HeroSection = () => {
     }
   };
 
-  if (slides.length === 0) {
-    return (
-      <section className="relative h-[200px] md:h-[380px] overflow-hidden bg-white flex items-center justify-center">
-        <div className="text-muted-foreground">슬라이드를 불러오는 중...</div>
-      </section>
-    );
-  }
+  // slides가 없어도 렌더링하되, 데이터가 로드되면 바로 표시
+  const hasSlides = slides.length > 0;
 
   return (
     <section className="relative h-[200px] md:h-[380px] overflow-hidden bg-white px-4">
-      {/* Mobile Single Slide Layout */}
-      <div className="block md:hidden relative w-full h-full">
-        <div 
-          ref={slideRef}
-          className="relative w-full h-full cursor-pointer select-none"
-          onClick={() => handleSlideClick(slides[currentSlide])}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-        >
-          <img
-            src={getOptimizedImageForContext(slides[currentSlide].image_url, 'hero-slide')}
-            alt={slides[currentSlide].title}
-            className="absolute inset-0 w-full h-full object-cover"
-            loading="eager"
-            fetchPriority="high"
-            sizes="100vw"
-            width="800"
-            height="450"
-            decoding="sync"
-          />
-          <div className="absolute inset-0 flex">
-            {/* Left side - Text content */}
-            <div className="flex-1 p-4 flex flex-col justify-center space-y-2">
-              {/* Title */}
-              <h2 className="text-white text-base font-bold leading-tight drop-shadow-lg">
-                {slides[currentSlide].title}
-              </h2>
+      {hasSlides && (
+        <>
+          {/* Mobile Single Slide Layout */}
+          <div className="block md:hidden relative w-full h-full">
+            <div 
+              ref={slideRef}
+              className="relative w-full h-full cursor-pointer select-none"
+              onClick={() => handleSlideClick(slides[currentSlide])}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            >
+              <img
+                src={getOptimizedImageForContext(slides[currentSlide].image_url, 'hero-slide')}
+                alt={slides[currentSlide].title}
+                className="absolute inset-0 w-full h-full object-cover"
+                loading="eager"
+                fetchPriority="high"
+                sizes="100vw"
+                width="800"
+                height="450"
+                decoding="sync"
+              />
+              <div className="absolute inset-0 flex">
+                {/* Left side - Text content */}
+                <div className="flex-1 p-4 flex flex-col justify-center space-y-2">
+                  {/* Title */}
+                  <h2 className="text-white text-base font-bold leading-tight drop-shadow-lg">
+                    {slides[currentSlide].title}
+                  </h2>
+                  
+                  {/* Subtitle */}
+                  <h3 className="text-white/90 text-sm font-medium drop-shadow-lg">
+                    {slides[currentSlide].subtitle}
+                  </h3>
+                  
+                  {/* Description with arrow */}
+                  <p className="text-white/80 text-xs drop-shadow-lg">
+                    {slides[currentSlide].description}
+                  </p>
+                </div>
+              </div>
               
-              {/* Subtitle */}
-              <h3 className="text-white/90 text-sm font-medium drop-shadow-lg">
-                {slides[currentSlide].subtitle}
-              </h3>
-              
-              {/* Description with arrow */}
-              <p className="text-white/80 text-xs drop-shadow-lg">
-                {slides[currentSlide].description}
-              </p>
+              {/* Mobile Slide Counter */}
+              <div className="absolute bottom-3 right-4 bg-black/40 rounded-full px-2.5 py-1 text-white text-xs font-medium">
+                {currentSlide + 1}/{slides.length}
+              </div>
             </div>
           </div>
-          
-          {/* Mobile Slide Counter */}
-          <div className="absolute bottom-3 right-4 bg-black/40 rounded-full px-2.5 py-1 text-white text-xs font-medium">
-            {currentSlide + 1}/{slides.length}
-          </div>
-        </div>
-      </div>
 
-      {/* Desktop Three Panel Layout */}
-      <div className="hidden md:block relative w-full h-full">
-        <div className="relative w-full h-full flex items-center justify-center">
-          <div className="flex w-full items-center justify-center">
-            
-            {/* Left Panel (Previous Slide) - Partially visible */}
-            <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-r-2xl"
-                 onClick={prevSlide}
-                 style={{ height: '340px' }}>
-              <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
-                <div className="relative w-full h-full">
-                  <img
-                    src={getOptimizedImageForContext(slides[getSlideIndex(-1)].image_url, 'hero-slide')}
-                    alt={slides[getSlideIndex(-1)].title}
-                    className="w-full h-full object-cover responsive-image"
-                    loading="lazy"
-                    sizes="50vw"
-                    width="800"
-                    height="450"
-                  />
-                  <div className="absolute inset-0 bg-black/40 flex items-center">
-                    <div className="text-white space-y-4 px-12 flex-1">
-                      <h3 className="text-2xl font-bold drop-shadow-lg">
-                        {slides[getSlideIndex(-1)].title}
-                      </h3>
-                      <p className="text-lg opacity-90 drop-shadow-lg">
-                        {slides[getSlideIndex(-1)].subtitle}
-                      </p>
-                      <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
-                        {slides[getSlideIndex(-1)].description}
-                      </p>
+          {/* Desktop Three Panel Layout */}
+          <div className="hidden md:block relative w-full h-full">
+            <div className="relative w-full h-full flex items-center justify-center">
+              <div className="flex w-full items-center justify-center">
+                
+                {/* Left Panel (Previous Slide) - Partially visible */}
+                <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-r-2xl"
+                     onClick={prevSlide}
+                     style={{ height: '340px' }}>
+                  <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
+                    <div className="relative w-full h-full">
+                      <img
+                        src={getOptimizedImageForContext(slides[getSlideIndex(-1)].image_url, 'hero-slide')}
+                        alt={slides[getSlideIndex(-1)].title}
+                        className="w-full h-full object-cover responsive-image"
+                        loading="lazy"
+                        sizes="50vw"
+                        width="800"
+                        height="450"
+                      />
+                      <div className="absolute inset-0 bg-black/40 flex items-center">
+                        <div className="text-white space-y-4 px-12 flex-1">
+                          <h3 className="text-2xl font-bold drop-shadow-lg">
+                            {slides[getSlideIndex(-1)].title}
+                          </h3>
+                          <p className="text-lg opacity-90 drop-shadow-lg">
+                            {slides[getSlideIndex(-1)].subtitle}
+                          </p>
+                          <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
+                            {slides[getSlideIndex(-1)].description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Center Panel (Current Slide) - Full visible */}
+                <div className="relative z-10 mx-4">
+                  <div 
+                    className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer"
+                    onClick={() => handleSlideClick(slides[currentSlide])}
+                  >
+                    <img
+                      src={getOptimizedImageForContext(slides[currentSlide].image_url, 'hero-slide')}
+                      alt={slides[currentSlide].title}
+                      className="w-full h-full object-cover responsive-image"
+                      loading="eager"
+                      fetchPriority="high"
+                      sizes="760px"
+                      width="800"
+                      height="450"
+                      decoding="sync"
+                    />
+                    <div className="absolute inset-0 bg-black/30 flex items-center">
+                      <div className="text-white space-y-4 px-12 flex-1">
+                        <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
+                          {slides[currentSlide].title}
+                        </h2>
+                        <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
+                          {slides[currentSlide].subtitle}
+                        </h3>
+                        <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
+                          {slides[currentSlide].description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Panel (Next Slide) - Partially visible */}
+                <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-l-2xl"
+                     onClick={nextSlide}
+                     style={{ height: '340px' }}>
+                  <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
+                    <div className="relative w-full h-full">
+                      <img
+                        src={getOptimizedImageForContext(slides[getSlideIndex(1)].image_url, 'hero-slide')}
+                        alt={slides[getSlideIndex(1)].title}
+                        className="w-full h-full object-cover responsive-image"
+                        loading="lazy"
+                        sizes="50vw"
+                        width="800"
+                        height="450"
+                      />
+                      <div className="absolute inset-0 bg-black/40 flex items-center">
+                        <div className="text-white space-y-4 px-12 flex-1">
+                          <h3 className="text-2xl font-bold drop-shadow-lg">
+                            {slides[getSlideIndex(1)].title}
+                          </h3>
+                          <p className="text-lg opacity-90 drop-shadow-lg">
+                            {slides[getSlideIndex(1)].subtitle}
+                          </p>
+                          <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
+                            {slides[getSlideIndex(1)].description}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Center Panel (Current Slide) - Full visible */}
-            <div className="relative z-10 mx-4">
-              <div 
-                className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer"
-                onClick={() => handleSlideClick(slides[currentSlide])}
-              >
-                <img
-                  src={getOptimizedImageForContext(slides[currentSlide].image_url, 'hero-slide')}
-                  alt={slides[currentSlide].title}
-                  className="w-full h-full object-cover responsive-image"
-                  loading="eager"
-                  fetchPriority="high"
-                  sizes="760px"
-                  width="800"
-                  height="450"
-                  decoding="sync"
-                />
-                <div className="absolute inset-0 bg-black/30 flex items-center">
-                  <div className="text-white space-y-4 px-12 flex-1">
-                    <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
-                      {slides[currentSlide].title}
-                    </h2>
-                    <h3 className="text-xl font-medium opacity-90 drop-shadow-lg">
-                      {slides[currentSlide].subtitle}
-                    </h3>
-                    <p className="text-base opacity-80 cursor-pointer hover:opacity-100 transition-opacity drop-shadow-lg">
-                      {slides[currentSlide].description}
-                    </p>
+            {/* Desktop Control Buttons positioned at center panel bottom right */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+              <div className="relative w-[760px]">
+                <div className="absolute bottom-4 right-8 flex items-center gap-3">
+                  
+                  {/* Navigation Arrows */}
+                  <button
+                    onClick={prevSlide}
+                    className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  
+                  {/* Play/Pause Button */}
+                  <button
+                    onClick={togglePlayPause}
+                    className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
+                  >
+                    {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+                  </button>
+                  
+                  {/* Slide Counter */}
+                  <div className="bg-black/50 rounded-full px-3 py-1.5 text-white text-sm font-medium">
+                    {currentSlide + 1} / {slides.length}
                   </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Panel (Next Slide) - Partially visible */}
-            <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-l-2xl"
-                 onClick={nextSlide}
-                 style={{ height: '340px' }}>
-              <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
-                <div className="relative w-full h-full">
-                  <img
-                    src={getOptimizedImageForContext(slides[getSlideIndex(1)].image_url, 'hero-slide')}
-                    alt={slides[getSlideIndex(1)].title}
-                    className="w-full h-full object-cover responsive-image"
-                    loading="lazy"
-                    sizes="50vw"
-                    width="800"
-                    height="450"
-                  />
-                  <div className="absolute inset-0 bg-black/40 flex items-center">
-                    <div className="text-white space-y-4 px-12 flex-1">
-                      <h3 className="text-2xl font-bold drop-shadow-lg">
-                        {slides[getSlideIndex(1)].title}
-                      </h3>
-                      <p className="text-lg opacity-90 drop-shadow-lg">
-                        {slides[getSlideIndex(1)].subtitle}
-                      </p>
-                      <p className="text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg">
-                        {slides[getSlideIndex(1)].description}
-                      </p>
-                    </div>
-                  </div>
+                  
+                  <button
+                    onClick={nextSlide}
+                    className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Desktop Control Buttons positioned at center panel bottom right */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
-          <div className="relative w-[760px]">
-            <div className="absolute bottom-4 right-8 flex items-center gap-3">
-              
-              {/* Navigation Arrows */}
-              <button
-                onClick={prevSlide}
-                className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              
-              {/* Play/Pause Button */}
-              <button
-                onClick={togglePlayPause}
-                className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
-              >
-                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
-              </button>
-              
-              {/* Slide Counter */}
-              <div className="bg-black/50 rounded-full px-3 py-1.5 text-white text-sm font-medium">
-                {currentSlide + 1} / {slides.length}
-              </div>
-              
-              <button
-                onClick={nextSlide}
-                className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+        </>
+      )}
     </section>
   );
 };
