@@ -239,9 +239,9 @@ export const AdminSidebar = () => {
                         to={subItem.url} 
                         className={getNavClassName(subItem.url)}
                         onClick={() => {
-                          setTimeout(() => {
+                          requestAnimationFrame(() => {
                             window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }, 100);
+                          });
                         }}
                       >
                         <subItem.icon className="mr-2 h-4 w-4" />
@@ -265,9 +265,9 @@ export const AdminSidebar = () => {
             className={getNavClassName(item.url)}
             end={item.url === '/admin'}
             onClick={() => {
-              setTimeout(() => {
+              requestAnimationFrame(() => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-              }, 100);
+              });
             }}
           >
             <item.icon className="mr-2 h-4 w-4" />

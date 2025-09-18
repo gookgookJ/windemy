@@ -39,7 +39,9 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   // Prevent scroll jumping when navigating between admin pages
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   }, [location.pathname]);
 
   if (loading) {
