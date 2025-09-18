@@ -150,9 +150,23 @@ html {
   transform: scale(1.1) translateZ(0);
 }
 
-/* Prevent reflows on image loading */
+/* Prevent reflows on image loading and optimize rendering */
 img {
   content-visibility: auto;
+  contain-intrinsic-size: 1px 400px;
+  background-color: hsl(var(--muted));
+}
+
+/* Critical performance optimizations */
+.hero-section img[loading="eager"] {
+  contain-intrinsic-size: 1px 380px;
+  content-visibility: visible;
+}
+
+/* Optimize course card images */
+.course-card-image {
+  contain-intrinsic-size: 1px 180px;
+  background-color: hsl(var(--muted));
 }
 
 .dark {

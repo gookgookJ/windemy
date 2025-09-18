@@ -65,9 +65,20 @@ const CourseCard = ({
           className="w-full h-[160px] sm:h-[180px] object-cover transition-transform duration-300 group-hover:scale-105 responsive-image"
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : "auto"}
-          sizes="(max-width: 640px) 40vw, (max-width: 1024px) 33vw, 25vw"
-          width="320"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          width="380"
           height="180"
+          decoding={priority ? "sync" : "async"}
+          onLoad={() => {
+            // Remove skeleton background after image loads
+            if (typeof window !== 'undefined') {
+              const target = event?.target as HTMLImageElement;
+              if (target) {
+                target.style.backgroundColor = 'transparent';
+              }
+            }
+          }}
+          style={{ backgroundColor: priority ? 'transparent' : 'hsl(220, 14.3%, 95.9%)' }}
         />
         {/* Favorite Heart Button - 원 크기를 하트의 1.5배로 축소 */}
         <button

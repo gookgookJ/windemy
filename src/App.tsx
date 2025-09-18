@@ -7,15 +7,22 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import ScrollToTop from "./components/ScrollToTop";
+import OptimizedLayout from "./components/OptimizedLayout";
 
 // Eager load critical home page components only
 import Index from "./pages/Index";
+
+// Pre-load CourseCatalog as it's likely to be visited early
+const CourseCatalog = React.lazy(() => 
+  import("./pages/CourseCatalog").then(module => ({
+    default: module.default
+  }))
+);
 
 // Lazy load all other pages to reduce initial bundle
 const CourseDetail = React.lazy(() => import("./pages/CourseDetail"));
 const Payment = React.lazy(() => import("./pages/Payment"));
 const PurchaseHistory = React.lazy(() => import("./pages/PurchaseHistory"));
-const CourseCatalog = React.lazy(() => import("./pages/CourseCatalog"));
 const AuthCallback = React.lazy(() => import("./pages/AuthCallback"));
 const SearchResults = React.lazy(() => import("./pages/SearchResults"));
 const MyPage = React.lazy(() => import("./pages/MyPage"));
@@ -54,12 +61,12 @@ const AdminHeroSlides = React.lazy(() => import("./pages/admin/HeroSlides"));
 const AdminHomepageSections = React.lazy(() => import("./pages/admin/HomepageSections"));
 const AdminHomepageSectionManager = React.lazy(() => import("./pages/admin/HomepageSectionManager"));
 
-// Loading fallback component
+// Optimized loading fallback with critical CSS classes
 const PageLoading = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="text-center">
-      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-      <p className="text-muted-foreground">Loading...</p>
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="text-center fade-in">
+      <div className="loading-spinner mb-4"></div>
+      <p className="text-muted-foreground text-sm">Loading...</p>
     </div>
   </div>
 );
@@ -73,12 +80,13 @@ const App = () => (
     <AuthProvider>
       <FavoritesProvider>
         <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ScrollToTop />
-            <Suspense fallback={<PageLoading />}>
-              <Routes>
+          <OptimizedLayout>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <ScrollToTop />
+              <Suspense fallback={<PageLoading />}>
+                <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/instructor-apply" element={<InstructorApply />} />
@@ -120,9 +128,10 @@ const App = () => (
                 <Route path="/learn/:courseId" element={<Learn />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </OptimizedLayout>
         </TooltipProvider>
       </FavoritesProvider>
     </AuthProvider>
