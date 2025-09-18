@@ -285,7 +285,10 @@ const FeaturedCourses = () => {
             height="180"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = "/placeholder.svg";
+              // Use requestAnimationFrame to avoid forced reflow
+              requestAnimationFrame(() => {
+                target.src = "/placeholder.svg";
+              });
             }}
           />
           

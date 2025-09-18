@@ -132,7 +132,30 @@ html {
   animation-fill-mode: forwards !important;
 }
 
-  .dark {
+/* Force GPU acceleration for transitions to prevent reflows */
+.group-hover\\:scale-105,
+.hover\\:scale-110,
+.transition-transform,
+.transition-all {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Ensure hover effects don't trigger layout */
+.group:hover .group-hover\\:scale-105 {
+  transform: scale(1.05) translateZ(0);
+}
+
+.hover\\:scale-110:hover {
+  transform: scale(1.1) translateZ(0);
+}
+
+/* Prevent reflows on image loading */
+img {
+  content-visibility: auto;
+}
+
+.dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 

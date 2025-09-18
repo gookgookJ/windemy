@@ -276,7 +276,10 @@ const SearchResults = () => {
                         style={{ aspectRatio: "283/159" }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          target.src = "/placeholder.svg";
+                          // Use requestAnimationFrame to avoid forced reflow
+                          requestAnimationFrame(() => {
+                            target.src = "/placeholder.svg";
+                          });
                         }}
                       />
                       

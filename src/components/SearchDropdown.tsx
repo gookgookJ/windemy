@@ -175,7 +175,10 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
                             alt={course.title}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.currentTarget.src = '/placeholder.svg';
+                              // Use requestAnimationFrame to avoid forced reflow
+                              requestAnimationFrame(() => {
+                                e.currentTarget.src = '/placeholder.svg';
+                              });
                             }}
                           />
                         )}
