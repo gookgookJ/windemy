@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { getOptimizedImageForContext } from "@/utils/imageOptimization";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface HeroSlide {
   id: string;
@@ -194,16 +195,13 @@ const HeroSection = () => {
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
             >
-              <img
+              <OptimizedImage
                 src={getOptimizedImageForContext(slides[currentSlide].image_url, 'hero-slide')}
                 alt={slides[currentSlide].title}
                 className="absolute inset-0 w-full h-full object-cover"
-                loading="eager"
-                fetchPriority="high"
-                sizes="100vw"
-                width="800"
-                height="450"
-                decoding="sync"
+                priority={true}
+                width={800}
+                height={450}
               />
               <div className="absolute inset-0 flex">
                 {/* Left side - Text content */}
@@ -243,15 +241,13 @@ const HeroSection = () => {
                      style={{ height: '340px' }}>
                   <div className="absolute -right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
                     <div className="relative w-full h-full">
-                      <img
-                        src={getOptimizedImageForContext(slides[getSlideIndex(-1)].image_url, 'hero-slide')}
-                        alt={slides[getSlideIndex(-1)].title}
-                        className="w-full h-full object-cover responsive-image"
-                        loading="lazy"
-                        sizes="50vw"
-                        width="800"
-                        height="450"
-                      />
+                        <OptimizedImage
+                          src={getOptimizedImageForContext(slides[getSlideIndex(-1)].image_url, 'hero-slide')}
+                          alt={slides[getSlideIndex(-1)].title}
+                          className="w-full h-full object-cover"
+                          width={800}
+                          height={450}
+                        />
                       <div className="absolute inset-0 bg-black/40 flex items-center">
                         <div className="text-white space-y-4 px-12 flex-1">
                           <h3 className="text-2xl font-bold drop-shadow-lg">
@@ -275,17 +271,14 @@ const HeroSection = () => {
                     className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer"
                     onClick={() => handleSlideClick(slides[currentSlide])}
                   >
-                    <img
-                      src={getOptimizedImageForContext(slides[currentSlide].image_url, 'hero-slide')}
-                      alt={slides[currentSlide].title}
-                      className="w-full h-full object-cover responsive-image"
-                      loading="eager"
-                      fetchPriority="high"
-                      sizes="760px"
-                      width="800"
-                      height="450"
-                      decoding="sync"
-                    />
+                      <OptimizedImage
+                        src={getOptimizedImageForContext(slides[currentSlide].image_url, 'hero-slide')}
+                        alt={slides[currentSlide].title}
+                        className="w-full h-full object-cover"
+                        priority={true}
+                        width={800}
+                        height={450}
+                      />
                     <div className="absolute inset-0 bg-black/30 flex items-center">
                       <div className="text-white space-y-4 px-12 flex-1">
                         <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">
@@ -308,15 +301,13 @@ const HeroSection = () => {
                      style={{ height: '340px' }}>
                   <div className="absolute -left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
                     <div className="relative w-full h-full">
-                      <img
-                        src={getOptimizedImageForContext(slides[getSlideIndex(1)].image_url, 'hero-slide')}
-                        alt={slides[getSlideIndex(1)].title}
-                        className="w-full h-full object-cover responsive-image"
-                        loading="lazy"
-                        sizes="50vw"
-                        width="800"
-                        height="450"
-                      />
+                        <OptimizedImage
+                          src={getOptimizedImageForContext(slides[getSlideIndex(1)].image_url, 'hero-slide')}
+                          alt={slides[getSlideIndex(1)].title}
+                          className="w-full h-full object-cover"
+                          width={800}
+                          height={450}
+                        />
                       <div className="absolute inset-0 bg-black/40 flex items-center">
                         <div className="text-white space-y-4 px-12 flex-1">
                           <h3 className="text-2xl font-bold drop-shadow-lg">

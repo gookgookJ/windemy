@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import InfoBanner from "@/components/InfoBanner";
-import { getOptimizedImageForContext } from "@/utils/imageOptimization";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface Course {
   id: string;
@@ -273,16 +273,14 @@ const FeaturedCourses = () => {
     return (
       <Link to={`/course/${course.id}`} className="group cursor-pointer block">
         <div className="relative mb-4">
-          <img
-            src={getOptimizedImageForContext(course.thumbnail_url, 'course-card')}
+          <OptimizedImage
+            src={course.thumbnail_url || "/placeholder.svg"}
             alt={course.title}
-            className="w-full h-[120px] sm:h-[140px] lg:h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300 responsive-image"
+            className="w-full h-[120px] sm:h-[140px] lg:h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
             style={{ aspectRatio: "320/180" }}
-            loading={index < 4 ? "eager" : "lazy"}
-            fetchPriority={index < 4 ? "high" : "auto"}
-            sizes="(max-width: 640px) 40vw, (max-width: 1024px) 33vw, 25vw"
-            width="320"
-            height="180"
+            priority={index < 4}
+            width={320}
+            height={180}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               // Use requestAnimationFrame to avoid forced reflow
