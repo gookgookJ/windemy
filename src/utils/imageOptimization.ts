@@ -1,6 +1,6 @@
 /**
  * Utility functions for optimizing images served from Supabase Storage
- * Uses Supabase's built-in image transformation capabilities
+ * Falls back to original URL if transformation is not available
  */
 
 export interface ImageTransformOptions {
@@ -15,7 +15,7 @@ export interface ImageTransformOptions {
  * Optimizes a Supabase storage image URL with transformation parameters
  * @param imageUrl - Original Supabase storage URL
  * @param options - Transformation options
- * @returns Optimized image URL
+ * @returns Optimized image URL or original URL if optimization not available
  */
 export const optimizeSupabaseImage = (
   imageUrl: string, 
@@ -25,6 +25,13 @@ export const optimizeSupabaseImage = (
     return imageUrl;
   }
 
+  // For now, return original URL since Supabase image transformation 
+  // might not be available on this instance
+  // TODO: Test if transformation endpoint works and re-enable if available
+  return imageUrl;
+
+  /* 
+  // Future implementation when transformation is confirmed to work:
   const {
     width,
     height,
@@ -33,14 +40,12 @@ export const optimizeSupabaseImage = (
     resize = 'cover'
   } = options;
 
-  // Extract the path after the public bucket URL
   const publicIndex = imageUrl.indexOf('/storage/v1/object/public/');
   if (publicIndex === -1) return imageUrl;
 
   const baseUrl = imageUrl.substring(0, publicIndex);
   const path = imageUrl.substring(publicIndex + '/storage/v1/object/public/'.length);
 
-  // Build transformation parameters
   const params = new URLSearchParams();
   
   if (width) params.append('width', width.toString());
@@ -49,8 +54,8 @@ export const optimizeSupabaseImage = (
   if (format) params.append('format', format);
   if (resize) params.append('resize', resize);
 
-  // Return the optimized URL using Supabase's image transformation endpoint
   return `${baseUrl}/storage/v1/render/image/public/${path}?${params.toString()}`;
+  */
 };
 
 /**
