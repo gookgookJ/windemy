@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mail, TrendingUp, DollarSign, BarChart3 } from "lucide-react";
+import { Mail, TrendingUp, DollarSign, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const InfoBanner = () => {
   const [email, setEmail] = useState('');
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isAutoPlay, setIsAutoPlay] = useState(true);
 
   const handleSubscribe = () => {
     if (email) {
@@ -38,6 +41,130 @@ const InfoBanner = () => {
     }
   ];
 
+  // 캐러셀 슬라이드 데이터 (모바일/태블릿용)
+  const carouselSlides = [
+    {
+      id: 1,
+      component: (
+        <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl h-full min-h-[280px]">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-bold text-foreground">최신 이커머스 시장 트렌드</h3>
+            </div>
+            <div className="space-y-2">
+              {bestPosts.slice(0, 3).map((post, index) => (
+                <div key={index} className="group">
+                  <a 
+                    href={post.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="flex-shrink-0 w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                      {index + 1}
+                    </span>
+                    <span className="text-sm text-foreground/80 group-hover:text-primary transition-colors line-clamp-2">
+                      {post.title}
+                    </span>
+                  </a>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )
+    },
+    {
+      id: 2,
+      component: (
+        <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-xl text-white h-full min-h-[280px]">
+          <CardContent className="p-4">
+            <div className="text-center mb-4">
+              <Mail className="h-7 w-7 mx-auto mb-2 text-white/90" />
+              <div className="space-y-1">
+                <div className="text-sm font-bold">돈 버는 이커머스 정보</div>
+                <div className="text-xs text-white/90">무료로 받아보기</div>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <Input
+                type="email"
+                placeholder="이메일 주소 입력하고"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/60 text-sm"
+              />
+              <Button 
+                onClick={handleSubscribe}
+                className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold text-sm py-2"
+              >
+                구독하기
+              </Button>
+            </div>
+            
+            <div className="mt-3 text-xs text-white/70 text-center">
+              놓치면 후회하는 정보를<br />
+              가장 먼저 받아보세요
+            </div>
+          </CardContent>
+        </Card>
+      )
+    },
+    {
+      id: 3,
+      component: (
+        <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl h-full min-h-[280px]">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-bold text-foreground">더 많은 이커머스 트렌드</h3>
+            </div>
+            <div className="space-y-2">
+              {bestPosts.slice(3, 5).map((post, index) => (
+                <div key={index} className="group">
+                  <a 
+                    href={post.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="flex-shrink-0 w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                      {index + 4}
+                    </span>
+                    <span className="text-sm text-foreground/80 group-hover:text-primary transition-colors line-clamp-2">
+                      {post.title}
+                    </span>
+                  </a>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )
+    }
+  ];
+
+  // 자동 재생 효과
+  useEffect(() => {
+    if (!isAutoPlay) return;
+    
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, [isAutoPlay, carouselSlides.length]);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + carouselSlides.length) % carouselSlides.length);
+  };
+
   return (
     <section className="w-full py-10 bg-gradient-to-br from-slate-900 to-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -49,72 +176,127 @@ const InfoBanner = () => {
           <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full"></div>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
-          {/* 왼쪽 - 최신 트렌드 (더 넓게) */}
-          <div className="lg:col-span-6">
-            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl h-full">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-bold text-foreground">최신 이커머스 시장 트렌드</h3>
-                </div>
-                <div className="space-y-2">
-                  {bestPosts.map((post, index) => (
-                    <div key={index} className="group">
-                      <a 
-                        href={post.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                      >
-                        <span className="flex-shrink-0 w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
-                          {index + 1}
-                        </span>
-                        <span className="text-sm text-foreground/80 group-hover:text-primary transition-colors line-clamp-2">
-                          {post.title}
-                        </span>
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        {/* PC View - 기존 그리드 레이아웃 */}
+        <div className="hidden lg:block">
+          <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
+            {/* 왼쪽 - 최신 트렌드 (더 넓게) */}
+            <div className="lg:col-span-6">
+              <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl h-full">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    <h3 className="text-lg font-bold text-foreground">최신 이커머스 시장 트렌드</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {bestPosts.map((post, index) => (
+                      <div key={index} className="group">
+                        <a 
+                          href={post.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <span className="flex-shrink-0 w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                            {index + 1}
+                          </span>
+                          <span className="text-sm text-foreground/80 group-hover:text-primary transition-colors line-clamp-2">
+                            {post.title}
+                          </span>
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-          {/* 오른쪽 - 구독하기 */}
-          <div className="lg:col-span-4">
-            <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-xl text-white h-full">
-            <CardContent className="p-4">
-              <div className="text-center mb-3">
-                <Mail className="h-7 w-7 mx-auto mb-2 text-white/90" />
-                <div className="space-y-1">
-                  <div className="text-sm font-bold">돈 버는 이커머스 정보</div>
-                  <div className="text-xs text-white/90">무료로 받아보기</div>
-                </div>
+            {/* 오른쪽 - 구독하기 */}
+            <div className="lg:col-span-4">
+              <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-xl text-white h-full">
+                <CardContent className="p-4">
+                  <div className="text-center mb-3">
+                    <Mail className="h-7 w-7 mx-auto mb-2 text-white/90" />
+                    <div className="space-y-1">
+                      <div className="text-sm font-bold">돈 버는 이커머스 정보</div>
+                      <div className="text-xs text-white/90">무료로 받아보기</div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Input
+                      type="email"
+                      placeholder="이메일 주소 입력하고"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/60 text-sm"
+                    />
+                    <Button 
+                      onClick={handleSubscribe}
+                      className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold text-sm py-2"
+                    >
+                      구독하기
+                    </Button>
+                  </div>
+                  
+                  <div className="mt-2 text-xs text-white/70 text-center">
+                    놓치면 후회하는 정보를<br />
+                    가장 먼저 받아보세요
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile/Tablet View - 캐러셀 */}
+        <div className="lg:hidden">
+          <div className="relative"
+               onMouseEnter={() => setIsAutoPlay(false)}
+               onMouseLeave={() => setIsAutoPlay(true)}>
+            {/* 캐러셀 컨테이너 */}
+            <div className="overflow-hidden rounded-xl">
+              <div 
+                className="flex transition-transform duration-300 ease-out"
+                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+              >
+                {carouselSlides.map((slide) => (
+                  <div key={slide.id} className="w-full flex-shrink-0">
+                    {slide.component}
+                  </div>
+                ))}
               </div>
-              
-              <div className="space-y-2">
-                <Input
-                  type="email"
-                  placeholder="이메일 주소 입력하고"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/60 text-sm"
+            </div>
+
+            {/* 내비게이션 버튼 */}
+            <button
+              onClick={prevSlide}
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors z-10"
+            >
+              <ChevronLeft className="w-4 h-4 text-slate-700" />
+            </button>
+            
+            <button
+              onClick={nextSlide}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors z-10"
+            >
+              <ChevronRight className="w-4 h-4 text-slate-700" />
+            </button>
+
+            {/* 인디케이터 도트 */}
+            <div className="flex justify-center mt-4 gap-2">
+              {carouselSlides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentSlide(index)}
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-all duration-200",
+                    currentSlide === index 
+                      ? "bg-white w-6" 
+                      : "bg-white/50 hover:bg-white/70"
+                  )}
                 />
-                <Button 
-                  onClick={handleSubscribe}
-                  className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold text-sm py-2"
-                >
-                  구독하기
-                </Button>
-              </div>
-              
-              <div className="mt-2 text-xs text-white/70 text-center">
-                놓치면 후회하는 정보를<br />
-                가장 먼저 받아보세요
-              </div>
-            </CardContent>
-          </Card>
+              ))}
+            </div>
           </div>
         </div>
       </div>
