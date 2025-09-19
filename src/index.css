@@ -210,28 +210,12 @@ img {
 
 /* Mobile optimization utilities */
 @layer utilities {
-  .line-clamp-1 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
-  }
-
   .line-clamp-2 {
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     line-height: 1.2;
-  }
-
-  /* Scrollbar hide for mobile horizontal scroll */
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
   }
   
   /* 모바일 터치 타겟 최소 크기 보장 */
@@ -294,31 +278,14 @@ img {
     @apply bg-background text-foreground;
     scroll-behavior: smooth;
     overflow-x: hidden; /* 가로 스크롤 방지 */
+    padding-top: 64px; /* 헤더 높이만큼 여백 확보 */
+    /* iOS 노치 대응 */
+    padding-top: max(64px, env(safe-area-inset-top));
+    padding-bottom: env(safe-area-inset-bottom);
     /* 폰트 줌 방지 */
     -webkit-text-size-adjust: 100%;
     /* 100vh 버그 회피 */
     min-height: 100dvh;
-  }
-
-  /* Desktop header spacing */
-  @media (min-width: 768px) {
-    body {
-      padding-top: 64px; /* 헤더 높이만큼 여백 확보 */
-      /* iOS 노치 대응 */
-      padding-top: max(64px, env(safe-area-inset-top));
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-  }
-
-  /* Mobile spacing */
-  @media (max-width: 767px) {
-    body {
-      padding-top: 110px; /* Mobile header + category tabs */
-      padding-bottom: 80px; /* Bottom navigation */
-      /* iOS 노치 대응 */
-      padding-top: max(110px, calc(110px + env(safe-area-inset-top)));
-      padding-bottom: max(80px, calc(80px + env(safe-area-inset-bottom)));
-    }
   }
 
   /* Admin pages manage offset internally */
