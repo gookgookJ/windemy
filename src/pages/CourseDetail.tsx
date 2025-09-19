@@ -1,17 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { 
-  Play, 
-  Clock, 
-  Users, 
-  Star, 
-  BookOpen, 
-  Award, 
-  Download, 
-  Share2,
-  Heart,
-  ChevronDown,
-  ChevronRight,
+import {
+  Play,
+  Clock,
+  Users,
+  Star,
+  BookOpen,
   CheckCircle,
   User,
   ChevronUp
@@ -19,18 +13,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { CourseDetailImages } from "@/components/CourseDetailImages";
-import { Progress } from "@/components/ui/progress";
+// Import Accordion components for improved accessibility and structure
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Header from "@/components/Header";
-import courseDetailLong from "@/assets/course-detail-long.jpg";
 import Footer from "@/components/Footer";
 
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+// --- TypeScript Interfaces (Enhanced) ---
 
 interface CourseOption {
   id: string;
@@ -38,21 +33,11 @@ interface CourseOption {
   price: number;
   original_price?: number;
   benefits: string[];
-  tag?: string; // Add tag field
-}
-
-interface CourseSession {
-  id: string;
-  title: string;
-  description?: string;
-  order_index: number;
-  duration_minutes: number;
-  is_preview: boolean;
+  tag?: string;
 }
 
 interface CourseReview {
   id: string;
-  user_id: string;
   rating: number;
   review_text?: string;
   created_at: string;
@@ -64,25 +49,13 @@ interface CourseReview {
 interface CourseData {
   id: string;
   title: string;
-  description?: string;
-  short_description?: string;
-  price: number;
   instructor_id: string;
-  category_id: string;
   level: string;
-  duration_hours: number;
   rating: number;
   total_students: number;
-  is_published: boolean;
   what_you_will_learn?: string[];
-  requirements?: string[];
   thumbnail_path?: string;
   detail_image_path?: string;
-  profiles?: {
-    full_name?: string;
-    instructor_bio?: string;
-    instructor_avatar_url?: string;
-  };
   categories?: {
     name: string;
   };
@@ -92,62 +65,56 @@ interface InstructorInfo {
   full_name?: string;
   instructor_bio?: string;
   instructor_avatar_url?: string;
-  email?: string;
 }
 
+// UI-specific interfaces for structured curriculum data
+interface LessonUI {
+    id: string;
+    title: string;
+    durationMinutes: number; // Store raw number for calculation
+    isPreview: boolean;
+}
+
+interface SectionUI {
+    id: string;
+    title: string;
+    lessons: LessonUI[];
+    totalMinutes: number;
+    lessonCount: number;
+}
+
+// Helper function for formatting duration
+const formatDuration = (totalMinutes: number): string => {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) {
+        return `${hours}시간 ${minutes}분`;
+    }
+    return `${minutes}분`;
+};
+
+// --- Main Component ---
+
 const CourseDetail = () => {
-  const [expandedSection, setExpandedSection] = useState<number | null>(0);
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const [isEnrolled, setIsEnrolled] = useState(false);
-  const [enrolling, setEnrolling] = useState(false);
+  // State Management
   const [selectedOption, setSelectedOption] = useState<string>("");
   const [courseData, setCourseData] = useState<CourseData | null>(null);
   const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
-  const [courseSessions, setCourseSessions] = useState<CourseSession[]>([]);
   const [courseReviews, setCourseReviews] = useState<CourseReview[]>([]);
-  const [groupedSections, setGroupedSections] = useState<any[]>([]); // Add state for sections
+  const [groupedSections, setGroupedSections] = useState<SectionUI[]>([]);
   const [loading, setLoading] = useState(true);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [showAlreadyEnrolledModal, setShowAlreadyEnrolledModal] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false); // Add auth modal state
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [instructorInfo, setInstructorInfo] = useState<InstructorInfo | null>(null);
-  
+
+  // Hooks
   const navigate = useNavigate();
   const { id: courseId } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const rightColRef = useRef<HTMLDivElement | null>(null);
-  const thumbnailRef = useRef<HTMLDivElement | null>(null);
-  const [fixedLeft, setFixedLeft] = useState<number | null>(null);
-  const [fixedTop, setFixedTop] = useState<number>(96);
-
-  useEffect(() => {
-    const updatePos = () => {
-      // Use requestAnimationFrame to batch DOM reads and avoid forced reflows
-      requestAnimationFrame(() => {
-        if (rightColRef.current) {
-          setFixedLeft(rightColRef.current.getBoundingClientRect().left);
-        }
-        if (thumbnailRef.current) {
-          const top = Math.max(0, Math.round(thumbnailRef.current.getBoundingClientRect().top));
-          setFixedTop(top);
-        }
-      });
-    };
-    
-    updatePos();
-    
-    const handleResize = () => {
-      // Debounce resize events to prevent excessive reflows
-      requestAnimationFrame(updatePos);
-    };
-    
-    window.addEventListener('resize', handleResize, { passive: true });
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [loading]);
+  // --- Effects ---
 
   useEffect(() => {
     if (courseId) {
@@ -155,16 +122,10 @@ const CourseDetail = () => {
     }
   }, [courseId]);
 
-  useEffect(() => {
-    if (user && courseId) {
-      checkEnrollment();
-    }
-  }, [user, courseId]);
-
-  // Scroll to top functionality
+  // Scroll to top functionality (Optimized with requestAnimationFrame)
   useEffect(() => {
     let ticking = false;
-    
+
     const handleScroll = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
@@ -179,148 +140,85 @@ const CourseDetail = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
+  // --- Data Fetching and Processing (Refactored) ---
+
   const fetchCourseData = async () => {
     if (!courseId) return;
-    
+
     setLoading(true);
     try {
-      // Fetch course details with secure instructor reference (no email)
+      // 1. Fetch Core Course Details
       const { data: course, error: courseError } = await supabase
         .from('courses')
         .select(`
-          *,
-          profiles:instructor_id(full_name),
+          id, title, instructor_id, level, rating, total_students,
+          what_you_will_learn, thumbnail_path, detail_image_path,
           categories:category_id(name)
         `)
         .eq('id', courseId)
         .single();
 
       if (courseError) throw courseError;
-      setCourseData(course);
+      if (!course) throw new Error("Course data not found");
+        
+      setCourseData(course as CourseData);
 
-      // Fetch instructor details from 'instructors' table using email (source of truth)
-      try {
-        let insInfo: InstructorInfo | null = null;
-        const email = (course as any)?.profiles?.email as string | undefined;
-        if (email) {
-          const { data: byEmail } = await supabase
-            .from('instructors')
-            .select('full_name, instructor_bio, instructor_avatar_url, email')
-            .eq('email', email)
-            .maybeSingle();
-          if (byEmail) insInfo = byEmail as InstructorInfo;
-        }
-        if (!insInfo && (course as any)?.instructor_id) {
-          const { data: byId } = await supabase
-            .from('instructors')
-            .select('full_name, instructor_bio, instructor_avatar_url, email')
-            .eq('id', (course as any).instructor_id)
-            .maybeSingle();
-          if (byId) insInfo = byId as InstructorInfo;
-        }
-        setInstructorInfo(insInfo);
-      } catch (e) {
-        console.warn('Failed to load instructor info from instructors table', e);
+      // 2. Fetch Instructor Details (Fixed Logic: Use instructor_id)
+      if (course.instructor_id) {
+        fetchInstructorInfo(course.instructor_id);
       }
 
-      // Fetch course options
-      const { data: optionsData, error: optionsError } = await supabase
-        .from('course_options')
-        .select('*')
-        .eq('course_id', courseId)
-        .order('price');
+      // 3. Fetch Related Data (Parallelized)
+      const [optionsResult, sectionsResult, reviewsResult] = await Promise.all([
+        supabase.from('course_options').select('*').eq('course_id', courseId).order('price'),
+        // Explicitly select fields to ensure type safety and clarity
+        supabase.from('course_sections').select(`
+            id, title, order_index,
+            course_sessions (id, title, order_index, duration_minutes, is_preview)
+        `).eq('course_id', courseId).order('order_index'),
+        supabase.from('course_reviews').select(`*, profiles:user_id(full_name)`).eq('course_id', courseId).order('created_at', { ascending: false })
+      ]);
 
-      if (optionsError) throw optionsError;
-      setCourseOptions(optionsData || []);
-      
-      // Set first option as default
-      if (optionsData && optionsData.length > 0) {
+      // Process Options
+      if (optionsResult.error) console.warn("Error fetching options:", optionsResult.error);
+      const optionsData = (optionsResult.data as CourseOption[]) || [];
+      setCourseOptions(optionsData);
+      if (optionsData.length > 0) {
         setSelectedOption(optionsData[0].id);
       }
 
-      // Fetch course sections with sessions
-      const { data: sectionsData, error: sectionsError } = await supabase
-        .from('course_sections')
-        .select(`
-          *,
-          course_sessions(*)
-        `)
-        .eq('course_id', courseId)
-        .order('order_index');
+      // Process Reviews
+      if (reviewsResult.error) console.warn("Error fetching reviews:", reviewsResult.error);
+      setCourseReviews((reviewsResult.data as CourseReview[]) || []);
 
-      if (sectionsError) throw sectionsError;
+      // Process Sections (Type Safety Applied)
+      if (sectionsResult.error) console.warn("Error fetching sections:", sectionsResult.error);
+      const sectionsData = sectionsResult.data || [];
 
-      // Store sections data for proper display
-      const transformedSections = (sectionsData || []).map(section => ({
-        id: section.id,
-        title: section.title,
-        order_index: section.order_index,
-        duration: '',
-        lessonCount: 0,
-        lessons: (section.course_sessions || [])
-          .sort((a: any, b: any) => a.order_index - b.order_index)
-          .map((session: any) => {
-            return {
-              id: session.id,
-              title: session.title,
-              duration: `${session.duration_minutes}분`,
-              isPreview: session.is_preview
-            };
-          })
-      }));
+      // Transform data structure for UI
+      const transformedSections: SectionUI[] = sectionsData.map((section: any) => {
+        // Ensure sessions are sorted
+        const sortedSessions = (section.course_sessions || []).sort((a: any, b: any) => a.order_index - b.order_index);
 
-      // Calculate duration and lesson count for each section
-      transformedSections.forEach(section => {
-        section.lessonCount = section.lessons.length;
-        const totalMinutes = section.lessons.reduce((total, lesson) => {
-          const durationNum = parseInt(lesson.duration.replace('분', ''));
-          return total + durationNum;
-        }, 0);
-        const hours = Math.floor(totalMinutes / 60);
-        const minutes = totalMinutes % 60;
-        section.duration = hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
+        const lessons: LessonUI[] = sortedSessions.map((session: any): LessonUI => ({
+                id: session.id,
+                title: session.title,
+                durationMinutes: session.duration_minutes || 0,
+                isPreview: session.is_preview
+            }));
+
+        const totalMinutes = lessons.reduce((total, lesson) => total + lesson.durationMinutes, 0);
+
+        return {
+            id: section.id,
+            title: section.title,
+            lessons,
+            totalMinutes,
+            lessonCount: lessons.length
+        };
       });
 
-      // Set the grouped sections for display
       setGroupedSections(transformedSections);
-
-      // Also maintain the flat sessions list for compatibility
-      const allSessions: CourseSession[] = [];
-      (sectionsData || []).forEach(section => {
-        (section.course_sessions || [])
-          .sort((a: any, b: any) => a.order_index - b.order_index)
-          .forEach((session: any) => {
-            allSessions.push({
-              id: session.id,
-              title: session.title,
-              description: session.description,
-              order_index: session.order_index,
-              duration_minutes: session.duration_minutes,
-              is_preview: session.is_preview
-            });
-          });
-      });
-
-      setCourseSessions(allSessions);
-
-      // Fetch course reviews
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('course_reviews')
-        .select(`
-          *,
-          profiles:user_id(full_name)
-        `)
-        .eq('course_id', courseId)
-        .order('created_at', { ascending: false });
-
-      if (reviewsError) throw reviewsError;
-      setCourseReviews(reviewsData || []);
 
     } catch (error) {
       console.error('Error fetching course data:', error);
@@ -334,150 +232,89 @@ const CourseDetail = () => {
     }
   };
 
-  const checkEnrollment = async () => {
-    if (!user || !courseId) return;
-    
+  const fetchInstructorInfo = async (instructorId: string) => {
     try {
-      const { data } = await supabase
-        .from('enrollments')
-        .select('id')
-        .eq('course_id', courseId)
-        .eq('user_id', user.id)
-        .single();
-        
-      setIsEnrolled(!!data);
-    } catch (error) {
-      setIsEnrolled(false);
+        const { data, error } = await supabase
+            .from('instructors')
+            .select('full_name, instructor_bio, instructor_avatar_url')
+            .eq('id', instructorId)
+            .maybeSingle();
+
+        if (error) {
+            console.warn('Failed to load detailed instructor info', error);
+        } else if (data) {
+            setInstructorInfo(data);
+        }
+    } catch (e) {
+        console.warn('Error during instructor info fetching', e);
     }
   };
 
+  // --- Event Handlers ---
+
   const handlePurchase = async () => {
-    console.log('구매 버튼 클릭됨', { user, courseId, selectedOption });
-    
     if (!user) {
       setShowAuthModal(true);
       return;
     }
-    
-    if (!courseId) {
-      console.error('Course ID가 없습니다');
-      toast({
-        title: "오류",
-        description: "강의 정보를 찾을 수 없습니다.",
-        variant: "destructive"
-      });
+
+    if (!courseId) return;
+
+    if (!selectedOption) {
+      toast({ title: "강의 옵션 선택", description: "구매할 강의 옵션을 선택해주세요.", variant: "destructive" });
       return;
     }
 
-    if (!selectedOption) {
-      toast({
-        title: "강의 옵션 선택",
-        description: "구매할 강의 옵션을 선택해주세요.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // 먼저 이미 등록된 강의인지 확인
+    // Check enrollment status
     try {
-      console.log('수강 등록 상태 확인 중...');
-      const { data: existingEnrollment, error: enrollmentCheckError } = await supabase
+      const { data: existingEnrollment, error } = await supabase
         .from('enrollments')
         .select('id')
         .eq('user_id', user.id)
         .eq('course_id', courseId)
         .maybeSingle();
 
-      if (enrollmentCheckError && enrollmentCheckError.code !== 'PGRST116') {
-        console.error('등록 상태 확인 오류:', enrollmentCheckError);
-        throw enrollmentCheckError;
-      }
+      // PGRST116 means no rows found (not enrolled), which is acceptable here
+      if (error && error.code !== 'PGRST116') throw error;
 
       if (existingEnrollment) {
-        console.log('이미 등록된 강의입니다');
-        // 이미 등록된 강의인 경우 모달 표시
         setShowAlreadyEnrolledModal(true);
         return;
       }
     } catch (error) {
       console.error('Error checking enrollment:', error);
-      toast({
-        title: "확인 실패",
-        description: "수강 등록 상태 확인 중 오류가 발생했습니다.",
-        variant: "destructive"
-      });
+      toast({ title: "확인 실패", description: "수강 등록 상태 확인 중 오류가 발생했습니다.", variant: "destructive" });
       return;
     }
-    
-    // 결제 페이지로 이동 (선택된 옵션이 있으면 쿼리 파라미터로 전달)
-    const paymentUrl = selectedOption 
-      ? `/payment/${courseId}?option=${selectedOption}`
-      : `/payment/${courseId}`;
-    
-    console.log('결제 페이지로 이동:', paymentUrl);
-    
-    toast({
-      title: "결제 페이지로 이동 중...",
-      description: "잠시만 기다려주세요.",
-    });
-    
-    try {
-      navigate(paymentUrl);
-    } catch (error) {
-      console.error('네비게이션 오류:', error);
-      toast({
-        title: "이동 실패",
-        description: "결제 페이지로 이동 중 오류가 발생했습니다.",
-        variant: "destructive"
-      });
-    }
+
+    // Navigate to payment
+    const paymentUrl = `/payment/${courseId}?option=${selectedOption}`;
+    navigate(paymentUrl);
   };
 
-  const selectedCourse = courseOptions.find(option => option.id === selectedOption);
-  const discountRate = selectedCourse && selectedCourse.original_price
-    ? Math.round(((selectedCourse.original_price - selectedCourse.price) / selectedCourse.original_price) * 100)
-    : 0;
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      // Adjusted scroll position to account for sticky header/navigation
+      const headerOffset = 120; // Adjust based on your actual header/sticky nav height (e.g., 80px header + 40px nav)
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+         top: offsetPosition,
+         behavior: 'smooth'
+      });
     }
   };
 
-  // Use the properly structured sections data instead of grouping sessions arbitrarily
-  const sectionsToDisplay = groupedSections.length > 0 ? groupedSections : 
-    // Fallback to old grouping method if no sections data
-    courseSessions.reduce((groups: any[], session, index) => {
-      const groupIndex = Math.floor(index / 4);
-      if (!groups[groupIndex]) {
-        groups[groupIndex] = {
-          title: `섹션 ${groupIndex + 1}`,
-          duration: 0,
-          lessonCount: 0,
-          lessons: []
-        };
-      }
-      
-      groups[groupIndex].lessons.push({
-        title: session.title,
-        duration: `${session.duration_minutes}분`,
-        isPreview: session.is_preview
-      });
-      groups[groupIndex].duration += session.duration_minutes;
-      groups[groupIndex].lessonCount += 1;
-      
-      return groups;
-    }, []);
+  // --- Derived State ---
+  const selectedCourse = courseOptions.find(option => option.id === selectedOption);
 
-  // Convert duration to hours and minutes for fallback sections only
-  if (sectionsToDisplay.length > 0 && !groupedSections.length) {
-    sectionsToDisplay.forEach(group => {
-      const hours = Math.floor(group.duration / 60);
-      const minutes = group.duration % 60;
-      group.duration = hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
-    });
-  }
+  // --- Render Logic ---
 
   if (loading) {
     return (
@@ -489,13 +326,14 @@ const CourseDetail = () => {
             <p className="text-muted-foreground">강의 정보를 불러오는 중...</p>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   if (!courseData) {
     return (
-      <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background">
         <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
@@ -506,14 +344,16 @@ const CourseDetail = () => {
             </Button>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
+  // --- Unified Responsive Layout ---
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-3 text-sm mb-6">
@@ -522,53 +362,125 @@ const CourseDetail = () => {
           <span className="text-muted-foreground">{courseData.level}</span>
         </div>
 
-        {/* Desktop Layout: 2-column structure with fixed widths */}
-        <div className="hidden lg:flex gap-8 justify-center min-h-screen">
-          {/* Left Column: Video and Content - Fixed 757px width */}
-          <div className="w-[757px] flex-shrink-0 pb-20">
-            {/* Thumbnail Section - Desktop: 757x426, Mobile: responsive */}
-            <div ref={thumbnailRef} className="relative rounded-xl overflow-hidden shadow-lg mb-6">
+        {/* Main Layout: Responsive Flex Container (Column on mobile, Row on desktop) */}
+        <div className="flex flex-col lg:flex-row gap-8 justify-center">
+
+          {/* Left Column: Content (Flexible on mobile, fixed max-width on desktop) */}
+          {/* pb-20 added to ensure content isn't hidden behind the mobile fixed bottom bar */}
+          <div className="w-full lg:max-w-[757px] flex-shrink-0 pb-20 lg:pb-8">
+
+            {/* Thumbnail Section */}
+            <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
               <img
                 src={courseData.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
                 alt={courseData.title}
-                className="w-[757px] h-[426px] object-cover"
+                // Responsive Sizing: aspect-video on mobile, fixed height on desktop
+                className="w-full aspect-video lg:h-[426px] object-cover"
               />
             </div>
 
-            {/* Desktop Navigation - Properly positioned within the left column */}
+            {/* Mobile Purchase Card (Visible only on Mobile/Tablet) */}
+            <div className="lg:hidden mb-8">
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="space-y-4">
+                        <h1 className="text-lg font-bold leading-tight">{courseData.title}</h1>
+
+                        {/* Rating and Price */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="flex items-center">
+                                    {[...Array(5)].map((_, i) => (
+                                    <Star
+                                        key={i}
+                                        className={`w-4 h-4 ${i < Math.floor(courseData.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                                    />
+                                    ))}
+                                </div>
+                                <span className="text-sm font-medium">{courseData.rating}</span>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-xl font-bold text-primary">
+                                    {(selectedCourse?.price ?? 0).toLocaleString()}원
+                                </div>
+                                {selectedCourse?.original_price && (
+                                    <div className="text-xs text-muted-foreground line-through">
+                                        {selectedCourse.original_price.toLocaleString()}원
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Options Selection */}
+                        <div className="space-y-2">
+                            {courseOptions.map((option) => (
+                            <div
+                                key={option.id}
+                                className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                                selectedOption === option.id
+                                    ? 'border-primary bg-primary/5'
+                                    : 'border-border hover:border-primary/50'
+                                }`}
+                                onClick={() => setSelectedOption(option.id)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedOption(option.id)}
+                            >
+                                <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium">{option.name}</span>
+                                <div className="text-right">
+                                    <div className="font-bold text-primary text-sm">
+                                    {option.price.toLocaleString()}원
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+                            ))}
+                        </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+
+            {/* Sticky Navigation Bar (Common for both Mobile and Desktop) */}
+            {/* top-20 assumes a header height of approx 80px. Adjust if necessary. */}
             <div className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm border border-border rounded-lg mb-8 overflow-hidden">
               <div className="grid grid-cols-4 gap-0">
-                <button 
+                {/* Responsive Button Styles */}
+                <button
                   onClick={() => scrollToSection('overview')}
-                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
+                  className="px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
                 >
-                  강의 안내
+                  <span className="lg:hidden">소개</span>
+                  <span className="hidden lg:inline">강의 안내</span>
                 </button>
-                <button 
+                <button
                   onClick={() => scrollToSection('curriculum')}
-                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
+                  className="px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
                 >
                   커리큘럼
                 </button>
-                <button 
+                <button
                   onClick={() => scrollToSection('instructor')}
-                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
+                  className="px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
                 >
                   강사 소개
                 </button>
-                <button 
+                <button
                   onClick={() => scrollToSection('reviews')}
-                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  className="px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                 >
-                  강의 후기
+                  후기
                 </button>
               </div>
             </div>
 
-            {/* Main Content Area - 757px width */}
-            <div className="w-[757px] space-y-8">
+            {/* Main Content Area */}
+            <div className="space-y-12 lg:space-y-16">
+
               {/* Course Detail Images */}
-              <div id="overview" className="w-[757px]">
+              <div id="overview">
                 {/* Display detail_image_path if exists */}
                 {courseData.detail_image_path && (
                   <div className="mb-8">
@@ -579,512 +491,269 @@ const CourseDetail = () => {
                     />
                   </div>
                 )}
-                
+
                 {/* Display additional course detail images */}
                 <CourseDetailImages courseId={courseId!} />
               </div>
 
-              {/* Course Content Sections */}
-              <div className="space-y-12">
-                {/* What You'll Learn */}
-                <section id="overview">
-                  <div className="mb-6">
-                    <h2 className="text-2xl font-bold">이 강의에서 배우는 것들</h2>
-                  </div>
-                  <div className="bg-muted/30 rounded-2xl p-8">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      {(courseData.what_you_will_learn || []).map((item, index) => (
-                        <div key={index} className="flex items-start gap-3">
-                          <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
-                          <span className="text-foreground">{item}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </section>
-
-                {/* Curriculum */}
-                <section id="curriculum">
-                  <div className="mb-6">
-                    <h2 className="text-2xl font-bold">커리큘럼</h2>
-                  </div>
-                  <div className="space-y-4">
-                    {sectionsToDisplay.map((section, sectionIndex) => (
-                      <Card key={sectionIndex}>
-                        <CardContent className="p-0">
-                          <div 
-                            className="flex items-center justify-between p-6 cursor-pointer hover:bg-muted/50 transition-colors"
-                            onClick={() => setExpandedSection(expandedSection === sectionIndex ? null : sectionIndex)}
-                          >
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-lg mb-1">{section.title}</h3>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-4 h-4" />
-                                  {section.duration}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <BookOpen className="w-4 h-4" />
-                                  {section.lessonCount}개 강의
-                                </span>
-                              </div>
-                            </div>
-                            {expandedSection === sectionIndex ? (
-                              <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                            ) : (
-                              <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                            )}
-                          </div>
-                          
-                          {expandedSection === sectionIndex && (
-                            <div className="border-t border-border">
-                              {section.lessons.map((lesson: any, lessonIndex: number) => (
-                                <div key={lessonIndex} className="flex items-center justify-between p-4 border-b border-border last:border-b-0">
-                                  <div className="flex items-center gap-3">
-                                    <Play className="w-4 h-4 text-muted-foreground" />
-                                    <span className="text-sm">{lesson.title}</span>
-                                    {lesson.isPreview && (
-                                      <Badge variant="outline" className="text-xs">미리보기</Badge>
-                                    )}
-                                  </div>
-                                  <span className="text-sm text-muted-foreground">{lesson.duration}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
+              {/* What You'll Learn */}
+              <section>
+                <h2 className="text-xl lg:text-2xl font-bold mb-6">이 강의에서 배우는 것들</h2>
+                <div className="bg-muted/30 rounded-2xl p-6 lg:p-8">
+                  <div className="grid md:grid-cols-2 gap-4 lg:gap-6">
+                    {(courseData.what_you_will_learn || []).map((item, index) => (
+                      <div key={index} className="flex items-start gap-3">
+                        <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
+                        <span className="text-foreground text-sm lg:text-base">{item}</span>
+                      </div>
                     ))}
                   </div>
-                </section>
-
-                {/* Instructor */}
-                <section id="instructor">
-                  <div className="mb-6">
-                    <h2 className="text-2xl font-bold">강사 소개</h2>
-                  </div>
-                  <div className="bg-muted/30 rounded-2xl p-8">
-                    <div className="flex items-start gap-6">
-                      <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {instructorInfo?.instructor_avatar_url ? (
-                          <img 
-                            src={instructorInfo.instructor_avatar_url}
-                            alt={instructorInfo.full_name || '강사'}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <User className="w-10 h-10 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold mb-2">{instructorInfo?.full_name || courseData.profiles?.full_name || '강사'}</h3>
-                        {instructorInfo?.instructor_bio && (
-                          <p className="text-muted-foreground">{instructorInfo.instructor_bio}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                {/* Reviews */}
-                <section id="reviews">
-                  <div className="mb-6">
-                    <h2 className="text-2xl font-bold">수강생 후기</h2>
-                  </div>
-                  <div className="space-y-6">
-                    {courseReviews.length > 0 ? (
-                      courseReviews.map((review, index) => (
-                        <Card key={index}>
-                          <CardContent className="p-6">
-                            <div className="flex items-start gap-4">
-                              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                                <User className="w-6 h-6 text-muted-foreground" />
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <span className="font-medium">{review.profiles?.full_name || "익명"}</span>
-                                  <div className="flex items-center">
-                                    {[...Array(review.rating)].map((_, i) => (
-                                      <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                                    ))}
-                                  </div>
-                                  <span className="text-sm text-muted-foreground">
-                                    {new Date(review.created_at).toLocaleDateString()}
-                                  </span>
-                                </div>
-                                <p className="text-muted-foreground">{review.review_text}</p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <p>아직 등록된 후기가 없습니다.</p>
-                      </div>
-                    )}
-                  </div>
-                </section>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Fixed Purchase Card - Desktop Only */}
-          <div className="hidden lg:block w-[383px] flex-shrink-0">
-            <div ref={rightColRef} className="w-[383px] h-0" />
-          </div>
-          {fixedLeft !== null && (
-            <div
-              className="hidden lg:block z-30 overflow-y-auto"
-              style={{ position: 'fixed', left: fixedLeft ?? 0, top: fixedTop, width: 383, maxHeight: `calc(100vh - ${fixedTop}px)` }}
-            >
-              <Card className="shadow-lg border border-border/50 p-6">
-                <div className="space-y-6">
-                  {/* Course Title */}
-                  <h1 className="text-xl font-bold leading-tight">
-                    {courseData.title}
-                  </h1>
-
-                  {/* Course Price */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl font-bold text-primary">
-                        {(selectedCourse?.price ?? 0).toLocaleString()}원
-                      </span>
-                      <Badge variant="destructive" className="text-sm">
-                        2차 얼리버드
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* Course Benefits */}
-                  {selectedCourse?.benefits && selectedCourse.benefits.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="text-sm font-medium text-muted-foreground">포함 혜택</h3>
-                      <div className="space-y-2">
-                        {selectedCourse.benefits.map((benefit, index) => (
-                          <div key={index} className="flex items-start gap-2 text-sm">
-                            <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                            {benefit}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Course Options Selection */}
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-muted-foreground">강의 구성</h3>
-                    <div className="space-y-2">
-                      {courseOptions.map((option) => (
-                        <div 
-                          key={option.id}
-                          className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                            selectedOption === option.id 
-                              ? 'border-primary bg-primary/5' 
-                              : 'border-border hover:border-primary/50'
-                          }`}
-                          onClick={() => setSelectedOption(option.id)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium">{option.name}</span>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-bold text-primary">
-                                {option.price.toLocaleString()}원
-                              </div>
-                              {option.original_price && (
-                                <div className="text-xs text-muted-foreground line-through">
-                                  {option.original_price.toLocaleString()}원
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Final Price */}
-                  <div className="border-t pt-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-medium">상품 금액</span>
-                      <span className="text-2xl font-bold text-primary">
-                        {(selectedCourse?.price ?? 0).toLocaleString()}원
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="space-y-3">
-                    <Button 
-                      variant="default" 
-                      size="lg" 
-                      className="w-full bg-primary hover:bg-primary/90"
-                      onClick={handlePurchase}
-                    >
-                      강의 구매하기
-                    </Button>
-                  </div>
                 </div>
-              </Card>
-            </div>
-          )}
-        </div>
+              </section>
 
-        {/* Mobile/Tablet Layout */}
-        <div className="lg:hidden">
-          {/* Mobile Thumbnail */}
-          <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
-            <img
-              src={courseData.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
-              alt={courseData.title}
-              className="w-full aspect-video object-cover"
-            />
-          </div>
+              {/* Curriculum (Using Accordion for Accessibility) */}
+              <section id="curriculum">
+                <h2 className="text-xl lg:text-2xl font-bold mb-6">커리큘럼</h2>
+                {/* Defaulting the first section to open if available. Using type="single" collapsible. */}
+                <Accordion type="single" collapsible defaultValue={groupedSections.length > 0 ? groupedSections[0].id : undefined} className="space-y-4">
+                    {groupedSections.map((section) => (
+                        <AccordionItem key={section.id} value={section.id} className="border border-border rounded-lg bg-card shadow-sm">
+                            <AccordionTrigger className="p-4 lg:p-6 hover:bg-muted/50 transition-colors rounded-lg">
+                                <div className="flex-1 text-left pr-4">
+                                    <h3 className="font-semibold text-base lg:text-lg mb-1">{section.title}</h3>
+                                    <div className="flex items-center gap-4 text-xs lg:text-sm text-muted-foreground font-normal">
+                                        <span className="flex items-center gap-1">
+                                            <Clock className="w-3 h-3 lg:w-4 lg:h-4" />
+                                            {formatDuration(section.totalMinutes)}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            <BookOpen className="w-3 h-3 lg:w-4 lg:h-4" />
+                                            {section.lessonCount}개 강의
+                                        </span>
+                                    </div>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="border-t border-border">
+                                {section.lessons.map((lesson) => (
+                                    <div key={lesson.id} className="flex items-center justify-between p-3 lg:p-4 border-b border-border last:border-b-0">
+                                        <div className="flex items-center gap-3">
+                                            <Play className="w-3 h-3 lg:w-4 lg:h-4 text-muted-foreground" />
+                                            <span className="text-xs lg:text-sm">{lesson.title}</span>
+                                            {lesson.isPreview && (
+                                                <Badge variant="outline" className="text-xs">미리보기</Badge>
+                                            )}
+                                        </div>
+                                        <span className="text-xs lg:text-sm text-muted-foreground">
+                                            {formatDuration(lesson.durationMinutes)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
+              </section>
 
-          {/* Mobile Condensed Payment Card */}
-          <Card className="mb-6 mx-4">
-            <CardContent className="p-4">
-              <div className="space-y-4">
-                <h1 className="text-lg font-bold leading-tight">{courseData.title}</h1>
-                
-                {/* Rating and Price */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star 
-                          key={i} 
-                          className={`w-4 h-4 ${i < Math.floor(courseData.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+              {/* Instructor */}
+              <section id="instructor">
+                <h2 className="text-xl lg:text-2xl font-bold mb-6">강사 소개</h2>
+                <div className="bg-muted/30 rounded-2xl p-6 lg:p-8">
+                  <div className="flex items-start gap-4 lg:gap-6">
+                    <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {instructorInfo?.instructor_avatar_url ? (
+                        <img
+                          src={instructorInfo.instructor_avatar_url}
+                          alt={instructorInfo.full_name || '강사'}
+                          className="w-full h-full object-cover"
                         />
-                      ))}
+                      ) : (
+                        <User className="w-8 h-8 lg:w-10 lg:h-10 text-muted-foreground" />
+                      )}
                     </div>
-                    <span className="text-sm font-medium">{courseData.rating}</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-primary">
-                      {(selectedCourse?.price ?? 0).toLocaleString()}원
-                    </div>
-                    <div className="text-xs text-muted-foreground line-through">
-                      {(selectedCourse?.original_price ?? 0).toLocaleString()}원
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mobile Options Selection */}
-                <div className="space-y-2">
-                  {courseOptions.map((option) => (
-                    <div 
-                      key={option.id}
-                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                        selectedOption === option.id 
-                          ? 'border-primary bg-primary/5' 
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                      onClick={() => setSelectedOption(option.id)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{option.name}</span>
-                        <div className="text-right">
-                          <div className="font-bold text-primary text-sm">
-                            {option.price.toLocaleString()}원
-                          </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg lg:text-xl font-semibold mb-2">{instructorInfo?.full_name || '강사'}</h3>
+                      {instructorInfo?.instructor_bio && (
+                        <p className="text-muted-foreground text-sm lg:text-base mb-3">{instructorInfo.instructor_bio}</p>
+                      )}
+                       {/* Instructor Stats */}
+                       <div className="flex items-center gap-4 text-xs lg:text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                            <Users className="w-3 h-3 lg:w-4 lg:h-4" />
+                            <span>{courseData.total_students.toLocaleString()}명 수강생</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Star className="w-3 h-3 lg:w-4 lg:h-4 text-yellow-400 fill-current" />
+                            <span>{courseData.rating}점</span>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </section>
 
-          {/* Mobile Content Navigation */}
-          <div className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm mb-8 mx-4">
-            <div className="grid grid-cols-4 gap-0 border border-border rounded-lg overflow-hidden">
-              <button 
-                onClick={() => scrollToSection('overview')}
-                className="px-3 py-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
-              >
-                소개
-              </button>
-              <button 
-                onClick={() => scrollToSection('curriculum')}
-                className="px-3 py-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
-              >
-                커리큘럼
-              </button>
-              <button 
-                onClick={() => scrollToSection('instructor')}
-                className="px-3 py-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
-              >
-                크리에이터
-              </button>
-              <button 
-                onClick={() => scrollToSection('reviews')}
-                className="px-3 py-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-              >
-                후기
-              </button>
+              {/* Reviews */}
+              <section id="reviews">
+                <h2 className="text-xl lg:text-2xl font-bold mb-6">수강생 후기</h2>
+                <div className="space-y-4 lg:space-y-6">
+                  {courseReviews.length > 0 ? (
+                    courseReviews.map((review) => (
+                      <Card key={review.id}>
+                        <CardContent className="p-4 lg:p-6">
+                          <div className="flex items-start gap-3 lg:gap-4">
+                            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                              <User className="w-5 h-5 lg:w-6 lg:h-6 text-muted-foreground" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
+                                <span className="font-medium text-sm lg:text-base">{review.profiles?.full_name || "익명"}</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center">
+                                    {[...Array(review.rating)].map((_, i) => (
+                                        <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                                    ))}
+                                    </div>
+                                    <span className="text-xs lg:text-sm text-muted-foreground">
+                                    {new Date(review.created_at).toLocaleDateString()}
+                                    </span>
+                                </div>
+                              </div>
+                              <p className="text-muted-foreground text-sm lg:text-base">{review.review_text}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>아직 등록된 후기가 없습니다.</p>
+                    </div>
+                  )}
+                </div>
+              </section>
             </div>
           </div>
 
-          {/* Mobile Content */}
-          <div className="mx-4 space-y-8">
-            {/* Course Detail Image */}
-            <div id="overview">
-              <CourseDetailImages courseId={courseId!} />
-            </div>
+          {/* Right Column: Sticky Purchase Card (Desktop Only) */}
+          {/* CSS STICKY IMPLEMENTATION */}
+          <div className="hidden lg:block w-[383px] flex-shrink-0">
+            {/* Sticky container: top-24 allows space for the header (e.g., 80px + 16px margin). */}
+            <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto">
+                <Card className="shadow-lg border border-border/50 p-6">
+                    <div className="space-y-6">
+                    {/* Course Title */}
+                    <h1 className="text-xl font-bold leading-tight">
+                        {courseData.title}
+                    </h1>
 
-            {/* What You'll Learn */}
-            <section className="bg-muted/30 rounded-2xl p-6">
-              <h2 className="text-xl font-bold mb-4">이 강의에서 배우는 것들</h2>
-              <div className="space-y-3">
-                {(courseData.what_you_will_learn || []).map((item, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
-                    <span className="text-sm">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Mobile Curriculum */}
-            <section id="curriculum">
-              <h2 className="text-xl font-bold mb-4">커리큘럼</h2>
-              <div className="space-y-3">
-                {sectionsToDisplay.map((section, sectionIndex) => (
-                  <Card key={sectionIndex}>
-                    <CardContent className="p-0">
-                      <div 
-                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => setExpandedSection(expandedSection === sectionIndex ? null : sectionIndex)}
-                      >
-                        <div className="flex-1">
-                          <h3 className="font-semibold mb-1">{section.title}</h3>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {section.duration}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <BookOpen className="w-3 h-3" />
-                              {section.lessonCount}개 강의
-                            </span>
-                          </div>
+                    {/* Course Price */}
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                        <span className="text-3xl font-bold text-primary">
+                            {(selectedCourse?.price ?? 0).toLocaleString()}원
+                        </span>
+                        {/* Example Badge, replace with dynamic data if available */}
+                        <Badge variant="destructive" className="text-sm">
+                            2차 얼리버드
+                        </Badge>
                         </div>
-                        {expandedSection === sectionIndex ? (
-                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        {selectedCourse?.original_price && (
+                             <div className="text-sm text-muted-foreground line-through">
+                                {selectedCourse.original_price.toLocaleString()}원
+                            </div>
                         )}
-                      </div>
-                      
-                      {expandedSection === sectionIndex && (
-                        <div className="border-t border-border">
-                          {section.lessons.map((lesson: any, lessonIndex: number) => (
-                            <div key={lessonIndex} className="flex items-center justify-between p-3 border-b border-border last:border-b-0">
-                              <div className="flex items-center gap-2">
-                                <Play className="w-3 h-3 text-muted-foreground" />
-                                <span className="text-xs">{lesson.title}</span>
-                                {lesson.isPreview && (
-                                  <Badge variant="outline" className="text-xs">미리보기</Badge>
+                    </div>
+
+                    {/* Course Benefits */}
+                    {selectedCourse?.benefits && selectedCourse.benefits.length > 0 && (
+                        <div className="space-y-3">
+                        <h3 className="text-sm font-medium text-muted-foreground">포함 혜택</h3>
+                        <div className="space-y-2">
+                            {selectedCourse.benefits.map((benefit, index) => (
+                            <div key={index} className="flex items-start gap-2 text-sm">
+                                <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                                {benefit}
+                            </div>
+                            ))}
+                        </div>
+                        </div>
+                    )}
+
+                    {/* Course Options Selection */}
+                    <div className="space-y-3">
+                        <h3 className="text-sm font-medium text-muted-foreground">강의 구성</h3>
+                        <div className="space-y-2">
+                        {courseOptions.map((option) => (
+                            <div
+                            key={option.id}
+                            className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                                selectedOption === option.id
+                                ? 'border-primary bg-primary/5'
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                            onClick={() => setSelectedOption(option.id)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedOption(option.id)}
+                            >
+                            <div className="flex items-center justify-between">
+                                <div className="flex-1 pr-4">
+                                    <span className="text-sm font-medium">{option.name}</span>
+                                </div>
+                                <div className="text-right">
+                                <div className="font-bold text-primary">
+                                    {option.price.toLocaleString()}원
+                                </div>
+                                {option.original_price && (
+                                    <div className="text-xs text-muted-foreground line-through">
+                                    {option.original_price.toLocaleString()}원
+                                    </div>
                                 )}
-                              </div>
-                              <span className="text-xs text-muted-foreground">{lesson.duration}</span>
+                                </div>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </section>
-
-            {/* Mobile Instructor */}
-            <section id="instructor" className="bg-muted/30 rounded-2xl p-6">
-              <h2 className="text-xl font-bold mb-4">강사 소개</h2>
-              <div className="flex items-start gap-4">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  {instructorInfo?.instructor_avatar_url ? (
-                    <img
-                      src={instructorInfo.instructor_avatar_url}
-                      alt={instructorInfo.full_name || '강사'}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-8 h-8 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-2">{instructorInfo?.full_name || courseData.profiles?.full_name || '강사'}</h3>
-                  {instructorInfo?.instructor_bio && (
-                    <p className="text-sm text-muted-foreground mb-3">{instructorInfo.instructor_bio}</p>
-                  )}
-                  <div className="flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      <span>{courseData.total_students.toLocaleString()}명</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="w-3 h-3 text-yellow-400" />
-                      <span>{courseData.rating}점</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Mobile Reviews */}
-            <section id="reviews" className="mb-20">
-              <h2 className="text-xl font-bold mb-4">수강생 후기</h2>
-              <div className="space-y-4">
-                {courseReviews.map((review, index) => (
-                  <Card key={index}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                          <User className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-medium text-sm">{review.profiles?.full_name || "익명"}</span>
-                            <div className="flex items-center">
-                              {[...Array(review.rating)].map((_, i) => (
-                                <Star key={i} className="w-3 h-3 text-yellow-400 fill-current" />
-                              ))}
                             </div>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(review.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{review.review_text}</p>
+                        ))}
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </section>
+                    </div>
+
+                    {/* Final Price */}
+                    <div className="border-t pt-4">
+                        <div className="flex items-center justify-between">
+                        <span className="text-lg font-medium">상품 금액</span>
+                        <span className="text-2xl font-bold text-primary">
+                            {(selectedCourse?.price ?? 0).toLocaleString()}원
+                        </span>
+                        </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="space-y-3">
+                        <Button
+                        variant="default"
+                        size="lg"
+                        className="w-full bg-primary hover:bg-primary/90"
+                        onClick={handlePurchase}
+                        >
+                        강의 구매하기
+                        </Button>
+                    </div>
+                    </div>
+                </Card>
+            </div>
           </div>
         </div>
 
-        {/* Mobile Fixed Bottom Purchase Bar */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 z-50">
-          <div className="flex items-center justify-between gap-4">
+        {/* Mobile Fixed Bottom Purchase Bar (Visible only on Mobile/Tablet) */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 z-50 shadow-top">
+          <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto">
             <div className="flex-1">
               <div className="text-sm text-muted-foreground">총 결제금액</div>
               <div className="text-lg font-bold text-primary">
                 {(selectedCourse?.price ?? 0).toLocaleString()}원
               </div>
             </div>
-            <Button 
-              variant="default" 
-              size="lg" 
+            <Button
+              variant="default"
+              size="lg"
               className="bg-primary hover:bg-primary/90 px-8"
               onClick={handlePurchase}
             >
@@ -1097,15 +766,16 @@ const CourseDetail = () => {
         {showScrollToTop && (
           <Button
             onClick={scrollToTop}
-            size="sm"
-            className="fixed bottom-20 right-4 lg:bottom-8 lg:right-8 z-50 w-12 h-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white animate-fade-in hover:scale-110 transition-transform duration-200"
+            size="icon"
+            // Adjust bottom position on mobile (bottom-20) to avoid overlap with the purchase bar
+            className="fixed bottom-20 right-4 lg:bottom-8 lg:right-8 z-50 w-12 h-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white transition-transform duration-200 hover:scale-105"
             aria-label="맨 위로 이동"
           >
-            <ChevronUp className="w-5 h-5" />
+            <ChevronUp className="w-6 h-6" />
           </Button>
         )}
 
-        {/* Already Enrolled Modal */}
+        {/* Modals */}
         <AlertDialog open={showAlreadyEnrolledModal} onOpenChange={setShowAlreadyEnrolledModal}>
           <AlertDialogContent className="max-w-md">
             <AlertDialogHeader>
@@ -1118,13 +788,13 @@ const CourseDetail = () => {
                 </div>
               </div>
               <AlertDialogDescription className="text-left">
-                해당 강의는 이미 구매하여 수강 중인 강의입니다. 
+                해당 강의는 이미 구매하여 수강 중인 강의입니다.
                 내 강의실에서 수강을 계속 진행하세요.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowAlreadyEnrolledModal(false)}
                 className="w-full sm:w-auto"
               >
@@ -1139,11 +809,10 @@ const CourseDetail = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        
-        {/* Auth Modal */}
-        <AuthModal 
-          isOpen={showAuthModal} 
-          onClose={() => setShowAuthModal(false)} 
+
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
           defaultTab="signin"
         />
       </main>
