@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Play, Youtube } from "lucide-react";
+import { Play, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import VideoModal from "./VideoModal";
@@ -140,14 +140,15 @@ const SecondBanner = () => {
           </div>
           <Button
             asChild
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full flex items-center gap-2 transition-colors"
+            className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full flex items-center gap-2 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl"
           >
             <a 
               href="https://www.youtube.com/@windly/videos" 
               target="_blank" 
               rel="noopener noreferrer"
+              className="flex items-center gap-2"
             >
-              <Youtube className="w-4 h-4" />
+              <Bell className="w-4 h-4" />
               구독
             </a>
           </Button>
