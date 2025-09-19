@@ -637,7 +637,7 @@ const CourseDetail = () => {
           </div>
 
           {/* Right Column: Sticky Purchase Card (Desktop Only) */}
-          <div className="hidden lg:block w-[383px] flex-shrink-0">
+          <div className="hidden lg:block w-[383px] flex-shrink-0 self-start">
             {/* Sticky container: top-20 (80px 아래에 고정). */}
             <div className="sticky top-20">
                 <Card className="shadow-lg border border-border/50 p-6">
