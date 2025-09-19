@@ -141,40 +141,12 @@ const HeroSection = () => {
   // ----- 네비게이션 함수들 -----
   const next = () => {
     if (isTransitioning.current) return;
-    isTransitioning.current = true;
-    setCurrentIndex((prev) => {
-      const newIndex = (prev + 1) % slides.length;
-      // 마지막에서 첫번째로 갈 때 무한 루프 처리
-      if (prev === slides.length - 1) {
-        setTimeout(() => {
-          moveToIndex(slides.length, true); // 중앙 그룹의 첫번째로 순간이동
-          setCurrentIndex(0);
-          isTransitioning.current = false;
-        }, 500);
-        return prev; // 일시적으로 현재 인덱스 유지
-      }
-      isTransitioning.current = false;
-      return newIndex;
-    });
+    setCurrentIndex((prev) => (prev + 1) % slides.length);
   };
 
   const prev = () => {
     if (isTransitioning.current) return;
-    isTransitioning.current = true;
-    setCurrentIndex((prev) => {
-      const newIndex = (prev - 1 + slides.length) % slides.length;
-      // 첫번째에서 마지막으로 갈 때 무한 루프 처리  
-      if (prev === 0) {
-        setTimeout(() => {
-          moveToIndex(slides.length + slides.length - 1, true); // 중앙 그룹의 마지막으로 순간이동
-          setCurrentIndex(slides.length - 1);
-          isTransitioning.current = false;
-        }, 500);
-        return prev; // 일시적으로 현재 인덱스 유지
-      }
-      isTransitioning.current = false;
-      return newIndex;
-    });
+    setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
   const toggle = () => setIsPlaying((v) => !v);
@@ -248,9 +220,9 @@ const HeroSection = () => {
                     "min-w-0 shrink-0 grow-0 relative overflow-hidden rounded-lg last:mr-4",
                     // 반응형 카드 폭/높이 (넓을수록 더 많이 보이게)
                     "h-[180px] w-[280px] sm:h-[220px] sm:w-[420px] md:h-[280px] md:w-[560px] lg:h-[340px] lg:w-[760px]",
-                    // 사이드 흐림(메인 강조)
+                    // 사이드 흐림(메인 강조) - 흰색계열로 변경
                     "after:pointer-events-none after:absolute after:inset-0 after:z-[2]",
-                    isActive ? "after:opacity-0" : "after:bg-black/60 after:opacity-100",
+                    isActive ? "after:opacity-0" : "after:bg-white/40 after:opacity-100",
                   ].join(" ")}
                   onClick={() => handleClick(s)}
                 >
@@ -265,24 +237,22 @@ const HeroSection = () => {
                     onLoad={() => { if (i === 0) moveToIndex(slides.length + currentIndex, true); }}
                   />
 
-                  {/* 텍스트(활성일 때만 표시) */}
-                  {isActive && (
-                    <div className="absolute bottom-14 left-5 z-[3] w-[calc(100%-40px)] space-y-2">
-                      <h2 className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold drop-shadow-lg">
-                        {s.title}
-                      </h2>
-                      {s.subtitle && (
-                        <h3 className="text-white/90 text-sm sm:text-base md:text-lg drop-shadow">
-                          {s.subtitle}
-                        </h3>
-                      )}
-                      {s.description && (
-                        <p className="text-white/85 text-xs sm:text-sm md:text-base drop-shadow">
-                          {s.description}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  {/* 텍스트(모든 슬라이드에 표시) */}
+                  <div className="absolute bottom-14 left-5 z-[3] w-[calc(100%-40px)] space-y-2">
+                    <h2 className={`text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold drop-shadow-lg ${isActive ? "text-white" : "text-gray-800"}`}>
+                      {s.title}
+                    </h2>
+                    {s.subtitle && (
+                      <h3 className={`text-sm sm:text-base md:text-lg drop-shadow ${isActive ? "text-white/90" : "text-gray-700"}`}>
+                        {s.subtitle}
+                      </h3>
+                    )}
+                    {s.description && (
+                      <p className={`text-xs sm:text-sm md:text-base drop-shadow ${isActive ? "text-white/85" : "text-gray-600"}`}>
+                        {s.description}
+                      </p>
+                    )}
+                  </div>
                 </div>
               );
             })}
