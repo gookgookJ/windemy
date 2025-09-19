@@ -69,12 +69,23 @@ export const CourseDetailImages: React.FC<CourseDetailImagesProps> = ({ courseId
           
           <Card className="overflow-hidden">
             <CardContent className="p-0">
-              <img
-                src={image.image_url}
-                alt={image.section_title || image.image_name}
-                className="w-full h-auto object-contain"
-                loading="lazy"
-              />
+              <div className="relative bg-muted" style={{ aspectRatio: 'auto' }}>
+                <img
+                  src={image.image_url}
+                  alt={image.section_title || image.image_name}
+                  className="w-full h-full object-contain object-center"
+                  loading="lazy"
+                  onLoad={(e) => {
+                    // Set container aspect ratio based on actual image dimensions
+                    const img = e.target as HTMLImageElement;
+                    const container = img.parentElement;
+                    if (container && img.naturalWidth && img.naturalHeight) {
+                      const aspectRatio = img.naturalWidth / img.naturalHeight;
+                      container.style.aspectRatio = aspectRatio.toString();
+                    }
+                  }}
+                />
+              </div>
             </CardContent>
           </Card>
         </div>

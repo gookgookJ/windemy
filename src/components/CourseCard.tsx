@@ -58,27 +58,27 @@ const CourseCard = ({
       className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 bg-white w-full max-w-[380px] touch-target"
       onClick={handleCardClick}
     >
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden aspect-[16/9] bg-muted">
         <img
           src={getOptimizedImageForContext(thumbnail, 'course-card')}
           alt={title}
-          className="w-full h-[160px] sm:h-[180px] object-cover transition-transform duration-300 group-hover:scale-105 responsive-image"
+          className="w-full h-full object-contain object-center transition-transform duration-300 group-hover:scale-105"
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : "auto"}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           width="380"
-          height="180"
+          height="214"
           decoding={priority ? "sync" : "async"}
-          onLoad={() => {
-            // Remove skeleton background after image loads
-            if (typeof window !== 'undefined') {
-              const target = event?.target as HTMLImageElement;
-              if (target) {
-                target.style.backgroundColor = 'transparent';
-              }
+          onLoad={(e) => {
+            // Set container aspect ratio based on actual image dimensions
+            const img = e.target as HTMLImageElement;
+            const container = img.parentElement;
+            if (container && img.naturalWidth && img.naturalHeight) {
+              const aspectRatio = img.naturalWidth / img.naturalHeight;
+              container.style.aspectRatio = aspectRatio.toString();
             }
           }}
-          style={{ backgroundColor: priority ? 'transparent' : 'hsl(220, 14.3%, 95.9%)' }}
+          style={{ backgroundColor: priority ? 'transparent' : 'hsl(var(--muted))' }}
         />
         {/* Favorite Heart Button - 원 크기를 하트의 1.5배로 축소 */}
         <button
