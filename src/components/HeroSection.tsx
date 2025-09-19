@@ -145,8 +145,15 @@ const HeroSection = () => {
     }
 
     const handleResize = () => {
-      // 리사이즈 시 위치는 그대로 두고 컨트롤 위치만 업데이트
+      // 현재 activeIndex를 기준으로 올바른 위치 계산 (갑작스런 슬라이드 변화 방지)
+      const centerGroupStart = slides.length;
+      const correctTrackIndex = centerGroupStart + activeIndex;
+      
+      snappingRef.current = true;  // useEffect 사이드 이펙트 방지
+      setTrackIndex(correctTrackIndex);
+      moveToTrack(correctTrackIndex, true);  // 즉시 이동 (transition 없이)
       updateControlsPosition();
+      snappingRef.current = false;
     };
     window.addEventListener("resize", handleResize);
     return () => {
