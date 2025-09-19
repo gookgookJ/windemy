@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import InfoBanner from "@/components/InfoBanner";
-import SecondBanner from "@/components/SecondBanner";
 import { getOptimizedImageForContext } from "@/utils/imageOptimization";
 
 interface Course {
@@ -463,11 +462,6 @@ const FeaturedCourses = memo(() => {
               section={section}
             />
           ))}
-          
-          {/* 추가된 두 번째 배너 */}
-          <div className="mt-16">
-            <SecondBanner />
-          </div>
         </div>
       </section>
     </>
