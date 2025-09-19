@@ -19,7 +19,7 @@ const GAP_PX = 16; // gap-4
 
 const HeroSection = () => {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
-  const [current, setCurrent] = useState(1); // 두 번째 슬라이드부터 시작
+  const [current, setCurrent] = useState(0); // 첫 번째 슬라이드부터 시작
   const [isPlaying, setIsPlaying] = useState(true);
   const [dragging, setDragging] = useState(false);
   const [enableTransition, setEnableTransition] = useState(false); // 초기 렌더 셋업용
@@ -78,7 +78,9 @@ const HeroSection = () => {
     if (!wrap || !card || !slides.length) return;
     const wrapW = wrap.clientWidth;
     const cardW = card.clientWidth;
-    const offset = current * (cardW + GAP_PX) - (wrapW / 2 - cardW / 2);
+    // 확장된 배열에서 중앙 그룹의 current 인덱스로 계산
+    const actualIndex = slides.length + current;
+    const offset = actualIndex * (cardW + GAP_PX) - (wrapW / 2 - cardW / 2);
     setTranslateX(-offset);
   };
 
