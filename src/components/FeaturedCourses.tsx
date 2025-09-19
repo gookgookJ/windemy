@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Zap, Heart, Crown, Monitor, BookOpen, Target } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
@@ -44,7 +44,7 @@ interface Category {
   course_count: number;
 }
 
-const FeaturedCourses = () => {
+const FeaturedCourses = memo(() => {
   const [sections, setSections] = useState<HomepageSection[]>([]);
   const [sectionCourses, setSectionCourses] = useState<Record<string, Course[]>>({});
   const [loading, setLoading] = useState(true);
