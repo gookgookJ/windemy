@@ -76,7 +76,7 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
         <Input
           ref={inputRef}
           type="text"
-          placeholder="강의를 검색해보세요"
+          placeholder="강의 또는 강사 이름을 검색해보세요"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleKeyDown}

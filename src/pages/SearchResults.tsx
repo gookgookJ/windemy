@@ -86,13 +86,16 @@ const SearchResults = () => {
         .map((course: any) => {
           const titleMatch = course.title.toLowerCase().includes(query.toLowerCase());
           const descMatch = course.short_description?.toLowerCase().includes(query.toLowerCase()) || false;
+          const instructorMatch = course.profiles?.full_name?.toLowerCase().includes(query.toLowerCase()) || false;
           
           let relevance = 0;
-          if (titleMatch) relevance += 10;
-          if (descMatch) relevance += 5;
+          if (titleMatch) relevance += 15;  // 제목 매치는 높은 점수
+          if (instructorMatch) relevance += 12;  // 강사 이름 매치도 높은 점수
+          if (descMatch) relevance += 5;  // 설명 매치는 낮은 점수
           
           // Exact matches get higher scores
           if (course.title.toLowerCase() === query.toLowerCase()) relevance += 20;
+          if (course.profiles?.full_name?.toLowerCase() === query.toLowerCase()) relevance += 18;
           
           return {
             ...course,
