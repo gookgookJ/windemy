@@ -129,27 +129,28 @@ const SecondBanner = () => {
     <section className="w-full py-16 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 헤더 */}
-        <div className="flex items-center justify-between mb-12">
-          <div className="text-left">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-2">
+        <div className="flex items-start sm:items-center justify-between mb-8 sm:mb-12 gap-4">
+          <div className="text-left flex-1">
+            <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-1 sm:mb-2">
               상위 1% 셀러의 판매법
             </h2>
-            <p className="text-sm sm:text-base text-muted-foreground">
+            <p className="text-xs sm:text-sm md:text-base text-muted-foreground">
               윈들리 유튜브에서 지금 확인해보세요!
             </p>
           </div>
           <Button
             asChild
-            className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full flex items-center gap-2 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl"
+            className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 rounded-full flex items-center gap-1 sm:gap-2 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
             <a 
               href="https://www.youtube.com/@windly/videos" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-2"
+              className="flex items-center gap-1 sm:gap-2"
             >
-              <Bell className="w-4 h-4" />
-              구독
+              <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">구독</span>
+              <span className="xs:hidden">구독</span>
             </a>
           </Button>
         </div>
