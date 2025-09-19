@@ -19,101 +19,62 @@ const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [slides, setSlides] = useState<HeroSlide[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(1); // 현재 화면에서 몇 개 보일지
   const navigate = useNavigate();
   const startX = useRef(0);
   const currentX = useRef(0);
-  const slideRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // fetch slides
+  // Fetch slides
   useEffect(() => {
-    let isMounted = true;
-    const fetchSlidesOptimized = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("hero_slides")
-          .select(
-            "id, title, subtitle, description, image_url, course_id, link_url, order_index"
-          )
-          .eq("is_active", true)
-          .eq("is_draft", false)
-          .order("order_index")
-          .limit(10);
-        if (!error && data && data.length > 0 && isMounted) {
-          setSlides(data);
-        }
-      } catch (error) {
-        if (isMounted) {
-          console.error("Error fetching slides:", error);
-        }
-      }
-    };
-    fetchSlidesOptimized();
-    return () => {
-      isMounted = false;
-    };
+    (async () => {
+      const { data } = await supabase
+        .from("hero_slides")
+        .select(
+          "id,title,subtitle,description,image_url,course_id,link_url,order_index"
+        )
+        .eq("is_active", true)
+        .eq("is_draft", false)
+        .order("order_index")
+        .limit(10);
+      if (data) setSlides(data);
+    })();
   }, []);
 
-  // preload first image
+  // 반응형: 화면 크기에 따라 visibleCount 변경
   useEffect(() => {
-    if (slides.length > 0 && slides[0].image_url) {
-      const href = getOptimizedImageForContext(
-        slides[0].image_url,
-        "hero-slide"
-      );
-      const preloadLink = document.createElement("link");
-      preloadLink.rel = "preload";
-      preloadLink.as = "image";
-      preloadLink.href = href;
-      preloadLink.fetchPriority = "high";
-      if (slides[0].image_url.includes("supabase.co")) {
-        preloadLink.crossOrigin = "anonymous";
-      }
-      document.head.appendChild(preloadLink);
-      const img = new Image();
-      img.src = href;
-      return () => {
-        if (document.head.contains(preloadLink)) {
-          document.head.removeChild(preloadLink);
-        }
-      };
-    }
-  }, [slides]);
+    const updateVisible = () => {
+      if (window.innerWidth < 640) setVisibleCount(1); // 모바일
+      else if (window.innerWidth < 1024) setVisibleCount(1.5); // 태블릿
+      else if (window.innerWidth < 1440) setVisibleCount(2.5); // 작은 데스크탑
+      else setVisibleCount(3.5); // 큰 데스크탑
+    };
+    updateVisible();
+    window.addEventListener("resize", updateVisible);
+    return () => window.removeEventListener("resize", updateVisible);
+  }, []);
 
-  // autoplay
+  // Autoplay
   useEffect(() => {
-    if (!isPlaying || slides.length === 0 || isDragging) return;
+    if (!isPlaying || isDragging) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
+      nextSlide();
+    }, 4000);
     return () => clearInterval(timer);
-  }, [slides.length, isPlaying, isDragging]);
+  }, [isPlaying, isDragging, slides.length, visibleCount]);
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    setCurrentSlide((prev) =>
+      prev + 1 >= slides.length ? 0 : prev + 1
+    );
   };
-
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    setCurrentSlide((prev) =>
+      prev - 1 < 0 ? slides.length - 1 : prev - 1
+    );
   };
 
-  const togglePlayPause = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  const getSlideIndex = (offset: number) => {
-    return (currentSlide + offset + slides.length) % slides.length;
-  };
-
-  const handleSlideClick = (slide: HeroSlide) => {
-    if (slide.course_id) {
-      navigate(`/course/${slide.course_id}`);
-    } else if (slide.link_url) {
-      window.open(slide.link_url, "_blank");
-    }
-  };
-
-  // swipe handlers
+  // Swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsDragging(true);
     startX.current = e.touches[0].clientX;
@@ -127,213 +88,87 @@ const HeroSection = () => {
     setIsDragging(false);
     const diffX = startX.current - currentX.current;
     if (Math.abs(diffX) > 50) {
-      diffX > 0 ? nextSlide() : prevSlide();
-    }
-  };
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    startX.current = e.clientX;
-  };
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    currentX.current = e.clientX;
-  };
-  const handleMouseUp = () => {
-    if (!isDragging) return;
-    setIsDragging(false);
-    const diffX = startX.current - currentX.current;
-    if (Math.abs(diffX) > 50) {
-      diffX > 0 ? nextSlide() : prevSlide();
+      if (diffX > 0) nextSlide();
+      else prevSlide();
     }
   };
 
-  const hasSlides = slides.length > 0;
+  const handleSlideClick = (slide: HeroSlide) => {
+    if (slide.course_id) navigate(`/course/${slide.course_id}`);
+    else if (slide.link_url) window.open(slide.link_url, "_blank");
+  };
+
+  const slideWidth = `${100 / visibleCount}%`;
 
   return (
-    <section className="hero-section relative h-[200px] md:h-[380px] overflow-hidden bg-white px-4">
-      {hasSlides && (
-        <>
-          {/* Mobile / Tablet: Single Slide */}
-          <div className="block md:hidden relative w-full h-full">
-            <div
-              ref={slideRef}
-              className="relative w-full h-full cursor-pointer select-none"
-              onClick={() => handleSlideClick(slides[currentSlide])}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            >
+    <section className="relative w-full overflow-hidden bg-white py-6">
+      <div
+        className="flex transition-transform duration-500 ease-in-out"
+        style={{
+          width: `${(slides.length * 100) / visibleCount}%`,
+          transform: `translateX(-${(currentSlide * 100) / slides.length}%)`,
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {slides.map((slide, idx) => (
+          <div
+            key={slide.id}
+            className="px-2"
+            style={{ flex: `0 0 ${slideWidth}` }}
+            onClick={() => handleSlideClick(slide)}
+          >
+            <div className="relative w-full aspect-[760/340] rounded-2xl overflow-hidden cursor-pointer">
               <img
-                src={getOptimizedImageForContext(
-                  slides[currentSlide].image_url,
-                  "hero-slide"
-                )}
-                alt={slides[currentSlide].title}
-                className="absolute inset-0 w-full h-full object-contain object-center"
-                loading="eager"
-                fetchPriority="high"
-                sizes="100vw"
+                src={getOptimizedImageForContext(slide.image_url, "hero-slide")}
+                alt={slide.title}
+                className="w-full h-full object-cover"
+                loading="lazy"
               />
-              <div className="absolute inset-0 flex">
-                <div className="flex-1 p-4 flex flex-col justify-center space-y-2">
-                  <h2 className="text-white text-base font-bold leading-tight drop-shadow-lg">
-                    {slides[currentSlide].title}
+              <div className="absolute inset-0 bg-black/30 flex items-center">
+                <div className="text-white space-y-2 px-4">
+                  <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold">
+                    {slide.title}
                   </h2>
-                  <h3 className="text-white/90 text-sm font-medium drop-shadow-lg">
-                    {slides[currentSlide].subtitle}
+                  <h3 className="text-sm md:text-base opacity-90">
+                    {slide.subtitle}
                   </h3>
-                  <p className="text-white/80 text-xs drop-shadow-lg">
-                    {slides[currentSlide].description}
+                  <p className="text-xs md:text-sm opacity-80">
+                    {slide.description}
                   </p>
                 </div>
               </div>
-              <div className="absolute bottom-3 right-4 bg-black/40 rounded-full px-2.5 py-1 text-white text-xs font-medium">
-                {currentSlide + 1}/{slides.length}
-              </div>
             </div>
           </div>
+        ))}
+      </div>
 
-          {/* Desktop: Three Panel Layout */}
-          <div className="hidden md:block relative w-full h-full">
-            <div className="relative w-full h-full flex items-center justify-center">
-              <div className="flex w-full items-center justify-center">
-                {/* Left */}
-                <div
-                  className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-r-2xl"
-                  onClick={prevSlide}
-                  style={{ height: "340px" }}
-                >
-                  <div className="absolute -right-12 md:-right-16 lg:-right-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
-                    <img
-                      src={getOptimizedImageForContext(
-                        slides[getSlideIndex(-1)].image_url,
-                        "hero-slide"
-                      )}
-                      alt={slides[getSlideIndex(-1)].title}
-                      className="w-full h-full object-contain object-center"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/40 flex items-center">
-                      <div className="text-white space-y-4 px-8 flex-1">
-                        <h3 className="text-xl md:text-2xl font-bold drop-shadow-lg">
-                          {slides[getSlideIndex(-1)].title}
-                        </h3>
-                        <p className="text-sm md:text-lg opacity-90 drop-shadow-lg">
-                          {slides[getSlideIndex(-1)].subtitle}
-                        </p>
-                        <p className="text-xs md:text-sm opacity-80 drop-shadow-lg">
-                          {slides[getSlideIndex(-1)].description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Center */}
-                <div className="relative z-10 mx-4">
-                  <div
-                    className="relative w-[760px] h-[340px] rounded-2xl overflow-hidden cursor-pointer"
-                    onClick={() => handleSlideClick(slides[currentSlide])}
-                  >
-                    <img
-                      src={getOptimizedImageForContext(
-                        slides[currentSlide].image_url,
-                        "hero-slide"
-                      )}
-                      alt={slides[currentSlide].title}
-                      className="w-full h-full object-contain object-center"
-                      loading="eager"
-                      fetchPriority="high"
-                    />
-                    <div className="absolute inset-0 bg-black/30 flex items-center">
-                      <div className="text-white space-y-4 px-12 flex-1">
-                        <h2 className="text-2xl md:text-3xl font-bold leading-tight drop-shadow-lg">
-                          {slides[currentSlide].title}
-                        </h2>
-                        <h3 className="text-lg md:text-xl font-medium opacity-90 drop-shadow-lg">
-                          {slides[currentSlide].subtitle}
-                        </h3>
-                        <p className="text-sm md:text-base opacity-80 drop-shadow-lg">
-                          {slides[currentSlide].description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right */}
-                <div
-                  className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-l-2xl"
-                  onClick={nextSlide}
-                  style={{ height: "340px" }}
-                >
-                  <div className="absolute -left-12 md:-left-16 lg:-left-20 top-0 w-[760px] h-[340px] rounded-2xl overflow-hidden">
-                    <img
-                      src={getOptimizedImageForContext(
-                        slides[getSlideIndex(1)].image_url,
-                        "hero-slide"
-                      )}
-                      alt={slides[getSlideIndex(1)].title}
-                      className="w-full h-full object-contain object-center"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/40 flex items-center">
-                      <div className="text-white space-y-4 px-8 flex-1">
-                        <h3 className="text-xl md:text-2xl font-bold drop-shadow-lg">
-                          {slides[getSlideIndex(1)].title}
-                        </h3>
-                        <p className="text-sm md:text-lg opacity-90 drop-shadow-lg">
-                          {slides[getSlideIndex(1)].subtitle}
-                        </p>
-                        <p className="text-xs md:text-sm opacity-80 drop-shadow-lg">
-                          {slides[getSlideIndex(1)].description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Controls */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
-              <div className="relative w-[760px]">
-                <div className="absolute bottom-0 right-6 flex items-center gap-3">
-                  <button
-                    onClick={prevSlide}
-                    className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={togglePlayPause}
-                    className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white"
-                  >
-                    {isPlaying ? (
-                      <Pause className="w-5 h-5" />
-                    ) : (
-                      <Play className="w-5 h-5 ml-0.5" />
-                    )}
-                  </button>
-                  <div className="bg-black/50 rounded-full px-3 py-1 text-white text-sm font-medium">
-                    {currentSlide + 1} / {slides.length}
-                  </div>
-                  <button
-                    onClick={nextSlide}
-                    className="w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      {/* Controls */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+        <button
+          onClick={prevSlide}
+          className="w-8 h-8 sm:w-10 sm:h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white"
+        >
+          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+        </button>
+        <button
+          onClick={() => setIsPlaying(!isPlaying)}
+          className="w-8 h-8 sm:w-10 sm:h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white"
+        >
+          {isPlaying ? (
+            <Pause className="w-4 h-4 sm:w-5 sm:h-5" />
+          ) : (
+            <Play className="w-4 h-4 sm:w-5 sm:h-5" />
+          )}
+        </button>
+        <button
+          onClick={nextSlide}
+          className="w-8 h-8 sm:w-10 sm:h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white"
+        >
+          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+        </button>
+      </div>
     </section>
   );
 };
