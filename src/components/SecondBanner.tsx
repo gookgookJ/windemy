@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Play } from "lucide-react";
+import { Play, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import VideoModal from "./VideoModal";
 
@@ -120,19 +120,23 @@ const SecondBanner = () => {
     <section className="w-full py-16 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 헤더 */}
-        <div className="text-center mb-12">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            윈들리 유튜브 채널
-          </h2>
-          <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-            전문가들의 실무 노하우와 최신 기술 트렌드를 영상으로 만나보세요
+        <div className="text-left mb-12">
+          <div className="flex items-center gap-3 mb-4">
+            <TrendingUp className="w-8 h-8 text-primary" />
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
+              상위 1% 셀러들의 판매 전략
+            </h2>
+          </div>
+          <p className="text-muted-foreground text-base sm:text-lg">
+            윈들리 유튜브를 통해 무료로 확인해보세요!
           </p>
         </div>
         
-        {/* 데스크톱 뷰 - 4개씩 그리드 */}
+        {/* 데스크톱 뷰 - 3개씩 그리드 */}
         <div className="hidden lg:block">
-          <div className="grid grid-cols-4 gap-6 mb-8">
-            {youtubeVideos.slice(currentSlide * 4, (currentSlide * 4) + 4).map((video) => (
+          <div className="relative">
+            <div className="grid grid-cols-3 gap-6 mb-8">
+            {youtubeVideos.slice(currentSlide * 3, (currentSlide * 3) + 3).map((video) => (
               <Card 
                 key={video.id} 
                 className="group cursor-pointer overflow-hidden border-0 bg-background shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
@@ -146,47 +150,58 @@ const SecondBanner = () => {
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-full p-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                      <Play className="w-6 h-6 text-primary" fill="currentColor" />
+                    <div className="bg-white/95 backdrop-blur-sm rounded-full p-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                      <Play className="w-4 h-4 text-primary" fill="currentColor" />
                     </div>
                   </div>
                 </div>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-relaxed">
-                    {video.title}
-                  </h3>
-                </CardContent>
               </Card>
             ))}
           </div>
           
-          {/* 네비게이션 */}
-          {Math.ceil(youtubeVideos.length / 4) > 1 && (
-            <div className="flex justify-center items-center gap-4">
+          {/* 좌우 네비게이션 버튼 */}
+          {Math.ceil(youtubeVideos.length / 3) > 1 && (
+            <>
               <button
                 onClick={prevSlide}
-                className="bg-background hover:bg-muted text-foreground rounded-full p-2 transition-colors shadow-sm border"
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
                 disabled={currentSlide === 0}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <span className="text-muted-foreground px-4 py-2 text-sm">
-                {currentSlide + 1} / {Math.ceil(youtubeVideos.length / 4)}
-              </span>
               <button
                 onClick={nextSlide}
-                className="bg-background hover:bg-muted text-foreground rounded-full p-2 transition-colors shadow-sm border"
-                disabled={currentSlide >= Math.ceil(youtubeVideos.length / 4) - 1}
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
+                disabled={currentSlide >= Math.ceil(youtubeVideos.length / 3) - 1}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
+            </>
+          )}
+          
+          {/* 하단 인디케이터 */}
+          {Math.ceil(youtubeVideos.length / 3) > 1 && (
+            <div className="flex justify-center mt-8 gap-2">
+              {Array.from({ length: Math.ceil(youtubeVideos.length / 3) }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentSlide(index)}
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-all duration-200",
+                    currentSlide === index 
+                      ? "bg-primary w-6" 
+                      : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  )}
+                />
+              ))}
             </div>
           )}
         </div>
+      </div>
 
         {/* 태블릿 뷰 - 2개씩 그리드 */}
         <div className="hidden md:block lg:hidden">
@@ -205,16 +220,11 @@ const SecondBanner = () => {
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-full p-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                      <Play className="w-6 h-6 text-primary" fill="currentColor" />
+                    <div className="bg-white/95 backdrop-blur-sm rounded-full p-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                      <Play className="w-4 h-4 text-primary" fill="currentColor" />
                     </div>
                   </div>
                 </div>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-relaxed">
-                    {video.title}
-                  </h3>
-                </CardContent>
               </Card>
             ))}
           </div>
@@ -272,16 +282,11 @@ const SecondBanner = () => {
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="bg-white/95 backdrop-blur-sm rounded-full p-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                            <Play className="w-6 h-6 text-primary" fill="currentColor" />
+                          <div className="bg-white/95 backdrop-blur-sm rounded-full p-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                            <Play className="w-4 h-4 text-primary" fill="currentColor" />
                           </div>
                         </div>
                       </div>
-                      <CardContent className="p-4">
-                        <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-relaxed">
-                          {video.title}
-                        </h3>
-                      </CardContent>
                     </Card>
                   </div>
                 ))}
