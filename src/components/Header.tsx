@@ -14,7 +14,7 @@ const Header = () => {
   const { user, profile, signOut, isAdmin } = useAuth();
 
   const navigationItems = [
-    { name: "윈데미 소개", href: "/about" },
+    { name: "회사소개", href: "/about" },
     { 
       name: "클래스", 
       href: "/courses",
