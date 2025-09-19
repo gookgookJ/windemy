@@ -132,10 +132,10 @@ const SecondBanner = () => {
         <div className="flex items-center justify-between mb-12">
           <div className="text-left">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-2">
-              상위 1% 셀러들의 판매 전략
+              상위 1% 셀러의 판매법
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground">
-              윈들리 유튜브를 통해 무료로 확인해보세요!
+              지금 바로 확인해보세요!
             </p>
           </div>
           <Button
