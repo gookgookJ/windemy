@@ -127,8 +127,8 @@ const SecondBanner = () => {
 
   return (
     <section className="w-full py-16 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-slate-800">
+      {/* 헤더 - 다른 섹션과 정렬 맞춤 */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 헤더 */}
         <div className="flex items-start sm:items-center justify-between mb-8 sm:mb-12 gap-4">
           <div className="text-left flex-1">
             <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-1 sm:mb-2">
@@ -154,10 +154,14 @@ const SecondBanner = () => {
             </a>
           </Button>
         </div>
+      </div>
+
+      {/* 비디오 컨텐츠 - 전체 width 사용 */}
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         
         {/* 데스크톱 뷰 - 클릭 네비게이션 */}
         <div className="hidden lg:block">
-          <div className="relative">
+          <div className="relative max-w-7xl mx-auto">
             <div className="overflow-hidden rounded-xl">
               <div 
                 className="flex transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing"
@@ -167,10 +171,10 @@ const SecondBanner = () => {
                 onMouseUp={handleTouchEnd}
                 onMouseLeave={handleTouchEnd}
               >
-                {Array.from({ length: Math.ceil(youtubeVideos.length / 3) }).map((_, slideIndex) => (
+                {Array.from({ length: Math.ceil(youtubeVideos.length / 4) }).map((_, slideIndex) => (
                   <div key={slideIndex} className="w-full flex-shrink-0">
-                    <div className="grid grid-cols-3 gap-6 px-4">
-                      {youtubeVideos.slice(slideIndex * 3, (slideIndex * 3) + 3).map((video) => (
+                    <div className="grid grid-cols-4 gap-6 px-4">
+                      {youtubeVideos.slice(slideIndex * 4, (slideIndex * 4) + 4).map((video) => (
                         <Card 
                           key={video.id} 
                           className="group cursor-pointer overflow-hidden border-0 bg-background shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
@@ -198,7 +202,7 @@ const SecondBanner = () => {
             </div>
             
             {/* 좌우 네비게이션 버튼 */}
-            {Math.ceil(youtubeVideos.length / 3) > 1 && (
+            {Math.ceil(youtubeVideos.length / 4) > 1 && (
               <>
                 <button
                   onClick={prevSlide}
@@ -212,7 +216,7 @@ const SecondBanner = () => {
                 <button
                   onClick={nextSlide}
                   className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
-                  disabled={currentSlide >= Math.ceil(youtubeVideos.length / 3) - 1}
+                  disabled={currentSlide >= Math.ceil(youtubeVideos.length / 4) - 1}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -222,9 +226,9 @@ const SecondBanner = () => {
             )}
             
             {/* 하단 인디케이터 */}
-            {Math.ceil(youtubeVideos.length / 3) > 1 && (
+            {Math.ceil(youtubeVideos.length / 4) > 1 && (
               <div className="flex justify-center mt-8 gap-2">
-                {Array.from({ length: Math.ceil(youtubeVideos.length / 3) }).map((_, index) => (
+                {Array.from({ length: Math.ceil(youtubeVideos.length / 4) }).map((_, index) => (
                   <button
                     key={index}
                     onClick={() => setCurrentSlide(index)}
@@ -243,7 +247,7 @@ const SecondBanner = () => {
 
         {/* 태블릿 뷰 - 2개씩 그리드 */}
         <div className="hidden md:block lg:hidden">
-          <div className="relative">
+          <div className="relative max-w-4xl mx-auto">
             <div className="overflow-hidden rounded-xl">
               <div 
                 className="flex transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing"
@@ -302,7 +306,7 @@ const SecondBanner = () => {
 
         {/* 모바일 뷰 - 1개씩 캐러셀 */}
         <div className="md:hidden">
-          <div className="relative">
+          <div className="relative max-w-sm mx-auto">
             <div className="overflow-hidden rounded-xl">
               <div 
                 className="flex transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing"
@@ -353,15 +357,15 @@ const SecondBanner = () => {
             </div>
           </div>
         </div>
-
-        {/* 비디오 모달 */}
-        <VideoModal
-          isOpen={!!selectedVideo}
-          onClose={() => setSelectedVideo(null)}
-          videoId={selectedVideo?.id || ""}
-          title={selectedVideo?.title || ""}
-        />
       </div>
+
+      {/* 비디오 모달 */}
+      <VideoModal
+        isOpen={!!selectedVideo}
+        onClose={() => setSelectedVideo(null)}
+        videoId={selectedVideo?.id || ""}
+        title={selectedVideo?.title || ""}
+      />
     </section>
   );
 };
