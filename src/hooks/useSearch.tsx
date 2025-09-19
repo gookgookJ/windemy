@@ -11,6 +11,8 @@ interface Course {
   price: number;
   level?: string;
   is_published: boolean;
+  instructor_name?: string;
+  relevance?: number;
 }
 
 interface SearchResult extends Course {
@@ -20,7 +22,7 @@ interface SearchResult extends Course {
 export const useSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [recommendedCourses, setRecommendedCourses] = useState<Course[]>([]);
+  const [liveSearchResults, setLiveSearchResults] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Load recent searches from localStorage
@@ -31,24 +33,61 @@ export const useSearch = () => {
     }
   }, []);
 
-  // Load recommended courses on mount
+  // Live search when query changes
   useEffect(() => {
-    loadRecommendedCourses();
-  }, []);
+    if (searchQuery.trim().length >= 2) {
+      performLiveSearch(searchQuery.trim());
+    } else {
+      setLiveSearchResults([]);
+    }
+  }, [searchQuery]);
 
-  const loadRecommendedCourses = async () => {
+  const performLiveSearch = async (query: string) => {
+    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('courses')
-        .select('id, title, short_description, category_id, thumbnail_url, thumbnail_path, price, level, is_published')
-        .eq('is_published', true)
-        .order('total_students', { ascending: false })
-        .limit(6);
+        .select(`
+          id, title, short_description, category_id, thumbnail_url, thumbnail_path, price, level, is_published,
+          profiles:instructor_id(full_name),
+          categories:category_id(name)
+        `)
+        .eq('is_published', true);
 
       if (error) throw error;
-      setRecommendedCourses(data || []);
+
+      // Filter and rank results
+      const results = (data || [])
+        .map((course: any) => {
+          const titleMatch = course.title.toLowerCase().includes(query.toLowerCase());
+          const descMatch = course.short_description?.toLowerCase().includes(query.toLowerCase()) || false;
+          const instructorMatch = course.profiles?.full_name?.toLowerCase().includes(query.toLowerCase()) || false;
+          
+          let relevance = 0;
+          if (titleMatch) relevance += 15;
+          if (instructorMatch) relevance += 12;
+          if (descMatch) relevance += 5;
+          
+          // Exact matches get higher scores
+          if (course.title.toLowerCase() === query.toLowerCase()) relevance += 20;
+          if (course.profiles?.full_name?.toLowerCase() === query.toLowerCase()) relevance += 18;
+          
+          return {
+            ...course,
+            instructor_name: course.profiles?.full_name || '운영진',
+            relevance
+          };
+        })
+        .filter(course => course.relevance > 0)
+        .sort((a, b) => b.relevance - a.relevance)
+        .slice(0, 5); // 최대 5개만 표시
+
+      setLiveSearchResults(results);
     } catch (error) {
-      console.error('Error loading recommended courses:', error);
+      console.error('Error performing live search:', error);
+      setLiveSearchResults([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -75,7 +114,7 @@ export const useSearch = () => {
     searchQuery,
     setSearchQuery,
     recentSearches,
-    recommendedCourses,
+    liveSearchResults,
     isLoading,
     addToRecentSearches,
     removeFromRecentSearches,

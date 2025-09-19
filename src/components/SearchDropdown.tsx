@@ -21,7 +21,8 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
     searchQuery,
     setSearchQuery,
     recentSearches,
-    recommendedCourses,
+    liveSearchResults,
+    isLoading,
     removeFromRecentSearches,
     clearRecentSearches,
   } = useSearch();
@@ -141,59 +142,77 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
               </div>
             )}
 
-            {recentSearches.length === 0 && (
-              <div className="text-center py-4">
-                <Search className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  검색어를 입력하고 엔터를 눌러보세요
-                </p>
+            {/* Live Search Results */}
+            {searchQuery.trim().length >= 2 && (
+              <div className={recentSearches.length > 0 ? "mt-6 pt-4 border-t border-border" : ""}>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                  <Search className="w-4 h-4" />
+                  검색 결과
+                </h3>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    <span className="ml-2 text-sm text-muted-foreground">검색 중...</span>
+                  </div>
+                ) : liveSearchResults.length > 0 ? (
+                  <div className="space-y-2">
+                    {liveSearchResults.map((course) => (
+                      <Link
+                        key={course.id}
+                        to={`/course/${course.id}`}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                        onClick={() => {
+                          setIsOpen(false);
+                          onClose?.();
+                        }}
+                      >
+                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                          {(course.thumbnail_url || course.thumbnail_path) && (
+                            <img
+                              src={course.thumbnail_url || course.thumbnail_path}
+                              alt={course.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                requestAnimationFrame(() => {
+                                  e.currentTarget.src = '/placeholder.svg';
+                                });
+                              }}
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {course.title}
+                          </p>
+                          {course.instructor_name && course.instructor_name !== "운영진" && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {course.instructor_name}
+                            </p>
+                          )}
+                          <p className="text-xs text-primary font-medium">
+                            {course.price === 0 ? '무료' : `₩${course.price.toLocaleString()}`}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-muted-foreground">
+                      '{searchQuery}'와 관련된 강의를 찾을 수 없습니다
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Recommended Courses */}
-            {recommendedCourses.length > 0 && (
-              <div className={recentSearches.length > 0 ? "mt-6 pt-4 border-t border-border" : ""}>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                  <Star className="w-4 h-4" />
-                  추천 강의
-                </h3>
-                <div className="space-y-2">
-                  {recommendedCourses.slice(0, 4).map((course) => (
-                    <Link
-                      key={course.id}
-                      to={`/course/${course.id}`}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                      onClick={() => {
-                        setIsOpen(false);
-                        onClose?.();
-                      }}
-                    >
-                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                        {(course.thumbnail_url || course.thumbnail_path) && (
-                          <img
-                            src={course.thumbnail_url || course.thumbnail_path}
-                            alt={course.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              // Use requestAnimationFrame to avoid forced reflow
-                              requestAnimationFrame(() => {
-                                e.currentTarget.src = '/placeholder.svg';
-                              });
-                            }}
-                          />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {course.title}
-                        </p>
-                        <p className="text-xs text-primary font-medium">
-                          {course.price === 0 ? '무료' : `₩${course.price.toLocaleString()}`}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+            {/* Empty state when no search query */}
+            {searchQuery.trim().length < 2 && recentSearches.length === 0 && (
+              <div className="text-center py-6">
+                <Search className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  강의 또는 강사 이름을 2글자 이상 입력해보세요
+                </p>
               </div>
             )}
           </div>
