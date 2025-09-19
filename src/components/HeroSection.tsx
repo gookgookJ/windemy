@@ -187,32 +187,35 @@ const HeroSection = () => {
   return (
     <section className="hero-section relative overflow-hidden bg-white px-4 py-4">
       {hasSlides && (
-        <div className="relative w-full flex items-center justify-center">
-          <div className="flex w-full items-center justify-center">
+        <div className="relative w-full flex items-center justify-center overflow-hidden">
+          {/* Flex container with responsive peek amounts */}
+          <div className="flex items-center w-full overflow-hidden">
             
-            {/* Left Panel (Previous Slide) - Partially visible */}
-            <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-r-2xl"
-                 onClick={prevSlide}>
-              <div className="absolute -right-16 sm:-right-18 md:-right-20 lg:-right-24 top-0 w-[300px] sm:w-[400px] md:w-[560px] lg:w-[760px] aspect-[760/340] rounded-2xl overflow-hidden">
+            {/* Left Panel (Previous Slide) - Responsive peek */}
+            <div 
+              className="flex-shrink-0 basis-[25%] sm:basis-[35%] md:basis-[45%] lg:basis-[55%] relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer"
+              onClick={prevSlide}
+            >
+              <div className="w-full aspect-[760/340] rounded-2xl overflow-hidden">
                 <div className="relative w-full h-full">
                   <img
                     src={getOptimizedImageForContext(slides[getSlideIndex(-1)].image_url, 'hero-slide')}
                     alt={slides[getSlideIndex(-1)].title}
                     className="w-full h-full object-contain object-center"
                     loading="lazy"
-                    sizes="(max-width: 640px) 300px, (max-width: 768px) 400px, (max-width: 1024px) 560px, 760px"
+                    sizes="(max-width: 640px) 25vw, (max-width: 768px) 35vw, (max-width: 1024px) 45vw, 55vw"
                     width="400"
                     height="225"
                   />
                   <div className="absolute inset-0 bg-black/40 flex items-center">
-                    <div className="text-white space-y-2 sm:space-y-3 md:space-y-4 px-4 sm:px-6 md:px-8 lg:px-12 flex-1">
-                      <h3 className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold drop-shadow-lg line-clamp-2">
+                    <div className="text-white space-y-1 sm:space-y-2 md:space-y-3 lg:space-y-4 px-2 sm:px-4 md:px-6 lg:px-8 flex-1">
+                      <h3 className="text-xs sm:text-sm md:text-lg lg:text-xl xl:text-2xl font-bold drop-shadow-lg line-clamp-2">
                         {slides[getSlideIndex(-1)].title}
                       </h3>
-                      <p className="text-xs sm:text-sm md:text-base lg:text-lg opacity-90 drop-shadow-lg line-clamp-2">
+                      <p className="text-xs sm:text-xs md:text-sm lg:text-base xl:text-lg opacity-90 drop-shadow-lg line-clamp-2">
                         {slides[getSlideIndex(-1)].subtitle}
                       </p>
-                      <p className="text-xs sm:text-xs md:text-sm lg:text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg line-clamp-3">
+                      <p className="text-xs opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg line-clamp-2">
                         {slides[getSlideIndex(-1)].description}
                       </p>
                     </div>
@@ -221,10 +224,10 @@ const HeroSection = () => {
               </div>
             </div>
 
-            {/* Center Panel (Current Slide) - Full visible */}
-            <div className="relative z-10 mx-2 sm:mx-3 md:mx-4">
+            {/* Center Panel (Current Slide) - Always full width */}
+            <div className="flex-shrink-0 basis-[50%] sm:basis-[30%] md:basis-[60%] lg:basis-[40%] xl:basis-[30%] relative z-10 mx-1 sm:mx-2 md:mx-3 lg:mx-4">
               <div 
-                className="relative w-[300px] sm:w-[400px] md:w-[560px] lg:w-[760px] aspect-[760/340] rounded-2xl overflow-hidden cursor-pointer"
+                className="relative w-full aspect-[760/340] rounded-2xl overflow-hidden cursor-pointer"
                 onClick={() => handleSlideClick(slides[currentSlide])}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
@@ -240,7 +243,7 @@ const HeroSection = () => {
                   className="w-full h-full object-contain object-center"
                   loading="eager"
                   fetchPriority="high"
-                  sizes="(max-width: 640px) 300px, (max-width: 768px) 400px, (max-width: 1024px) 560px, 760px"
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 60vw, (max-width: 1024px) 60vw, 40vw"
                   width="800"
                   height="450"
                   decoding="sync"
@@ -261,29 +264,31 @@ const HeroSection = () => {
               </div>
             </div>
 
-            {/* Right Panel (Next Slide) - Partially visible */}
-            <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-l-2xl"
-                 onClick={nextSlide}>
-              <div className="absolute -left-16 sm:-left-18 md:-left-20 lg:-left-24 top-0 w-[300px] sm:w-[400px] md:w-[560px] lg:w-[760px] aspect-[760/340] rounded-2xl overflow-hidden">
+            {/* Right Panel (Next Slide) - Responsive peek */}
+            <div 
+              className="flex-shrink-0 basis-[25%] sm:basis-[35%] md:basis-[45%] lg:basis-[55%] relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer"
+              onClick={nextSlide}
+            >
+              <div className="w-full aspect-[760/340] rounded-2xl overflow-hidden">
                 <div className="relative w-full h-full">
                   <img
                     src={getOptimizedImageForContext(slides[getSlideIndex(1)].image_url, 'hero-slide')}
                     alt={slides[getSlideIndex(1)].title}
                     className="w-full h-full object-contain object-center"
                     loading="lazy"
-                    sizes="(max-width: 640px) 300px, (max-width: 768px) 400px, (max-width: 1024px) 560px, 760px"
+                    sizes="(max-width: 640px) 25vw, (max-width: 768px) 35vw, (max-width: 1024px) 45vw, 55vw"
                     width="400"
                     height="225"
                   />
                   <div className="absolute inset-0 bg-black/40 flex items-center">
-                    <div className="text-white space-y-2 sm:space-y-3 md:space-y-4 px-4 sm:px-6 md:px-8 lg:px-12 flex-1">
-                      <h3 className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold drop-shadow-lg line-clamp-2">
+                    <div className="text-white space-y-1 sm:space-y-2 md:space-y-3 lg:space-y-4 px-2 sm:px-4 md:px-6 lg:px-8 flex-1">
+                      <h3 className="text-xs sm:text-sm md:text-lg lg:text-xl xl:text-2xl font-bold drop-shadow-lg line-clamp-2">
                         {slides[getSlideIndex(1)].title}
                       </h3>
-                      <p className="text-xs sm:text-sm md:text-base lg:text-lg opacity-90 drop-shadow-lg line-clamp-2">
+                      <p className="text-xs sm:text-xs md:text-sm lg:text-base xl:text-lg opacity-90 drop-shadow-lg line-clamp-2">
                         {slides[getSlideIndex(1)].subtitle}
                       </p>
-                      <p className="text-xs sm:text-xs md:text-sm lg:text-sm opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg line-clamp-3">
+                      <p className="text-xs opacity-80 cursor-pointer hover:opacity-100 drop-shadow-lg line-clamp-2">
                         {slides[getSlideIndex(1)].description}
                       </p>
                     </div>
@@ -293,39 +298,37 @@ const HeroSection = () => {
             </div>
           </div>
 
-          {/* Control Buttons positioned at center panel bottom right */}
+          {/* Control Buttons positioned at center bottom */}
           <div className="absolute bottom-2 sm:bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 z-20">
-            <div className="relative w-[300px] sm:w-[400px] md:w-[560px] lg:w-[760px]">
-              <div className="absolute bottom-2 sm:bottom-3 md:bottom-4 right-4 sm:right-6 md:right-8 flex items-center gap-2 sm:gap-3">
-                
-                {/* Navigation Arrows */}
-                <button
-                  onClick={prevSlide}
-                  className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
-                >
-                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-                
-                {/* Play/Pause Button */}
-                <button
-                  onClick={togglePlayPause}
-                  className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
-                >
-                  {isPlaying ? <Pause className="w-4 h-4 sm:w-5 sm:h-5" /> : <Play className="w-4 h-4 sm:w-5 sm:h-5 ml-0.5" />}
-                </button>
-                
-                {/* Slide Counter */}
-                <div className="bg-black/50 rounded-full px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 text-white text-xs sm:text-sm font-medium">
-                  {currentSlide + 1} / {slides.length}
-                </div>
-                
-                <button
-                  onClick={nextSlide}
-                  className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
-                >
-                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
+            <div className="flex items-center gap-2 sm:gap-3">
+              
+              {/* Navigation Arrows */}
+              <button
+                onClick={prevSlide}
+                className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
+              >
+                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+              
+              {/* Play/Pause Button */}
+              <button
+                onClick={togglePlayPause}
+                className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
+              >
+                {isPlaying ? <Pause className="w-4 h-4 sm:w-5 sm:h-5" /> : <Play className="w-4 h-4 sm:w-5 sm:h-5 ml-0.5" />}
+              </button>
+              
+              {/* Slide Counter */}
+              <div className="bg-black/50 rounded-full px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 text-white text-xs sm:text-sm font-medium">
+                {currentSlide + 1} / {slides.length}
               </div>
+              
+              <button
+                onClick={nextSlide}
+                className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors touch-target"
+              >
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
             </div>
           </div>
         </div>
