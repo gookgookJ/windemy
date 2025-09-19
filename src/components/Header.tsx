@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, User, Menu, X, LogOut, BookOpen, Users, Info, ShoppingCart, Bell, Heart } from "lucide-react";
+import { Search, User, Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,10 +14,10 @@ const Header = () => {
   const { user, profile, signOut, isAdmin } = useAuth();
 
   const navigationItems = [
+    { name: "윈데미 소개", href: "/about" },
     { 
-      name: "전체강의", 
+      name: "클래스", 
       href: "/courses",
-      icon: BookOpen,
       submenu: [
         { name: "전체", href: "/courses" },
         { name: "무료강의", href: "/courses/free-courses" },
@@ -25,135 +25,98 @@ const Header = () => {
         { name: "프리미엄 강의", href: "/courses/premium-courses" },
       ]
     },
-    { 
-      name: "강사신청", 
-      href: "/instructor-apply", 
-      icon: Users,
-      badge: "NEW"
-    },
-    { 
-      name: "소개", 
-      href: "/about", 
-      icon: Info 
-    },
+    { name: "강사 지원", href: "/instructor-apply" },
   ];
 
   return (
-    <header className="bg-white/95 backdrop-blur-sm border-b border-border/50 fixed top-0 left-0 right-0 z-50 shadow-sm font-sans">
+    <header className="bg-white border-b border-border fixed top-0 left-0 right-0 z-50 shadow-soft font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-3 flex-shrink-0 select-none mr-8">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary via-primary to-secondary rounded-xl flex items-center justify-center shadow-md">
-                <span className="text-white font-bold text-lg leading-none">윈</span>
+          <div className="flex items-center space-x-8">
+            <Link to="/" className="flex items-center space-x-3 flex-shrink-0 select-none">
+              <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-[18px] leading-none">W</span>
               </div>
-              <span className="text-xl font-bold text-foreground whitespace-nowrap hidden sm:block">윈들리아카데미</span>
+              <span className="text-[20px] leading-none tracking-tight font-bold text-foreground whitespace-nowrap">Windly Academy</span>
             </Link>
 
-            {/* Desktop Navigation - 아이콘과 함께 */}
-            <nav className="hidden lg:flex items-center space-x-6">
-              {navigationItems.map((item) => {
-                const IconComponent = item.icon;
-                return (
-                  <div key={item.name} className="relative group">
-                    {item.submenu ? (
-                      <>
-                        <button className="text-foreground/80 hover:text-foreground transition-colors duration-200 font-medium flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-primary/5">
-                          <IconComponent className="w-4 h-4" />
-                          {item.name}
-                          <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                        <div className="absolute top-full left-0 mt-1 w-48 bg-white/95 backdrop-blur-sm border border-border/50 rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                          <div className="py-2">
-                            {item.submenu.map((subItem) => (
-                              <Link
-                                key={subItem.name}
-                                to={subItem.href}
-                                className="block px-4 py-2.5 text-sm text-foreground/70 hover:text-foreground hover:bg-primary/5 transition-colors duration-200"
-                              >
-                                {subItem.name}
-                              </Link>
-                            ))}
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <Link
-                        to={item.href}
-                        className="text-foreground/80 hover:text-foreground transition-colors duration-200 font-medium py-2 px-3 rounded-lg hover:bg-primary/5 flex items-center gap-2 relative"
-                      >
-                        <IconComponent className="w-4 h-4" />
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex space-x-8">
+              {navigationItems.map((item) => (
+                <div key={item.name} className="relative group">
+                  {item.submenu ? (
+                    <>
+                      <button className="text-muted-foreground hover:text-primary transition-colors duration-200 font-medium flex items-center gap-1">
                         {item.name}
-                        {item.badge && (
-                          <Badge variant="destructive" className="text-xs px-1.5 py-0.5 ml-1">
-                            {item.badge}
-                          </Badge>
-                        )}
-                      </Link>
-                    )}
-                  </div>
-                );
-              })}
+                        <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        <div className="py-2">
+                          {item.submenu.map((subItem) => (
+                            <Link
+                              key={subItem.name}
+                              to={subItem.href}
+                              className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors duration-200"
+                            >
+                              {subItem.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <Link
+                      to={item.href}
+                      className="text-muted-foreground hover:text-primary transition-colors duration-200 font-medium"
+                    >
+                      {item.name}
+                    </Link>
+                  )}
+                </div>
+              ))}
             </nav>
           </div>
 
-          {/* Search Bar - 더 크고 중앙에 배치 */}
-          <div className="hidden md:flex items-center flex-1 max-w-2xl mx-8">
-            <div className="w-full relative">
-              <SearchDropdown />
-            </div>
+          {/* Search Bar */}
+          <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
+            <SearchDropdown />
           </div>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-4">
             {/* Mobile Search */}
-            <Button variant="ghost" size="icon" className="md:hidden hover:bg-primary/10 rounded-full">
+            <Button variant="ghost" size="icon" className="md:hidden">
               <Search className="w-5 h-5" />
             </Button>
 
-            {/* 즐겨찾기 및 알림 (로그인 시에만) */}
-            {user && (
-              <>
-                <Link to="/favorite-courses">
-                  <Button variant="ghost" size="icon" className="hover:bg-primary/10 rounded-full relative">
-                    <Heart className="w-5 h-5" />
-                  </Button>
-                </Link>
-                <Button variant="ghost" size="icon" className="hover:bg-primary/10 rounded-full relative">
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full"></span>
-                </Button>
-              </>
-            )}
 
             {/* User Menu */}
             {user ? (
               <div className="flex items-center space-x-2">
                 {isAdmin && (
                   <Link to="/admin">
-                    <Button variant="destructive" size="sm" className="text-xs font-medium px-3 py-1.5 rounded-full">
+                    <Button variant="destructive" size="sm" className="text-xs whitespace-nowrap">
                       관리자
                     </Button>
                   </Link>
                 )}
                 <Link to="/my-page">
-                  <Button variant="ghost" size="icon" className="hover:bg-primary/10 rounded-full">
+                  <Button variant="ghost" size="icon" className="touch-target">
                     <User className="w-5 h-5" />
                   </Button>
                 </Link>
-                <Button variant="ghost" size="icon" onClick={signOut} className="hover:bg-destructive/10 rounded-full">
+                <Button variant="ghost" size="icon" onClick={signOut} className="touch-target">
                   <LogOut className="w-5 h-5" />
                 </Button>
               </div>
             ) : (
-              <div className="hidden sm:flex items-center space-x-3">
+              <div className="hidden sm:flex items-center space-x-2">
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  className="font-medium hover:bg-primary/10 px-4 py-2"
                   onClick={() => {
                     setAuthModalTab('signin');
                     setIsAuthModalOpen(true);
@@ -162,8 +125,8 @@ const Header = () => {
                   로그인
                 </Button>
                 <Button 
+                  variant="default" 
                   size="sm"
-                  className="font-medium px-4 py-2 rounded-full bg-primary hover:bg-primary/90 shadow-sm"
                   onClick={() => {
                     setAuthModalTab('signup');
                     setIsAuthModalOpen(true);
@@ -178,7 +141,7 @@ const Header = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden hover:bg-primary/10 rounded-full"
+              className="lg:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -188,76 +151,45 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="lg:hidden border-t border-border/50 bg-white/95 backdrop-blur-sm">
-            <div className="px-4 py-6 space-y-5">
+          <div className="lg:hidden border-t border-border bg-white">
+            <div className="px-4 py-6 space-y-4">
               {/* Mobile Search */}
               <div className="md:hidden">
                 <SearchDropdown />
               </div>
 
               {/* Mobile Navigation */}
-              <nav className="space-y-1">
-                {navigationItems.map((item) => {
-                  const IconComponent = item.icon;
-                  return (
-                    <div key={item.name}>
-                      <Link
-                        to={item.href}
-                        className="flex items-center gap-3 text-foreground/80 hover:text-foreground hover:bg-primary/5 transition-colors duration-200 font-medium py-3 px-3 rounded-lg"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <IconComponent className="w-5 h-5" />
-                        {item.name}
-                        {item.badge && (
-                          <Badge variant="destructive" className="text-xs px-1.5 py-0.5 ml-auto">
-                            {item.badge}
-                          </Badge>
-                        )}
-                      </Link>
-                      {item.submenu && (
-                        <div className="ml-8 mt-1 space-y-1">
-                          {item.submenu.map((subItem) => (
-                            <Link
-                              key={subItem.name}
-                              to={subItem.href}
-                              className="block text-sm text-foreground/60 hover:text-foreground hover:bg-primary/5 transition-colors duration-200 py-2 px-3 rounded-lg"
-                              onClick={() => setIsMenuOpen(false)}
-                            >
-                              {subItem.name}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+              <nav className="space-y-3">
+                {navigationItems.map((item) => (
+                  <div key={item.name}>
+                    <Link
+                      to={item.href}
+                      className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
+                    >
+                      {item.name}
+                    </Link>
+                    {item.submenu && (
+                      <div className="ml-4 mt-2 space-y-2">
+                        {item.submenu.map((subItem) => (
+                          <Link
+                            key={subItem.name}
+                            to={subItem.href}
+                            className="block text-sm text-muted-foreground hover:text-primary transition-colors duration-200 py-1"
+                          >
+                            {subItem.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
                 {user && (
-                  <>
-                    <Link 
-                      to="/favorite-courses" 
-                      className="flex items-center gap-3 text-foreground/80 hover:text-foreground hover:bg-primary/5 transition-colors duration-200 font-medium py-3 px-3 rounded-lg"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <Heart className="w-5 h-5" />
-                      관심강의
-                    </Link>
-                    <Link 
-                      to="/my-page" 
-                      className="flex items-center gap-3 text-foreground/80 hover:text-foreground hover:bg-primary/5 transition-colors duration-200 font-medium py-3 px-3 rounded-lg"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <User className="w-5 h-5" />
-                      마이페이지
-                    </Link>
-                  </>
+                  <Link to="/my-page" className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2">
+                    마이페이지
+                  </Link>
                 )}
                 {isAdmin && (
-                  <Link 
-                    to="/admin" 
-                    className="flex items-center gap-3 text-foreground/80 hover:text-foreground hover:bg-primary/5 transition-colors duration-200 font-medium py-3 px-3 rounded-lg"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <User className="w-5 h-5" />
+                  <Link to="/admin" className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2">
                     관리자
                   </Link>
                 )}
@@ -265,10 +197,10 @@ const Header = () => {
 
               {/* Mobile Auth Buttons */}
               {!user ? (
-                <div className="flex space-x-3 pt-4 border-t border-border/30 sm:hidden">
+                <div className="flex space-x-3 pt-4 border-t border-border sm:hidden">
                   <Button 
                     variant="ghost" 
-                    className="flex-1 font-medium hover:bg-primary/10"
+                    className="flex-1"
                     onClick={() => {
                       setAuthModalTab('signin');
                       setIsAuthModalOpen(true);
@@ -278,7 +210,8 @@ const Header = () => {
                     로그인
                   </Button>
                   <Button 
-                    className="flex-1 font-medium rounded-full bg-primary hover:bg-primary/90"
+                    variant="default" 
+                    className="flex-1"
                     onClick={() => {
                       setAuthModalTab('signup');
                       setIsAuthModalOpen(true);
@@ -289,15 +222,8 @@ const Header = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="pt-4 border-t border-border/30 sm:hidden">
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start font-medium hover:bg-destructive/10 rounded-lg" 
-                    onClick={() => {
-                      signOut();
-                      setIsMenuOpen(false);
-                    }}
-                  >
+                <div className="pt-4 border-t border-border sm:hidden">
+                  <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
                     <LogOut className="w-4 h-4 mr-2" />
                     로그아웃
                   </Button>
