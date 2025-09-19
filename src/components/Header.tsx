@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, User, Menu, X, LogOut } from "lucide-react";
+import { Search, User, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
@@ -104,13 +104,11 @@ const Header = () => {
                   </Link>
                 )}
                 <Link to="/my-page">
-                  <Button variant="ghost" size="icon" className="touch-target">
-                    <User className="w-5 h-5" />
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    <span className="hidden sm:inline">내 강의실</span>
                   </Button>
                 </Link>
-                <Button variant="ghost" size="icon" onClick={signOut} className="touch-target">
-                  <LogOut className="w-5 h-5" />
-                </Button>
               </div>
             ) : (
               <div className="hidden sm:flex items-center space-x-2">
@@ -196,7 +194,7 @@ const Header = () => {
               </nav>
 
               {/* Mobile Auth Buttons */}
-              {!user ? (
+              {!user && (
                 <div className="flex space-x-3 pt-4 border-t border-border sm:hidden">
                   <Button 
                     variant="ghost" 
@@ -219,13 +217,6 @@ const Header = () => {
                     }}
                   >
                     회원가입
-                  </Button>
-                </div>
-              ) : (
-                <div className="pt-4 border-t border-border sm:hidden">
-                  <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    로그아웃
                   </Button>
                 </div>
               )}
