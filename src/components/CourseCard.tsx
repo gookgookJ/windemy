@@ -59,8 +59,7 @@ const CourseCard = ({
       onClick={handleCardClick}
     >
       <div 
-        className="relative overflow-hidden bg-muted/50 min-h-[120px]" 
-        style={{ aspectRatio: 'auto' }}
+        className="relative overflow-hidden bg-muted/50 aspect-[16/9] lg:aspect-[16/9]" 
         data-image-container
       >
         <img
@@ -76,7 +75,8 @@ const CourseCard = ({
           onLoad={(e) => {
             const img = e.target as HTMLImageElement;
             const container = img.closest('[data-image-container]') as HTMLElement;
-            if (container && img.naturalWidth && img.naturalHeight) {
+            // Only adjust aspect ratio for mobile/tablet (below lg breakpoint)
+            if (container && img.naturalWidth && img.naturalHeight && window.innerWidth < 1024) {
               const aspectRatio = img.naturalWidth / img.naturalHeight;
               container.style.aspectRatio = aspectRatio.toString();
             }
