@@ -145,9 +145,13 @@ const HeroSection = () => {
     }
 
     const handleResize = () => {
-      const idx = (prev => prev)(trackIndex);
+      // 현재 activeIndex를 기준으로 정확한 trackIndex 계산
+      const centerGroupStart = slides.length;
+      const correctTrackIndex = centerGroupStart + activeIndex;
+      
       snappingRef.current = true;
-      moveToTrack(idx, true);
+      setTrackIndex(correctTrackIndex);
+      moveToTrack(correctTrackIndex, true);
       forceReflow();
       setEnableTransition(true);
       updateControlsPosition();
