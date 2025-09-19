@@ -124,7 +124,7 @@ const HeroSection = () => {
 
   // currentIndex 변경시 위치 업데이트
   useEffect(() => {
-    if (slides.length && !isTransitioning.current) {
+    if (slides.length && !isTransitioning.current && typeof currentIndex === 'number') {
       moveToIndex(slides.length + currentIndex);
     }
   }, [currentIndex, slides.length]);
@@ -237,7 +237,7 @@ const HeroSection = () => {
           >
             {extendedSlides.map((s, i) => {
               const originalIndex = i % slides.length;
-              const isActive = originalIndex === currentIndex;
+              const isActive = originalIndex === (currentIndex || 0);
               return (
                 <div
                   key={`${s.id}-${i}`}
