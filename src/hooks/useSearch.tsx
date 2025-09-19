@@ -35,7 +35,7 @@ export const useSearch = () => {
 
   // Live search when query changes
   useEffect(() => {
-    if (searchQuery.trim().length >= 2) {
+    if (searchQuery.trim().length >= 1) {
       performLiveSearch(searchQuery.trim());
     } else {
       setLiveSearchResults([]);

@@ -143,7 +143,7 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
             )}
 
             {/* Live Search Results */}
-            {searchQuery.trim().length >= 2 && (
+            {searchQuery.trim().length >= 1 && (
               <div className={recentSearches.length > 0 ? "mt-6 pt-4 border-t border-border" : ""}>
                 <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
                   <Search className="w-4 h-4" />
@@ -189,9 +189,6 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
                               {course.instructor_name}
                             </p>
                           )}
-                          <p className="text-xs text-primary font-medium">
-                            {course.price === 0 ? '무료' : `₩${course.price.toLocaleString()}`}
-                          </p>
                         </div>
                       </Link>
                     ))}
@@ -207,11 +204,11 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
             )}
 
             {/* Empty state when no search query */}
-            {searchQuery.trim().length < 2 && recentSearches.length === 0 && (
+            {searchQuery.trim().length < 1 && recentSearches.length === 0 && (
               <div className="text-center py-6">
                 <Search className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">
-                  강의 또는 강사 이름을 2글자 이상 입력해보세요
+                  원하는 내용을 검색해보세요
                 </p>
               </div>
             )}
