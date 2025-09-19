@@ -19,7 +19,7 @@ const GAP_PX = 16; // gap-4
 
 const HeroSection = () => {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
-  const [current, setCurrent] = useState(0);
+  const [current, setCurrent] = useState(1); // 두 번째 슬라이드부터 시작
   const [isPlaying, setIsPlaying] = useState(true);
   const [dragging, setDragging] = useState(false);
   const [enableTransition, setEnableTransition] = useState(false); // 초기 렌더 셋업용
@@ -231,8 +231,8 @@ const HeroSection = () => {
             })}
           </div>
           
-          {/* 중앙 하단 고정 컨트롤 */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[4] flex items-center gap-2">
+          {/* 우측 하단 고정 컨트롤 */}
+          <div className="absolute bottom-4 right-4 z-[4] flex items-center gap-2">
             <button
               onClick={(e) => { e.stopPropagation(); prev(); }}
               className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
