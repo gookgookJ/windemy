@@ -22,16 +22,24 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
-                  서비스 이용약관
+                <Link to="/instructor-apply" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
+                  강사 지원하기
+                </Link>
+              </li>
+              <li>
+                <a 
+                  href="mailto:edu@windly.cc"
+                  className="text-slate-400 hover:text-white transition-colors duration-200 text-sm"
+                >
+                  비즈니스/제휴 문의
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* 두 번째 컬럼 - 개인정보 */}
+          {/* 두 번째 컬럼 - 개인정보&이용약관 */}
           <div className="space-y-4">
-            <h3 className="font-medium text-white text-sm mb-6">개인정보</h3>
+            <h3 className="font-medium text-white text-sm mb-6">개인정보&이용약관</h3>
             <ul className="space-y-3">
               <li>
                 <a href="#" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
@@ -40,7 +48,7 @@ const Footer = () => {
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
-                  제휴
+                  서비스 이용약관
                 </a>
               </li>
             </ul>
@@ -61,12 +69,6 @@ const Footer = () => {
                   <Youtube className="w-3.5 h-3.5" />
                   Youtube
                 </a>
-              </li>
-              <li>
-                <Link to="/instructor-apply" className="text-slate-400 hover:text-white transition-colors duration-200 flex items-center gap-2 text-sm">
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  강사 지원하기
-                </Link>
               </li>
             </ul>
           </div>
@@ -97,15 +99,6 @@ const Footer = () => {
                   인스타그램
                 </a>
               </li>
-              <li>
-                <a 
-                  href="mailto:edu@windly.cc"
-                  className="text-slate-400 hover:text-white transition-colors duration-200 flex items-center gap-2 text-sm"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  비즈니스/제휴 문의
-                </a>
-              </li>
             </ul>
           </div>
 
@@ -117,12 +110,12 @@ const Footer = () => {
                   size="sm"
                   className="w-full bg-white text-slate-900 hover:bg-slate-100 font-medium text-sm h-9"
                 >
-                  문의하기
+                  고객센터
                 </Button>
               </Link>
               <div className="text-xs text-slate-500 space-y-1.5">
                 <p>평일 10:00 - 18:00</p>
-                <p>점심시간 12 - 13시</p>
+                <p>점심시간 12:30 - 13:30</p>
                 <p>주말 및 공휴일 제외</p>
               </div>
             </div>
