@@ -447,8 +447,8 @@ const CourseDetail = () => {
 
 
             {/* Sticky Navigation Bar */}
-            {/* 수정됨: bg-background로 변경하여 불투명하게 만들고, backdrop-blur-sm 제거 */}
-            <div className="sticky top-20 z-40 bg-background border border-border rounded-lg mb-8 overflow-hidden shadow-sm">
+            {/* 수정됨: z-index를 높여서 콘텐츠가 밑으로 지나가도록 함 */}
+            <div className="sticky top-20 z-50 bg-background border border-border rounded-lg mb-8 overflow-hidden shadow-md">
               <div className="grid grid-cols-4 gap-0">
                 {/* Responsive Button Styles */}
                 <button
