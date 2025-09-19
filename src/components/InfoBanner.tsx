@@ -148,14 +148,14 @@ const InfoBanner = () => {
   };
 
   return (
-    <section className="w-full py-10 bg-gradient-to-br from-slate-900 to-slate-800">
+    <section className="w-full py-10 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 중앙 강조 텍스트 */}
         <div className="text-center mb-6">
           <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2 leading-tight">
-            보기만해도 매출 상승하는<br className="sm:hidden" /> 이커머스 사업 꿀팁!
+            보기만해도 <span className="underline decoration-2 underline-offset-4 decoration-white/80">매출 상승하는</span><br className="sm:hidden" /> 이커머스 사업 꿀팁!
           </h2>
-          <div className="w-20 sm:w-24 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full"></div>
+          <div className="w-20 sm:w-24 h-1 bg-gradient-to-r from-white/60 to-white/80 mx-auto rounded-full"></div>
         </div>
         
         {/* PC View - 기존 그리드 레이아웃 */}
