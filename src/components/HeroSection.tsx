@@ -22,112 +22,96 @@ const HeroSection = () => {
   const [current, setCurrent] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [dragging, setDragging] = useState(false);
-  const [enableTransition, setEnableTransition] = useState(false); // 초기 렌더 셋업용
 
   const wrapRef = useRef<HTMLDivElement>(null);
-  const firstCardRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const startX = useRef(0);
   const curX = useRef(0);
 
   const navigate = useNavigate();
 
-  // ----- 데이터 로드 -----
+  // --- Fetch slides ---
   useEffect(() => {
-    let mounted = true;
+    let isMounted = true;
     (async () => {
-      const { data, error } = await supabase
-        .from("hero_slides")
-        .select(
-          "id, title, subtitle, description, image_url, course_id, link_url, order_index"
-        )
-        .eq("is_active", true)
-        .eq("is_draft", false)
-        .order("order_index")
-        .limit(10);
+      try {
+        const { data, error } = await supabase
+          .from("hero_slides")
+          .select(
+            "id, title, subtitle, description, image_url, course_id, link_url, order_index"
+          )
+          .eq("is_active", true)
+          .eq("is_draft", false)
+          .order("order_index")
+          .limit(10);
 
-    if (!error && data && data.length && mounted) {
-        setSlides(data);
+        if (!error && data && data.length > 0 && isMounted) {
+          setSlides(data);
+        }
+      } catch (e) {
+        if (isMounted) console.error("Error fetching slides:", e);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // ----- LCP 프리로드 -----
+  // --- Preload first hero image for LCP ---
   useEffect(() => {
-    if (!slides.length) return;
-    const href = getOptimizedImageForContext(slides[0].image_url, "hero-slide");
-    const l = document.createElement("link");
-    l.rel = "preload";
-    l.as = "image";
-    l.href = href;
-    l.fetchPriority = "high";
-    if (slides[0].image_url.includes("supabase.co")) l.crossOrigin = "anonymous";
-    document.head.appendChild(l);
-    const img = new Image();
-    img.src = href;
-    return () => { if (document.head.contains(l)) document.head.removeChild(l); };
+    if (slides.length > 0 && slides[0].image_url) {
+      const href = getOptimizedImageForContext(slides[0].image_url, "hero-slide");
+      const l = document.createElement("link");
+      l.rel = "preload";
+      l.as = "image";
+      l.href = href;
+      l.fetchPriority = "high";
+      if (slides[0].image_url.includes("supabase.co")) l.crossOrigin = "anonymous";
+      document.head.appendChild(l);
+      const img = new Image();
+      img.src = href;
+      return () => {
+        if (document.head.contains(l)) document.head.removeChild(l);
+      };
+    }
   }, [slides]);
 
-  // ----- 중앙 정렬 계산 -----
-  const [translateX, setTranslateX] = useState(0);
+  // --- autoplay ---
+  useEffect(() => {
+    if (!isPlaying || slides.length === 0 || dragging) return;
+    const t = setInterval(() => setCurrent((p) => (p + 1) % slides.length), 5000);
+    return () => clearInterval(t);
+  }, [slides.length, isPlaying, dragging]);
 
+  const next = () => setCurrent((p) => (p + 1) % slides.length);
+  const prev = () => setCurrent((p) => (p - 1 + slides.length) % slides.length);
+  const toggle = () => setIsPlaying((v) => !v);
+
+  const handleClickSlide = (s: HeroSlide) => {
+    if (s.course_id) navigate(`/course/${s.course_id}`);
+    else if (s.link_url) window.open(s.link_url, "_blank");
+  };
+
+  // --- 중앙 정렬 계산 ---
+  const [translateX, setTranslateX] = useState(0);
   const recalc = () => {
     const wrap = wrapRef.current;
-    const card = firstCardRef.current;
-    if (!wrap || !card || !slides.length) return;
+    const card = cardRef.current;
+    if (!wrap || !card) return;
     const wrapW = wrap.clientWidth;
     const cardW = card.clientWidth;
     const offset = current * (cardW + GAP_PX) - (wrapW / 2 - cardW / 2);
     setTranslateX(-offset);
   };
 
-  // 초기 렌더: 측정 → 중앙 고정 → 그 다음부터 transition 활성화
   useEffect(() => {
-    // 첫 계산은 transition 없이
-    setEnableTransition(false);
-    const setup = () => {
-      recalc();
-      // 다음 프레임 이후 transition 켜기
-      requestAnimationFrame(() => setEnableTransition(true));
-    };
-
-    // 이미지가 로드되면 더 정확 (첫 카드 onload)
-    const img = firstCardRef.current?.querySelector("img");
-    if (img && !img.complete) {
-      img.addEventListener("load", setup, { once: true });
-    } else {
-      setup();
-    }
-
+    recalc();
     window.addEventListener("resize", recalc);
-    return () => {
-      window.removeEventListener("resize", recalc);
-      if (img) img.removeEventListener("load", setup);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slides.length]);
+    return () => window.removeEventListener("resize", recalc);
+  }, [current, slides.length]);
 
-  // current 변경 시에도 재계산
-  useEffect(() => { recalc(); }, [current]);
-
-  // ----- 오토플레이 -----
-  useEffect(() => {
-    if (!isPlaying || !slides.length || dragging) return;
-    const t = setInterval(() => setCurrent((p) => (p + 1) % slides.length), 5000);
-    return () => clearInterval(t);
-  }, [isPlaying, slides.length, dragging]);
-
-  const next = () => setCurrent((p) => (p + 1) % slides.length);
-  const prev = () => setCurrent((p) => (p - 1 + slides.length) % slides.length);
-  const toggle = () => setIsPlaying((v) => !v);
-
-  const handleClick = (s: HeroSlide) => {
-    if (s.course_id) navigate(`/course/${s.course_id}`);
-    else if (s.link_url) window.open(s.link_url, "_blank");
-  };
-
-  // ----- 스와이프 -----
+  // --- swipe ---
   const onTouchStart = (e: React.TouchEvent) => {
     setDragging(true);
     startX.current = e.touches[0].clientX;
@@ -163,11 +147,11 @@ const HeroSection = () => {
   return (
     <section className="relative w-full bg-white py-4">
       {hasSlides && (
-        <div ref={wrapRef} className="relative w-full overflow-hidden">
-          {/* 트랙: 월부형 구조 */}
+        <div ref={wrapRef} className="overflow-hidden relative w-full">
+          {/* 트랙 */}
           <div
-            className={`flex gap-4 ml-0 ${enableTransition ? "transition-transform duration-500 ease-out" : ""}`}
-            style={{ transform: `translate3d(${translateX}px, 0, 0)` }}
+            className="flex gap-4 ml-0 transition-transform duration-500 ease-out"
+            style={{ transform: `translate3d(${translateX}px,0,0)` }}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -183,71 +167,92 @@ const HeroSection = () => {
                   key={s.id}
                   role="group"
                   aria-roledescription="slide"
-                  ref={i === 0 ? firstCardRef : undefined}
+                  ref={i === 0 ? cardRef : undefined}
                   className={[
-                    "min-w-0 shrink-0 grow-0 relative overflow-hidden rounded-lg last:mr-4",
-                    // 반응형 카드 폭/높이 (넓을수록 더 많이 보이게)
-                    "h-[180px] w-[280px] sm:h-[220px] sm:w-[420px] md:h-[280px] md:w-[560px] lg:h-[340px] lg:w-[760px]",
-                    // 사이드 흐림(메인 강조)
-                    "after:pointer-events-none after:absolute after:inset-0 after:z-[2]",
-                    isActive ? "after:opacity-0" : "after:bg-black/60 after:opacity-100",
+                    "min-w-0 shrink-0 grow-0 relative overflow-hidden",
+                    "rounded-lg last:mr-4",
+                    "h-[180px] w-[280px] sm:h-[240px] sm:w-[460px] md:h-[300px] md:w-[600px] lg:h-[340px] lg:w-[760px]",
+                    "after:pointer-events-none after:absolute after:top-0 after:left-0 after:h-full after:w-full after:z-[2]",
+                    isActive
+                      ? "after:opacity-0"
+                      : "after:bg-black/60 after:opacity-100",
                   ].join(" ")}
-                  onClick={() => handleClick(s)}
+                  onClick={() => handleClickSlide(s)}
                 >
-                  {/* 이미지 */}
-                  <img
-                    alt={s.title}
-                    src={getOptimizedImageForContext(s.image_url, "hero-slide")}
-                    className="absolute inset-0 h-full w-full object-cover"
-                    loading={isActive ? "eager" : "lazy"}
-                    fetchPriority={isActive ? "high" : undefined}
-                    decoding={isActive ? "sync" : "auto"}
-                    onLoad={() => { if (i === 0) recalc(); }}
-                  />
+                  <div className="absolute top-0 left-0 h-full w-full">
+                    <img
+                      alt={s.title}
+                      src={getOptimizedImageForContext(s.image_url, "hero-slide")}
+                      className="inline-block h-full w-full object-cover"
+                      loading={isActive ? "eager" : "lazy"}
+                      fetchPriority={isActive ? "high" : undefined}
+                      decoding={isActive ? "sync" : "auto"}
+                    />
+                  </div>
 
-                  {/* 텍스트(모든 카드에서 노출, 활성일 때 더 또렷/큼) */}
-                  <div className="absolute bottom-14 left-5 z-[3] w-[calc(100%-40px)] space-y-2">
-                    <h2 className={`${isActive ? "text-white text-lg sm:text-xl md:text-2xl lg:text-3xl" : "text-white/85 text-base sm:text-lg md:text-xl"} font-bold drop-shadow-lg`}>
+                  {/* 텍스트 (조금 위쪽으로) */}
+                  <div className="absolute bottom-12 left-6 z-[3] w-[calc(100%-48px)] space-y-2">
+                    <h2
+                      className={`font-bold drop-shadow-lg ${
+                        isActive
+                          ? "text-white text-lg sm:text-xl md:text-2xl lg:text-3xl"
+                          : "text-white/80 text-base sm:text-lg"
+                      }`}
+                    >
                       {s.title}
                     </h2>
                     {s.subtitle && (
-                      <h3 className={`${isActive ? "text-white/90 text-sm sm:text-base md:text-lg" : "text-white/70 text-sm sm:text-base"} drop-shadow`}>
+                      <h3
+                        className={`drop-shadow ${
+                          isActive
+                            ? "text-white/90 text-sm sm:text-base md:text-lg"
+                            : "text-white/70 text-sm"
+                        }`}
+                      >
                         {s.subtitle}
                       </h3>
                     )}
                     {s.description && (
-                      <p className={`${isActive ? "text-white/85 text-xs sm:text-sm md:text-base" : "text-white/60 text-xs sm:text-sm"} drop-shadow`}>
+                      <p
+                        className={`drop-shadow ${
+                          isActive
+                            ? "text-white/80 text-xs sm:text-sm md:text-base"
+                            : "hidden"
+                        }`}
+                      >
                         {s.description}
                       </p>
                     )}
                   </div>
-
-                  {/* 컨트롤: 활성 카드 우측 하단 고정(빨간 박스 위치) */}
-                  {isActive && (
-                    <div className="absolute bottom-4 right-5 z-[4] flex items-center gap-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); prev(); }}
-                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-                      >
-                        <ChevronLeft className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setIsPlaying((v) => !v); }}
-                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-                      >
-                        {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); next(); }}
-                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-                      >
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
-                    </div>
-                  )}
                 </div>
               );
             })}
+          </div>
+
+          {/* 컨트롤 버튼 → 메인 이미지 오른쪽 하단 */}
+          <div className="absolute bottom-4 right-6 z-20 flex items-center gap-2">
+            <button
+              onClick={prev}
+              className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={toggle}
+              className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+            >
+              {isPlaying ? (
+                <Pause className="w-5 h-5" />
+              ) : (
+                <Play className="w-5 h-5" />
+              )}
+            </button>
+            <button
+              onClick={next}
+              className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
         </div>
       )}
