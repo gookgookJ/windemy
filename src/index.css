@@ -277,7 +277,7 @@ img {
   body {
     @apply bg-background text-foreground;
     scroll-behavior: smooth;
-    overflow-x: hidden; /* 가로 스크롤 방지 */
+    /* overflow-x: hidden 제거 - sticky positioning을 방해함 */
     padding-top: 64px; /* 헤더 높이만큼 여백 확보 */
     /* iOS 노치 대응 */
     padding-top: max(64px, env(safe-area-inset-top));
