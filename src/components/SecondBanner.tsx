@@ -135,7 +135,7 @@ const SecondBanner = () => {
               상위 1% 셀러의 판매법
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground">
-              지금 바로 확인해보세요!
+              윈들리 유튜브에서 지금 확인해보세요!
             </p>
           </div>
           <Button
