@@ -14,52 +14,52 @@ const SecondBanner = () => {
   const youtubeVideos = [
     {
       id: "kztEXMiPYzA",
-      title: "AI 모델 배포와 운영의 모든 것",
+      title: "",
       thumbnail: `https://img.youtube.com/vi/kztEXMiPYzA/maxresdefault.jpg`,
     },
     {
       id: "d3gz_uTNuX0",
-      title: "분산 추론을 위한 멀티 머신 GPU 설정",
+      title: "",
       thumbnail: `https://img.youtube.com/vi/d3gz_uTNuX0/maxresdefault.jpg`,
     },
     {
       id: "-AojEJLT338",
-      title: "유튜브 제목 작성법, 조회수 늘리는 비법",
+      title: "",
       thumbnail: `https://img.youtube.com/vi/-AojEJLT338/maxresdefault.jpg`,
     },
     {
       id: "ZKRadvhmrAM",
-      title: "딥러닝 모델 최적화 기법",
+      title: "",
       thumbnail: `https://img.youtube.com/vi/ZKRadvhmrAM/maxresdefault.jpg`,
     },
     {
       id: "zCscF4-cys0",
-      title: "클라우드 인프라 구축 가이드",
+      title: "",
       thumbnail: `https://img.youtube.com/vi/zCscF4-cys0/maxresdefault.jpg`,
     },
     {
       id: "lx1deqdvdes",
-      title: "실전 MLOps 파이프라인 구축",
+      title: "",
       thumbnail: `https://img.youtube.com/vi/lx1deqdvdes/maxresdefault.jpg`,
     },
     {
       id: "Kj1FGAL5ScM",
-      title: "컨테이너 기반 서비스 배포",
+      title: "",
       thumbnail: `https://img.youtube.com/vi/Kj1FGAL5ScM/maxresdefault.jpg`,
     },
     {
       id: "kewfIAYKuM0",
-      title: "마이크로서비스 아키텍처 설계",
+      title: "",
       thumbnail: `https://img.youtube.com/vi/kewfIAYKuM0/maxresdefault.jpg`,
     },
     {
       id: "CQL1wlJyr4A",
-      title: "데이터 파이프라인 구축하기",
+      title: "",
       thumbnail: `https://img.youtube.com/vi/CQL1wlJyr4A/maxresdefault.jpg`,
     },
     {
       id: "7cwMsPDqpBw",
-      title: "실시간 데이터 처리 시스템",
+      title: "",
       thumbnail: `https://img.youtube.com/vi/7cwMsPDqpBw/maxresdefault.jpg`,
     }
   ];
