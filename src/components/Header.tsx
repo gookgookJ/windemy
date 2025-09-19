@@ -38,7 +38,7 @@ const Header = () => {
               <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center flex-shrink-0">
                 <span className="text-white font-bold text-[18px] leading-none">W</span>
               </div>
-              <span className="text-[20px] leading-none tracking-tight font-bold text-foreground whitespace-nowrap">Windly Academy</span>
+              <span className="text-[20px] leading-none tracking-tight font-bold text-foreground whitespace-nowrap">윈들리아카데미</span>
             </Link>
 
             {/* Desktop Navigation */}
