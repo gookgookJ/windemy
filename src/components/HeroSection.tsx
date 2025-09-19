@@ -19,9 +19,8 @@ const GAP_PX = 16; // gap-4
 
 const HeroSection = () => {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
-  const [activeIndex, setActiveIndex] = useState(0);    // 0..(n-1), 텍스트/불투명 강조에 사용
-  const [trackIndex, setTrackIndex] = useState(0);      // 확장(3배) 트랙에서의 절대 인덱스
-  const [translateX, setTranslateX] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0); // 실제 보여지는 슬라이드 인덱스
+  const [translateX, setTranslateX] = useState(0); // 실제 translate 값
   const [isPlaying, setIsPlaying] = useState(true);
   const [dragging, setDragging] = useState(false);
   const [enableTransition, setEnableTransition] = useState(false);
@@ -51,13 +50,11 @@ const HeroSection = () => {
         .order("order_index")
         .limit(10);
 
-      if (!error && data && data.length && mounted) {
+    if (!error && data && data.length && mounted) {
         setSlides(data);
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
   // ----- LCP 프리로드 -----
@@ -73,31 +70,28 @@ const HeroSection = () => {
     document.head.appendChild(l);
     const img = new Image();
     img.src = href;
-    return () => {
-      if (document.head.contains(l)) document.head.removeChild(l);
-    };
+    return () => { if (document.head.contains(l)) document.head.removeChild(l); };
   }, [slides]);
 
-  // ----- 유틸 -----
+  // ----- 무한 루프 슬라이드 계산 -----
   const getCardWidth = () => {
     const card = firstCardRef.current;
     return card ? card.clientWidth + GAP_PX : 0;
   };
 
-  const moveToTrack = (idx: number, immediate = false) => {
+  const moveToIndex = (index: number, immediate = false) => {
+    if (isTransitioning.current) return;
+    
     const cardWidth = getCardWidth();
     if (!cardWidth) return;
-    const wrapWidth = wrapRef.current?.clientWidth ?? 0;
 
-    // idx번째 카드를 화면 중앙에 오도록 이동
-    const offset =
-      idx * cardWidth - (wrapWidth / 2 - (cardWidth - GAP_PX) / 2);
-
+    const wrapWidth = wrapRef.current?.clientWidth || 0;
+    const offset = index * cardWidth - (wrapWidth / 2 - (cardWidth - GAP_PX) / 2);
+    
     if (immediate) {
       setEnableTransition(false);
       setTranslateX(-offset);
-      // 다음 프레임에 transition 다시 켜서 눈에 띄지 않게 스냅
-      requestAnimationFrame(() => setEnableTransition(true));
+      setTimeout(() => setEnableTransition(true), 50);
     } else {
       setTranslateX(-offset);
     }
@@ -107,27 +101,26 @@ const HeroSection = () => {
     const cardEl = firstCardRef.current;
     const groupEl = controlsRef.current;
     if (!cardEl || !groupEl) return;
-    const cardW = cardEl.clientWidth;
-    const groupW = groupEl.clientWidth;
-    const margin = 16;
+    const cardW = cardEl.clientWidth; // single card width
+    const groupW = groupEl.clientWidth; // buttons width
+    const margin = 16; // keep some right padding inside card
     const translate = cardW / 2 - margin - groupW;
     setControlsTranslate(translate);
   };
 
-  // ----- 초기 세팅 및 리사이즈 -----
+  // ----- 초기 설정 및 리사이즈 처리 -----
   useEffect(() => {
     if (!slides.length) return;
-
+    
+    setEnableTransition(false);
     const setup = () => {
-      // 시작을 "가운데 그룹의 0번째"로 설정
-      const startTrack = slides.length; // [L][C][R]에서 C그룹의 0번째
-      setActiveIndex(0);
-      setTrackIndex(startTrack);
-      moveToTrack(startTrack, true);
+      const startIndex = slides.length; // 중앙 그룹의 첫 번째 슬라이드
+      setCurrentIndex(0);
+      moveToIndex(startIndex, true);
       updateControlsPosition();
+      setTimeout(() => setEnableTransition(true), 100);
     };
 
-    // 첫 카드 이미지 로드 이후 치수 안정화
     const img = firstCardRef.current?.querySelector("img");
     if (img && !img.complete) {
       img.addEventListener("load", setup, { once: true });
@@ -136,26 +129,28 @@ const HeroSection = () => {
     }
 
     const handleResize = () => {
-      // 현재 trackIndex 기준으로 위치 재계산
       setTimeout(() => {
-        moveToTrack((prev => prev)(trackIndex), true);
+        moveToIndex(slides.length + currentIndex);
         updateControlsPosition();
-      }, 60);
+      }, 100);
     };
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
       if (img) img.removeEventListener("load", setup);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slides.length]);
 
-  // trackIndex가 바뀌면 이동
+  // currentIndex 변경시 위치 업데이트
   useEffect(() => {
-    if (!slides.length) return;
-    moveToTrack(trackIndex);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trackIndex, slides.length]);
+    if (slides.length && typeof currentIndex === 'number') {
+      const timeoutId = setTimeout(() => {
+        moveToIndex(slides.length + currentIndex);
+        updateControlsPosition();
+      }, 50);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [currentIndex, slides.length]);
 
   // ----- 오토플레이 -----
   useEffect(() => {
@@ -164,23 +159,17 @@ const HeroSection = () => {
       next();
     }, 5000);
     return () => clearInterval(t);
-  }, [isPlaying, slides.length, dragging, activeIndex]);
+  }, [isPlaying, slides.length, dragging, currentIndex]);
 
-  // ----- 네비게이션 -----
+  // ----- 네비게이션 함수들 -----
   const next = () => {
     if (isTransitioning.current) return;
-    isTransitioning.current = true;
-    setEnableTransition(true);
-    setTrackIndex((prev) => prev + 1);               // 항상 +1로 이동
-    setActiveIndex((i) => (i + 1) % slides.length);  // 강조용 인덱스
+    setCurrentIndex((prev) => (prev + 1) % slides.length);
   };
 
   const prev = () => {
     if (isTransitioning.current) return;
-    isTransitioning.current = true;
-    setEnableTransition(true);
-    setTrackIndex((prev) => prev - 1);                                  // 항상 -1로 이동
-    setActiveIndex((i) => (i - 1 + slides.length) % slides.length);
+    setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
   const toggle = () => setIsPlaying((v) => !v);
@@ -221,47 +210,18 @@ const HeroSection = () => {
     if (Math.abs(dx) > 50) (dx > 0 ? next() : prev());
   };
 
-  // ----- 무한 루프용 확장 배열 -----
-  const extendedSlides =
-    slides.length > 0 ? [...slides, ...slides, ...slides] : [];
+  // 무한 루프를 위한 슬라이드 복제
+  const extendedSlides = slides.length > 0 ? [...slides, ...slides, ...slides] : [];
   const hasSlides = slides.length > 0;
-
-  // ----- transition 끝난 뒤 경계 스냅 (무한루프 핵심) -----
-  const onTransitionEnd = () => {
-    if (!slides.length) return;
-    const n = slides.length;
-
-    // 중앙 그룹 범위 [n .. 2n-1]를 벗어나면 스냅
-    if (trackIndex >= 2 * n) {
-      const ni = trackIndex - n; // 같은 아이템의 중앙 그룹 위치
-      setEnableTransition(false);
-      setTrackIndex(ni);
-      moveToTrack(ni, true);
-    } else if (trackIndex < n) {
-      const ni = trackIndex + n;
-      setEnableTransition(false);
-      setTrackIndex(ni);
-      moveToTrack(ni, true);
-    }
-
-    // 다음 애니메이션 허용
-    requestAnimationFrame(() => {
-      isTransitioning.current = false;
-      setEnableTransition(true);
-    });
-  };
 
   return (
     <section className="relative w-full bg-white py-4">
       {hasSlides && (
         <div ref={wrapRef} className="relative w-full overflow-hidden">
-          {/* 트랙 */}
+          {/* 트랙: 월부형 구조 */}
           <div
-            className={`flex gap-4 ml-0 ${
-              enableTransition ? "transition-transform duration-500 ease-out" : ""
-            }`}
+            className={`flex gap-4 ml-0 ${enableTransition ? "transition-transform duration-500 ease-out" : ""}`}
             style={{ transform: `translate3d(${translateX}px, 0, 0)` }}
-            onTransitionEnd={onTransitionEnd}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -271,9 +231,10 @@ const HeroSection = () => {
             onMouseLeave={onMouseUp}
           >
             {extendedSlides.map((s, i) => {
-              const originalIndex = slides.length ? i % slides.length : 0;
+              const originalIndex = i % slides.length;
+              // 더 안정적인 활성 슬라이드 계산
+              const activeIndex = currentIndex >= 0 ? currentIndex : 0;
               const isActive = originalIndex === activeIndex;
-
               return (
                 <div
                   key={`${s.id}-${i}`}
@@ -282,10 +243,11 @@ const HeroSection = () => {
                   ref={i === 0 ? firstCardRef : undefined}
                   className={[
                     "min-w-0 shrink-0 grow-0 relative overflow-hidden rounded-lg last:mr-4",
+                    // 반응형 카드 폭/높이 (넓을수록 더 많이 보이게)
                     "h-[180px] w-[280px] sm:h-[220px] sm:w-[420px] md:h-[280px] md:w-[560px] lg:h-[340px] lg:w-[760px]",
+                    // 사이드 흐림(메인 강조) - 흰색계열로 변경
                     "after:pointer-events-none after:absolute after:inset-0 after:z-[2]",
                     isActive ? "after:opacity-0" : "after:bg-white/40 after:opacity-100",
-                    isActive ? "" : "cursor-pointer",
                   ].join(" ")}
                   onClick={() => handleClick(s)}
                 >
@@ -299,7 +261,7 @@ const HeroSection = () => {
                     decoding={isActive ? "sync" : "auto"}
                   />
 
-                  {/* 텍스트 (모든 카드에 표시) */}
+                  {/* 텍스트 (모든 카드에 표시, 흰색 계열) */}
                   <div className="absolute bottom-14 left-5 z-[3] w-[calc(100%-40px)] space-y-2">
                     <h2 className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold drop-shadow-lg">
                       {s.title}
@@ -315,42 +277,34 @@ const HeroSection = () => {
                       </p>
                     )}
                   </div>
+
                 </div>
               );
             })}
           </div>
 
-          {/* 컨트롤: 가운데 카드 우하단 위치 */}
+          {/* 고정 컨트롤 버튼: 가운데 카드의 우측 하단에 정렬되도록 동적 위치 */}
           <div
             ref={controlsRef}
             className="pointer-events-none absolute bottom-4 left-1/2 z-[4] flex items-center gap-2"
             style={{ transform: `translateX(${controlsTranslate}px)` }}
           >
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                prev();
-              }}
+              onClick={(e) => { e.stopPropagation(); prev(); }}
               className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
               aria-label="Previous slide"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggle();
-              }}
+              onClick={(e) => { e.stopPropagation(); toggle(); }}
               className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
               aria-label="Toggle autoplay"
             >
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </button>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                next();
-              }}
+              onClick={(e) => { e.stopPropagation(); next(); }}
               className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
               aria-label="Next slide"
             >
