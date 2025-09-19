@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AuthModal } from "@/components/auth/AuthModal";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { CourseDetailImages } from "@/components/CourseDetailImages";
 import { Progress } from "@/components/ui/progress";
@@ -108,6 +109,7 @@ const CourseDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [showAlreadyEnrolledModal, setShowAlreadyEnrolledModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false); // Add auth modal state
   const [instructorInfo, setInstructorInfo] = useState<InstructorInfo | null>(null);
   
   const navigate = useNavigate();
@@ -353,12 +355,7 @@ const CourseDetail = () => {
     console.log('구매 버튼 클릭됨', { user, courseId, selectedOption });
     
     if (!user) {
-      toast({
-        title: "로그인이 필요합니다",
-        description: "강의를 구매하려면 먼저 로그인해주세요.",
-        variant: "destructive"
-      });
-      navigate('/');
+      setShowAuthModal(true);
       return;
     }
     
@@ -538,41 +535,33 @@ const CourseDetail = () => {
               />
             </div>
 
-            {/* Sticky Navigation Bar - Full width 4-column layout */}
-            <div className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm mb-8">
-              <div className="w-full max-w-[757px] grid grid-cols-4 gap-0 border border-border rounded-md overflow-hidden">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+            {/* Desktop Navigation - Properly positioned within the left column */}
+            <div className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm border border-border rounded-lg mb-8 overflow-hidden">
+              <div className="grid grid-cols-4 gap-0">
+                <button 
                   onClick={() => scrollToSection('overview')}
-                  className="rounded-none border-r border-border flex-1 justify-center border-t-0 border-b-0 border-l-0 h-10 text-sm"
+                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
                 >
                   강의 안내
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                </button>
+                <button 
                   onClick={() => scrollToSection('curriculum')}
-                  className="rounded-none border-r border-border flex-1 justify-center border-t-0 border-b-0 border-l-0 h-10 text-sm"
+                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
                 >
                   커리큘럼
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                </button>
+                <button 
                   onClick={() => scrollToSection('instructor')}
-                  className="rounded-none border-r border-border flex-1 justify-center border-t-0 border-b-0 border-l-0 h-10 text-sm"
+                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
                 >
                   강사 소개
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                </button>
+                <button 
                   onClick={() => scrollToSection('reviews')}
-                  className="rounded-none flex-1 justify-center border-t-0 border-b-0 border-l-0 border-r-0 h-10 text-sm"
+                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                 >
                   강의 후기
-                </Button>
+                </button>
               </div>
             </div>
 
@@ -915,39 +904,31 @@ const CourseDetail = () => {
 
           {/* Mobile Content Navigation */}
           <div className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm mb-8 mx-4">
-            <div className="grid grid-cols-4 gap-0 py-3">
-              <Button 
-                variant="outline" 
-                size="sm" 
+            <div className="grid grid-cols-4 gap-0 border border-border rounded-lg overflow-hidden">
+              <button 
                 onClick={() => scrollToSection('overview')}
-                className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center text-xs"
+                className="px-3 py-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
               >
                 소개
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              </button>
+              <button 
                 onClick={() => scrollToSection('curriculum')}
-                className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center text-xs"
+                className="px-3 py-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
               >
                 커리큘럼
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              </button>
+              <button 
                 onClick={() => scrollToSection('instructor')}
-                className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center text-xs"
+                className="px-3 py-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
               >
                 크리에이터
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              </button>
+              <button 
                 onClick={() => scrollToSection('reviews')}
-                className="rounded-none border-r border-border first:rounded-l-md last:rounded-r-md last:border-r-0 flex-1 justify-center text-xs"
+                className="px-3 py-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
               >
                 후기
-              </Button>
+              </button>
             </div>
           </div>
 
@@ -1158,6 +1139,13 @@ const CourseDetail = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        
+        {/* Auth Modal */}
+        <AuthModal 
+          isOpen={showAuthModal} 
+          onClose={() => setShowAuthModal(false)} 
+          defaultTab="signin"
+        />
       </main>
       <Footer />
     </div>
