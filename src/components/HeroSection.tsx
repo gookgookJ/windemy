@@ -28,8 +28,6 @@ const HeroSection = () => {
   const wrapRef = useRef<HTMLDivElement>(null);
   const firstCardRef = useRef<HTMLDivElement>(null);
   const isTransitioning = useRef(false);
-  const isSnapping = useRef(false);
-  const skipNextEffect = useRef(false);
 
   const startX = useRef(0);
   const curX = useRef(0);
@@ -82,7 +80,7 @@ const HeroSection = () => {
   };
 
   const moveToIndex = (index: number, immediate = false) => {
-    if (isTransitioning.current || isSnapping.current) return;
+    if (isTransitioning.current) return;
     
     const cardWidth = getCardWidth();
     if (!cardWidth) return;
@@ -97,30 +95,6 @@ const HeroSection = () => {
     } else {
       setTranslateX(-offset);
     }
-  };
-
-  const handleTransitionEnd = () => {
-    if (!isSnapping.current) return;
-    
-    isSnapping.current = false;
-    isTransitioning.current = false;
-    
-    // 경계 스냅: 트랜지션 완전히 끄고 순간이동
-    const cardWidth = getCardWidth();
-    if (!cardWidth) return;
-    
-    let snapIndex = slides.length + currentIndex;
-    setEnableTransition(false);
-    skipNextEffect.current = true;
-    
-    const wrapWidth = wrapRef.current?.clientWidth || 0;
-    const offset = snapIndex * cardWidth - (wrapWidth / 2 - (cardWidth - GAP_PX) / 2);
-    setTranslateX(-offset);
-    
-    // 다음 프레임에서 트랜지션 재활성화
-    requestAnimationFrame(() => {
-      setEnableTransition(true);
-    });
   };
 
   const updateControlsPosition = () => {
@@ -169,11 +143,6 @@ const HeroSection = () => {
 
   // currentIndex 변경시 위치 업데이트
   useEffect(() => {
-    if (skipNextEffect.current) {
-      skipNextEffect.current = false;
-      return;
-    }
-    
     if (slides.length && typeof currentIndex === 'number') {
       const timeoutId = setTimeout(() => {
         moveToIndex(slides.length + currentIndex);
@@ -194,29 +163,13 @@ const HeroSection = () => {
 
   // ----- 네비게이션 함수들 -----
   const next = () => {
-    if (isTransitioning.current || isSnapping.current) return;
-    isTransitioning.current = true;
-    
-    const newIndex = (currentIndex + 1) % slides.length;
-    setCurrentIndex(newIndex);
-    
-    // 경계 체크 (마지막 → 첫번째)
-    if (currentIndex === slides.length - 1) {
-      isSnapping.current = true;
-    }
+    if (isTransitioning.current) return;
+    setCurrentIndex((prev) => (prev + 1) % slides.length);
   };
 
   const prev = () => {
-    if (isTransitioning.current || isSnapping.current) return;
-    isTransitioning.current = true;
-    
-    const newIndex = (currentIndex - 1 + slides.length) % slides.length;
-    setCurrentIndex(newIndex);
-    
-    // 경계 체크 (첫번째 → 마지막)
-    if (currentIndex === 0) {
-      isSnapping.current = true;
-    }
+    if (isTransitioning.current) return;
+    setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
   const toggle = () => setIsPlaying((v) => !v);
@@ -269,7 +222,6 @@ const HeroSection = () => {
           <div
             className={`flex gap-4 ml-0 ${enableTransition ? "transition-transform duration-500 ease-out" : ""}`}
             style={{ transform: `translate3d(${translateX}px, 0, 0)` }}
-            onTransitionEnd={handleTransitionEnd}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
