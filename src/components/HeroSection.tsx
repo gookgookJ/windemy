@@ -145,17 +145,8 @@ const HeroSection = () => {
     }
 
     const handleResize = () => {
-      // 현재 activeIndex를 기준으로 정확한 trackIndex 계산
-      const centerGroupStart = slides.length;
-      const correctTrackIndex = centerGroupStart + activeIndex;
-      
-      snappingRef.current = true;
-      setTrackIndex(correctTrackIndex);
-      moveToTrack(correctTrackIndex, true);
-      forceReflow();
-      setEnableTransition(true);
+      // 리사이즈 시 위치는 그대로 두고 컨트롤 위치만 업데이트
       updateControlsPosition();
-      snappingRef.current = false;
     };
     window.addEventListener("resize", handleResize);
     return () => {
