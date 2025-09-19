@@ -441,7 +441,15 @@ const CourseDetail = () => {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      // Get the header height for proper offset
+      const headerHeight = 100; // Approximate header + navigation height
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - headerHeight;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -536,39 +544,39 @@ const CourseDetail = () => {
             </div>
 
             {/* Desktop Navigation - Properly positioned within the left column */}
-            <div className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm border border-border rounded-lg mb-8 overflow-hidden">
+            <nav className="sticky top-24 z-40 bg-background/95 backdrop-blur-sm border border-border rounded-lg mb-8 overflow-hidden shadow-sm">
               <div className="grid grid-cols-4 gap-0">
                 <button 
-                  onClick={() => scrollToSection('overview')}
-                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
+                  onClick={() => scrollToSection('course-overview')}
+                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0 hover:shadow-sm"
                 >
                   강의 안내
                 </button>
                 <button 
                   onClick={() => scrollToSection('curriculum')}
-                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
+                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0 hover:shadow-sm"
                 >
                   커리큘럼
                 </button>
                 <button 
                   onClick={() => scrollToSection('instructor')}
-                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
+                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0 hover:shadow-sm"
                 >
                   강사 소개
                 </button>
                 <button 
                   onClick={() => scrollToSection('reviews')}
-                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  className="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors hover:shadow-sm"
                 >
                   강의 후기
                 </button>
               </div>
-            </div>
+            </nav>
 
             {/* Main Content Area - 757px width */}
             <div className="w-[757px] space-y-8">
               {/* Course Detail Images */}
-              <div id="overview" className="w-[757px]">
+              <div id="course-overview" className="w-[757px]">
                 {/* Display detail_image_path if exists */}
                 {courseData.detail_image_path && (
                   <div className="mb-8">
@@ -587,7 +595,7 @@ const CourseDetail = () => {
               {/* Course Content Sections */}
               <div className="space-y-12">
                 {/* What You'll Learn */}
-                <section id="overview">
+                <section id="learning-overview">
                   <div className="mb-6">
                     <h2 className="text-2xl font-bold">이 강의에서 배우는 것들</h2>
                   </div>
@@ -903,13 +911,13 @@ const CourseDetail = () => {
           </Card>
 
           {/* Mobile Content Navigation */}
-          <div className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm mb-8 mx-4">
-            <div className="grid grid-cols-4 gap-0 border border-border rounded-lg overflow-hidden">
+          <nav className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm mb-8 mx-4">
+            <div className="grid grid-cols-4 gap-0 border border-border rounded-lg overflow-hidden shadow-sm">
               <button 
-                onClick={() => scrollToSection('overview')}
+                onClick={() => scrollToSection('course-overview')}
                 className="px-3 py-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
               >
-                소개
+                강의 안내
               </button>
               <button 
                 onClick={() => scrollToSection('curriculum')}
@@ -921,21 +929,21 @@ const CourseDetail = () => {
                 onClick={() => scrollToSection('instructor')}
                 className="px-3 py-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
               >
-                크리에이터
+                강사 소개
               </button>
               <button 
                 onClick={() => scrollToSection('reviews')}
                 className="px-3 py-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
               >
-                후기
+                강의 후기
               </button>
             </div>
-          </div>
+          </nav>
 
           {/* Mobile Content */}
           <div className="mx-4 space-y-8">
             {/* Course Detail Image */}
-            <div id="overview">
+            <div id="course-overview">
               <CourseDetailImages courseId={courseId!} />
             </div>
 
