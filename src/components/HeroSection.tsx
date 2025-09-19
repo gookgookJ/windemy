@@ -330,18 +330,18 @@ const HeroSection = () => {
                     decoding={isActive ? "sync" : "auto"}
                   />
 
-                  {/* 텍스트 3종 (모든 카드) */}
-                  <div className="absolute bottom-14 left-5 z-[3] w-[calc(100%-40px)] space-y-2">
-                    <h2 className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold drop-shadow-lg">
+                  {/* 텍스트 3종 - PC view 기준으로 위치 설정, 반응형 조정 */}
+                  <div className="absolute bottom-8 left-4 sm:bottom-12 sm:left-6 md:bottom-16 md:left-8 lg:bottom-20 lg:left-12 z-[3] w-[calc(100%-32px)] sm:w-[calc(100%-48px)] md:w-[calc(100%-64px)] lg:w-[calc(100%-96px)] space-y-1 sm:space-y-2 md:space-y-3">
+                    <h2 className="text-white text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold drop-shadow-lg leading-tight">
                       {s.title}
                     </h2>
                     {s.subtitle && (
-                      <h3 className="text-white/90 text-sm sm:text-base md:text-lg drop-shadow">
+                      <h3 className="text-white/90 text-sm sm:text-base md:text-lg lg:text-xl drop-shadow leading-snug">
                         {s.subtitle}
                       </h3>
                     )}
                     {s.description && (
-                      <p className="text-white/85 text-xs sm:text-sm md:text-base drop-shadow">
+                      <p className="text-white/85 text-xs sm:text-sm md:text-base lg:text-lg drop-shadow leading-relaxed max-w-prose">
                         {s.description}
                       </p>
                     )}
