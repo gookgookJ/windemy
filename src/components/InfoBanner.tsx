@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 const InfoBanner = () => {
   const [email, setEmail] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isAutoPlay, setIsAutoPlay] = useState(true);
 
   const handleSubscribe = () => {
     if (email) {
@@ -49,8 +48,8 @@ const InfoBanner = () => {
         <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl h-full min-h-[320px]">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-bold text-foreground">최신 이커머스 시장 트렌드</h3>
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <h3 className="text-base sm:text-lg font-bold text-foreground">최신 이커머스 시장 트렌드</h3>
             </div>
             <div className="space-y-2">
               {bestPosts.map((post, index) => (
@@ -81,10 +80,10 @@ const InfoBanner = () => {
         <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-xl text-white h-full min-h-[320px]">
           <CardContent className="p-4 flex flex-col justify-center">
             <div className="text-center mb-6">
-              <Mail className="h-8 w-8 mx-auto mb-3 text-white/90" />
+              <Mail className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-3 text-white/90" />
               <div className="space-y-1">
-                <div className="text-lg font-bold">돈 버는 이커머스 정보</div>
-                <div className="text-sm text-white/90">무료로 받아보기</div>
+                <div className="text-base sm:text-lg font-bold">돈 버는 이커머스 정보</div>
+                <div className="text-xs sm:text-sm text-white/90">무료로 받아보기</div>
               </div>
             </div>
             
@@ -98,13 +97,13 @@ const InfoBanner = () => {
               />
               <Button 
                 onClick={handleSubscribe}
-                className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3"
+                className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 sm:py-3 text-sm sm:text-base"
               >
                 구독하기
               </Button>
             </div>
             
-            <div className="mt-4 text-sm text-white/70 text-center">
+            <div className="mt-4 text-xs sm:text-sm text-white/70 text-center">
               놓치면 후회하는 정보를<br />
               가장 먼저 받아보세요
             </div>
@@ -113,17 +112,6 @@ const InfoBanner = () => {
       )
     }
   ];
-
-  // 자동 재생 효과
-  useEffect(() => {
-    if (!isAutoPlay) return;
-    
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
-    }, 4000);
-
-    return () => clearInterval(timer);
-  }, [isAutoPlay, carouselSlides.length]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
@@ -138,10 +126,10 @@ const InfoBanner = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 중앙 강조 텍스트 */}
         <div className="text-center mb-6">
-          <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
-            보기만해도 매출 상승하는 이커머스 사업 꿀팁!
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2 leading-tight">
+            보기만해도 매출 상승하는<br className="sm:hidden" /> 이커머스 사업 꿀팁!
           </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full"></div>
+          <div className="w-20 sm:w-24 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full"></div>
         </div>
         
         {/* PC View - 기존 그리드 레이아웃 */}
@@ -218,9 +206,7 @@ const InfoBanner = () => {
 
         {/* Mobile/Tablet View - 캐러셀 */}
         <div className="lg:hidden">
-          <div className="relative"
-               onMouseEnter={() => setIsAutoPlay(false)}
-               onMouseLeave={() => setIsAutoPlay(true)}>
+          <div className="relative">
             {/* 캐러셀 컨테이너 */}
             <div className="overflow-hidden rounded-xl">
               <div 
