@@ -31,6 +31,8 @@ const HeroSection = () => {
 
   const startX = useRef(0);
   const curX = useRef(0);
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const [controlsTranslate, setControlsTranslate] = useState(0);
 
   const navigate = useNavigate();
 
@@ -95,6 +97,17 @@ const HeroSection = () => {
     }
   };
 
+  const updateControlsPosition = () => {
+    const cardEl = firstCardRef.current;
+    const groupEl = controlsRef.current;
+    if (!cardEl || !groupEl) return;
+    const cardW = cardEl.clientWidth; // single card width
+    const groupW = groupEl.clientWidth; // buttons width
+    const margin = 16; // keep some right padding inside card
+    const translate = cardW / 2 - margin - groupW;
+    setControlsTranslate(translate);
+  };
+
   // ----- 초기 설정 및 리사이즈 처리 -----
   useEffect(() => {
     if (!slides.length) return;
@@ -104,6 +117,7 @@ const HeroSection = () => {
       const startIndex = slides.length; // 중앙 그룹의 첫 번째 슬라이드
       setCurrentIndex(0);
       moveToIndex(startIndex, true);
+      updateControlsPosition();
       setTimeout(() => setEnableTransition(true), 100);
     };
 
@@ -117,6 +131,7 @@ const HeroSection = () => {
     const handleResize = () => {
       setTimeout(() => {
         moveToIndex(slides.length + currentIndex);
+        updateControlsPosition();
       }, 100);
     };
     window.addEventListener("resize", handleResize);
@@ -131,6 +146,7 @@ const HeroSection = () => {
     if (slides.length && typeof currentIndex === 'number') {
       const timeoutId = setTimeout(() => {
         moveToIndex(slides.length + currentIndex);
+        updateControlsPosition();
       }, 50);
       return () => clearTimeout(timeoutId);
     }
@@ -262,35 +278,38 @@ const HeroSection = () => {
                     )}
                   </div>
 
-                  {/* 활성 슬라이드에만 컨트롤 버튼 표시 (이미지 우측 하단) */}
-                  {isActive && (
-                    <div className="absolute bottom-4 right-4 z-[4] flex items-center gap-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); prev(); }}
-                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-                        aria-label="Previous slide"
-                      >
-                        <ChevronLeft className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggle(); }}
-                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-                        aria-label="Toggle autoplay"
-                      >
-                        {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); next(); }}
-                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-                        aria-label="Next slide"
-                      >
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
-                    </div>
-                  )}
                 </div>
               );
             })}
+          </div>
+
+          {/* 고정 컨트롤 버튼: 가운데 카드의 우측 하단에 정렬되도록 동적 위치 */}
+          <div
+            ref={controlsRef}
+            className="pointer-events-none absolute bottom-4 left-1/2 z-[4] flex items-center gap-2"
+            style={{ transform: `translateX(${controlsTranslate}px)` }}
+          >
+            <button
+              onClick={(e) => { e.stopPropagation(); prev(); }}
+              className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); toggle(); }}
+              className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+              aria-label="Toggle autoplay"
+            >
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); next(); }}
+              className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+              aria-label="Next slide"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
         </div>
       )}
