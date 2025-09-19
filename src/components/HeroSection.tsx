@@ -124,7 +124,7 @@ const HeroSection = () => {
 
   // currentIndex 변경시 위치 업데이트
   useEffect(() => {
-    if (slides.length && !isTransitioning.current && typeof currentIndex === 'number') {
+    if (slides.length && typeof currentIndex === 'number') {
       moveToIndex(slides.length + currentIndex);
     }
   }, [currentIndex, slides.length]);
@@ -133,10 +133,10 @@ const HeroSection = () => {
   useEffect(() => {
     if (!isPlaying || !slides.length || dragging) return;
     const t = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % slides.length);
+      next();
     }, 5000);
     return () => clearInterval(t);
-  }, [isPlaying, slides.length, dragging]);
+  }, [isPlaying, slides.length, dragging, currentIndex]);
 
   // ----- 네비게이션 함수들 -----
   const next = () => {
@@ -234,50 +234,54 @@ const HeroSection = () => {
                     loading={isActive ? "eager" : "lazy"}
                     fetchPriority={isActive ? "high" : undefined}
                     decoding={isActive ? "sync" : "auto"}
-                    onLoad={() => { if (i === 0) moveToIndex(slides.length + currentIndex, true); }}
                   />
 
-                  {/* 텍스트(모든 슬라이드에 표시) */}
+                  {/* 텍스트 (모든 카드에 표시, 흰색 계열) */}
                   <div className="absolute bottom-14 left-5 z-[3] w-[calc(100%-40px)] space-y-2">
-                    <h2 className={`text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold drop-shadow-lg ${isActive ? "text-white" : "text-gray-800"}`}>
+                    <h2 className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold drop-shadow-lg">
                       {s.title}
                     </h2>
                     {s.subtitle && (
-                      <h3 className={`text-sm sm:text-base md:text-lg drop-shadow ${isActive ? "text-white/90" : "text-gray-700"}`}>
+                      <h3 className="text-white/90 text-sm sm:text-base md:text-lg drop-shadow">
                         {s.subtitle}
                       </h3>
                     )}
                     {s.description && (
-                      <p className={`text-xs sm:text-sm md:text-base drop-shadow ${isActive ? "text-white/85" : "text-gray-600"}`}>
+                      <p className="text-white/85 text-xs sm:text-sm md:text-base drop-shadow">
                         {s.description}
                       </p>
                     )}
                   </div>
+
+                  {/* 활성 카드에만 컨트롤 표시 (카드 우측 하단) */}
+                  {isActive && (
+                    <div className="absolute bottom-4 right-4 z-[4] flex items-center gap-2">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); prev(); }}
+                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+                        aria-label="Previous slide"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggle(); }}
+                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+                        aria-label="Toggle autoplay"
+                      >
+                        {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); next(); }}
+                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+                        aria-label="Next slide"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
-          </div>
-          
-          {/* 중앙 이미지 우측 하단 고정 컨트롤 */}
-          <div className="absolute bottom-4 left-1/2 transform translate-x-[50%] z-[4] flex items-center gap-2">
-            <button
-              onClick={(e) => { e.stopPropagation(); prev(); }}
-              className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); toggle(); }}
-              className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-            >
-              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); next(); }}
-              className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
           </div>
         </div>
       )}
