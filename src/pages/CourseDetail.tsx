@@ -354,7 +354,7 @@ const CourseDetail = () => {
   // --- Unified Responsive Layout ---
   return (
     <div className="min-h-screen bg-background">
-      {/* Header (가정: 고정되어 있으며 높이는 약 80px) */}
+      {/* Header (가정: 고정되어 있으며 높이는 약 80px, z-50) */}
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -447,8 +447,8 @@ const CourseDetail = () => {
 
 
             {/* Sticky Navigation Bar */}
-            {/* 수정됨: sticky top-20 (80px 아래에 고정) */}
-            <div className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm border border-border rounded-lg mb-8 overflow-hidden">
+            {/* 수정됨: bg-background로 변경하여 불투명하게 만들고, backdrop-blur-sm 제거 */}
+            <div className="sticky top-20 z-40 bg-background border border-border rounded-lg mb-8 overflow-hidden shadow-sm">
               <div className="grid grid-cols-4 gap-0">
                 {/* Responsive Button Styles */}
                 <button
@@ -638,7 +638,7 @@ const CourseDetail = () => {
 
           {/* Right Column: Sticky Purchase Card (Desktop Only) */}
           <div className="hidden lg:block w-[383px] flex-shrink-0">
-            {/* 수정됨: sticky top-20 (80px 아래에 고정). max-h 조정됨. */}
+            {/* Sticky container: top-20 (80px 아래에 고정). */}
             <div className="sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto">
                 <Card className="shadow-lg border border-border/50 p-6">
                     <div className="space-y-6">
