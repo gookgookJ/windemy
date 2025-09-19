@@ -19,13 +19,15 @@ const GAP_PX = 16; // gap-4
 
 const HeroSection = () => {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
-  const [current, setCurrent] = useState(0); // 첫 번째 슬라이드부터 시작
+  const [currentIndex, setCurrentIndex] = useState(0); // 실제 보여지는 슬라이드 인덱스
+  const [translateX, setTranslateX] = useState(0); // 실제 translate 값
   const [isPlaying, setIsPlaying] = useState(true);
   const [dragging, setDragging] = useState(false);
-  const [enableTransition, setEnableTransition] = useState(false); // 초기 렌더 셋업용
+  const [enableTransition, setEnableTransition] = useState(false);
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const firstCardRef = useRef<HTMLDivElement>(null);
+  const isTransitioning = useRef(false);
 
   const startX = useRef(0);
   const curX = useRef(0);
@@ -69,34 +71,42 @@ const HeroSection = () => {
     return () => { if (document.head.contains(l)) document.head.removeChild(l); };
   }, [slides]);
 
-  // ----- 중앙 정렬 계산 -----
-  const [translateX, setTranslateX] = useState(0);
-
-  const recalc = () => {
-    const wrap = wrapRef.current;
+  // ----- 무한 루프 슬라이드 계산 -----
+  const getCardWidth = () => {
     const card = firstCardRef.current;
-    if (!wrap || !card || !slides.length) return;
-    const wrapW = wrap.clientWidth;
-    const cardW = card.clientWidth;
-    // 확장된 배열에서 중앙 그룹의 current 인덱스로 계산
-    const actualIndex = slides.length + current;
-    const offset = actualIndex * (cardW + GAP_PX) - (wrapW / 2 - cardW / 2);
-    setTranslateX(-offset);
+    return card ? card.clientWidth + GAP_PX : 0;
   };
 
-  // 초기 렌더: 측정 → 중앙 고정 → 그 다음부터 transition 활성화
+  const moveToIndex = (index: number, immediate = false) => {
+    if (isTransitioning.current) return;
+    
+    const cardWidth = getCardWidth();
+    if (!cardWidth) return;
+
+    const wrapWidth = wrapRef.current?.clientWidth || 0;
+    const offset = index * cardWidth - (wrapWidth / 2 - (cardWidth - GAP_PX) / 2);
+    
+    if (immediate) {
+      setEnableTransition(false);
+      setTranslateX(-offset);
+      setTimeout(() => setEnableTransition(true), 50);
+    } else {
+      setTranslateX(-offset);
+    }
+  };
+
+  // ----- 초기 설정 및 리사이즈 처리 -----
   useEffect(() => {
     if (!slides.length) return;
     
-    // 첫 계산은 transition 없이
     setEnableTransition(false);
     const setup = () => {
-      recalc();
-      // 충분한 지연 후 transition 켜기
+      const startIndex = slides.length; // 중앙 그룹의 첫 번째 슬라이드
+      setCurrentIndex(0);
+      moveToIndex(startIndex, true);
       setTimeout(() => setEnableTransition(true), 100);
     };
 
-    // 이미지가 로드되면 더 정확 (첫 카드 onload)
     const img = firstCardRef.current?.querySelector("img");
     if (img && !img.complete) {
       img.addEventListener("load", setup, { once: true });
@@ -104,26 +114,69 @@ const HeroSection = () => {
       setup();
     }
 
-    window.addEventListener("resize", recalc);
+    const handleResize = () => moveToIndex(slides.length + currentIndex);
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener("resize", recalc);
+      window.removeEventListener("resize", handleResize);
       if (img) img.removeEventListener("load", setup);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slides.length]);
 
-  // current 변경 시에도 재계산
-  useEffect(() => { recalc(); }, [current]);
+  // currentIndex 변경시 위치 업데이트
+  useEffect(() => {
+    if (slides.length && !isTransitioning.current) {
+      moveToIndex(slides.length + currentIndex);
+    }
+  }, [currentIndex, slides.length]);
 
   // ----- 오토플레이 -----
   useEffect(() => {
     if (!isPlaying || !slides.length || dragging) return;
-    const t = setInterval(() => setCurrent((p) => (p + 1) % slides.length), 5000);
+    const t = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % slides.length);
+    }, 5000);
     return () => clearInterval(t);
   }, [isPlaying, slides.length, dragging]);
 
-  const next = () => setCurrent((p) => (p + 1) % slides.length);
-  const prev = () => setCurrent((p) => (p - 1 + slides.length) % slides.length);
+  // ----- 네비게이션 함수들 -----
+  const next = () => {
+    if (isTransitioning.current) return;
+    isTransitioning.current = true;
+    setCurrentIndex((prev) => {
+      const newIndex = (prev + 1) % slides.length;
+      // 마지막에서 첫번째로 갈 때 무한 루프 처리
+      if (prev === slides.length - 1) {
+        setTimeout(() => {
+          moveToIndex(slides.length, true); // 중앙 그룹의 첫번째로 순간이동
+          setCurrentIndex(0);
+          isTransitioning.current = false;
+        }, 500);
+        return prev; // 일시적으로 현재 인덱스 유지
+      }
+      isTransitioning.current = false;
+      return newIndex;
+    });
+  };
+
+  const prev = () => {
+    if (isTransitioning.current) return;
+    isTransitioning.current = true;
+    setCurrentIndex((prev) => {
+      const newIndex = (prev - 1 + slides.length) % slides.length;
+      // 첫번째에서 마지막으로 갈 때 무한 루프 처리  
+      if (prev === 0) {
+        setTimeout(() => {
+          moveToIndex(slides.length + slides.length - 1, true); // 중앙 그룹의 마지막으로 순간이동
+          setCurrentIndex(slides.length - 1);
+          isTransitioning.current = false;
+        }, 500);
+        return prev; // 일시적으로 현재 인덱스 유지
+      }
+      isTransitioning.current = false;
+      return newIndex;
+    });
+  };
+
   const toggle = () => setIsPlaying((v) => !v);
 
   const handleClick = (s: HeroSlide) => {
@@ -184,7 +237,7 @@ const HeroSection = () => {
           >
             {extendedSlides.map((s, i) => {
               const originalIndex = i % slides.length;
-              const isActive = originalIndex === current;
+              const isActive = originalIndex === currentIndex;
               return (
                 <div
                   key={`${s.id}-${i}`}
@@ -209,7 +262,7 @@ const HeroSection = () => {
                     loading={isActive ? "eager" : "lazy"}
                     fetchPriority={isActive ? "high" : undefined}
                     decoding={isActive ? "sync" : "auto"}
-                    onLoad={() => { if (i === 0) recalc(); }}
+                    onLoad={() => { if (i === 0) moveToIndex(slides.length + currentIndex, true); }}
                   />
 
                   {/* 텍스트(활성일 때만 표시) */}
