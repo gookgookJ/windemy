@@ -1,115 +1,105 @@
 import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Star, Award, Users } from "lucide-react";
+import { Play, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SecondBanner = () => {
-  const [email, setEmail] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
 
-  const handleSubscribe = () => {
-    if (email) {
-      // TODO: 실제 구독 로직 구현
-      console.log('구독:', email);
-      setEmail('');
+  // 유튜브 영상 데이터
+  const youtubeVideos = [
+    {
+      id: "kztEXMiPYzA",
+      title: "윈들리 채널 영상 1",
+      thumbnail: `https://img.youtube.com/vi/kztEXMiPYzA/maxresdefault.jpg`,
+      url: "https://youtu.be/kztEXMiPYzA"
+    },
+    {
+      id: "d3gz_uTNuX0",
+      title: "윈들리 채널 영상 2",
+      thumbnail: `https://img.youtube.com/vi/d3gz_uTNuX0/maxresdefault.jpg`,
+      url: "https://youtu.be/d3gz_uTNuX0"
+    },
+    {
+      id: "-AojEJLT338",
+      title: "윈들리 채널 영상 3",
+      thumbnail: `https://img.youtube.com/vi/-AojEJLT338/maxresdefault.jpg`,
+      url: "https://youtu.be/-AojEJLT338"
+    },
+    {
+      id: "ZKRadvhmrAM",
+      title: "윈들리 채널 영상 4",
+      thumbnail: `https://img.youtube.com/vi/ZKRadvhmrAM/maxresdefault.jpg`,
+      url: "https://youtu.be/ZKRadvhmrAM"
+    },
+    {
+      id: "zCscF4-cys0",
+      title: "윈들리 채널 영상 5",
+      thumbnail: `https://img.youtube.com/vi/zCscF4-cys0/maxresdefault.jpg`,
+      url: "https://youtu.be/zCscF4-cys0"
+    },
+    {
+      id: "lx1deqdvdes",
+      title: "윈들리 채널 영상 6",
+      thumbnail: `https://img.youtube.com/vi/lx1deqdvdes/maxresdefault.jpg`,
+      url: "https://youtu.be/lx1deqdvdes"
+    },
+    {
+      id: "Kj1FGAL5ScM",
+      title: "윈들리 채널 영상 7",
+      thumbnail: `https://img.youtube.com/vi/Kj1FGAL5ScM/maxresdefault.jpg`,
+      url: "https://youtu.be/Kj1FGAL5ScM"
+    },
+    {
+      id: "kewfIAYKuM0",
+      title: "윈들리 채널 영상 8",
+      thumbnail: `https://img.youtube.com/vi/kewfIAYKuM0/maxresdefault.jpg`,
+      url: "https://youtu.be/kewfIAYKuM0"
+    },
+    {
+      id: "CQL1wlJyr4A",
+      title: "윈들리 채널 영상 9",
+      thumbnail: `https://img.youtube.com/vi/CQL1wlJyr4A/maxresdefault.jpg`,
+      url: "https://youtu.be/CQL1wlJyr4A"
+    },
+    {
+      id: "7cwMsPDqpBw",
+      title: "윈들리 채널 영상 10",
+      thumbnail: `https://img.youtube.com/vi/7cwMsPDqpBw/maxresdefault.jpg`,
+      url: "https://youtu.be/7cwMsPDqpBw"
     }
+  ];
+
+  const itemsPerPage = {
+    mobile: 1,
+    tablet: 2,
+    desktop: 4
   };
 
-  const achievements = [
-    {
-      title: "1,000+ 성공 사례",
-      description: "검증된 강의로 실제 성과를 거둔 수강생들"
-    },
-    {
-      title: "98% 만족도",
-      description: "수강생이 직접 평가한 높은 강의 퀄리티"
-    },
-    {
-      title: "전문 강사진",
-      description: "현업 전문가들의 실무 경험 공유"
-    },
-    {
-      title: "24/7 지원",
-      description: "언제든지 받을 수 있는 학습 지원"
+  const getItemsToShow = () => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth >= 1024) return itemsPerPage.desktop;
+      if (window.innerWidth >= 768) return itemsPerPage.tablet;
     }
-  ];
+    return itemsPerPage.mobile;
+  };
 
-  // 캐러셀 슬라이드 데이터 (모바일/태블릿용)
-  const carouselSlides = [
-    {
-      id: 1,
-      component: (
-        <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl h-full min-h-[320px]">
-          <CardContent className="p-4 flex flex-col justify-center h-full">
-            <div className="flex items-center gap-2 mb-4">
-              <Award className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              <h3 className="text-base sm:text-lg font-bold text-foreground">우리의 성과</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {achievements.map((achievement, index) => (
-                <div key={index} className="text-center p-3 rounded-lg bg-muted/30">
-                  <div className="text-lg font-bold text-primary mb-1">
-                    {achievement.title}
-                  </div>
-                  <div className="text-xs text-foreground/70">
-                    {achievement.description}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )
-    },
-    {
-      id: 2,
-      component: (
-        <Card className="bg-gradient-to-br from-green-600 to-green-700 border-0 shadow-xl text-white h-full min-h-[320px]">
-          <CardContent className="p-4 flex flex-col justify-center">
-            <div className="text-center mb-6">
-              <Star className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-3 text-white/90" />
-              <div className="space-y-1">
-                <div className="text-base sm:text-lg font-bold">프리미엄 강의 알림</div>
-                <div className="text-xs sm:text-sm text-white/90">새로운 강의를 가장 먼저</div>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <Input
-                type="email"
-                placeholder="이메일 주소 입력"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/60"
-              />
-              <Button 
-                onClick={handleSubscribe}
-                className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 sm:py-3 text-sm sm:text-base"
-              >
-                알림 받기
-              </Button>
-            </div>
-            
-            <div className="mt-4 text-xs sm:text-sm text-white/70 text-center">
-              새로운 강의와 특별 할인<br />
-              소식을 놓치지 마세요
-            </div>
-          </CardContent>
-        </Card>
-      )
-    }
-  ];
+  const totalSlides = Math.ceil(youtubeVideos.length / getItemsToShow());
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
+    setCurrentSlide((prev) => (prev + 1) % totalSlides);
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + carouselSlides.length) % carouselSlides.length);
+    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+  };
+
+  const getCurrentVideos = () => {
+    const itemsToShow = getItemsToShow();
+    const startIndex = currentSlide * itemsToShow;
+    return youtubeVideos.slice(startIndex, startIndex + itemsToShow);
   };
 
   // 터치 이벤트 핸들러
@@ -140,81 +130,144 @@ const SecondBanner = () => {
     <section className="w-full py-10 bg-gradient-to-br from-indigo-900 to-purple-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 중앙 강조 텍스트 */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-8">
           <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2 leading-tight">
-            검증된 전문가와 함께하는<br className="sm:hidden" /> 온라인 학습 경험!
+            윈들리 유튜브 채널<br className="sm:hidden" /> 최신 영상들
           </h2>
+          <p className="text-white/80 text-sm sm:text-base">
+            전문가들의 유용한 인사이트를 만나보세요
+          </p>
         </div>
         
-        {/* PC View - 기존 그리드 레이아웃 */}
+        {/* 데스크톱 뷰 - 4개씩 그리드 */}
         <div className="hidden lg:block">
-          <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
-            {/* 왼쪽 - 성과 및 통계 (더 넓게) */}
-            <div className="lg:col-span-6">
-              <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl h-full">
-                <CardContent className="p-4 flex flex-col justify-center h-full">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Award className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-bold text-foreground">우리의 성과</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    {achievements.map((achievement, index) => (
-                      <div key={index} className="text-center p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                        <div className="text-xl font-bold text-primary mb-2">
-                          {achievement.title}
-                        </div>
-                        <div className="text-sm text-foreground/70">
-                          {achievement.description}
-                        </div>
+          <div className="relative">
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              {getCurrentVideos().map((video, index) => (
+                <Card key={video.id} className="bg-white/95 backdrop-blur-sm border-0 shadow-xl overflow-hidden group hover:scale-105 transition-transform duration-300">
+                  <div className="relative aspect-video">
+                    <img 
+                      src={video.thumbnail} 
+                      alt={video.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
+                      <div className="bg-white/90 rounded-full p-3 group-hover:scale-110 transition-transform duration-300">
+                        <Play className="w-6 h-6 text-primary" fill="currentColor" />
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* 오른쪽 - 구독하기 */}
-            <div className="lg:col-span-4">
-              <Card className="bg-gradient-to-br from-green-600 to-green-700 border-0 shadow-xl text-white h-full">
-                <CardContent className="p-4">
-                  <div className="text-center mb-3">
-                    <Star className="h-7 w-7 mx-auto mb-2 text-white/90" />
-                    <div className="space-y-1">
-                      <div className="text-sm font-bold">프리미엄 강의 알림</div>
-                      <div className="text-xs text-white/90">새로운 강의를 가장 먼저</div>
                     </div>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Input
-                      type="email"
-                      placeholder="이메일 주소 입력"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/60 text-sm"
-                    />
-                    <Button 
-                      onClick={handleSubscribe}
-                      className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold text-sm py-2"
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-sm text-foreground mb-2 line-clamp-2">
+                      {video.title}
+                    </h3>
+                    <a 
+                      href={video.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                     >
-                      알림 받기
-                    </Button>
-                  </div>
-                  
-                  <div className="mt-2 text-xs text-white/70 text-center">
-                    새로운 강의와 특별 할인<br />
-                    소식을 놓치지 마세요
-                  </div>
-                </CardContent>
-              </Card>
+                      유튜브에서 보기
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
+            
+            {/* 네비게이션 버튼 */}
+            {totalSlides > 1 && (
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={prevSlide}
+                  className="bg-white/20 hover:bg-white/30 text-white rounded-full p-2 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <span className="text-white/80 px-4 py-2 text-sm">
+                  {currentSlide + 1} / {totalSlides}
+                </span>
+                <button
+                  onClick={nextSlide}
+                  className="bg-white/20 hover:bg-white/30 text-white rounded-full p-2 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Mobile/Tablet View - 캐러셀 */}
-        <div className="lg:hidden">
+        {/* 태블릿 뷰 - 2개씩 그리드 */}
+        <div className="hidden md:block lg:hidden">
           <div className="relative">
-            {/* 캐러셀 컨테이너 */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              {getCurrentVideos().map((video, index) => (
+                <Card key={video.id} className="bg-white/95 backdrop-blur-sm border-0 shadow-xl overflow-hidden group hover:scale-105 transition-transform duration-300">
+                  <div className="relative aspect-video">
+                    <img 
+                      src={video.thumbnail} 
+                      alt={video.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
+                      <div className="bg-white/90 rounded-full p-3 group-hover:scale-110 transition-transform duration-300">
+                        <Play className="w-6 h-6 text-primary" fill="currentColor" />
+                      </div>
+                    </div>
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-sm text-foreground mb-2 line-clamp-2">
+                      {video.title}
+                    </h3>
+                    <a 
+                      href={video.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                    >
+                      유튜브에서 보기
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            {/* 네비게이션 버튼 */}
+            {totalSlides > 1 && (
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={prevSlide}
+                  className="bg-white/20 hover:bg-white/30 text-white rounded-full p-2 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <span className="text-white/80 px-4 py-2 text-sm">
+                  {currentSlide + 1} / {totalSlides}
+                </span>
+                <button
+                  onClick={nextSlide}
+                  className="bg-white/20 hover:bg-white/30 text-white rounded-full p-2 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 모바일 뷰 - 1개씩 캐러셀 */}
+        <div className="md:hidden">
+          <div className="relative">
             <div className="overflow-hidden rounded-xl">
               <div 
                 className="flex transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing"
@@ -223,9 +276,36 @@ const SecondBanner = () => {
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
               >
-                {carouselSlides.map((slide) => (
-                  <div key={slide.id} className="w-full flex-shrink-0">
-                    {slide.component}
+                {youtubeVideos.map((video) => (
+                  <div key={video.id} className="w-full flex-shrink-0">
+                    <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl overflow-hidden mx-2">
+                      <div className="relative aspect-video">
+                        <img 
+                          src={video.thumbnail} 
+                          alt={video.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                          <div className="bg-white/90 rounded-full p-3">
+                            <Play className="w-6 h-6 text-primary" fill="currentColor" />
+                          </div>
+                        </div>
+                      </div>
+                      <CardContent className="p-4">
+                        <h3 className="font-semibold text-sm text-foreground mb-2 line-clamp-2">
+                          {video.title}
+                        </h3>
+                        <a 
+                          href={video.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                        >
+                          유튜브에서 보기
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </CardContent>
+                    </Card>
                   </div>
                 ))}
               </div>
@@ -233,7 +313,7 @@ const SecondBanner = () => {
 
             {/* 인디케이터 도트 */}
             <div className="flex justify-center mt-4 gap-2">
-              {carouselSlides.map((_, index) => (
+              {youtubeVideos.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentSlide(index)}
