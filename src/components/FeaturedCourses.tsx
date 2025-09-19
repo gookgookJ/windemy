@@ -172,20 +172,20 @@ const FeaturedCourses = memo(() => {
   const getDefaultSubtitle = (section: HomepageSection) => {
     switch (section.section_type) {
       case 'free':
-        return '이커머스가 처음이라면 무료강의로 시작해보세요';
+        return '이커머스가 처음이라면? 무료강의부터';
       case 'premium':
-        return '상위 1% 셀러의 모든 노하우를 습득해보세요';
+        return '상위 1% 셀러들의 핵심 노하우';
       case 'vod':
-        return '언제 어디서나 자유롭게 학습할 수 있는 VOD 강의';
+        return '언제 어디서나 자유롭게 학습';
       case 'custom':
         return '엄선된 강의로 여러분의 성장을 도와드립니다';
       default:
         if (section.filter_type === 'hot_new') {
-          return '가장 많은 셀러가 주목하는 인기 강의를 만나보세요';
+          return '많은 셀러가 주목하는 인기 강의';
         } else if (section.filter_type === 'category') {
           return `${section.filter_value} 분야의 전문 강의를 만나보세요`;
         }
-        return '가장 많은 셀러가 주목하는 인기 강의를 만나보세요';
+        return '많은 셀러가 주목하는 인기 강의';
     }
   };
 
@@ -213,11 +213,11 @@ const FeaturedCourses = memo(() => {
     return (
       <div className="mb-16">
         <div className="flex items-center justify-between mb-6 sm:mb-8">
-          <div>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+          <div className="min-h-[4rem] sm:min-h-[4.5rem] lg:min-h-[5rem] flex flex-col justify-center">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground leading-tight">
                 {title}
               </h2>
-              <p className="text-sm sm:text-base text-muted-foreground mt-1">
+              <p className="text-sm sm:text-base text-muted-foreground mt-1 leading-relaxed">
                 {subtitle || getDefaultSubtitle(section)}
               </p>
             </div>
