@@ -257,8 +257,8 @@ const HeroSection = () => {
             })}
           </div>
           
-          {/* 고정 컨트롤 버튼 (화면 중앙 하단) */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[4] flex items-center gap-2">
+          {/* 고정 컨트롤 버튼 (가운데 이미지 우측 하단) */}
+          <div className="absolute bottom-4 left-1/2 transform translate-x-[20%] z-[4] flex items-center gap-2">
             <button
               onClick={(e) => { e.stopPropagation(); prev(); }}
               className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
