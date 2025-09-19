@@ -171,24 +171,25 @@ const SecondBanner = () => {
                 onMouseUp={handleTouchEnd}
                 onMouseLeave={handleTouchEnd}
               >
-                {Array.from({ length: Math.ceil(youtubeVideos.length / 4) }).map((_, slideIndex) => (
+                {Array.from({ length: Math.ceil(youtubeVideos.length / 3.5) }).map((_, slideIndex) => (
                   <div key={slideIndex} className="w-full flex-shrink-0">
-                    <div className="grid grid-cols-4 gap-6 px-4">
+                    <div className="flex gap-6 px-4">
                       {youtubeVideos.slice(slideIndex * 4, (slideIndex * 4) + 4).map((video) => (
-                        <Card 
-                          key={video.id} 
-                          className="group cursor-pointer overflow-hidden border-0 bg-background shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                          onClick={() => handleVideoClick(video)}
-                        >
-                          <div className="relative aspect-video overflow-hidden">
-                            <img 
-                              src={video.thumbnail} 
-                              alt={video.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                          </div>
-                        </Card>
+                        <div key={video.id} className="flex-none w-[calc(100%/3.5-18px)]">
+                          <Card 
+                            className="group cursor-pointer overflow-hidden border-0 bg-background shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                            onClick={() => handleVideoClick(video)}
+                          >
+                            <div className="relative aspect-video overflow-hidden">
+                              <img 
+                                src={video.thumbnail} 
+                                alt={video.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                            </div>
+                          </Card>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -201,7 +202,7 @@ const SecondBanner = () => {
               <>
                 <button
                   onClick={prevSlide}
-                  className="absolute left-2 top-[45%] -translate-y-1/2 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
+                  className="absolute -left-6 top-[45%] -translate-y-1/2 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
                   disabled={currentSlide === 0}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,7 +211,7 @@ const SecondBanner = () => {
                 </button>
                 <button
                   onClick={nextSlide}
-                  className="absolute right-2 top-[45%] -translate-y-1/2 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
+                  className="absolute -right-6 top-[45%] -translate-y-1/2 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
                   disabled={currentSlide >= Math.ceil(youtubeVideos.length / 4) - 1}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -251,24 +252,25 @@ const SecondBanner = () => {
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
               >
-                {Array.from({ length: Math.ceil(youtubeVideos.length / 2) }).map((_, slideIndex) => (
+                {Array.from({ length: Math.ceil(youtubeVideos.length / 2.5) }).map((_, slideIndex) => (
                   <div key={slideIndex} className="w-full flex-shrink-0">
-                    <div className="grid grid-cols-2 gap-6 px-4">
-                      {youtubeVideos.slice(slideIndex * 2, (slideIndex * 2) + 2).map((video) => (
-                        <Card 
-                          key={video.id} 
-                          className="group cursor-pointer overflow-hidden border-0 bg-background shadow-sm hover:shadow-xl transition-all duration-300"
-                          onClick={() => handleVideoClick(video)}
-                        >
-                          <div className="relative aspect-video overflow-hidden">
-                            <img 
-                              src={video.thumbnail} 
-                              alt={video.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                          </div>
-                        </Card>
+                    <div className="flex gap-6 px-4">
+                      {youtubeVideos.slice(slideIndex * 3, (slideIndex * 3) + 3).map((video) => (
+                        <div key={video.id} className="flex-none w-[calc(100%/2.5-16px)]">
+                          <Card 
+                            className="group cursor-pointer overflow-hidden border-0 bg-background shadow-sm hover:shadow-xl transition-all duration-300"
+                            onClick={() => handleVideoClick(video)}
+                          >
+                            <div className="relative aspect-video overflow-hidden">
+                              <img 
+                                src={video.thumbnail} 
+                                alt={video.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                            </div>
+                          </Card>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -278,7 +280,7 @@ const SecondBanner = () => {
 
             {/* 인디케이터 도트 */}
             <div className="flex justify-center mt-6 gap-2">
-              {Array.from({ length: Math.ceil(youtubeVideos.length / 2) }).map((_, index) => (
+              {Array.from({ length: Math.ceil(youtubeVideos.length / 2.5) }).map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentSlide(index)}
@@ -305,21 +307,23 @@ const SecondBanner = () => {
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
               >
-                {youtubeVideos.map((video) => (
-                  <div key={video.id} className="w-full flex-shrink-0 px-4">
-                    <Card 
-                      className="group cursor-pointer overflow-hidden border-0 bg-background shadow-sm hover:shadow-xl transition-all duration-300"
-                      onClick={() => handleVideoClick(video)}
-                    >
-                      <div className="relative aspect-video overflow-hidden">
-                        <img 
-                          src={video.thumbnail} 
-                          alt={video.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                      </div>
-                    </Card>
+                {youtubeVideos.map((video, index) => (
+                  <div key={video.id} className="w-full flex-shrink-0 flex justify-center px-4">
+                    <div className="w-[66.66%]">
+                      <Card 
+                        className="group cursor-pointer overflow-hidden border-0 bg-background shadow-sm hover:shadow-xl transition-all duration-300"
+                        onClick={() => handleVideoClick(video)}
+                      >
+                        <div className="relative aspect-video overflow-hidden">
+                          <img 
+                            src={video.thumbnail} 
+                            alt={video.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                        </div>
+                      </Card>
+                    </div>
                   </div>
                 ))}
               </div>
