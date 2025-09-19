@@ -122,6 +122,33 @@ export type Database = {
           },
         ]
       }
+      blog_update_history: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          posts_data: Json
+          posts_fetched: number
+          success: boolean
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          posts_data: Json
+          posts_fetched: number
+          success?: boolean
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          posts_data?: Json
+          posts_fetched?: number
+          success?: boolean
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           course_id: string | null
