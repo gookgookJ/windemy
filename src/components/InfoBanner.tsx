@@ -155,7 +155,6 @@ const InfoBanner = () => {
           <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2 leading-tight">
             보기만해도 매출 상승하는<br className="sm:hidden" /> 이커머스 사업 꿀팁!
           </h2>
-          <div className="w-20 sm:w-24 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full"></div>
         </div>
         
         {/* PC View - 기존 그리드 레이아웃 */}
