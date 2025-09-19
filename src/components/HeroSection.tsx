@@ -158,6 +158,8 @@ const HeroSection = () => {
     if (Math.abs(dx) > 50) (dx > 0 ? next() : prev());
   };
 
+  // 무한 루프를 위한 슬라이드 복제
+  const extendedSlides = slides.length > 0 ? [...slides, ...slides, ...slides] : [];
   const hasSlides = slides.length > 0;
 
   return (
@@ -176,11 +178,12 @@ const HeroSection = () => {
             onMouseUp={onMouseUp}
             onMouseLeave={onMouseUp}
           >
-            {slides.map((s, i) => {
-              const isActive = i === current;
+            {extendedSlides.map((s, i) => {
+              const originalIndex = i % slides.length;
+              const isActive = originalIndex === current;
               return (
                 <div
-                  key={s.id}
+                  key={`${s.id}-${i}`}
                   role="group"
                   aria-roledescription="slide"
                   ref={i === 0 ? firstCardRef : undefined}
@@ -205,49 +208,49 @@ const HeroSection = () => {
                     onLoad={() => { if (i === 0) recalc(); }}
                   />
 
-                  {/* 텍스트(모든 카드에서 노출, 활성일 때 더 또렷/큼) */}
-                  <div className="absolute bottom-14 left-5 z-[3] w-[calc(100%-40px)] space-y-2">
-                    <h2 className={`${isActive ? "text-white text-lg sm:text-xl md:text-2xl lg:text-3xl" : "text-white/85 text-base sm:text-lg md:text-xl"} font-bold drop-shadow-lg`}>
-                      {s.title}
-                    </h2>
-                    {s.subtitle && (
-                      <h3 className={`${isActive ? "text-white/90 text-sm sm:text-base md:text-lg" : "text-white/70 text-sm sm:text-base"} drop-shadow`}>
-                        {s.subtitle}
-                      </h3>
-                    )}
-                    {s.description && (
-                      <p className={`${isActive ? "text-white/85 text-xs sm:text-sm md:text-base" : "text-white/60 text-xs sm:text-sm"} drop-shadow`}>
-                        {s.description}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* 컨트롤: 활성 카드 우측 하단 고정(빨간 박스 위치) */}
+                  {/* 텍스트(활성일 때만 표시) */}
                   {isActive && (
-                    <div className="absolute bottom-4 right-5 z-[4] flex items-center gap-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); prev(); }}
-                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-                      >
-                        <ChevronLeft className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setIsPlaying((v) => !v); }}
-                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-                      >
-                        {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); next(); }}
-                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-                      >
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
+                    <div className="absolute bottom-14 left-5 z-[3] w-[calc(100%-40px)] space-y-2">
+                      <h2 className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold drop-shadow-lg">
+                        {s.title}
+                      </h2>
+                      {s.subtitle && (
+                        <h3 className="text-white/90 text-sm sm:text-base md:text-lg drop-shadow">
+                          {s.subtitle}
+                        </h3>
+                      )}
+                      {s.description && (
+                        <p className="text-white/85 text-xs sm:text-sm md:text-base drop-shadow">
+                          {s.description}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
               );
             })}
+          </div>
+          
+          {/* 중앙 하단 고정 컨트롤 */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[4] flex items-center gap-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); prev(); }}
+              className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); toggle(); }}
+              className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+            >
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); next(); }}
+              className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
         </div>
       )}
