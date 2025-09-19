@@ -189,16 +189,13 @@ const FeaturedCourses = memo(() => {
     return (
       <div className="mb-16">
         <div className="flex items-center justify-between mb-6 sm:mb-8">
-          <div className="flex items-center gap-2">
-            {icon}
-            <div>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
-                {title}
+          <div>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+              {title}
               </h2>
-              {subtitle && (
-                <p className="text-sm sm:text-base text-muted-foreground mt-1">{subtitle}</p>
-              )}
-            </div>
+            {subtitle && (
+              <p className="text-sm sm:text-base text-muted-foreground mt-1">{subtitle}</p>
+            )}
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             {/* 모든 섹션에 캐러셀 컨트롤 표시 */}

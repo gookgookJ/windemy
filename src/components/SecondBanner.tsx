@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Play, TrendingUp } from "lucide-react";
+import { Play, Youtube } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import VideoModal from "./VideoModal";
 
 const SecondBanner = () => {
@@ -128,16 +129,28 @@ const SecondBanner = () => {
     <section className="w-full py-16 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 헤더 */}
-        <div className="text-left mb-12">
-          <div className="flex items-center gap-3 mb-4">
-            <TrendingUp className="w-8 h-8 text-primary" />
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+        <div className="flex items-center justify-between mb-12">
+          <div className="text-left">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-2">
               상위 1% 셀러들의 판매 전략
             </h2>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              윈들리 유튜브를 통해 무료로 확인해보세요!
+            </p>
           </div>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">
-            윈들리 유튜브를 통해 무료로 확인해보세요!
-          </p>
+          <Button
+            asChild
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full flex items-center gap-2 transition-colors"
+          >
+            <a 
+              href="https://www.youtube.com/@windly/videos" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              <Youtube className="w-4 h-4" />
+              구독
+            </a>
+          </Button>
         </div>
         
         {/* 데스크톱 뷰 - 클릭 네비게이션 */}
@@ -226,7 +239,7 @@ const SecondBanner = () => {
           </div>
         </div>
 
-        {/* 태블릿 뷰 - 스와이프 캐러셀 */}
+        {/* 태블릿 뷰 - 2개씩 그리드 */}
         <div className="hidden md:block lg:hidden">
           <div className="relative">
             <div className="overflow-hidden rounded-xl">
@@ -237,26 +250,31 @@ const SecondBanner = () => {
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
               >
-                {youtubeVideos.map((video) => (
-                  <div key={video.id} className="w-full flex-shrink-0 px-4">
-                    <Card 
-                      className="group cursor-pointer overflow-hidden border-0 bg-background shadow-sm hover:shadow-xl transition-all duration-300"
-                      onClick={() => handleVideoClick(video)}
-                    >
-                      <div className="relative aspect-video overflow-hidden">
-                        <img 
-                          src={video.thumbnail} 
-                          alt={video.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="bg-white/95 backdrop-blur-sm rounded-full p-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                            <Play className="w-4 h-4 text-primary" fill="currentColor" />
+                {Array.from({ length: Math.ceil(youtubeVideos.length / 2) }).map((_, slideIndex) => (
+                  <div key={slideIndex} className="w-full flex-shrink-0">
+                    <div className="grid grid-cols-2 gap-6 px-4">
+                      {youtubeVideos.slice(slideIndex * 2, (slideIndex * 2) + 2).map((video) => (
+                        <Card 
+                          key={video.id} 
+                          className="group cursor-pointer overflow-hidden border-0 bg-background shadow-sm hover:shadow-xl transition-all duration-300"
+                          onClick={() => handleVideoClick(video)}
+                        >
+                          <div className="relative aspect-video overflow-hidden">
+                            <img 
+                              src={video.thumbnail} 
+                              alt={video.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="bg-white/95 backdrop-blur-sm rounded-full p-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                <Play className="w-4 h-4 text-primary" fill="currentColor" />
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </Card>
+                        </Card>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -264,7 +282,7 @@ const SecondBanner = () => {
 
             {/* 인디케이터 도트 */}
             <div className="flex justify-center mt-6 gap-2">
-              {youtubeVideos.map((_, index) => (
+              {Array.from({ length: Math.ceil(youtubeVideos.length / 2) }).map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentSlide(index)}
