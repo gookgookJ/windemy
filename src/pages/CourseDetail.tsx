@@ -447,8 +447,8 @@ const CourseDetail = () => {
 
 
             {/* Sticky Navigation Bar */}
-            {/* 수정됨: top-16으로 헤더 바로 아래 위치하도록 조정 */}
-            <div className="sticky top-16 z-50 bg-background border border-border rounded-lg mb-8 overflow-hidden shadow-md">
+            {/* 수정됨: rounded-lg 제거하여 직각 모서리로 변경 */}
+            <div className="sticky top-16 z-50 bg-background border border-border mb-8 overflow-hidden shadow-md">
               <div className="grid grid-cols-4 gap-0">
                 {/* Responsive Button Styles */}
                 <button
