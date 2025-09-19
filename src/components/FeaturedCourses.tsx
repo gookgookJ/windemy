@@ -168,7 +168,28 @@ const FeaturedCourses = memo(() => {
     }
   };
 
-  const CourseCarousel = ({ courses, title, subtitle, viewAllLink, icon, section }: { 
+  // 기본 부제목 제공 함수
+  const getDefaultSubtitle = (section: HomepageSection) => {
+    switch (section.section_type) {
+      case 'free':
+        return '누구나 무료로 수강할 수 있는 고품질 강의들을 만나보세요';
+      case 'premium':
+        return '전문가의 심화 지식을 담은 프리미엄 회원 전용 강의';
+      case 'vod':
+        return '언제 어디서나 자유롭게 학습할 수 있는 주문형 비디오 강의';
+      case 'custom':
+        return '엄선된 강의로 여러분의 성장을 도와드립니다';
+      default:
+        if (section.filter_type === 'hot_new') {
+          return '최신 트렌드와 인기 강의를 한눈에 확인하세요';
+        } else if (section.filter_type === 'category') {
+          return `${section.filter_value} 분야의 전문 강의를 만나보세요`;
+        }
+        return '학습 목표 달성을 위한 최적의 강의를 추천합니다';
+    }
+  };
+
+  const CourseCarousel = ({ courses, title, subtitle, viewAllLink, icon, section }: {
     courses: Course[], 
     title: string, 
     subtitle?: string,
