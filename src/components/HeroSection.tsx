@@ -114,7 +114,11 @@ const HeroSection = () => {
       setup();
     }
 
-    const handleResize = () => moveToIndex(slides.length + currentIndex);
+    const handleResize = () => {
+      setTimeout(() => {
+        moveToIndex(slides.length + currentIndex);
+      }, 100);
+    };
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
@@ -125,7 +129,10 @@ const HeroSection = () => {
   // currentIndex 변경시 위치 업데이트
   useEffect(() => {
     if (slides.length && typeof currentIndex === 'number') {
-      moveToIndex(slides.length + currentIndex);
+      const timeoutId = setTimeout(() => {
+        moveToIndex(slides.length + currentIndex);
+      }, 50);
+      return () => clearTimeout(timeoutId);
     }
   }, [currentIndex, slides.length]);
 
@@ -209,7 +216,9 @@ const HeroSection = () => {
           >
             {extendedSlides.map((s, i) => {
               const originalIndex = i % slides.length;
-              const isActive = originalIndex === (currentIndex || 0);
+              // 더 안정적인 활성 슬라이드 계산
+              const activeIndex = currentIndex >= 0 ? currentIndex : 0;
+              const isActive = originalIndex === activeIndex;
               return (
                 <div
                   key={`${s.id}-${i}`}
