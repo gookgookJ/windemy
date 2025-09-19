@@ -86,12 +86,14 @@ const HeroSection = () => {
 
   // 초기 렌더: 측정 → 중앙 고정 → 그 다음부터 transition 활성화
   useEffect(() => {
+    if (!slides.length) return;
+    
     // 첫 계산은 transition 없이
     setEnableTransition(false);
     const setup = () => {
       recalc();
-      // 다음 프레임 이후 transition 켜기
-      requestAnimationFrame(() => setEnableTransition(true));
+      // 충분한 지연 후 transition 켜기
+      setTimeout(() => setEnableTransition(true), 100);
     };
 
     // 이미지가 로드되면 더 정확 (첫 카드 onload)
@@ -233,8 +235,8 @@ const HeroSection = () => {
             })}
           </div>
           
-          {/* 우측 하단 고정 컨트롤 */}
-          <div className="absolute bottom-4 right-4 z-[4] flex items-center gap-2">
+          {/* 중앙 이미지 우측 하단 고정 컨트롤 */}
+          <div className="absolute bottom-4 left-1/2 transform translate-x-[50%] z-[4] flex items-center gap-2">
             <button
               onClick={(e) => { e.stopPropagation(); prev(); }}
               className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
