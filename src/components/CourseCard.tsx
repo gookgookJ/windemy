@@ -58,18 +58,29 @@ const CourseCard = ({
       className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 bg-white w-full max-w-[380px] touch-target"
       onClick={handleCardClick}
     >
-      <div className="relative overflow-hidden bg-muted min-h-[120px] flex items-center justify-center">
+      <div 
+        className="relative overflow-hidden bg-muted/50 min-h-[120px]" 
+        style={{ aspectRatio: 'auto' }}
+        data-image-container
+      >
         <img
           src={getOptimizedImageForContext(thumbnail, 'course-card')}
           alt={title}
-          className="w-full h-auto max-h-[240px] object-contain object-center transition-transform duration-300 group-hover:scale-105"
+          className="w-full h-full object-contain object-center transition-transform duration-300 group-hover:scale-105"
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : "auto"}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          sizes="(max-width: 375px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1440px) 25vw, 20vw"
           width="380"
           height="214"
           decoding={priority ? "sync" : "async"}
-          style={{ backgroundColor: priority ? 'transparent' : 'hsl(var(--muted))' }}
+          onLoad={(e) => {
+            const img = e.target as HTMLImageElement;
+            const container = img.closest('[data-image-container]') as HTMLElement;
+            if (container && img.naturalWidth && img.naturalHeight) {
+              const aspectRatio = img.naturalWidth / img.naturalHeight;
+              container.style.aspectRatio = aspectRatio.toString();
+            }
+          }}
         />
         {/* Favorite Heart Button - 원 크기를 하트의 1.5배로 축소 */}
         <button
