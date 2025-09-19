@@ -296,11 +296,13 @@ const CourseDetail = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // (수정됨) 스크롤 오프셋 조정
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
       // Adjusted scroll position to account for sticky header/navigation
-      const headerOffset = 120; // Adjust based on your actual header/sticky nav height (e.g., 80px header + 40px nav)
+      // 예상 높이: 헤더(80px) + 네비게이션 바(약 50px) = 130px.
+      const headerOffset = 130; 
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -352,6 +354,7 @@ const CourseDetail = () => {
   // --- Unified Responsive Layout ---
   return (
     <div className="min-h-screen bg-background">
+      {/* Header (가정: 고정되어 있으며 높이는 약 80px) */}
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -362,11 +365,11 @@ const CourseDetail = () => {
           <span className="text-muted-foreground">{courseData.level}</span>
         </div>
 
-        {/* Main Layout: Responsive Flex Container (Column on mobile, Row on desktop) */}
-        <div className="flex flex-col lg:flex-row gap-8 justify-center">
+        {/* Main Layout: Responsive Flex Container */}
+        {/* 수정됨: lg:items-start 추가하여 데스크톱에서 컬럼 상단을 정렬 */}
+        <div className="flex flex-col lg:flex-row gap-8 justify-center lg:items-start">
 
-          {/* Left Column: Content (Flexible on mobile, fixed max-width on desktop) */}
-          {/* pb-20 added to ensure content isn't hidden behind the mobile fixed bottom bar */}
+          {/* Left Column: Content */}
           <div className="w-full lg:max-w-[757px] flex-shrink-0 pb-20 lg:pb-8">
 
             {/* Thumbnail Section */}
@@ -443,8 +446,8 @@ const CourseDetail = () => {
             </div>
 
 
-            {/* Sticky Navigation Bar (Common for both Mobile and Desktop) */}
-            {/* top-20 assumes a header height of approx 80px. Adjust if necessary. */}
+            {/* Sticky Navigation Bar */}
+            {/* 수정됨: sticky top-20 (80px 아래에 고정) */}
             <div className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm border border-border rounded-lg mb-8 overflow-hidden">
               <div className="grid grid-cols-4 gap-0">
                 {/* Responsive Button Styles */}
@@ -634,10 +637,9 @@ const CourseDetail = () => {
           </div>
 
           {/* Right Column: Sticky Purchase Card (Desktop Only) */}
-          {/* CSS STICKY IMPLEMENTATION */}
           <div className="hidden lg:block w-[383px] flex-shrink-0">
-            {/* Sticky container: top-24 allows space for the header (e.g., 80px + 16px margin). */}
-            <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto">
+            {/* 수정됨: sticky top-20 (80px 아래에 고정). max-h 조정됨. */}
+            <div className="sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto">
                 <Card className="shadow-lg border border-border/50 p-6">
                     <div className="space-y-6">
                     {/* Course Title */}
