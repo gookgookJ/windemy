@@ -252,36 +252,34 @@ const HeroSection = () => {
                       </p>
                     )}
                   </div>
-
-                  {/* 활성 카드에만 컨트롤 표시 (카드 우측 하단) */}
-                  {isActive && (
-                    <div className="absolute bottom-4 right-4 z-[4] flex items-center gap-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); prev(); }}
-                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-                        aria-label="Previous slide"
-                      >
-                        <ChevronLeft className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggle(); }}
-                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-                        aria-label="Toggle autoplay"
-                      >
-                        {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); next(); }}
-                        className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
-                        aria-label="Next slide"
-                      >
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
-                    </div>
-                  )}
                 </div>
               );
             })}
+          </div>
+          
+          {/* 고정 컨트롤 버튼 (슬라이드 영역 우측 하단) */}
+          <div className="absolute bottom-4 right-4 z-[4] flex items-center gap-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); prev(); }}
+              className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); toggle(); }}
+              className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+              aria-label="Toggle autoplay"
+            >
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); next(); }}
+              className="w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white"
+              aria-label="Next slide"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
         </div>
       )}
