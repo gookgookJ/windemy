@@ -193,7 +193,7 @@ const HeroSection = () => {
             {/* Left Panel (Previous Slide) - Partially visible */}
             <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-r-2xl"
                  onClick={prevSlide}>
-              <div className="absolute -right-10 sm:-right-12 md:-right-16 lg:-right-20 top-0 w-[300px] sm:w-[400px] md:w-[560px] lg:w-[760px] aspect-[760/340] rounded-2xl overflow-hidden">
+              <div className="absolute -right-16 sm:-right-18 md:-right-20 lg:-right-24 top-0 w-[300px] sm:w-[400px] md:w-[560px] lg:w-[760px] aspect-[760/340] rounded-2xl overflow-hidden">
                 <div className="relative w-full h-full">
                   <img
                     src={getOptimizedImageForContext(slides[getSlideIndex(-1)].image_url, 'hero-slide')}
@@ -264,7 +264,7 @@ const HeroSection = () => {
             {/* Right Panel (Next Slide) - Partially visible */}
             <div className="flex-1 relative opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-pointer overflow-hidden rounded-l-2xl"
                  onClick={nextSlide}>
-              <div className="absolute -left-10 sm:-left-12 md:-left-16 lg:-left-20 top-0 w-[300px] sm:w-[400px] md:w-[560px] lg:w-[760px] aspect-[760/340] rounded-2xl overflow-hidden">
+              <div className="absolute -left-16 sm:-left-18 md:-left-20 lg:-left-24 top-0 w-[300px] sm:w-[400px] md:w-[560px] lg:w-[760px] aspect-[760/340] rounded-2xl overflow-hidden">
                 <div className="relative w-full h-full">
                   <img
                     src={getOptimizedImageForContext(slides[getSlideIndex(1)].image_url, 'hero-slide')}
