@@ -258,7 +258,7 @@ const SearchResults = () => {
               <span className="ml-4 text-muted-foreground">검색 중...</span>
             </div>
           ) : results.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {results.map((course) => {
                 const handleFavoriteClick = (e: React.MouseEvent) => {
                   e.preventDefault();
@@ -268,15 +268,25 @@ const SearchResults = () => {
 
                 return (
                   <Link key={course.id} to={`/course/${course.id}`} className="group cursor-pointer block">
-                    <div className="relative mb-4">
+                    <div 
+                      className="relative mb-4 bg-muted/50 aspect-[16/9] lg:aspect-[16/9] overflow-hidden rounded-xl"
+                      data-image-container
+                    >
                       <img
                         src={course.thumbnail_url}
                         alt={course.title}
-                        className="w-full h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
-                        style={{ aspectRatio: "283/159" }}
+                        className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300"
+                        onLoad={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          const container = img.closest('[data-image-container]') as HTMLElement;
+                          // Only adjust aspect ratio for mobile/tablet (below lg breakpoint)
+                          if (container && img.naturalWidth && img.naturalHeight && window.innerWidth < 1024) {
+                            const aspectRatio = img.naturalWidth / img.naturalHeight;
+                            container.style.aspectRatio = aspectRatio.toString();
+                          }
+                        }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          // Use requestAnimationFrame to avoid forced reflow
                           requestAnimationFrame(() => {
                             target.src = "/placeholder.svg";
                           });

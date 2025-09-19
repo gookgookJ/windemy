@@ -272,20 +272,30 @@ const FeaturedCourses = memo(() => {
 
     return (
       <Link to={`/course/${course.id}`} className="group cursor-pointer block">
-        <div className="relative mb-4">
+        <div 
+          className="relative mb-4 bg-muted/50 aspect-[16/9] lg:aspect-[16/9] overflow-hidden rounded-xl"
+          data-image-container
+        >
           <img
             src={getOptimizedImageForContext(course.thumbnail_url, 'course-card')}
             alt={course.title}
-            className="w-full h-[120px] sm:h-[140px] lg:h-[159px] object-cover rounded-xl group-hover:scale-105 transition-transform duration-300 responsive-image"
-            style={{ aspectRatio: "320/180" }}
+            className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300"
             loading={index < 4 ? "eager" : "lazy"}
             fetchPriority={index < 4 ? "high" : "auto"}
             sizes="(max-width: 640px) 40vw, (max-width: 1024px) 33vw, 25vw"
             width="320"
             height="180"
+            onLoad={(e) => {
+              const img = e.target as HTMLImageElement;
+              const container = img.closest('[data-image-container]') as HTMLElement;
+              // Only adjust aspect ratio for mobile/tablet (below lg breakpoint)
+              if (container && img.naturalWidth && img.naturalHeight && window.innerWidth < 1024) {
+                const aspectRatio = img.naturalWidth / img.naturalHeight;
+                container.style.aspectRatio = aspectRatio.toString();
+              }
+            }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              // Use requestAnimationFrame to avoid forced reflow
               requestAnimationFrame(() => {
                 target.src = "/placeholder.svg";
               });
