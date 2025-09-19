@@ -157,12 +157,8 @@ const SecondBanner = () => {
           <div className="relative max-w-7xl mx-auto">
             <div className="overflow-hidden rounded-xl">
               <div 
-                className="flex transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing"
+                className="flex transition-transform duration-300 ease-out"
                 style={{ transform: `translateX(-${currentSlide * (100 / 3.5)}%)` }}
-                onMouseDown={handleTouchStart}
-                onMouseMove={handleTouchMove}
-                onMouseUp={handleTouchEnd}
-                onMouseLeave={handleTouchEnd}
               >
                 {youtubeVideos.map((video) => (
                   <div key={video.id} className="flex-none w-[calc(100%/3.5-18px)] mr-6">
