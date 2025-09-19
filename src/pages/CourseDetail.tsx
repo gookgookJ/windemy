@@ -639,7 +639,7 @@ const CourseDetail = () => {
           {/* Right Column: Sticky Purchase Card (Desktop Only) */}
           <div className="hidden lg:block w-[383px] flex-shrink-0">
             {/* Sticky container: top-20 (80px 아래에 고정). */}
-            <div className="sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto">
+            <div className="sticky top-20">
                 <Card className="shadow-lg border border-border/50 p-6">
                     <div className="space-y-6">
                     {/* Course Title */}
