@@ -234,7 +234,7 @@ const FeaturedCourses = memo(() => {
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex gap-3 sm:gap-4">
             {displayCourses.map((course, index) => (
-              <div key={course.id} className="flex-none w-[calc(70%-12px)] sm:w-[calc(40%-6px)] md:w-[calc(33.333%-11px)] lg:w-[calc(25%-18px)]">
+              <div key={course.id} className="flex-none w-[calc(70%-12px)] sm:w-[calc(40%-6px)] md:w-[calc(33.333%-11px)] lg:w-[calc(28.5%-14px)]">
                 <CourseCard course={course} index={index} />
               </div>
             ))}
