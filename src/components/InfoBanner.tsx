@@ -21,24 +21,24 @@ const InfoBanner = () => {
 
   const bestPosts = [
     {
+      title: "2025 타오바오 할인코드, 할인쿠폰 사용방법",
+      url: "https://windly.cc/blog/2025-taobao-discount-coupon"
+    },
+    {
+      title: "무신사(MUSINSA) 입점 방법ㅣ판매상품, 수수료, 정산 총정리",
+      url: "https://windly.cc/blog/musinsa-onboading-guide"
+    },
+    {
       title: "일본판 아마존닷컴, 메루카리(Mercari) 초보자 직구 가이드ㅣ회원가입부터 실전까지",
-      url: "https://www.windly.cc/blog/mercari-japan-guide"
+      url: "https://windly.cc/blog/mercari-japan-guide"
     },
     {
-      title: "쿠팡파트너스 시작가이드ㅣ가입방법, 정산, 주의사항까지",
-      url: "https://www.windly.cc/blog"
+      title: "'쿠팡 파트너스' 시작 가이드- 가입방법, 정산, 주의사항까지",
+      url: "https://windly.cc/blog/kupang-pateuneoseu-sijag-gaideu-gaibbangbeob-jeongsan-juyisahangggaji"
     },
     {
-      title: "네이버 스마트스토어 상위노출 완벽 가이드",
-      url: "https://www.windly.cc/blog"
-    },
-    {
-      title: "중국 직구 사업 시작하기 - 알리바바 완전정복",
-      url: "https://www.windly.cc/blog"
-    },
-    {
-      title: "온라인 쇼핑몰 마케팅 전략 - ROI 200% 달성법",
-      url: "https://www.windly.cc/blog"
+      title: "떠오르는 유통업계 위기론, 사실일까?",
+      url: "https://windly.cc/blog/ecommerce-crisis"
     }
   ];
 
