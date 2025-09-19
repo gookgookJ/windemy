@@ -187,11 +187,6 @@ const SecondBanner = () => {
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="bg-white/95 backdrop-blur-sm rounded-full p-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                                <Play className="w-4 h-4 text-primary" fill="currentColor" />
-                              </div>
-                            </div>
                           </div>
                         </Card>
                       ))}
@@ -206,7 +201,7 @@ const SecondBanner = () => {
               <>
                 <button
                   onClick={prevSlide}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
+                  className="absolute left-2 top-[45%] -translate-y-1/2 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
                   disabled={currentSlide === 0}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -215,7 +210,7 @@ const SecondBanner = () => {
                 </button>
                 <button
                   onClick={nextSlide}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
+                  className="absolute right-2 top-[45%] -translate-y-1/2 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
                   disabled={currentSlide >= Math.ceil(youtubeVideos.length / 4) - 1}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -272,11 +267,6 @@ const SecondBanner = () => {
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="bg-white/95 backdrop-blur-sm rounded-full p-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                                <Play className="w-4 h-4 text-primary" fill="currentColor" />
-                              </div>
-                            </div>
                           </div>
                         </Card>
                       ))}
@@ -328,11 +318,6 @@ const SecondBanner = () => {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="bg-white/95 backdrop-blur-sm rounded-full p-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                            <Play className="w-4 h-4 text-primary" fill="currentColor" />
-                          </div>
-                        </div>
                       </div>
                     </Card>
                   </div>
