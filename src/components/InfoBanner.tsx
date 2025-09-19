@@ -46,14 +46,14 @@ const InfoBanner = () => {
     {
       id: 1,
       component: (
-        <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl h-full min-h-[280px]">
+        <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl h-full min-h-[320px]">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-bold text-foreground">최신 이커머스 시장 트렌드</h3>
             </div>
             <div className="space-y-2">
-              {bestPosts.slice(0, 3).map((post, index) => (
+              {bestPosts.map((post, index) => (
                 <div key={index} className="group">
                   <a 
                     href={post.url}
@@ -78,67 +78,35 @@ const InfoBanner = () => {
     {
       id: 2,
       component: (
-        <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-xl text-white h-full min-h-[280px]">
-          <CardContent className="p-4">
-            <div className="text-center mb-4">
-              <Mail className="h-7 w-7 mx-auto mb-2 text-white/90" />
+        <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-xl text-white h-full min-h-[320px]">
+          <CardContent className="p-4 flex flex-col justify-center">
+            <div className="text-center mb-6">
+              <Mail className="h-8 w-8 mx-auto mb-3 text-white/90" />
               <div className="space-y-1">
-                <div className="text-sm font-bold">돈 버는 이커머스 정보</div>
-                <div className="text-xs text-white/90">무료로 받아보기</div>
+                <div className="text-lg font-bold">돈 버는 이커머스 정보</div>
+                <div className="text-sm text-white/90">무료로 받아보기</div>
               </div>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Input
                 type="email"
                 placeholder="이메일 주소 입력하고"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/60 text-sm"
+                className="bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/60"
               />
               <Button 
                 onClick={handleSubscribe}
-                className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold text-sm py-2"
+                className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3"
               >
                 구독하기
               </Button>
             </div>
             
-            <div className="mt-3 text-xs text-white/70 text-center">
+            <div className="mt-4 text-sm text-white/70 text-center">
               놓치면 후회하는 정보를<br />
               가장 먼저 받아보세요
-            </div>
-          </CardContent>
-        </Card>
-      )
-    },
-    {
-      id: 3,
-      component: (
-        <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl h-full min-h-[280px]">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-bold text-foreground">더 많은 이커머스 트렌드</h3>
-            </div>
-            <div className="space-y-2">
-              {bestPosts.slice(3, 5).map((post, index) => (
-                <div key={index} className="group">
-                  <a 
-                    href={post.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <span className="flex-shrink-0 w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
-                      {index + 4}
-                    </span>
-                    <span className="text-sm text-foreground/80 group-hover:text-primary transition-colors line-clamp-2">
-                      {post.title}
-                    </span>
-                  </a>
-                </div>
-              ))}
             </div>
           </CardContent>
         </Card>
