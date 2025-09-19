@@ -48,7 +48,7 @@ const InfoBanner = () => {
       id: 1,
       component: (
         <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl h-full min-h-[320px]">
-          <CardContent className="p-4">
+          <CardContent className="p-4 flex flex-col justify-center h-full">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               <h3 className="text-base sm:text-lg font-bold text-foreground">최신 이커머스 시장 트렌드</h3>
@@ -163,7 +163,7 @@ const InfoBanner = () => {
             {/* 왼쪽 - 최신 트렌드 (더 넓게) */}
             <div className="lg:col-span-6">
               <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl h-full">
-                <CardContent className="p-4">
+                <CardContent className="p-4 flex flex-col justify-center h-full">
                   <div className="flex items-center gap-2 mb-4">
                     <TrendingUp className="h-5 w-5 text-primary" />
                     <h3 className="text-lg font-bold text-foreground">최신 이커머스 시장 트렌드</h3>
