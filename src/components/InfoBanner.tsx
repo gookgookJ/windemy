@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mail, TrendingUp, DollarSign, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
+import { Mail, TrendingUp, DollarSign, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const InfoBanner = () => {
   const [email, setEmail] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
 
   const handleSubscribe = () => {
     if (email) {
@@ -121,6 +123,30 @@ const InfoBanner = () => {
     setCurrentSlide((prev) => (prev - 1 + carouselSlides.length) % carouselSlides.length);
   };
 
+  // 터치 이벤트 핸들러
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(0); // 초기화
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      nextSlide();
+    } else if (isRightSwipe) {
+      prevSlide();
+    }
+  };
+
   return (
     <section className="w-full py-10 bg-gradient-to-br from-slate-900 to-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -210,8 +236,11 @@ const InfoBanner = () => {
             {/* 캐러셀 컨테이너 */}
             <div className="overflow-hidden rounded-xl">
               <div 
-                className="flex transition-transform duration-300 ease-out"
+                className="flex transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing"
                 style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
               >
                 {carouselSlides.map((slide) => (
                   <div key={slide.id} className="w-full flex-shrink-0">
@@ -220,21 +249,6 @@ const InfoBanner = () => {
                 ))}
               </div>
             </div>
-
-            {/* 내비게이션 버튼 */}
-            <button
-              onClick={prevSlide}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors z-10"
-            >
-              <ChevronLeft className="w-4 h-4 text-slate-700" />
-            </button>
-            
-            <button
-              onClick={nextSlide}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors z-10"
-            >
-              <ChevronRight className="w-4 h-4 text-slate-700" />
-            </button>
 
             {/* 인디케이터 도트 */}
             <div className="flex justify-center mt-4 gap-2">
