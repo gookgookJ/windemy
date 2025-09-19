@@ -637,110 +637,107 @@ const CourseDetail = () => {
           </div>
 
           {/* Right Column: Sticky Purchase Card (Desktop Only) */}
-          <div className="hidden lg:block w-[383px] flex-shrink-0 self-start">
-            {/* Sticky container: top-20 (80px 아래에 고정). */}
-            <div className="sticky top-20">
-                <Card className="shadow-lg border border-border/50 p-6">
-                    <div className="space-y-6">
-                    {/* Course Title */}
-                    <h1 className="text-xl font-bold leading-tight">
-                        {courseData.title}
-                    </h1>
+          <div className="hidden lg:block sticky top-20 w-[383px] flex-shrink-0 self-start">
+            <Card className="shadow-lg border border-border/50 p-6">
+                <div className="space-y-6">
+                {/* Course Title */}
+                <h1 className="text-xl font-bold leading-tight">
+                    {courseData.title}
+                </h1>
 
-                    {/* Course Price */}
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                        <span className="text-3xl font-bold text-primary">
-                            {(selectedCourse?.price ?? 0).toLocaleString()}원
-                        </span>
-                        {/* Example Badge, replace with dynamic data if available */}
-                        <Badge variant="destructive" className="text-sm">
-                            2차 얼리버드
-                        </Badge>
-                        </div>
-                        {selectedCourse?.original_price && (
-                             <div className="text-sm text-muted-foreground line-through">
-                                {selectedCourse.original_price.toLocaleString()}원
-                            </div>
-                        )}
+                {/* Course Price */}
+                <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                    <span className="text-3xl font-bold text-primary">
+                        {(selectedCourse?.price ?? 0).toLocaleString()}원
+                    </span>
+                    {/* Example Badge, replace with dynamic data if available */}
+                    <Badge variant="destructive" className="text-sm">
+                        2차 얼리버드
+                    </Badge>
                     </div>
-
-                    {/* Course Benefits */}
-                    {selectedCourse?.benefits && selectedCourse.benefits.length > 0 && (
-                        <div className="space-y-3">
-                        <h3 className="text-sm font-medium text-muted-foreground">포함 혜택</h3>
-                        <div className="space-y-2">
-                            {selectedCourse.benefits.map((benefit, index) => (
-                            <div key={index} className="flex items-start gap-2 text-sm">
-                                <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                                {benefit}
-                            </div>
-                            ))}
-                        </div>
+                    {selectedCourse?.original_price && (
+                         <div className="text-sm text-muted-foreground line-through">
+                            {selectedCourse.original_price.toLocaleString()}원
                         </div>
                     )}
+                </div>
 
-                    {/* Course Options Selection */}
+                {/* Course Benefits */}
+                {selectedCourse?.benefits && selectedCourse.benefits.length > 0 && (
                     <div className="space-y-3">
-                        <h3 className="text-sm font-medium text-muted-foreground">강의 구성</h3>
-                        <div className="space-y-2">
-                        {courseOptions.map((option) => (
-                            <div
-                            key={option.id}
-                            className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                                selectedOption === option.id
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border hover:border-primary/50'
-                            }`}
-                            onClick={() => setSelectedOption(option.id)}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedOption(option.id)}
-                            >
-                            <div className="flex items-center justify-between">
-                                <div className="flex-1 pr-4">
-                                    <span className="text-sm font-medium">{option.name}</span>
-                                </div>
-                                <div className="text-right">
-                                <div className="font-bold text-primary">
-                                    {option.price.toLocaleString()}원
-                                </div>
-                                {option.original_price && (
-                                    <div className="text-xs text-muted-foreground line-through">
-                                    {option.original_price.toLocaleString()}원
-                                    </div>
-                                )}
-                                </div>
-                            </div>
-                            </div>
+                    <h3 className="text-sm font-medium text-muted-foreground">포함 혜택</h3>
+                    <div className="space-y-2">
+                        {selectedCourse.benefits.map((benefit, index) => (
+                        <div key={index} className="flex items-start gap-2 text-sm">
+                            <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                            {benefit}
+                        </div>
                         ))}
-                        </div>
                     </div>
-
-                    {/* Final Price */}
-                    <div className="border-t pt-4">
-                        <div className="flex items-center justify-between">
-                        <span className="text-lg font-medium">상품 금액</span>
-                        <span className="text-2xl font-bold text-primary">
-                            {(selectedCourse?.price ?? 0).toLocaleString()}원
-                        </span>
-                        </div>
                     </div>
+                )}
 
-                    {/* Action Buttons */}
-                    <div className="space-y-3">
-                        <Button
-                        variant="default"
-                        size="lg"
-                        className="w-full bg-primary hover:bg-primary/90"
-                        onClick={handlePurchase}
+                {/* Course Options Selection */}
+                <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground">강의 구성</h3>
+                    <div className="space-y-2">
+                    {courseOptions.map((option) => (
+                        <div
+                        key={option.id}
+                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                            selectedOption === option.id
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                        onClick={() => setSelectedOption(option.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedOption(option.id)}
                         >
-                        강의 구매하기
-                        </Button>
+                        <div className="flex items-center justify-between">
+                            <div className="flex-1 pr-4">
+                                <span className="text-sm font-medium">{option.name}</span>
+                            </div>
+                            <div className="text-right">
+                            <div className="font-bold text-primary">
+                                {option.price.toLocaleString()}원
+                            </div>
+                            {option.original_price && (
+                                <div className="text-xs text-muted-foreground line-through">
+                                {option.original_price.toLocaleString()}원
+                                </div>
+                            )}
+                            </div>
+                        </div>
+                        </div>
+                    ))}
                     </div>
+                </div>
+
+                {/* Final Price */}
+                <div className="border-t pt-4">
+                    <div className="flex items-center justify-between">
+                    <span className="text-lg font-medium">상품 금액</span>
+                    <span className="text-2xl font-bold text-primary">
+                        {(selectedCourse?.price ?? 0).toLocaleString()}원
+                    </span>
                     </div>
-                </Card>
-            </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-3">
+                    <Button
+                    variant="default"
+                    size="lg"
+                    className="w-full bg-primary hover:bg-primary/90"
+                    onClick={handlePurchase}
+                    >
+                    강의 구매하기
+                    </Button>
+                </div>
+                </div>
+            </Card>
           </div>
         </div>
 
