@@ -92,14 +92,22 @@ const SecondBanner = () => {
     setSelectedVideo(video);
   };
 
-  // 터치 이벤트 핸들러
-  const handleTouchStart = (e: React.TouchEvent) => {
+  // 터치/마우스 이벤트 핸들러
+  const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
     setTouchEnd(0);
-    setTouchStart(e.targetTouches[0].clientX);
+    if ('touches' in e) {
+      setTouchStart(e.touches[0].clientX);
+    } else {
+      setTouchStart(e.clientX);
+    }
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+  const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if ('touches' in e) {
+      setTouchEnd(e.touches[0].clientX);
+    } else {
+      setTouchEnd(e.clientX);
+    }
   };
 
   const handleTouchEnd = () => {
@@ -123,70 +131,140 @@ const SecondBanner = () => {
         <div className="text-left mb-12">
           <div className="flex items-center gap-3 mb-4">
             <TrendingUp className="w-8 h-8 text-primary" />
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
               상위 1% 셀러들의 판매 전략
             </h2>
           </div>
-          <p className="text-muted-foreground text-base sm:text-lg">
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             윈들리 유튜브를 통해 무료로 확인해보세요!
           </p>
         </div>
         
-        {/* 데스크톱 뷰 - 3개씩 그리드 */}
+        {/* 데스크톱 뷰 - 클릭 네비게이션 */}
         <div className="hidden lg:block">
           <div className="relative">
-            <div className="grid grid-cols-3 gap-6 mb-8">
-            {youtubeVideos.slice(currentSlide * 3, (currentSlide * 3) + 3).map((video) => (
-              <Card 
-                key={video.id} 
-                className="group cursor-pointer overflow-hidden border-0 bg-background shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                onClick={() => handleVideoClick(video)}
+            <div className="overflow-hidden rounded-xl">
+              <div 
+                className="flex transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing"
+                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                onMouseDown={handleTouchStart}
+                onMouseMove={handleTouchMove}
+                onMouseUp={handleTouchEnd}
+                onMouseLeave={handleTouchEnd}
               >
-                <div className="relative aspect-video overflow-hidden">
-                  <img 
-                    src={video.thumbnail} 
-                    alt={video.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-full p-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                      <Play className="w-4 h-4 text-primary" fill="currentColor" />
+                {Array.from({ length: Math.ceil(youtubeVideos.length / 3) }).map((_, slideIndex) => (
+                  <div key={slideIndex} className="w-full flex-shrink-0">
+                    <div className="grid grid-cols-3 gap-6 px-4">
+                      {youtubeVideos.slice(slideIndex * 3, (slideIndex * 3) + 3).map((video) => (
+                        <Card 
+                          key={video.id} 
+                          className="group cursor-pointer overflow-hidden border-0 bg-background shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                          onClick={() => handleVideoClick(video)}
+                        >
+                          <div className="relative aspect-video overflow-hidden">
+                            <img 
+                              src={video.thumbnail} 
+                              alt={video.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="bg-white/95 backdrop-blur-sm rounded-full p-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                <Play className="w-4 h-4 text-primary" fill="currentColor" />
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                ))}
+              </div>
+            </div>
+            
+            {/* 좌우 네비게이션 버튼 */}
+            {Math.ceil(youtubeVideos.length / 3) > 1 && (
+              <>
+                <button
+                  onClick={prevSlide}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
+                  disabled={currentSlide === 0}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={nextSlide}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
+                  disabled={currentSlide >= Math.ceil(youtubeVideos.length / 3) - 1}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
+            
+            {/* 하단 인디케이터 */}
+            {Math.ceil(youtubeVideos.length / 3) > 1 && (
+              <div className="flex justify-center mt-8 gap-2">
+                {Array.from({ length: Math.ceil(youtubeVideos.length / 3) }).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSlide(index)}
+                    className={cn(
+                      "w-2 h-2 rounded-full transition-all duration-200",
+                      currentSlide === index 
+                        ? "bg-primary w-6" 
+                        : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-          
-          {/* 좌우 네비게이션 버튼 */}
-          {Math.ceil(youtubeVideos.length / 3) > 1 && (
-            <>
-              <button
-                onClick={prevSlide}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
-                disabled={currentSlide === 0}
+        </div>
+
+        {/* 태블릿 뷰 - 스와이프 캐러셀 */}
+        <div className="hidden md:block lg:hidden">
+          <div className="relative">
+            <div className="overflow-hidden rounded-xl">
+              <div 
+                className="flex transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing"
+                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                onClick={nextSlide}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-background hover:bg-muted text-foreground rounded-full p-3 transition-colors shadow-lg border z-10"
-                disabled={currentSlide >= Math.ceil(youtubeVideos.length / 3) - 1}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </>
-          )}
-          
-          {/* 하단 인디케이터 */}
-          {Math.ceil(youtubeVideos.length / 3) > 1 && (
-            <div className="flex justify-center mt-8 gap-2">
-              {Array.from({ length: Math.ceil(youtubeVideos.length / 3) }).map((_, index) => (
+                {youtubeVideos.map((video) => (
+                  <div key={video.id} className="w-full flex-shrink-0 px-4">
+                    <Card 
+                      className="group cursor-pointer overflow-hidden border-0 bg-background shadow-sm hover:shadow-xl transition-all duration-300"
+                      onClick={() => handleVideoClick(video)}
+                    >
+                      <div className="relative aspect-video overflow-hidden">
+                        <img 
+                          src={video.thumbnail} 
+                          alt={video.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="bg-white/95 backdrop-blur-sm rounded-full p-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                            <Play className="w-4 h-4 text-primary" fill="currentColor" />
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 인디케이터 도트 */}
+            <div className="flex justify-center mt-6 gap-2">
+              {youtubeVideos.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentSlide(index)}
@@ -199,62 +277,7 @@ const SecondBanner = () => {
                 />
               ))}
             </div>
-          )}
-        </div>
-      </div>
-
-        {/* 태블릿 뷰 - 2개씩 그리드 */}
-        <div className="hidden md:block lg:hidden">
-          <div className="grid grid-cols-2 gap-6 mb-8">
-            {youtubeVideos.slice(currentSlide * 2, (currentSlide * 2) + 2).map((video) => (
-              <Card 
-                key={video.id} 
-                className="group cursor-pointer overflow-hidden border-0 bg-background shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                onClick={() => handleVideoClick(video)}
-              >
-                <div className="relative aspect-video overflow-hidden">
-                  <img 
-                    src={video.thumbnail} 
-                    alt={video.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-full p-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                      <Play className="w-4 h-4 text-primary" fill="currentColor" />
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
           </div>
-          
-          {/* 네비게이션 */}
-          {Math.ceil(youtubeVideos.length / 2) > 1 && (
-            <div className="flex justify-center items-center gap-4">
-              <button
-                onClick={prevSlide}
-                className="bg-background hover:bg-muted text-foreground rounded-full p-2 transition-colors shadow-sm border"
-                disabled={currentSlide === 0}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <span className="text-muted-foreground px-4 py-2 text-sm">
-                {currentSlide + 1} / {Math.ceil(youtubeVideos.length / 2)}
-              </span>
-              <button
-                onClick={nextSlide}
-                className="bg-background hover:bg-muted text-foreground rounded-full p-2 transition-colors shadow-sm border"
-                disabled={currentSlide >= Math.ceil(youtubeVideos.length / 2) - 1}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          )}
         </div>
 
         {/* 모바일 뷰 - 1개씩 캐러셀 */}
