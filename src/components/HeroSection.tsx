@@ -28,25 +28,33 @@ const HeroSection = () => {
   const slideRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // 즉시 데이터를 가져와서 로딩 시간 최소화
-    const fetchSlidesImmediately = async () => {
+    let isMounted = true;
+    
+    const fetchSlidesOptimized = async () => {
       try {
         const { data, error } = await supabase
           .from('hero_slides')
-          .select('*')
+          .select('id, title, subtitle, description, image_url, course_id, link_url, order_index')
           .eq('is_active', true)
           .eq('is_draft', false)
-          .order('order_index');
+          .order('order_index')
+          .limit(5); // 최대 5개로 제한
 
-        if (!error && data && data.length > 0) {
+        if (!error && data && data.length > 0 && isMounted) {
           setSlides(data);
         }
       } catch (error) {
-        console.error('Error fetching slides:', error);
+        if (isMounted) {
+          console.error('Error fetching slides:', error);
+        }
       }
     };
     
-    fetchSlidesImmediately();
+    fetchSlidesOptimized();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Immediate preload of the first hero image for better LCP
@@ -248,9 +256,9 @@ const HeroSection = () => {
                         alt={slides[getSlideIndex(-1)].title}
                         className="w-full h-full object-cover responsive-image"
                         loading="lazy"
-                        sizes="50vw"
-                        width="800"
-                        height="450"
+                        sizes="400px"
+                        width="400"
+                        height="225"
                       />
                       <div className="absolute inset-0 bg-black/40 flex items-center">
                         <div className="text-white space-y-4 px-12 flex-1">
@@ -313,9 +321,9 @@ const HeroSection = () => {
                         alt={slides[getSlideIndex(1)].title}
                         className="w-full h-full object-cover responsive-image"
                         loading="lazy"
-                        sizes="50vw"
-                        width="800"
-                        height="450"
+                        sizes="400px"
+                        width="400"
+                        height="225"
                       />
                       <div className="absolute inset-0 bg-black/40 flex items-center">
                         <div className="text-white space-y-4 px-12 flex-1">

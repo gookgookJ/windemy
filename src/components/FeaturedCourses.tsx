@@ -431,6 +431,8 @@ const FeaturedCourses = () => {
       </section>
     </>
   );
-};
+});
+
+FeaturedCourses.displayName = 'FeaturedCourses';
 
 export default FeaturedCourses;
