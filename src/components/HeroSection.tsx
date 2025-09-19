@@ -38,7 +38,7 @@ const HeroSection = () => {
           .eq('is_active', true)
           .eq('is_draft', false)
           .order('order_index')
-          .limit(5); // 최대 5개로 제한
+          .limit(10); // 최대 10개로 변경
 
         if (!error && data && data.length > 0 && isMounted) {
           setSlides(data);
