@@ -15,7 +15,7 @@ interface HeroSlide {
   order_index: number;
 }
 
-const GAP_PX = 16;
+const GAP_PX = 16; // gap-4
 const AUTOPLAY_INTERVAL = 5000;
 const SWIPE_THRESHOLD = 50;
 
@@ -23,23 +23,17 @@ const HeroSection = () => {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [trackIndex, setTrackIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(true); // FIXED: enableTransition을 isTransitioning으로 이름 변경 및 초기값 true로 설정
   const [isPlaying, setIsPlaying] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
-  // NEW: 순간이동(snap) 상태를 명시적으로 관리하기 위한 상태 추가
-  const [isSnapping, setIsSnapping] = useState(false);
 
   const trackRef = useRef<HTMLDivElement>(null);
   const firstCardRef = useRef<HTMLDivElement>(null);
+  const transitionEndTimer = useRef<NodeJS.Timeout>();
   const startX = useRef(0);
   const currentX = useRef(0);
   const controlsRef = useRef<HTMLDivElement>(null);
   const [controlsTranslate, setControlsTranslate] = useState(0);
-
-  const activeIndexRef = useRef(activeIndex);
-  useEffect(() => {
-    activeIndexRef.current = activeIndex;
-  }, [activeIndex]);
 
   const navigate = useNavigate();
 
@@ -53,7 +47,10 @@ const HeroSection = () => {
         .eq("is_draft", false)
         .order("order_index")
         .limit(10);
-      if (!error && data) setSlides(data);
+
+      if (!error && data) {
+        setSlides(data);
+      }
     };
     fetchSlides();
   }, []);
@@ -81,26 +78,37 @@ const HeroSection = () => {
   const hasSlides = slides.length > 0;
   const extendedSlides = hasSlides ? [...slides, ...slides, ...slides] : [];
 
+  // ----- 유틸 함수 (useCallback으로 최적화) -----
   const getCardWidth = useCallback(() => {
-    return firstCardRef.current ? firstCardRef.current.clientWidth + GAP_PX : 0;
+    const card = firstCardRef.current;
+    return card ? card.clientWidth + GAP_PX : 0;
   }, []);
 
   const updateControlsPosition = useCallback(() => {
     const cardEl = firstCardRef.current;
     const groupEl = controlsRef.current;
     if (!cardEl || !groupEl) return;
-    setControlsTranslate(cardEl.clientWidth / 2 - groupEl.clientWidth - 16);
+    const cardW = cardEl.clientWidth;
+    const groupW = groupEl.clientWidth;
+    const margin = 16;
+    setControlsTranslate(cardW / 2 - margin - groupW);
   }, []);
 
-  // 초기 세팅 로직
+  // ----- 초기 세팅 및 리사이즈 -----
   useEffect(() => {
     if (!hasSlides) return;
+
     const setup = () => {
-      setIsTransitioning(false);
-      setTrackIndex(slides.length);
+      setIsTransitioning(false); // 초기 위치 설정 시에는 애니메이션 끔
+      const startTrackIndex = slides.length;
+      setTrackIndex(startTrackIndex);
       setActiveIndex(0);
       updateControlsPosition();
-      setTimeout(() => setIsTransitioning(true), 50); // 초기 로드 시에는 짧은 지연이 안정적일 수 있음
+      
+      // HACK: state 업데이트 후 DOM이 반영될 시간을 벌기 위해 setTimeout 사용
+      setTimeout(() => {
+        setIsTransitioning(true);
+      }, 50);
     };
 
     const img = firstCardRef.current?.querySelector("img");
@@ -109,54 +117,63 @@ const HeroSection = () => {
     } else {
       setup();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slides.length, hasSlides]);
 
-  // 리사이즈 핸들러
-  useEffect(() => {
-    if (!hasSlides) return;
     const handleResize = () => {
-      setIsTransitioning(false);
-      setTrackIndex(slides.length + activeIndexRef.current);
+      setIsTransitioning(false); // 리사이즈 중에는 애니메이션 끔
+      const newTrackIndex = slides.length + activeIndex;
+      setTrackIndex(newTrackIndex);
       updateControlsPosition();
+      // HACK: 마찬가지로 state 반영 후 애니메이션을 다시 켬
       setTimeout(() => setIsTransitioning(true), 50);
     };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [slides.length, hasSlides, updateControlsPosition]);
 
-  // 오토플레이
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (img) img.removeEventListener("load", setup);
+    };
+  }, [slides.length, hasSlides, activeIndex, updateControlsPosition]); // FIXED: 의존성 배열 수정
+
+  // ----- 오토플레이 -----
   useEffect(() => {
     if (!isPlaying || !hasSlides || isDragging) return;
+
     const autoplay = setInterval(() => {
+      // NOTE: next() 함수를 직접 호출하는 대신, 상태 업데이트 함수형으로 변경
       setTrackIndex(prev => prev + 1);
     }, AUTOPLAY_INTERVAL);
+
     return () => clearInterval(autoplay);
   }, [isPlaying, hasSlides, isDragging]);
 
+  // ----- 네비게이션 (useCallback으로 최적화) -----
   const goToSlide = useCallback((index: number) => {
-    setTrackIndex(slides.length + index);
+    const newTrackIndex = slides.length + index;
+    setTrackIndex(newTrackIndex);
   }, [slides.length]);
-
+  
   const next = useCallback(() => setTrackIndex(prev => prev + 1), []);
   const prev = useCallback(() => setTrackIndex(prev => prev - 1), []);
   const togglePlay = useCallback(() => setIsPlaying(v => !v), []);
 
   const handleSlideClick = useCallback((slide: HeroSlide, index: number) => {
-    const originalIndex = index % slides.length;
-    if (originalIndex !== activeIndex) {
-      goToSlide(originalIndex);
-      return;
-    }
-    if (slide.course_id) navigate(`/course/${slide.course_id}`);
-    else if (slide.link_url) window.open(slide.link_url, "_blank");
+      const originalIndex = index % slides.length;
+      if (originalIndex !== activeIndex) {
+        goToSlide(originalIndex);
+        return; // 비활성 슬라이드 클릭 시 해당 슬라이드로 이동만 함
+      }
+      // 활성 슬라이드 클릭 시 링크 이동
+      if (slide.course_id) navigate(`/course/${slide.course_id}`);
+      else if (slide.link_url) window.open(slide.link_url, "_blank");
   }, [activeIndex, slides.length, navigate, goToSlide]);
 
+
+  // ----- 스와이프 이벤트 핸들러 (useCallback으로 최적화) -----
   const onDragStart = useCallback((clientX: number) => {
     setIsDragging(true);
     startX.current = clientX;
     currentX.current = clientX;
-    setIsTransitioning(false);
+    setIsTransitioning(false); // 드래그 시작 시 애니메이션 비활성화
   }, []);
 
   const onDragMove = useCallback((clientX: number) => {
@@ -166,20 +183,31 @@ const HeroSection = () => {
 
   const onDragEnd = useCallback(() => {
     if (!isDragging) return;
-    setIsDragging(false);
-    setIsTransitioning(true);
+    
+    setIsTransitioning(true); // 드래그 종료 시 애니메이션 활성화
     const dx = startX.current - currentX.current;
+
     if (Math.abs(dx) > SWIPE_THRESHOLD) {
       if (dx > 0) next();
       else prev();
+    } else {
+        // 임계값 미만이면 원래 위치로 복귀
+        if(trackRef.current) {
+            const cardWidth = getCardWidth();
+            const offset = (trackRef.current.parentElement!.clientWidth / 2) - ((cardWidth - GAP_PX) / 2);
+            trackRef.current.style.transform = `translate3d(${-trackIndex * cardWidth + offset}px, 0, 0)`;
+        }
     }
-  }, [isDragging, next, prev]);
+    setIsDragging(false);
+  }, [isDragging, next, prev, trackIndex, getCardWidth]);
 
+  // ----- 트랙 위치 계산 -----
   const calculateTranslateX = () => {
     if (!trackRef.current) return 0;
     const cardWidth = getCardWidth();
     const wrapWidth = trackRef.current.parentElement?.clientWidth ?? 0;
     const baseOffset = (wrapWidth / 2) - ((cardWidth - GAP_PX) / 2);
+
     if (isDragging) {
       const dragOffset = currentX.current - startX.current;
       return -trackIndex * cardWidth + baseOffset + dragOffset;
@@ -187,42 +215,44 @@ const HeroSection = () => {
     return -trackIndex * cardWidth + baseOffset;
   };
 
-  // CHANGED: onTransitionEnd 로직을 '스냅 모드'를 사용하도록 변경
+  // ----- 무한 루프 처리 (핵심 로직) -----
   const onTransitionEnd = useCallback(() => {
     if (!hasSlides) return;
     const n = slides.length;
     let newTrackIndex = trackIndex;
     let shouldSnap = false;
 
-    if (trackIndex >= 2 * n) {
+    if (trackIndex >= 2 * n) { // 오른쪽 끝에 도달했을 때
       newTrackIndex = trackIndex - n;
       shouldSnap = true;
-    } else if (trackIndex < n) {
+    } else if (trackIndex < n) { // 왼쪽 끝에 도달했을 때
       newTrackIndex = trackIndex + n;
       shouldSnap = true;
     }
 
     if (shouldSnap) {
-      setIsSnapping(true);
-      setTrackIndex(newTrackIndex);
+      setIsTransitioning(false); // 애니메이션 끄고
+      setTrackIndex(newTrackIndex); // 위치 순간이동
+      
+      // HACK: React가 상태 업데이트를 배치 처리하므로,
+      // DOM에 반영된 후(순간이동 후) 다시 애니메이션을 켜기 위해 setTimeout 사용
+      setTimeout(() => {
+        setIsTransitioning(true);
+      }, 50);
     }
   }, [trackIndex, slides.length, hasSlides]);
 
-  // NEW: isSnapping 상태를 감지하여 스냅이 끝난 후 애니메이션을 다시 켜는 useEffect
-  useEffect(() => {
-    if (isSnapping) {
-      // isSnapping이 true로 렌더링된 직후, 다시 false로 돌려놓아 애니메이션을 활성화
-      setIsSnapping(false);
-    }
-  }, [isSnapping]);
-
+  // trackIndex가 변경되면 activeIndex도 업데이트
   useEffect(() => {
     if (hasSlides) {
-      setActiveIndex((trackIndex % slides.length + slides.length) % slides.length);
+      const newActiveIndex = (trackIndex % slides.length + slides.length) % slides.length;
+      setActiveIndex(newActiveIndex);
     }
   }, [trackIndex, slides.length, hasSlides]);
 
-  if (!hasSlides) return null;
+  if (!hasSlides) {
+    return null; // 데이터가 없으면 아무것도 렌더링하지 않음
+  }
 
   return (
     <section className="relative w-full bg-white py-4 overflow-hidden">
@@ -231,15 +261,14 @@ const HeroSection = () => {
         className="flex gap-4"
         style={{
           transform: `translate3d(${calculateTranslateX()}px, 0, 0)`,
-          // CHANGED: isSnapping 상태일 때는 transition을 강제로 'none'으로 설정
-          transition: !isSnapping && isTransitioning ? "transform 500ms ease-out" : "none",
-          willChange: 'transform',
+          transition: isTransitioning ? "transform 500ms ease-out" : "none",
         }}
         onTransitionEnd={onTransitionEnd}
       >
         {extendedSlides.map((s, i) => {
           const originalIndex = i % slides.length;
           const isActive = originalIndex === activeIndex;
+
           return (
             <div
               key={`${s.id}-${i}`}
@@ -262,7 +291,7 @@ const HeroSection = () => {
                 className="absolute inset-0 h-full w-full object-cover"
                 loading={isActive ? "eager" : "lazy"}
                 fetchPriority={isActive ? "high" : undefined}
-                decoding="async"
+                decoding="async" // decoding은 sync보다 async가 더 나은 선택일 수 있습니다.
               />
               <div className="absolute bottom-8 left-4 sm:bottom-12 sm:left-6 md:bottom-16 md:left-8 lg:bottom-20 lg:left-12 z-[3] w-[calc(100%-32px)] sm:w-[calc(100%-48px)] md:w-[calc(100%-64px)] lg:w-[calc(100%-96px)] space-y-1 sm:space-y-2 md:space-y-3">
                 <h2 className="text-white text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold drop-shadow-lg leading-tight">
@@ -279,6 +308,7 @@ const HeroSection = () => {
         })}
       </div>
 
+      {/* 컨트롤: 중앙 카드 우하단 고정 */}
       <div
         ref={controlsRef}
         className="pointer-events-none absolute bottom-8 left-1/2 z-[4] flex items-center gap-2"
