@@ -87,7 +87,7 @@ const HeroSection = () => {
   }, [gap]);
 
   const updateControlsPosition = useCallback(() => {
-    if (window.innerWidth < MOBILE_BREAKPOINT) return; // 모바일에선 컨트롤이 없으므로 계산 불필요
+    if (window.innerWidth < MOBILE_BREAKPOINT) return;
     const cardEl = firstCardRef.current;
     const groupEl = controlsRef.current;
     if (!cardEl || !groupEl) return;
@@ -240,10 +240,10 @@ const HeroSection = () => {
             <div
               key={`${s.id}-${i}`}
               ref={i === 0 ? firstCardRef : undefined}
-              // ✨ 화면 크기별 스타일을 명확하게 분리하여 PC/태블릿 뷰에서 기존 디자인이 깨지지 않도록 수정
+              // ✨ 모바일 뷰에서 h-[55vw] 대신 aspect-[2/1]을 사용하여 이미지 비율 유지
               className={`relative shrink-0 overflow-hidden transition-opacity duration-300
-                          h-[55vw] w-full rounded-none max-h-[280px]
-                          sm:h-[220px] sm:w-[420px] sm:rounded-lg sm:max-h-none
+                          w-full rounded-none aspect-[2/1]
+                          sm:aspect-auto sm:h-[220px] sm:w-[420px] sm:rounded-lg
                           md:h-[280px] md:w-[560px]
                           lg:h-[340px] lg:w-[760px]
                           ${isActive ? "opacity-100" : "opacity-50 cursor-pointer"}`}
@@ -276,7 +276,6 @@ const HeroSection = () => {
                 )}
               </div>
               
-              {/* ✨ 페이지네이션을 sm 사이즈 이상에서는 보이지 않도록 'sm:hidden' 추가 */}
               {isActive && (
                 <div className="absolute bottom-4 right-4 z-[4] rounded-full bg-black/60 px-3 py-1 text-white text-xs pointer-events-none sm:hidden">
                   {activeIndex + 1} / {slides.length}
