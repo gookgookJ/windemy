@@ -130,13 +130,13 @@ const About = () => {
                             { label: '수강생 목표 달성률', value: 92, icon: Target }
                         ].map((stat) => (
                             <div key={stat.label} className="bg-card border border-border rounded-2xl p-8 group hover:border-primary hover:shadow-xl hover:-translate-y-2 transition-all duration-300" data-animate>
-                                {/* ✨ FIX: `break-keep` 클래스를 추가하여 단어 단위로 줄바꿈되도록 수정 */}
                                 <p className="text-lg font-semibold text-muted-foreground mb-3 group-hover:text-primary/80 transition-colors duration-300 break-keep">{stat.label}</p>
                                 <div className="flex items-end justify-between">
-                                    <div className="font-extrabold text-foreground text-5xl lg:text-[52px]">
+                                    {/* ✨ FIX: 모바일-태블릿-PC에 맞춰 폰트 크기를 반응형으로 조정하여 아이콘 침범 방지 */}
+                                    <div className="font-extrabold text-foreground text-4xl sm:text-5xl lg:text-[52px]">
                                         <span data-count={stat.value}>0</span>%
                                     </div>
-                                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-xl group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
+                                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-xl group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300 flex-shrink-0">
                                         <stat.icon className="w-7 h-7 text-primary" />
                                     </div>
                                 </div>
@@ -149,7 +149,8 @@ const About = () => {
             {/* Our Principles Section */}
             <section className="px-5 py-20 lg:py-[120px] bg-gray-50/70">
                 <div className="max-w-6xl mx-auto">
-                    <div className="text-left mb-12 lg:mb-[60px]" data-animate>
+                    {/* ✨ FIX: 제목과 카드 그리드 사이의 간격을 늘려 답답함 해소 (mb-12 -> mb-16, lg:mb-[60px] -> lg:mb-20) */}
+                    <div className="text-left mb-16 lg:mb-20" data-animate>
                         <h2 className="text-base text-primary font-bold tracking-wider mb-3">OUR PRINCIPLES</h2>
                         <p className="text-3xl lg:text-5xl font-extrabold leading-tight">
                             우리가 이기는 결과를 만드는
@@ -181,13 +182,11 @@ const About = () => {
             {/* Call to Action Section */}
             <section className="px-5 pb-20 lg:pb-[120px]">
                 <div className="max-w-6xl mx-auto" data-animate>
-                    {/* ✨ FIX: 모바일에서 세로 정렬 시 텍스트가 중앙에 오도록 `text-center` 추가 */}
                     <div className="bg-primary text-primary-foreground rounded-[30px] p-8 lg:py-20 lg:px-[60px] flex flex-col md:flex-row md:items-center md:justify-between text-center md:text-left hover:shadow-2xl transition-shadow duration-300">
                         <div className="mb-8 md:mb-0">
                             <h2 className="text-3xl md:text-4xl font-bold leading-snug mb-3">이제 당신의 차례입니다.</h2>
                             <p className="text-base md:text-lg opacity-80">
                                 윈들리아카데미와 함께라면, 
-                                {/* ✨ FIX: 작은 화면(sm 미만)에서 자연스러운 줄바꿈 추가 */}
                                 <br className="block sm:hidden" />
                                 경제적 자유는 더 이상 꿈이 아닙니다.
                             </p>
