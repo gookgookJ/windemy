@@ -132,8 +132,8 @@ const About = () => {
                             <div key={stat.label} className="bg-card border border-border rounded-2xl p-8 group hover:border-primary hover:shadow-xl hover:-translate-y-2 transition-all duration-300" data-animate>
                                 <p className="text-lg font-semibold text-muted-foreground mb-3 group-hover:text-primary/80 transition-colors duration-300 break-keep">{stat.label}</p>
                                 <div className="flex items-end justify-between">
-                                    {/* ✨ FIX: 태블릿(md) 사이즈에서 폰트가 커지도록 수정하여 태블릿에서의 레이아웃 깨짐 현상 방지 */}
-                                    <div className="font-extrabold text-foreground text-4xl md:text-5xl lg:text-[52px]">
+                                    {/* ✨ FIX: 모바일-태블릿-PC에 맞춰 폰트 크기를 반응형으로 조정하여 아이콘 침범 방지 */}
+                                    <div className="font-extrabold text-foreground text-4xl sm:text-5xl lg:text-[52px]">
                                         <span data-count={stat.value}>0</span>%
                                     </div>
                                     <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-xl group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300 flex-shrink-0">
@@ -149,6 +149,7 @@ const About = () => {
             {/* Our Principles Section */}
             <section className="px-5 py-20 lg:py-[120px] bg-gray-50/70">
                 <div className="max-w-6xl mx-auto">
+                    {/* ✨ FIX: 제목과 카드 그리드 사이의 간격을 늘려 답답함 해소 (mb-12 -> mb-16, lg:mb-[60px] -> lg:mb-20) */}
                     <div className="text-left mb-16 lg:mb-20" data-animate>
                         <h2 className="text-base text-primary font-bold tracking-wider mb-3">OUR PRINCIPLES</h2>
                         <p className="text-3xl lg:text-5xl font-extrabold leading-tight">
