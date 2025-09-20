@@ -26,6 +26,8 @@ const HeroSection = () => {
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+  // NEW: 순간이동(snap) 상태를 명시적으로 관리하기 위한 상태 추가
+  const [isSnapping, setIsSnapping] = useState(false);
 
   const trackRef = useRef<HTMLDivElement>(null);
   const firstCardRef = useRef<HTMLDivElement>(null);
@@ -98,8 +100,7 @@ const HeroSection = () => {
       setTrackIndex(slides.length);
       setActiveIndex(0);
       updateControlsPosition();
-      // CHANGED: 50ms 대신 0ms timeout으로 브라우저 렌더링 직후 애니메이션 활성화
-      setTimeout(() => setIsTransitioning(true), 0);
+      setTimeout(() => setIsTransitioning(true), 50); // 초기 로드 시에는 짧은 지연이 안정적일 수 있음
     };
 
     const img = firstCardRef.current?.querySelector("img");
@@ -108,7 +109,7 @@ const HeroSection = () => {
     } else {
       setup();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slides.length, hasSlides]);
 
   // 리사이즈 핸들러
@@ -118,8 +119,7 @@ const HeroSection = () => {
       setIsTransitioning(false);
       setTrackIndex(slides.length + activeIndexRef.current);
       updateControlsPosition();
-      // CHANGED: 50ms 대신 0ms timeout으로 브라우저 렌더링 직후 애니메이션 활성화
-      setTimeout(() => setIsTransitioning(true), 0);
+      setTimeout(() => setIsTransitioning(true), 50);
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -187,6 +187,7 @@ const HeroSection = () => {
     return -trackIndex * cardWidth + baseOffset;
   };
 
+  // CHANGED: onTransitionEnd 로직을 '스냅 모드'를 사용하도록 변경
   const onTransitionEnd = useCallback(() => {
     if (!hasSlides) return;
     const n = slides.length;
@@ -202,12 +203,18 @@ const HeroSection = () => {
     }
 
     if (shouldSnap) {
-      setIsTransitioning(false);
+      setIsSnapping(true);
       setTrackIndex(newTrackIndex);
-      // CHANGED: 50ms 대신 0ms timeout으로 브라우저 렌더링 직후 애니메이션 활성화
-      setTimeout(() => setIsTransitioning(true), 0);
     }
   }, [trackIndex, slides.length, hasSlides]);
+
+  // NEW: isSnapping 상태를 감지하여 스냅이 끝난 후 애니메이션을 다시 켜는 useEffect
+  useEffect(() => {
+    if (isSnapping) {
+      // isSnapping이 true로 렌더링된 직후, 다시 false로 돌려놓아 애니메이션을 활성화
+      setIsSnapping(false);
+    }
+  }, [isSnapping]);
 
   useEffect(() => {
     if (hasSlides) {
@@ -224,8 +231,8 @@ const HeroSection = () => {
         className="flex gap-4"
         style={{
           transform: `translate3d(${calculateTranslateX()}px, 0, 0)`,
-          transition: isTransitioning ? "transform 500ms ease-out" : "none",
-          // CHANGED: 브라우저에 애니메이션 힌트를 주어 성능 향상
+          // CHANGED: isSnapping 상태일 때는 transition을 강제로 'none'으로 설정
+          transition: !isSnapping && isTransitioning ? "transform 500ms ease-out" : "none",
           willChange: 'transform',
         }}
         onTransitionEnd={onTransitionEnd}
