@@ -34,7 +34,6 @@ const HeroSection = () => {
   const controlsRef = useRef<HTMLDivElement>(null);
   const [controlsTranslate, setControlsTranslate] = useState(0);
 
-  // FIXED: activeIndex의 최신 값을 참조하기 위한 ref 추가
   const activeIndexRef = useRef(activeIndex);
   useEffect(() => {
     activeIndexRef.current = activeIndex;
@@ -91,16 +90,16 @@ const HeroSection = () => {
     setControlsTranslate(cardEl.clientWidth / 2 - groupEl.clientWidth - 16);
   }, []);
 
-  // FIXED: 초기 세팅 로직을 별도의 useEffect로 분리
+  // 초기 세팅 로직
   useEffect(() => {
     if (!hasSlides) return;
     const setup = () => {
       setIsTransitioning(false);
-      const startTrackIndex = slides.length;
-      setTrackIndex(startTrackIndex);
+      setTrackIndex(slides.length);
       setActiveIndex(0);
       updateControlsPosition();
-      setTimeout(() => setIsTransitioning(true), 50);
+      // CHANGED: 50ms 대신 0ms timeout으로 브라우저 렌더링 직후 애니메이션 활성화
+      setTimeout(() => setIsTransitioning(true), 0);
     };
 
     const img = firstCardRef.current?.querySelector("img");
@@ -110,23 +109,23 @@ const HeroSection = () => {
       setup();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slides.length, hasSlides]); // 최초 로드 시에만 실행
+  }, [slides.length, hasSlides]);
 
-  // FIXED: 리사이즈 핸들러를 별도의 useEffect로 분리
+  // 리사이즈 핸들러
   useEffect(() => {
     if (!hasSlides) return;
     const handleResize = () => {
       setIsTransitioning(false);
-      const newTrackIndex = slides.length + activeIndexRef.current; // ref에서 최신 값 참조
-      setTrackIndex(newTrackIndex);
+      setTrackIndex(slides.length + activeIndexRef.current);
       updateControlsPosition();
-      setTimeout(() => setIsTransitioning(true), 50);
+      // CHANGED: 50ms 대신 0ms timeout으로 브라우저 렌더링 직후 애니메이션 활성화
+      setTimeout(() => setIsTransitioning(true), 0);
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [slides.length, hasSlides, updateControlsPosition]); // activeIndex 의존성 제거
+  }, [slides.length, hasSlides, updateControlsPosition]);
 
-  // ----- 오토플레이 -----
+  // 오토플레이
   useEffect(() => {
     if (!isPlaying || !hasSlides || isDragging) return;
     const autoplay = setInterval(() => {
@@ -174,7 +173,6 @@ const HeroSection = () => {
       if (dx > 0) next();
       else prev();
     }
-    // FIXED: 불필요한 DOM 직접 조작 코드 제거, React 상태에 따라 자동으로 복귀됨
   }, [isDragging, next, prev]);
 
   const calculateTranslateX = () => {
@@ -182,7 +180,6 @@ const HeroSection = () => {
     const cardWidth = getCardWidth();
     const wrapWidth = trackRef.current.parentElement?.clientWidth ?? 0;
     const baseOffset = (wrapWidth / 2) - ((cardWidth - GAP_PX) / 2);
-
     if (isDragging) {
       const dragOffset = currentX.current - startX.current;
       return -trackIndex * cardWidth + baseOffset + dragOffset;
@@ -207,14 +204,14 @@ const HeroSection = () => {
     if (shouldSnap) {
       setIsTransitioning(false);
       setTrackIndex(newTrackIndex);
-      setTimeout(() => setIsTransitioning(true), 50);
+      // CHANGED: 50ms 대신 0ms timeout으로 브라우저 렌더링 직후 애니메이션 활성화
+      setTimeout(() => setIsTransitioning(true), 0);
     }
   }, [trackIndex, slides.length, hasSlides]);
 
   useEffect(() => {
     if (hasSlides) {
-      const newActiveIndex = (trackIndex % slides.length + slides.length) % slides.length;
-      setActiveIndex(newActiveIndex);
+      setActiveIndex((trackIndex % slides.length + slides.length) % slides.length);
     }
   }, [trackIndex, slides.length, hasSlides]);
 
@@ -228,13 +225,14 @@ const HeroSection = () => {
         style={{
           transform: `translate3d(${calculateTranslateX()}px, 0, 0)`,
           transition: isTransitioning ? "transform 500ms ease-out" : "none",
+          // CHANGED: 브라우저에 애니메이션 힌트를 주어 성능 향상
+          willChange: 'transform',
         }}
         onTransitionEnd={onTransitionEnd}
       >
         {extendedSlides.map((s, i) => {
           const originalIndex = i % slides.length;
           const isActive = originalIndex === activeIndex;
-
           return (
             <div
               key={`${s.id}-${i}`}
