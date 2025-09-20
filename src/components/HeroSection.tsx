@@ -93,38 +93,38 @@ const HeroSection = () => {
   // ----- 초기 세팅 -----
   useEffect(() => {
     if (!hasSlides) return;
-
     const setup = () => {
       setIsTransitioning(false);
       const startTrackIndex = slides.length;
       setTrackIndex(startTrackIndex);
       setActiveIndex(0);
       updateControlsPosition();
-      // ✨ FIXED: setTimeout delay를 0으로 변경하여 즉시 다음 렌더링 사이클에서 transition 활성화
-      setTimeout(() => setIsTransitioning(true), 0);
+      requestAnimationFrame(() => setIsTransitioning(true));
     };
 
-    // 첫번째 슬라이드의 이미지가 로드된 후 초기 위치를 설정하여 레이아웃 쉬프트 방지
     const img = firstCardRef.current?.querySelector("img");
     if (img && !img.complete) {
       img.addEventListener("load", setup, { once: true });
     } else {
       setup();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slides.length, hasSlides]); // 최초 로드 시에만 실행
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slides.length, hasSlides]);
 
   // ----- 리사이즈 핸들러 -----
   useEffect(() => {
     if (!hasSlides) return;
-
     const handleResize = () => {
       setIsTransitioning(false);
       const newTrackIndex = slides.length + activeIndexRef.current;
       setTrackIndex(newTrackIndex);
       updateControlsPosition();
-      // ✨ FIXED: setTimeout delay를 0으로 변경
-      setTimeout(() => setIsTransitioning(true), 0);
+      // ✨ ULTIMATE FIX: 리사이즈 시에도 requestAnimationFrame을 사용하여 안정성 확보
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsTransitioning(true);
+        });
+      });
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -139,29 +139,23 @@ const HeroSection = () => {
     return () => clearInterval(autoplay);
   }, [isPlaying, hasSlides, isDragging]);
 
-  const goToSlide = useCallback(
-    (index: number) => {
-      setTrackIndex(slides.length + index);
-    },
-    [slides.length]
-  );
+  const goToSlide = useCallback((index: number) => {
+    setTrackIndex(slides.length + index);
+  }, [slides.length]);
 
   const next = useCallback(() => setTrackIndex(prev => prev + 1), []);
   const prev = useCallback(() => setTrackIndex(prev => prev - 1), []);
   const togglePlay = useCallback(() => setIsPlaying(v => !v), []);
 
-  const handleSlideClick = useCallback(
-    (slide: HeroSlide, index: number) => {
-      const originalIndex = index % slides.length;
-      if (originalIndex !== activeIndex) {
-        goToSlide(originalIndex);
-        return;
-      }
-      if (slide.course_id) navigate(`/course/${slide.course_id}`);
-      else if (slide.link_url) window.open(slide.link_url, "_blank");
-    },
-    [activeIndex, slides.length, navigate, goToSlide]
-  );
+  const handleSlideClick = useCallback((slide: HeroSlide, index: number) => {
+    const originalIndex = index % slides.length;
+    if (originalIndex !== activeIndex) {
+      goToSlide(originalIndex);
+      return;
+    }
+    if (slide.course_id) navigate(`/course/${slide.course_id}`);
+    else if (slide.link_url) window.open(slide.link_url, "_blank");
+  }, [activeIndex, slides.length, navigate, goToSlide]);
 
   const onDragStart = useCallback((clientX: number) => {
     setIsDragging(true);
@@ -170,18 +164,13 @@ const HeroSection = () => {
     setIsTransitioning(false);
   }, []);
 
-  const onDragMove = useCallback(
-    (clientX: number) => {
-      if (!isDragging) return;
-      currentX.current = clientX;
-      // 드래그 중 실시간으로 transform을 업데이트하여 부드러운 드래그 효과 제공
-      if (trackRef.current) {
-        trackRef.current.style.transform = `translate3d(${calculateTranslateX()}px, 0, 0)`;
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isDragging] 
-  );
+  const onDragMove = useCallback((clientX: number) => {
+    if (!isDragging || !trackRef.current) return;
+    const dragOffset = clientX - startX.current;
+    const newTranslateX = calculateTranslateX() + dragOffset;
+    trackRef.current.style.transform = `translate3d(${newTranslateX}px, 0, 0)`;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDragging]);
 
   const onDragEnd = useCallback(() => {
     if (!isDragging) return;
@@ -192,44 +181,38 @@ const HeroSection = () => {
       if (dx > 0) next();
       else prev();
     } else {
-      // 드래그 거리가 짧으면 원래 위치로 복귀
-      if (trackRef.current) {
-        trackRef.current.style.transform = `translate3d(${calculateTranslateX(true)}px, 0, 0)`;
-      }
+        if(trackRef.current) {
+            trackRef.current.style.transform = `translate3d(${calculateTranslateX()}px, 0, 0)`;
+        }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDragging, next, prev]);
 
-  // calculateTranslateX 함수에 isResetting 파라미터 추가
-  const calculateTranslateX = (isResetting = false) => {
+  const calculateTranslateX = () => {
     if (!trackRef.current) return 0;
     const cardWidth = getCardWidth();
     const wrapWidth = trackRef.current.parentElement?.clientWidth ?? 0;
-    const baseOffset = wrapWidth / 2 - (cardWidth - GAP_PX) / 2;
-    
-    // 드래그 중이 아니거나 리셋 중일 때는 trackIndex 기반으로 위치 계산
-    if (!isDragging || isResetting) {
-        return -trackIndex * cardWidth + baseOffset;
-    }
-    
-    // 드래그 중일 때
-    const dragOffset = currentX.current - startX.current;
-    return -trackIndex * cardWidth + baseOffset + dragOffset;
+    const baseOffset = (wrapWidth / 2) - ((cardWidth - GAP_PX) / 2);
+    return -trackIndex * cardWidth + baseOffset;
   };
-
+  
   const onTransitionEnd = useCallback(() => {
     if (!hasSlides) return;
     const n = slides.length;
-    // ✨ REFINED: 로직을 더 명확하고 안전하게 개선
-    // 트랙 인덱스가 원본 범위를 벗어났는지(첫번째 클론셋 이전 또는 마지막 클론셋 이후) 확인
+    
     if (trackIndex < n || trackIndex >= 2 * n) {
-      // 모듈러 연산을 통해 현재 보이는 슬라이드에 해당하는 원본 슬라이드 인덱스를 찾고,
-      // 그 인덱스를 원본 슬라이드 그룹(중앙)의 위치로 변환
       const newTrackIndex = (trackIndex % n) + n;
       setIsTransitioning(false);
       setTrackIndex(newTrackIndex);
-      // ✨ FIXED: setTimeout의 delay를 0으로 설정하여 깜빡임 제거
-      setTimeout(() => setIsTransitioning(true), 0);
+
+      // ✨ ULTIMATE FIX: 이중 requestAnimationFrame으로 깜빡임 문제를 완벽하게 해결합니다.
+      // 브라우저가 transition:none 상태와 변경된 위치를 렌더링할 시간을 확실히 보장한 후,
+      // 다음 프레임에서 transition을 다시 활성화하여 중간 과정을 절대 노출시키지 않습니다.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsTransitioning(true);
+        });
+      });
     }
   }, [trackIndex, slides.length, hasSlides]);
 
@@ -277,10 +260,9 @@ const HeroSection = () => {
                 alt={s.title}
                 src={getOptimizedImageForContext(s.image_url, "hero-slide")}
                 className="absolute inset-0 h-full w-full object-cover"
-                loading={isActive ? "eager" : "lazy"}
-                fetchPriority={isActive ? "high" : undefined}
+                loading={i < 3 ? "eager" : "lazy"} // 첫 몇개의 이미지는 바로 로딩
+                fetchPriority={isActive ? "high" : "auto"}
                 decoding="async"
-                // 드래그 이벤트가 이미지에서 중단되지 않도록 처리
                 draggable="false"
               />
               <div className="absolute bottom-8 left-4 sm:bottom-12 sm:left-6 md:bottom-16 md:left-8 lg:bottom-20 lg:left-12 z-[3] w-[calc(100%-32px)] sm:w-[calc(100%-48px)] md:w-[calc(100%-64px)] lg:w-[calc(100%-96px)] space-y-1 sm:space-y-2 md:space-y-3">
