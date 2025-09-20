@@ -1,19 +1,21 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { getOptimizedImageForContext } from "@/utils/imageOptimization";
 
+// (HeroSlide 인터페이스는 이전과 동일)
 interface HeroSlide {
-  id: string;
-  title: string;
-  subtitle?: string;
-  description?: string;
-  image_url: string;
-  course_id?: string;
-  link_url?: string;
-  order_index: number;
+    id: string;
+    title: string;
+    subtitle?: string;
+    description?: string;
+    image_url: string;
+    course_id?: string;
+    link_url?: string;
+    order_index: number;
 }
+
 
 const GAP_PX = 16;
 const AUTOPLAY_INTERVAL = 5000;
@@ -41,40 +43,37 @@ const HeroSection = () => {
 
   const navigate = useNavigate();
 
-  // ----- 데이터 로드 -----
-  useEffect(() => {
-    const fetchSlides = async () => {
-      const { data, error } = await supabase
-        .from("hero_slides")
-        .select("id, title, subtitle, description, image_url, course_id, link_url, order_index")
-        .eq("is_active", true)
-        .eq("is_draft", false)
-        .order("order_index")
-        .limit(10);
-      if (!error && data) setSlides(data);
-    };
-    fetchSlides();
-  }, []);
+  // (데이터 로드, LCP 프리로드 로직은 이전과 동일)
+    useEffect(() => {
+        const fetchSlides = async () => {
+            const { data, error } = await supabase
+                .from("hero_slides")
+                .select("id, title, subtitle, description, image_url, course_id, link_url, order_index")
+                .eq("is_active", true)
+                .eq("is_draft", false)
+                .order("order_index")
+                .limit(10);
+            if (!error && data) setSlides(data);
+        };
+        fetchSlides();
+    }, []);
 
-  // ----- LCP 프리로드 -----
-  useEffect(() => {
-    if (!slides.length) return;
-    const href = getOptimizedImageForContext(slides[0].image_url, "hero-slide");
-    const link = document.createElement("link");
-    link.rel = "preload";
-    link.as = "image";
-    link.href = href;
-    link.fetchPriority = "high";
-    if (slides[0].image_url.includes("supabase.co")) link.crossOrigin = "anonymous";
-    document.head.appendChild(link);
-
-    const img = new Image();
-    img.src = href;
-
-    return () => {
-      if (document.head.contains(link)) document.head.removeChild(link);
-    };
-  }, [slides]);
+    useEffect(() => {
+        if (!slides.length) return;
+        const href = getOptimizedImageForContext(slides[0].image_url, "hero-slide");
+        const link = document.createElement("link");
+        link.rel = "preload";
+        link.as = "image";
+        link.href = href;
+        link.fetchPriority = "high";
+        if (slides[0].image_url.includes("supabase.co")) link.crossOrigin = "anonymous";
+        document.head.appendChild(link);
+        const img = new Image();
+        img.src = href;
+        return () => {
+            if (document.head.contains(link)) document.head.removeChild(link);
+        };
+    }, [slides]);
 
   const hasSlides = slides.length > 0;
   const extendedSlides = hasSlides ? [...slides, ...slides, ...slides] : [];
@@ -83,120 +82,122 @@ const HeroSection = () => {
     return firstCardRef.current ? firstCardRef.current.clientWidth + GAP_PX : 0;
   }, []);
 
-  const updateControlsPosition = useCallback(() => {
-    const cardEl = firstCardRef.current;
-    const groupEl = controlsRef.current;
-    if (!cardEl || !groupEl) return;
-    setControlsTranslate(cardEl.clientWidth / 2 - groupEl.clientWidth - 16);
-  }, []);
+  const calculateBaseTranslateX = useCallback(() => {
+    if (!trackRef.current) return 0;
+    const cardWidth = getCardWidth();
+    const wrapWidth = trackRef.current.parentElement?.clientWidth ?? 0;
+    const baseOffset = wrapWidth / 2 - (cardWidth - GAP_PX) / 2;
+    return -trackIndex * cardWidth + baseOffset;
+  }, [trackIndex, getCardWidth]);
 
-  // ----- 초기 세팅 -----
-  useEffect(() => {
-    if (!hasSlides) return;
-    const setup = () => {
-      setIsTransitioning(false);
-      const startTrackIndex = slides.length;
-      setTrackIndex(startTrackIndex);
-      setActiveIndex(0);
-      updateControlsPosition();
-      requestAnimationFrame(() => setIsTransitioning(true));
-    };
+  // (초기 세팅, 리사이즈, 오토플레이, 네비게이션 함수들은 이전과 동일)
+    const updateControlsPosition = useCallback(() => {
+        const cardEl = firstCardRef.current;
+        const groupEl = controlsRef.current;
+        if (!cardEl || !groupEl) return;
+        setControlsTranslate(cardEl.clientWidth / 2 - groupEl.clientWidth - 16);
+    }, []);
 
-    const img = firstCardRef.current?.querySelector("img");
-    if (img && !img.complete) {
-      img.addEventListener("load", setup, { once: true });
-    } else {
-      setup();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slides.length, hasSlides]);
+    useEffect(() => {
+        if (!hasSlides) return;
+        const setup = () => {
+            setIsTransitioning(false);
+            const startTrackIndex = slides.length;
+            setTrackIndex(startTrackIndex);
+            setActiveIndex(0);
+            updateControlsPosition();
+            requestAnimationFrame(() => setIsTransitioning(true));
+        };
+        const img = firstCardRef.current?.querySelector("img");
+        if (img && !img.complete) {
+            img.addEventListener("load", setup, { once: true });
+        } else {
+            setup();
+        }
+    }, [slides.length, hasSlides, updateControlsPosition]);
 
-  // ----- 리사이즈 핸들러 -----
-  useEffect(() => {
-    if (!hasSlides) return;
-    const handleResize = () => {
-      setIsTransitioning(false);
-      const newTrackIndex = slides.length + activeIndexRef.current;
-      setTrackIndex(newTrackIndex);
-      updateControlsPosition();
-      // ✨ ULTIMATE FIX: 리사이즈 시에도 requestAnimationFrame을 사용하여 안정성 확보
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setIsTransitioning(true);
-        });
-      });
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [slides.length, hasSlides, updateControlsPosition]);
-
-  // ----- 오토플레이 -----
-  useEffect(() => {
-    if (!isPlaying || !hasSlides || isDragging) return;
-    const autoplay = setInterval(() => {
-      setTrackIndex(prev => prev + 1);
-    }, AUTOPLAY_INTERVAL);
-    return () => clearInterval(autoplay);
-  }, [isPlaying, hasSlides, isDragging]);
+    useEffect(() => {
+        if (!hasSlides) return;
+        let resizeTimer: number;
+        const handleResize = () => {
+            setIsTransitioning(false);
+            const newTrackIndex = slides.length + activeIndexRef.current;
+            setTrackIndex(newTrackIndex);
+            updateControlsPosition();
+            clearTimeout(resizeTimer);
+            resizeTimer = window.setTimeout(() => {
+                requestAnimationFrame(() => setIsTransitioning(true));
+            }, 50);
+        };
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, [slides.length, hasSlides, updateControlsPosition]);
+  
+    useEffect(() => {
+        if (!isPlaying || !hasSlides || isDragging) return;
+        const autoplay = setInterval(() => {
+            setTrackIndex(prev => prev + 1);
+        }, AUTOPLAY_INTERVAL);
+        return () => clearInterval(autoplay);
+    }, [isPlaying, hasSlides, isDragging]);
 
   const goToSlide = useCallback((index: number) => {
-    setTrackIndex(slides.length + index);
+      setTrackIndex(slides.length + index);
   }, [slides.length]);
-
   const next = useCallback(() => setTrackIndex(prev => prev + 1), []);
   const prev = useCallback(() => setTrackIndex(prev => prev - 1), []);
   const togglePlay = useCallback(() => setIsPlaying(v => !v), []);
 
   const handleSlideClick = useCallback((slide: HeroSlide, index: number) => {
-    const originalIndex = index % slides.length;
-    if (originalIndex !== activeIndex) {
-      goToSlide(originalIndex);
-      return;
-    }
-    if (slide.course_id) navigate(`/course/${slide.course_id}`);
-    else if (slide.link_url) window.open(slide.link_url, "_blank");
+      const originalIndex = index % slides.length;
+      if (originalIndex !== activeIndex) {
+          goToSlide(originalIndex);
+          return;
+      }
+      if (slide.course_id) navigate(`/course/${slide.course_id}`);
+      else if (slide.link_url) window.open(slide.link_url, "_blank");
   }, [activeIndex, slides.length, navigate, goToSlide]);
-
+    
+  // 드래그 로직
   const onDragStart = useCallback((clientX: number) => {
     setIsDragging(true);
+    setIsTransitioning(false);
     startX.current = clientX;
     currentX.current = clientX;
-    setIsTransitioning(false);
   }, []);
 
   const onDragMove = useCallback((clientX: number) => {
     if (!isDragging || !trackRef.current) return;
-    const dragOffset = clientX - startX.current;
-    const newTranslateX = calculateTranslateX() + dragOffset;
+    currentX.current = clientX;
+    const dragOffset = currentX.current - startX.current;
+    const newTranslateX = calculateBaseTranslateX() + dragOffset;
     trackRef.current.style.transform = `translate3d(${newTranslateX}px, 0, 0)`;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDragging]);
+  }, [isDragging, calculateBaseTranslateX]);
 
   const onDragEnd = useCallback(() => {
     if (!isDragging) return;
     setIsDragging(false);
     setIsTransitioning(true);
-    const dx = startX.current - currentX.current;
+    const dx = currentX.current - startX.current;
+
     if (Math.abs(dx) > SWIPE_THRESHOLD) {
-      if (dx > 0) next();
+      if (dx < 0) next();
       else prev();
     } else {
-        if(trackRef.current) {
-            trackRef.current.style.transform = `translate3d(${calculateTranslateX()}px, 0, 0)`;
-        }
+      // ✨ FIX: 임계값 미만일 때 부드럽게 제자리로 돌아가도록 직접 스타일 지정
+      // 상태에만 의존하지 않고 직접 스타일을 지정해 React 렌더링 지연으로 인한 점프를 방지
+      if (trackRef.current) {
+        trackRef.current.style.transition = "transform 300ms ease-out";
+        trackRef.current.style.transform = `translate3d(${calculateBaseTranslateX()}px, 0, 0)`;
+      }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDragging, next, prev]);
+  }, [isDragging, next, prev, calculateBaseTranslateX]);
 
-  const calculateTranslateX = () => {
-    if (!trackRef.current) return 0;
-    const cardWidth = getCardWidth();
-    const wrapWidth = trackRef.current.parentElement?.clientWidth ?? 0;
-    const baseOffset = (wrapWidth / 2) - ((cardWidth - GAP_PX) / 2);
-    return -trackIndex * cardWidth + baseOffset;
-  };
-  
   const onTransitionEnd = useCallback(() => {
+    if (trackRef.current) {
+        trackRef.current.style.transition = 'none';
+    }
+
     if (!hasSlides) return;
     const n = slides.length;
     
@@ -205,9 +206,6 @@ const HeroSection = () => {
       setIsTransitioning(false);
       setTrackIndex(newTrackIndex);
 
-      // ✨ ULTIMATE FIX: 이중 requestAnimationFrame으로 깜빡임 문제를 완벽하게 해결합니다.
-      // 브라우저가 transition:none 상태와 변경된 위치를 렌더링할 시간을 확실히 보장한 후,
-      // 다음 프레임에서 transition을 다시 활성화하여 중간 과정을 절대 노출시키지 않습니다.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setIsTransitioning(true);
@@ -225,90 +223,72 @@ const HeroSection = () => {
 
   if (!hasSlides) return null;
 
+  const trackStyle: React.CSSProperties = {
+    transform: `translate3d(${calculateBaseTranslateX()}px, 0, 0)`,
+    transition: isTransitioning ? "transform 500ms ease-out" : "none",
+    // ✨ FIX: 브라우저 렌더링 최적화로 깜빡임(flicker) 현상 억제
+    willChange: 'transform',
+    backfaceVisibility: 'hidden',
+  };
+
   return (
     <section className="relative w-full bg-white py-4 overflow-hidden select-none">
       <div
         ref={trackRef}
         className="flex gap-4"
-        style={{
-          transform: `translate3d(${calculateTranslateX()}px, 0, 0)`,
-          transition: isTransitioning ? "transform 500ms ease-out" : "none",
-        }}
+        style={trackStyle}
         onTransitionEnd={onTransitionEnd}
       >
         {extendedSlides.map((s, i) => {
-          const originalIndex = i % slides.length;
-          const isActive = originalIndex === activeIndex;
-
-          return (
-            <div
-              key={`${s.id}-${i}`}
-              ref={i === 0 ? firstCardRef : undefined}
-              className={`relative shrink-0 overflow-hidden rounded-lg transition-opacity duration-300
-                          h-[180px] w-[280px] sm:h-[220px] sm:w-[420px] md:h-[280px] md:w-[560px] lg:h-[340px] lg:w-[760px]
-                          ${isActive ? "opacity-100" : "opacity-50 cursor-pointer"}`}
-              onClick={() => handleSlideClick(s, i)}
-              onTouchStart={(e) => onDragStart(e.touches[0].clientX)}
-              onTouchMove={(e) => onDragMove(e.touches[0].clientX)}
-              onTouchEnd={onDragEnd}
-              onMouseDown={(e) => onDragStart(e.clientX)}
-              onMouseMove={(e) => onDragMove(e.clientX)}
-              onMouseUp={onDragEnd}
-              onMouseLeave={onDragEnd}
-            >
-              <img
-                alt={s.title}
-                src={getOptimizedImageForContext(s.image_url, "hero-slide")}
-                className="absolute inset-0 h-full w-full object-cover"
-                loading={i < 3 ? "eager" : "lazy"} // 첫 몇개의 이미지는 바로 로딩
-                fetchPriority={isActive ? "high" : "auto"}
-                decoding="async"
-                draggable="false"
-              />
-              <div className="absolute bottom-8 left-4 sm:bottom-12 sm:left-6 md:bottom-16 md:left-8 lg:bottom-20 lg:left-12 z-[3] w-[calc(100%-32px)] sm:w-[calc(100%-48px)] md:w-[calc(100%-64px)] lg:w-[calc(100%-96px)] space-y-1 sm:space-y-2 md:space-y-3">
-                <h2 className="text-white text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold drop-shadow-lg leading-tight">
-                  {s.title}
-                </h2>
-                {s.subtitle && (
-                  <h3 className="text-white/90 text-sm sm:text-base md:text-lg lg:text-xl drop-shadow leading-snug">
-                    {s.subtitle}
-                  </h3>
-                )}
-              </div>
-            </div>
-          );
+            const originalIndex = i % slides.length;
+            const isActive = originalIndex === activeIndex;
+            return (
+                <div
+                    key={`${s.id}-${i}`}
+                    ref={i === 0 ? firstCardRef : undefined}
+                    className={`relative shrink-0 overflow-hidden rounded-lg transition-opacity duration-300
+                                h-[180px] w-[280px] sm:h-[220px] sm:w-[420px] md:h-[280px] md:w-[560px] lg:h-[340px] lg:w-[760px]
+                                ${isActive ? "opacity-100" : "opacity-50 cursor-pointer"}`}
+                    onClick={() => handleSlideClick(s, i)}
+                    onMouseDown={(e) => onDragStart(e.clientX)}
+                    onMouseMove={(e) => onDragMove(e.clientX)}
+                    onMouseUp={onDragEnd}
+                    onMouseLeave={onDragEnd}
+                    onTouchStart={(e) => onDragStart(e.touches[0].clientX)}
+                    onTouchMove={(e) => onDragMove(e.touches[0].clientX)}
+                    onTouchEnd={onDragEnd}
+                >
+                    <img
+                        alt={s.title}
+                        src={getOptimizedImageForContext(s.image_url, "hero-slide")}
+                        className="absolute inset-0 h-full w-full object-cover"
+                        loading={i < 3 ? "eager" : "lazy"}
+                        fetchPriority={isActive ? "high" : "auto"}
+                        decoding="async"
+                        draggable="false"
+                    />
+                    <div className="absolute bottom-8 left-4 sm:bottom-12 sm:left-6 md:bottom-16 md:left-8 lg:bottom-20 lg:left-12 z-[3] w-[calc(100%-32px)] sm:w-[calc(100%-48px)] md:w-[calc(100%-64px)] lg:w-[calc(100%-96px)] space-y-1 sm:space-y-2 md:space-y-3">
+                        <h2 className="text-white text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold drop-shadow-lg leading-tight">{s.title}</h2>
+                        {s.subtitle && <h3 className="text-white/90 text-sm sm:text-base md:text-lg lg:text-xl drop-shadow leading-snug">{s.subtitle}</h3>}
+                    </div>
+                </div>
+            );
         })}
       </div>
 
-      <div
-        ref={controlsRef}
-        className="pointer-events-none absolute bottom-8 left-1/2 z-[4] flex items-center gap-2"
-        style={{ transform: `translateX(${controlsTranslate}px)` }}
-      >
-        <button
-          onClick={prev}
-          className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
-          aria-label="Previous slide"
+      {/* 컨트롤 버튼 UI (이전과 동일) */}
+        <div
+            ref={controlsRef}
+            className="pointer-events-none absolute bottom-8 left-1/2 z-[4] flex items-center gap-2"
+            style={{ transform: `translateX(${controlsTranslate}px)` }}
         >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <button
-          onClick={togglePlay}
-          className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
-          aria-label="Toggle autoplay"
-        >
-          {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-        </button>
-        <button
-          onClick={next}
-          className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
-          aria-label="Next slide"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      </div>
+            <button onClick={prev} className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors" aria-label="Previous slide"><ChevronLeft className="w-5 h-5" /></button>
+            <button onClick={togglePlay} className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors" aria-label="Toggle autoplay">{isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}</button>
+            <button onClick={next} className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors" aria-label="Next slide"><ChevronRight className="w-5 h-5" /></button>
+        </div>
     </section>
   );
 };
 
-export default HeroSection;
+// ✨ FIX: React.memo로 컴포넌트를 감싸 불필요한 리렌더링 방지
+export default React.memo(HeroSection);
