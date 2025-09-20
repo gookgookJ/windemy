@@ -15,9 +15,10 @@ interface HeroSlide {
   order_index: number;
 }
 
-const GAP_PX = 16;
+const GAP_PX_DESKTOP = 16;
 const AUTOPLAY_INTERVAL = 5000;
 const SWIPE_THRESHOLD = 50;
+const MOBILE_BREAKPOINT = 640; // Tailwind 'sm' breakpoint
 
 const HeroSection = () => {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
@@ -26,6 +27,9 @@ const HeroSection = () => {
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // ✨ 모바일/데스크탑 뷰에 따라 동적으로 gap을 관리하기 위한 state 추가
+  const [gap, setGap] = useState(GAP_PX_DESKTOP);
 
   const trackRef = useRef<HTMLDivElement>(null);
   const firstCardRef = useRef<HTMLDivElement>(null);
@@ -80,8 +84,8 @@ const HeroSection = () => {
   const extendedSlides = hasSlides ? [...slides, ...slides, ...slides] : [];
 
   const getCardWidth = useCallback(() => {
-    return firstCardRef.current ? firstCardRef.current.clientWidth + GAP_PX : 0;
-  }, []);
+    return firstCardRef.current ? firstCardRef.current.clientWidth + gap : 0;
+  }, [gap]);
 
   const updateControlsPosition = useCallback(() => {
     const cardEl = firstCardRef.current;
@@ -90,16 +94,28 @@ const HeroSection = () => {
     setControlsTranslate(cardEl.clientWidth / 2 - groupEl.clientWidth - 16);
   }, []);
 
-  // ----- 초기 세팅 -----
+  // ----- 초기 세팅 및 리사이즈 핸들러 통합 -----
   useEffect(() => {
     if (!hasSlides) return;
-    const setup = () => {
+
+    const handleResize = () => {
+      const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
+      setGap(isMobile ? 0 : GAP_PX_DESKTOP);
+      
       setIsTransitioning(false);
-      const startTrackIndex = slides.length;
-      setTrackIndex(startTrackIndex);
-      setActiveIndex(0);
+      const newTrackIndex = slides.length + activeIndexRef.current;
+      setTrackIndex(newTrackIndex);
       updateControlsPosition();
-      requestAnimationFrame(() => setIsTransitioning(true));
+      
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsTransitioning(true);
+        });
+      });
+    };
+    
+    const setup = () => {
+        handleResize(); // 초기 로드 시 한 번 실행하여 gap 등 레이아웃 설정
     };
 
     const img = firstCardRef.current?.querySelector("img");
@@ -108,24 +124,7 @@ const HeroSection = () => {
     } else {
       setup();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slides.length, hasSlides]);
-
-  // ----- 리사이즈 핸들러 -----
-  useEffect(() => {
-    if (!hasSlides) return;
-    const handleResize = () => {
-      setIsTransitioning(false);
-      const newTrackIndex = slides.length + activeIndexRef.current;
-      setTrackIndex(newTrackIndex);
-      updateControlsPosition();
-      // ✨ ULTIMATE FIX: 리사이즈 시에도 requestAnimationFrame을 사용하여 안정성 확보
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setIsTransitioning(true);
-        });
-      });
-    };
+    
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [slides.length, hasSlides, updateControlsPosition]);
@@ -156,6 +155,15 @@ const HeroSection = () => {
     if (slide.course_id) navigate(`/course/${slide.course_id}`);
     else if (slide.link_url) window.open(slide.link_url, "_blank");
   }, [activeIndex, slides.length, navigate, goToSlide]);
+  
+  const calculateTranslateX = useCallback(() => {
+    if (!trackRef.current) return 0;
+    const cardWidth = getCardWidth();
+    const wrapWidth = trackRef.current.parentElement?.clientWidth ?? 0;
+    // ✨ 모바일에서는 중앙정렬 오프셋이 필요 없으므로 gap을 이용해 분기
+    const baseOffset = gap === 0 ? 0 : (wrapWidth / 2) - ((cardWidth - gap) / 2);
+    return -trackIndex * cardWidth + baseOffset;
+  }, [trackIndex, getCardWidth, gap]);
 
   const onDragStart = useCallback((clientX: number) => {
     setIsDragging(true);
@@ -166,11 +174,11 @@ const HeroSection = () => {
 
   const onDragMove = useCallback((clientX: number) => {
     if (!isDragging || !trackRef.current) return;
+    currentX.current = clientX;
     const dragOffset = clientX - startX.current;
     const newTranslateX = calculateTranslateX() + dragOffset;
     trackRef.current.style.transform = `translate3d(${newTranslateX}px, 0, 0)`;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDragging]);
+  }, [isDragging, calculateTranslateX]);
 
   const onDragEnd = useCallback(() => {
     if (!isDragging) return;
@@ -185,17 +193,8 @@ const HeroSection = () => {
             trackRef.current.style.transform = `translate3d(${calculateTranslateX()}px, 0, 0)`;
         }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDragging, next, prev]);
+  }, [isDragging, next, prev, calculateTranslateX]);
 
-  const calculateTranslateX = () => {
-    if (!trackRef.current) return 0;
-    const cardWidth = getCardWidth();
-    const wrapWidth = trackRef.current.parentElement?.clientWidth ?? 0;
-    const baseOffset = (wrapWidth / 2) - ((cardWidth - GAP_PX) / 2);
-    return -trackIndex * cardWidth + baseOffset;
-  };
-  
   const onTransitionEnd = useCallback(() => {
     if (!hasSlides) return;
     const n = slides.length;
@@ -205,9 +204,6 @@ const HeroSection = () => {
       setIsTransitioning(false);
       setTrackIndex(newTrackIndex);
 
-      // ✨ ULTIMATE FIX: 이중 requestAnimationFrame으로 깜빡임 문제를 완벽하게 해결합니다.
-      // 브라우저가 transition:none 상태와 변경된 위치를 렌더링할 시간을 확실히 보장한 후,
-      // 다음 프레임에서 transition을 다시 활성화하여 중간 과정을 절대 노출시키지 않습니다.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setIsTransitioning(true);
@@ -226,13 +222,15 @@ const HeroSection = () => {
   if (!hasSlides) return null;
 
   return (
-    <section className="relative w-full bg-white py-4 overflow-hidden select-none">
+    // ✨ 모바일에서는 padding-top/bottom을 제거하여 꽉찬 느낌을 줌
+    <section className="relative w-full bg-white sm:py-4 overflow-hidden select-none">
       <div
         ref={trackRef}
-        className="flex gap-4"
+        className="flex" // ✨ gap은 동적 스타일로 관리
         style={{
           transform: `translate3d(${calculateTranslateX()}px, 0, 0)`,
           transition: isTransitioning ? "transform 500ms ease-out" : "none",
+          gap: `${gap}px`,
         }}
         onTransitionEnd={onTransitionEnd}
       >
@@ -244,8 +242,12 @@ const HeroSection = () => {
             <div
               key={`${s.id}-${i}`}
               ref={i === 0 ? firstCardRef : undefined}
-              className={`relative shrink-0 overflow-hidden rounded-lg transition-opacity duration-300
-                          h-[180px] w-[280px] sm:h-[220px] sm:w-[420px] md:h-[280px] md:w-[560px] lg:h-[340px] lg:w-[760px]
+              // ✨ 반응형 카드 스타일 수정
+              className={`relative shrink-0 overflow-hidden transition-opacity duration-300
+                          w-full h-[55vw] max-h-[280px] rounded-none
+                          sm:w-[420px] sm:h-[220px] sm:rounded-lg
+                          md:w-[560px] md:h-[280px]
+                          lg:w-[760px] lg:h-[340px]
                           ${isActive ? "opacity-100" : "opacity-50 cursor-pointer"}`}
               onClick={() => handleSlideClick(s, i)}
               onTouchStart={(e) => onDragStart(e.touches[0].clientX)}
@@ -260,7 +262,7 @@ const HeroSection = () => {
                 alt={s.title}
                 src={getOptimizedImageForContext(s.image_url, "hero-slide")}
                 className="absolute inset-0 h-full w-full object-cover"
-                loading={i < 3 ? "eager" : "lazy"} // 첫 몇개의 이미지는 바로 로딩
+                loading={i < 3 ? "eager" : "lazy"}
                 fetchPriority={isActive ? "high" : "auto"}
                 decoding="async"
                 draggable="false"
@@ -275,14 +277,22 @@ const HeroSection = () => {
                   </h3>
                 )}
               </div>
+              
+              {/* ✨ 모바일 뷰를 위한 페이지네이션 추가 */}
+              {isActive && (
+                <div className="absolute bottom-4 right-4 z-[4] rounded-full bg-black/60 px-3 py-1 text-white text-xs pointer-events-none">
+                  {activeIndex + 1} / {slides.length}
+                </div>
+              )}
             </div>
           );
         })}
       </div>
-
+      
+      {/* ✨ 컨트롤 버튼은 데스크톱(sm 이상)에서만 보이도록 수정 */}
       <div
         ref={controlsRef}
-        className="pointer-events-none absolute bottom-8 left-1/2 z-[4] flex items-center gap-2"
+        className="pointer-events-none absolute bottom-8 left-1/2 z-[4] hidden sm:flex items-center gap-2"
         style={{ transform: `translateX(${controlsTranslate}px)` }}
       >
         <button
