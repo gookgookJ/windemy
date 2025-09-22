@@ -24,9 +24,12 @@ export const optimizeImageUrl = (
     return imageUrl;
   }
 
+  // public/ 접두사 제거 (레거시 데이터 호환성)
+  const cleanImageUrl = imageUrl.startsWith('public/') ? imageUrl.replace('public/', '') : imageUrl;
+
   // Supabase 스토리지 파일명인 경우 공개 URL 생성
   try {
-    const { data } = supabase.storage.from(bucket).getPublicUrl(imageUrl);
+    const { data } = supabase.storage.from(bucket).getPublicUrl(cleanImageUrl);
     return data.publicUrl;
   } catch (error) {
     console.error('Error generating public URL:', error);
