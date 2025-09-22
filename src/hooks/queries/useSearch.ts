@@ -35,8 +35,8 @@ const performSearch = async (query: string): Promise<SearchResult[]> => {
       price,
       level,
       total_students,
-      instructors!inner(full_name),
-      categories!inner(name),
+      profiles!courses_instructor_id_fkey(full_name),
+      categories!courses_category_id_fkey(name),
       course_reviews(rating)
     `)
     .eq('is_published', true);
@@ -52,7 +52,7 @@ const performSearch = async (query: string): Promise<SearchResult[]> => {
     price: course.price,
     level: course.level,
     total_students: course.total_students,
-    instructor: course.instructors?.full_name || '알 수 없음',
+    instructor: course.profiles?.full_name || '알 수 없음',
     category: course.categories?.name || '기타',
     rating: course.course_reviews?.length > 0 
       ? course.course_reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / course.course_reviews.length 

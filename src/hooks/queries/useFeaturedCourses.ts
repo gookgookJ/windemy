@@ -55,8 +55,8 @@ const fetchFeaturedCoursesData = async () => {
           order_index,
           courses:course_id(
             *,
-            instructors!inner(full_name),
-            categories!inner(name),
+            profiles!courses_instructor_id_fkey(full_name),
+            categories!courses_category_id_fkey(name),
             course_reviews(rating)
           )
         `)
@@ -71,7 +71,7 @@ const fetchFeaturedCoursesData = async () => {
         .filter((mc: any) => mc.courses && mc.courses.is_published)
         .map((mc: any) => ({
           ...mc.courses,
-          instructor_name: mc.courses?.instructors?.full_name || '운영진',
+          instructor_name: mc.courses?.profiles?.full_name || '운영진',
           category_name: mc.courses?.categories?.name || '기타',
           rating: mc.courses?.course_reviews?.length > 0 
             ? mc.courses.course_reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / mc.courses.course_reviews.length 
@@ -88,8 +88,8 @@ const fetchFeaturedCoursesData = async () => {
         .from('courses')
         .select(`
           *,
-          instructors!inner(full_name),
-          categories!inner(name),
+          profiles!courses_instructor_id_fkey(full_name),
+          categories!courses_category_id_fkey(name),
           course_reviews(rating)
         `)
         .eq('is_published', true)
@@ -101,7 +101,7 @@ const fetchFeaturedCoursesData = async () => {
 
       const transformedCategoryCourses = (categoryCourses || []).map((course: any) => ({
         ...course,
-        instructor_name: course.instructors?.full_name || '운영진',
+        instructor_name: course.profiles?.full_name || '운영진',
         category_name: course.categories?.name || '기타',
         rating: course.course_reviews?.length > 0 
           ? course.course_reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / course.course_reviews.length 
@@ -117,8 +117,8 @@ const fetchFeaturedCoursesData = async () => {
         .from('courses')
         .select(`
           *,
-          instructors!inner(full_name),
-          categories!inner(name),
+          profiles!courses_instructor_id_fkey(full_name),
+          categories!courses_category_id_fkey(name),
           course_reviews(rating)
         `)
         .eq('is_published', true)
@@ -129,7 +129,7 @@ const fetchFeaturedCoursesData = async () => {
 
       const transformedPopularCourses = (popularCourses || []).map((course: any) => ({
         ...course,
-        instructor_name: course.instructors?.full_name || '운영진',
+        instructor_name: course.profiles?.full_name || '운영진',
         category_name: course.categories?.name || '기타',
         rating: course.course_reviews?.length > 0 
           ? course.course_reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / course.course_reviews.length 

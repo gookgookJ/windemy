@@ -69,8 +69,8 @@ const fetchHomepageData = async () => {
         level, 
         is_published,
         total_students,
-        instructors!inner(full_name),
-        categories!inner(name)
+        profiles!courses_instructor_id_fkey(full_name),
+        categories!courses_category_id_fkey(name)
       `)
       .eq('is_published', true)
       .order('total_students', { ascending: false })
@@ -86,7 +86,7 @@ const fetchHomepageData = async () => {
     sections: sectionsResult.data as HomepageSection[],
     featuredCourses: (coursesResult.data || []).map((course: any) => ({
       ...course,
-      instructor_name: course.instructors?.full_name || '운영진',
+      instructor_name: course.profiles?.full_name || '운영진',
       category_name: course.categories?.name || '기타',
     })) as Course[],
   };
