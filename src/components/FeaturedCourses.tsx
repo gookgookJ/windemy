@@ -128,9 +128,13 @@ const FeaturedCourses = memo(() => {
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
             loading={index < 4 ? "eager" : "lazy"}
             onError={(e) => {
-              requestAnimationFrame(() => {
-                e.currentTarget.src = "/placeholder.svg";
-              });
+              console.log('Image failed to load for course:', course.title);
+              console.log('Original URL:', course.thumbnail_url);
+              console.log('Attempted URL:', e.currentTarget.src);
+              const target = e.currentTarget;
+              if (target.src !== '/placeholder.svg') {
+                target.src = '/placeholder.svg';
+              }
             }}
           />
           
