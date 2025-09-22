@@ -6,6 +6,7 @@ interface Course {
   title: string;
   short_description?: string;
   thumbnail_url?: string;
+  thumbnail_path?: string; // fallback for legacy data
   price: number;
   level?: string;
   is_published: boolean;
@@ -44,7 +45,7 @@ const fetchCoursesForSection = async (section: HomepageSection): Promise<Course[
     let query = supabase
       .from('courses')
       .select(`
-        id, title, short_description, thumbnail_url, price, level, is_published, is_hot, is_new,
+        id, title, short_description, thumbnail_url, thumbnail_path, price, level, is_published, is_hot, is_new,
         profiles!courses_instructor_id_fkey(full_name),
         categories!courses_category_id_fkey(name)
       `)
@@ -73,7 +74,7 @@ const fetchCoursesForSection = async (section: HomepageSection): Promise<Course[
           .select(`
             course_id,
             courses!inner(
-              id, title, short_description, thumbnail_url, price, level, is_published, is_hot, is_new,
+              id, title, short_description, thumbnail_url, thumbnail_path, price, level, is_published, is_hot, is_new,
               profiles!courses_instructor_id_fkey(full_name),
               categories!courses_category_id_fkey(name)
             )
@@ -87,11 +88,14 @@ const fetchCoursesForSection = async (section: HomepageSection): Promise<Course[
           return [];
         }
 
-        return (sectionCourses || []).map((item: any) => ({
+        const mapped = (sectionCourses || []).map((item: any) => ({
           ...item.courses,
+          thumbnail_url: item.courses.thumbnail_url || item.courses.thumbnail_path,
           instructor_name: item.courses.profiles?.full_name || '운영진',
           category_name: item.courses.categories?.name || '미분류'
         }));
+        // Deduplicate by course id
+        return Array.from(new Map(mapped.map((c: any) => [c.id, c])).values());
     }
 
     // 표시 제한 적용
@@ -104,12 +108,14 @@ const fetchCoursesForSection = async (section: HomepageSection): Promise<Course[
       return [];
     }
 
-    // 데이터 변환
-    return (data || []).map(course => ({
+    // 데이터 변환 및 중복 제거
+    const mapped = (data || []).map((course: any) => ({
       ...course,
+      thumbnail_url: course.thumbnail_url || course.thumbnail_path,
       instructor_name: course.profiles?.full_name || '운영진',
       category_name: course.categories?.name || '미분류'
     }));
+    return Array.from(new Map(mapped.map((c: any) => [c.id, c])).values());
   } catch (error) {
     console.error(`Fetch courses for section ${section.id} error:`, error);
     return [];

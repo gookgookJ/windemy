@@ -127,6 +127,7 @@ const FeaturedCourses = memo(() => {
             alt={course.title}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
             loading={index < 4 ? "eager" : "lazy"}
+            crossOrigin="anonymous"
             onError={(e) => {
               console.log('Image failed to load for course:', course.title);
               console.log('Original URL:', course.thumbnail_url);
