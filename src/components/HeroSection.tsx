@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getOptimizedImageForContext } from "@/utils/imageOptimization";
+import { getImageUrl } from "@/lib/utils";
 import type { HeroSlide } from "@/hooks/queries/useHomepageData";
 
 interface HeroSectionProps {
@@ -42,7 +42,7 @@ const HeroSection = ({ heroSlides = [] }: HeroSectionProps) => {
   // ----- LCP 프리로드 -----
   useEffect(() => {
     if (!slides.length) return;
-    const href = getOptimizedImageForContext(slides[0].image_url, "hero-slide");
+    const href = getImageUrl('course-thumbnails', slides[0].image_url);
     const link = document.createElement("link");
     link.rel = "preload";
     link.as = "image";
@@ -238,7 +238,7 @@ const HeroSection = ({ heroSlides = [] }: HeroSectionProps) => {
             >
               <img
                 alt={s.title}
-                src={getOptimizedImageForContext(s.image_url, "hero-slide")}
+                src={getImageUrl('course-thumbnails', s.image_url)}
                 className="absolute inset-0 h-full w-full object-cover"
                 loading={i < 3 ? "eager" : "lazy"}
                 fetchPriority={isActive ? "high" : "auto"}

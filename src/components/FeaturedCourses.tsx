@@ -5,7 +5,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import InfoBanner from "@/components/InfoBanner";
-import { getOptimizedImageForContext } from "@/utils/imageOptimization";
+import { getImageUrl } from "@/lib/utils";
 import { useFeaturedCourses } from "@/hooks/queries/useFeaturedCourses";
 import type { Course, HomepageSection } from "@/hooks/queries/useFeaturedCourses";
 
@@ -123,7 +123,7 @@ const FeaturedCourses = memo(() => {
       <Link to={`/course/${course.id}`} className="group cursor-pointer block">
         <div className="relative mb-4 bg-muted/50 aspect-[16/9] overflow-hidden rounded-xl">
           <img
-            src={getOptimizedImageForContext(course.thumbnail_url, 'course-card')}
+            src={getImageUrl('course-thumbnails', course.thumbnail_url)}
             alt={course.title}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
             loading={index < 4 ? "eager" : "lazy"}
