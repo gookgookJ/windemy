@@ -38,6 +38,7 @@ const FAQ = React.lazy(() => import("./pages/FAQ"));
 const ProfileSettings = React.lazy(() => import("./pages/ProfileSettings"));
 const About = React.lazy(() => import("./pages/About"));
 const InstructorApply = React.lazy(() => import("./pages/InstructorApply"));
+const SecurityTest = React.lazy(() => import("./pages/SecurityTest"));
 
 // Lazy load admin pages (heaviest components)
 const Admin = React.lazy(() => import("./pages/Admin"));
@@ -125,6 +126,7 @@ const App = () => (
                 <Route path="/admin/hero-slides" element={<AdminHeroSlides />} />
                 <Route path="/admin/homepage-sections" element={<AdminHomepageSections />} />
                 <Route path="/admin/homepage-sections/:sectionType" element={<AdminHomepageSectionManager />} />
+                <Route path="/security-test" element={<SecurityTest />} />
                 <Route path="/learn/:courseId" element={<Learn />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

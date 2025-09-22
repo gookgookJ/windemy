@@ -1347,6 +1347,10 @@ export type Database = {
         Args: { days_to_keep?: number }
         Returns: number
       }
+      ensure_test_users: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1391,6 +1395,10 @@ export type Database = {
       }
       sanitize_user_input: {
         Args: { input_text: string }
+        Returns: string
+      }
+      security_comprehensive_check: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       security_quick_check: {

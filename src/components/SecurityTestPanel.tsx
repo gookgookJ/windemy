@@ -18,6 +18,8 @@ export const SecurityTestPanel = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [quickCheck, setQuickCheck] = useState<string>('');
+  const [comprehensiveCheck, setComprehensiveCheck] = useState<string>('');
+  const [userStatus, setUserStatus] = useState<string>('');
   const [testResults, setTestResults] = useState<SecurityTestResult[]>([]);
 
   const runQuickCheck = async () => {
@@ -29,6 +31,34 @@ export const SecurityTestPanel = () => {
     } catch (error) {
       console.error('보안 체크 오류:', error);
       setQuickCheck('오류: ' + (error as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const runComprehensiveCheck = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('security_comprehensive_check');
+      if (error) throw error;
+      setComprehensiveCheck(data);
+    } catch (error) {
+      console.error('종합 보안 체크 오류:', error);
+      setComprehensiveCheck('오류: ' + (error as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const checkUserStatus = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('ensure_test_users');
+      if (error) throw error;
+      setUserStatus(data);
+    } catch (error) {
+      console.error('사용자 현황 체크 오류:', error);
+      setUserStatus('오류: ' + (error as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -105,30 +135,101 @@ export const SecurityTestPanel = () => {
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
           <Button 
             onClick={runQuickCheck} 
             disabled={isLoading}
             variant="outline"
+            size="sm"
           >
-            {isLoading ? '체크 중...' : '🔍 빠른 보안 체크'}
+            {isLoading ? '체크 중...' : '🔍 빠른 체크'}
+          </Button>
+          <Button 
+            onClick={runComprehensiveCheck} 
+            disabled={isLoading}
+            variant="default"
+            size="sm"
+          >
+            {isLoading ? '체크 중...' : '🔒 종합 체크'}
+          </Button>
+          <Button 
+            onClick={checkUserStatus} 
+            disabled={isLoading}
+            variant="secondary"
+            size="sm"
+          >
+            {isLoading ? '확인 중...' : '👥 사용자 현황'}
           </Button>
           <Button 
             onClick={runFullTest} 
             disabled={isLoading}
+            variant="destructive"
+            size="sm"
           >
-            {isLoading ? '테스트 중...' : '🧪 종합 보안 테스트'}
+            {isLoading ? '테스트 중...' : '🧪 상세 테스트'}
           </Button>
         </div>
 
         {quickCheck && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">빠른 보안 체크 결과</CardTitle>
+              <CardTitle className="text-lg">🔍 빠른 보안 체크 결과</CardTitle>
             </CardHeader>
             <CardContent>
               <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded font-mono overflow-x-auto">
                 {quickCheck}
+              </pre>
+            </CardContent>
+          </Card>
+        )}
+
+        {comprehensiveCheck && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">🔒 종합 보안 체크 결과</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded font-mono overflow-x-auto">
+                {comprehensiveCheck}
+              </pre>
+            </CardContent>
+          </Card>
+        )}
+
+        {userStatus && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">👥 사용자 현황</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded font-mono overflow-x-auto">
+                {userStatus}
+              </pre>
+            </CardContent>
+          </Card>
+        )}
+
+        {comprehensiveCheck && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">🔒 종합 보안 체크 결과</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded font-mono overflow-x-auto">
+                {comprehensiveCheck}
+              </pre>
+            </CardContent>
+          </Card>
+        )}
+
+        {userStatus && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">👥 사용자 현황</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded font-mono overflow-x-auto">
+                {userStatus}
               </pre>
             </CardContent>
           </Card>
