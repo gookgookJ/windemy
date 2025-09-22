@@ -1339,6 +1339,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      cleanup_old_audit_logs: {
+        Args: { days_to_keep?: number }
+        Returns: number
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1366,6 +1370,18 @@ export type Database = {
         }[]
       }
       is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      log_security_event: {
+        Args: { details_param?: Json; event_type_param: string }
+        Returns: undefined
+      }
+      sanitize_user_input: {
+        Args: { input_text: string }
+        Returns: string
+      }
+      validate_user_session: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
