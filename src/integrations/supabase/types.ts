@@ -1351,6 +1351,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_course_enrollment_stats: {
+        Args: { course_uuid: string }
+        Returns: {
+          active_enrollments: number
+          completed_enrollments: number
+          course_id: string
+          total_enrollments: number
+        }[]
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
