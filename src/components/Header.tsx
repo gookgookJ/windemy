@@ -61,9 +61,9 @@ const Header = () => {
       href: "/courses",
       submenu: [
         { name: "전체", href: "/courses" },
-        { name: "무료강의", href: "/courses/free-courses" },
-        { name: "VOD 강의", href: "/courses/vod-courses" },
-        { name: "프리미엄 강의", href: "/courses/premium-courses" },
+        { name: "무료강의", href: "/courses" },
+        { name: "VOD 강의", href: "/courses" },
+        { name: "프리미엄 강의", href: "/courses" },
       ]
     },
     { name: "강사 지원", href: "/instructor-apply" },
@@ -151,7 +151,7 @@ const Header = () => {
                     </Button>
                   </Link>
                 )}
-                <Link to="/my-page">
+                <Link to="/mypage">
                   <Button variant="ghost" size="sm" className="flex items-center gap-2">
                     <User className="w-4 h-4" />
                     <span className="hidden sm:inline">내 강의실</span>
@@ -233,7 +233,7 @@ const Header = () => {
                   </div>
                 ))}
                 {user && (
-                  <Link to="/my-page" className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2">
+                  <Link to="/mypage" className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2">
                     마이페이지
                   </Link>
                 )}
