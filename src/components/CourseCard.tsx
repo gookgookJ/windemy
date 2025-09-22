@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
-import { getImageUrl } from "@/lib/utils";
+import { getOptimizedImageForContext } from "@/utils/imageOptimization";
 
 interface CourseCardProps {
   id: string;
@@ -63,7 +63,7 @@ const CourseCard = ({
         data-image-container
       >
         <img
-          src={getImageUrl('course-thumbnails', thumbnail)}
+          src={getOptimizedImageForContext(thumbnail, 'course-card')}
           alt={title}
           className="w-full h-full object-contain object-center transition-transform duration-300 group-hover:scale-105"
           loading={priority ? "eager" : "lazy"}

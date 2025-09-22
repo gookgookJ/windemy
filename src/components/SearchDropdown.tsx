@@ -167,9 +167,9 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
                         }}
                       >
                         <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                          {course.thumbnail_url && (
+                          {(course.thumbnail_url || course.thumbnail_path) && (
                             <img
-                              src={course.thumbnail_url}
+                              src={course.thumbnail_url || course.thumbnail_path}
                               alt={course.title}
                               className="w-full h-full object-cover"
                               onError={(e) => {

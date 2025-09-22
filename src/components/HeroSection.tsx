@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { getImageUrl } from "@/lib/utils";
-import type { HeroSlide } from "@/hooks/queries/useHomepageData";
+import { getOptimizedImageForContext } from "@/utils/imageOptimization";
 
-interface HeroSectionProps {
-  heroSlides?: HeroSlide[];
+interface HeroSlide {
+  id: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  image_url: string;
+  course_id?: string;
+  link_url?: string;
+  order_index: number;
 }
 
 const GAP_PX_DESKTOP = 16;
@@ -13,7 +20,8 @@ const AUTOPLAY_INTERVAL = 5000;
 const SWIPE_THRESHOLD = 50;
 const MOBILE_BREAKPOINT = 640; // Tailwind 'sm' breakpoint
 
-const HeroSection = ({ heroSlides = [] }: HeroSectionProps) => {
+const HeroSection = () => {
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [trackIndex, setTrackIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(true);
@@ -36,13 +44,25 @@ const HeroSection = ({ heroSlides = [] }: HeroSectionProps) => {
 
   const navigate = useNavigate();
 
-  // heroSlides를 slides로 설정
-  const slides = heroSlides;
+  // ----- 데이터 로드 -----
+  useEffect(() => {
+    const fetchSlides = async () => {
+      const { data, error } = await supabase
+        .from("hero_slides")
+        .select("id, title, subtitle, description, image_url, course_id, link_url, order_index")
+        .eq("is_active", true)
+        .eq("is_draft", false)
+        .order("order_index")
+        .limit(10);
+      if (!error && data) setSlides(data);
+    };
+    fetchSlides();
+  }, []);
 
   // ----- LCP 프리로드 -----
   useEffect(() => {
     if (!slides.length) return;
-    const href = getImageUrl('course-thumbnails', slides[0].image_url);
+    const href = getOptimizedImageForContext(slides[0].image_url, "hero-slide");
     const link = document.createElement("link");
     link.rel = "preload";
     link.as = "image";
@@ -238,7 +258,7 @@ const HeroSection = ({ heroSlides = [] }: HeroSectionProps) => {
             >
               <img
                 alt={s.title}
-                src={getImageUrl('course-thumbnails', s.image_url)}
+                src={getOptimizedImageForContext(s.image_url, "hero-slide")}
                 className="absolute inset-0 h-full w-full object-cover"
                 loading={i < 3 ? "eager" : "lazy"}
                 fetchPriority={isActive ? "high" : "auto"}
@@ -257,7 +277,7 @@ const HeroSection = ({ heroSlides = [] }: HeroSectionProps) => {
               </div>
               
               {isActive && (
-                <div className="absolute bottom-4 right-4 z-[4] rounded-full bg-black/60 px-2 py-1 text-white text-xs pointer-events-none sm:hidden">
+                <div className="absolute bottom-4 right-4 z-[4] rounded-full bg-black/60 px-3 py-1 text-white text-xs pointer-events-none sm:hidden">
                   {activeIndex + 1} / {slides.length}
                 </div>
               )}
