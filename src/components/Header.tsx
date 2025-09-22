@@ -63,7 +63,7 @@ const Header = () => {
   return (
     // ✨ className과 style 수정
     <header 
-      className={`bg-white sm:border-b border-border fixed top-0 left-0 right-0 z-50 sm:shadow-sm font-sans transition-transform duration-300 ease-in-out`}
+      className={`bg-white fixed top-0 left-0 right-0 z-50 font-sans transition-transform duration-300 ease-in-out sm:border-b sm:border-border sm:shadow-sm`}
       style={{ transform: isVisible ? 'translateY(0)' : `translateY(-${HEADER_HEIGHT}px)` }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
