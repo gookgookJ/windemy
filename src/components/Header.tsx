@@ -14,6 +14,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState<'signin' | 'signup'>('signup');
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const { user, profile, signOut, isAdmin } = useAuth();
 
   // ✨ --- 스크롤 감지 로직 추가 ---
@@ -125,7 +126,12 @@ const Header = () => {
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4">
             {/* ... (내부 코드는 변경 없음) ... */}
-            <Button variant="ghost" size="icon" className="md:hidden">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="md:hidden"
+              onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
+            >
               <Search className="w-5 h-5" />
             </Button>
             {user ? (
@@ -178,6 +184,13 @@ const Header = () => {
             </Button>
           </div>
         </div>
+
+        {/* Mobile Search Dropdown */}
+        {isMobileSearchOpen && (
+          <div className="md:hidden border-t border-border bg-white px-4 py-4">
+            <SearchDropdown onClose={() => setIsMobileSearchOpen(false)} />
+          </div>
+        )}
 
         {/* Mobile Menu */}
         {isMenuOpen && (
