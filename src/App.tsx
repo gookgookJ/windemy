@@ -70,8 +70,6 @@ const PageLoading = () => (
   </div>
 );
 
-
-
 const App = () => (
   <AuthProvider>
     <FavoritesProvider>
