@@ -186,7 +186,7 @@ const FeaturedCourses = memo(() => {
           data-image-container
         >
           <img
-            src={getOptimizedImageForContext(course.thumbnail_url, 'course-card')}
+            src={getOptimizedImageForContext(course.thumbnail_url || '', 'course-card')}
             alt={course.title}
             className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300"
             loading={index < 4 ? "eager" : "lazy"}

@@ -21,14 +21,23 @@ export const optimizeSupabaseImage = (
   imageUrl: string, 
   options: ImageTransformOptions = {}
 ): string => {
-  if (!imageUrl || !imageUrl.includes('supabase.co/storage/v1/object/public/')) {
+  // Return placeholder for null/undefined/empty strings
+  if (!imageUrl || imageUrl.trim() === '') {
+    return '/placeholder.svg';
+  }
+
+  // If it's already a full URL, return as is
+  if (imageUrl.startsWith('http') || imageUrl.startsWith('/')) {
     return imageUrl;
   }
 
-  // For now, return original URL since Supabase image transformation 
+  // Convert relative storage path to full Supabase URL
+  // Assume it's a file in the course-thumbnails bucket
+  const supabaseUrl = "https://hzeoergmlzhdorhgzehz.supabase.co";
+  return `${supabaseUrl}/storage/v1/object/public/course-thumbnails/${imageUrl}`;
+
+  // For now, return the full URL since Supabase image transformation 
   // might not be available on this instance
-  // TODO: Test if transformation endpoint works and re-enable if available
-  return imageUrl;
 
   /* 
   // Future implementation when transformation is confirmed to work:
