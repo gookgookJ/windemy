@@ -257,7 +257,7 @@ const HeroSection = ({ heroSlides = [] }: HeroSectionProps) => {
               </div>
               
               {isActive && (
-                <div className="absolute bottom-4 right-4 z-[4] rounded-full bg-black/60 px-3 py-1 text-white text-xs pointer-events-none sm:hidden">
+                <div className="absolute bottom-4 right-4 z-[4] rounded-full bg-black/60 px-2 py-1 text-white text-xs pointer-events-none sm:hidden">
                   {activeIndex + 1} / {slides.length}
                 </div>
               )}

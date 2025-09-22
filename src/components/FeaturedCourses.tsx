@@ -121,11 +121,11 @@ const FeaturedCourses = memo(() => {
 
     return (
       <Link to={`/course/${course.id}`} className="group cursor-pointer block">
-        <div className="relative mb-4 bg-muted/50 aspect-[16/9] lg:aspect-[16/9] overflow-hidden rounded-xl">
+        <div className="relative mb-4 bg-muted/50 aspect-[16/9] overflow-hidden rounded-xl">
           <img
             src={getOptimizedImageForContext(course.thumbnail_url, 'course-card')}
             alt={course.title}
-            className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
             loading={index < 4 ? "eager" : "lazy"}
             onError={(e) => {
               requestAnimationFrame(() => {
@@ -134,11 +134,13 @@ const FeaturedCourses = memo(() => {
             }}
           />
           
+          {/* 기존 스타일로 하트 버튼 복원 */}
           <button
             onClick={handleFavoriteClick}
-            className="absolute bottom-1 right-1 w-2.5 h-2.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-sm hover:shadow-md hover:scale-110 z-10 flex items-center justify-center"
+            className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-sm hover:shadow-md hover:scale-110 z-10 flex items-center justify-center"
+            aria-label={isFavorite(course.id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
           >
-            <Heart className={`w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 transition-all duration-200 ${
+            <Heart className={`w-4 h-4 transition-all duration-200 ${
               isFavorite(course.id) ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-400'
             }`} />
           </button>
