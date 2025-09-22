@@ -17,7 +17,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main>
-        <HeroSection heroSlides={homepageData?.heroSlides} />
+        <HeroSection />
         <CategorySection />
         <FeaturedCourses />
         <SecondBanner />
