@@ -47,63 +47,98 @@ const fetchFeaturedCoursesData = async () => {
 
   // Fetch courses for each section
   for (const section of sections || []) {
-    let query = supabase.from('courses').select(`
-      id,
-      title,
-      short_description,
-      category_id,
-      thumbnail_url,
-      thumbnail_path,
-      price,
-      level,
-      total_students,
-      instructors (full_name),
-      categories (name),
-      course_reviews (rating)
-    `).eq('is_published', true);
+    if (section.filter_type === 'manual') {
+      // Fetch manually selected courses
+      const { data: manualCourses, error: manualError } = await supabase
+        .from('homepage_section_courses')
+        .select(`
+          order_index,
+          courses:course_id(
+            *,
+            instructors!inner(full_name),
+            categories!inner(name),
+            course_reviews(rating)
+          )
+        `)
+        .eq('section_id', section.id)
+        .eq('is_draft', false)
+        .order('order_index');
 
-    // Apply filters based on section configuration
-    if (section.filter_type === 'category' && section.filter_value) {
-      if (section.filter_value === 'featured') {
-        // Featured courses logic - you might want to add a featured flag
-        query = query.order('total_students', { ascending: false });
-      } else {
-        query = query.eq('category_id', section.filter_value);
-      }
-    } else if (section.filter_type === 'level' && section.filter_value) {
-      query = query.eq('level', section.filter_value);
-    } else if (section.filter_type === 'popular') {
-      query = query.order('total_students', { ascending: false });
-    } else if (section.filter_type === 'recent') {
-      query = query.order('created_at', { ascending: false });
+      if (manualError) throw manualError;
+
+      // Transform the data
+      const transformedCourses = (manualCourses || [])
+        .filter((mc: any) => mc.courses && mc.courses.is_published)
+        .map((mc: any) => ({
+          ...mc.courses,
+          instructor_name: mc.courses?.instructors?.full_name || '운영진',
+          category_name: mc.courses?.categories?.name || '기타',
+          rating: mc.courses?.course_reviews?.length > 0 
+            ? mc.courses.course_reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / mc.courses.course_reviews.length 
+            : 0,
+          review_count: mc.courses?.course_reviews?.length || 0,
+        }))
+        .slice(0, section.display_limit);
+
+      sectionCourses[section.id] = transformedCourses;
+
+    } else if (section.filter_type === 'category' && section.filter_value) {
+      // Fetch courses by category  
+      const { data: categoryCourses, error: categoryError } = await supabase
+        .from('courses')
+        .select(`
+          *,
+          instructors!inner(full_name),
+          categories!inner(name),
+          course_reviews(rating)
+        `)
+        .eq('is_published', true)
+        .eq('categories.name', section.filter_value)
+        .order('created_at', { ascending: false })
+        .limit(section.display_limit);
+
+      if (categoryError) throw categoryError;
+
+      const transformedCategoryCourses = (categoryCourses || []).map((course: any) => ({
+        ...course,
+        instructor_name: course.instructors?.full_name || '운영진',
+        category_name: course.categories?.name || '기타',
+        rating: course.course_reviews?.length > 0 
+          ? course.course_reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / course.course_reviews.length 
+          : 0,
+        review_count: course.course_reviews?.length || 0,
+      }));
+
+      sectionCourses[section.id] = transformedCategoryCourses;
+
     } else {
-      query = query.order('total_students', { ascending: false });
+      // Default: popular courses
+      const { data: popularCourses, error: popularError } = await supabase
+        .from('courses')
+        .select(`
+          *,
+          instructors!inner(full_name),
+          categories!inner(name),
+          course_reviews(rating)
+        `)
+        .eq('is_published', true)
+        .order('total_students', { ascending: false })
+        .limit(section.display_limit);
+
+      if (popularError) throw popularError;
+
+      const transformedPopularCourses = (popularCourses || []).map((course: any) => ({
+        ...course,
+        instructor_name: course.instructors?.full_name || '운영진',
+        category_name: course.categories?.name || '기타',
+        rating: course.course_reviews?.length > 0 
+          ? course.course_reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / course.course_reviews.length 
+          : 0,
+        review_count: course.course_reviews?.length || 0,
+      }));
+
+      sectionCourses[section.id] = transformedPopularCourses;
     }
-
-    const { data: coursesData, error: coursesError } = await query.limit(section.display_limit);
-
-    if (coursesError) throw coursesError;
-
-    // Transform the data
-    const transformedCourses = (coursesData || []).map((course: any) => ({
-      id: course.id,
-      title: course.title,
-      short_description: course.short_description,
-      category_id: course.category_id,
-      thumbnail_url: course.thumbnail_url,
-      thumbnail_path: course.thumbnail_path,
-      price: course.price,
-      level: course.level,
-      total_students: course.total_students,
-      instructor_name: course.instructors?.full_name || '알 수 없음',
-      category_name: course.categories?.name || '기타',
-      rating: course.course_reviews?.length > 0 
-        ? course.course_reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / course.course_reviews.length 
-        : 0,
-      review_count: course.course_reviews?.length || 0,
-    }));
-
-    sectionCourses[section.id] = transformedCourses;
   }
 
   return {

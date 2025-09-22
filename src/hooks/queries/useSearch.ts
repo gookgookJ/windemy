@@ -35,9 +35,9 @@ const performSearch = async (query: string): Promise<SearchResult[]> => {
       price,
       level,
       total_students,
-      instructors (full_name),
-      categories (name),
-      course_reviews (rating)
+      instructors!inner(full_name),
+      categories!inner(name),
+      course_reviews(rating)
     `)
     .eq('is_published', true);
 

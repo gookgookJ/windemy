@@ -58,7 +58,20 @@ const fetchHomepageData = async () => {
     
     supabase
       .from('courses')
-      .select('id, title, short_description, category_id, thumbnail_url, thumbnail_path, price, level, is_published')
+      .select(`
+        id, 
+        title, 
+        short_description, 
+        category_id, 
+        thumbnail_url, 
+        thumbnail_path, 
+        price, 
+        level, 
+        is_published,
+        total_students,
+        instructors!inner(full_name),
+        categories!inner(name)
+      `)
       .eq('is_published', true)
       .order('total_students', { ascending: false })
       .limit(6)
@@ -71,7 +84,11 @@ const fetchHomepageData = async () => {
   return {
     slides: slidesResult.data as HeroSlide[],
     sections: sectionsResult.data as HomepageSection[],
-    featuredCourses: coursesResult.data as Course[],
+    featuredCourses: (coursesResult.data || []).map((course: any) => ({
+      ...course,
+      instructor_name: course.instructors?.full_name || '운영진',
+      category_name: course.categories?.name || '기타',
+    })) as Course[],
   };
 };
 
