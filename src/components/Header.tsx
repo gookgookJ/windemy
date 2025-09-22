@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { SearchDropdown } from "@/components/SearchDropdown";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const HEADER_HEIGHT = 64; // ✨ 헤더 높이 (h-16 = 64px)
 const HEADER_SCROLL_THRESHOLD = 5; // ✨ 헤더 숨김 시작점
@@ -16,13 +17,20 @@ const Header = () => {
   const [authModalTab, setAuthModalTab] = useState<'signin' | 'signup'>('signup');
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const { user, profile, signOut, isAdmin } = useAuth();
+  const isMobile = useIsMobile();
 
-  // ✨ --- 스크롤 감지 로직 추가 ---
+  // ✨ --- 스크롤 감지 로직 추가 (모바일에서만 동작) ---
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
+      // PC/태블릿에서는 항상 헤더 표시
+      if (!isMobile) {
+        setIsVisible(true);
+        return;
+      }
+
       const currentScrollY = window.scrollY;
       
       if (currentScrollY <= HEADER_SCROLL_THRESHOLD) {
@@ -43,7 +51,7 @@ const Header = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isMobile]);
   // ✨ --- 여기까지 ---
 
   const navigationItems = [
