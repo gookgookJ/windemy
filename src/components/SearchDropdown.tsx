@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, Clock, X, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useSearch } from '@/hooks/useSearch';
+import { useSearch } from '@/hooks/queries/useSearch';
 import { cn } from '@/lib/utils';
 
 interface SearchDropdownProps {
@@ -184,9 +184,9 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
                           <p className="text-sm font-medium text-foreground truncate">
                             {course.title}
                           </p>
-                          {course.instructor_name && course.instructor_name !== "운영진" && (
+                          {course.instructor && course.instructor !== "운영진" && (
                             <p className="text-xs text-muted-foreground truncate">
-                              {course.instructor_name}
+                              {course.instructor}
                             </p>
                           )}
                         </div>
