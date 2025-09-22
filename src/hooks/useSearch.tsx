@@ -1,29 +1,12 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-
-interface Course {
-  id: string;
-  title: string;
-  short_description?: string;
-  category_id?: string;
-  thumbnail_url?: string;
-  thumbnail_path?: string;
-  price: number;
-  level?: string;
-  is_published: boolean;
-  instructor_name?: string;
-  relevance?: number;
-}
-
-interface SearchResult extends Course {
-  relevance: number;
-}
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchCourses } from '@/hooks/queries/useSearchCourses';
 
 export const useSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [liveSearchResults, setLiveSearchResults] = useState<Course[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  
+  // React Query를 사용한 검색
+  const { data: liveSearchResults = [], isLoading } = useSearchCourses(searchQuery);
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -33,63 +16,10 @@ export const useSearch = () => {
     }
   }, []);
 
-  // Live search when query changes
-  useEffect(() => {
-    if (searchQuery.trim().length >= 1) {
-      performLiveSearch(searchQuery.trim());
-    } else {
-      setLiveSearchResults([]);
-    }
-  }, [searchQuery]);
-
-  const performLiveSearch = async (query: string) => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('courses')
-        .select(`
-          id, title, short_description, category_id, thumbnail_url, thumbnail_path, price, level, is_published,
-          profiles:instructor_id(full_name),
-          categories:category_id(name)
-        `)
-        .eq('is_published', true);
-
-      if (error) throw error;
-
-      // Filter and rank results
-      const results = (data || [])
-        .map((course: any) => {
-          const titleMatch = course.title.toLowerCase().includes(query.toLowerCase());
-          const descMatch = course.short_description?.toLowerCase().includes(query.toLowerCase()) || false;
-          const instructorMatch = course.profiles?.full_name?.toLowerCase().includes(query.toLowerCase()) || false;
-          
-          let relevance = 0;
-          if (titleMatch) relevance += 15;
-          if (instructorMatch) relevance += 12;
-          if (descMatch) relevance += 5;
-          
-          // Exact matches get higher scores
-          if (course.title.toLowerCase() === query.toLowerCase()) relevance += 20;
-          if (course.profiles?.full_name?.toLowerCase() === query.toLowerCase()) relevance += 18;
-          
-          return {
-            ...course,
-            instructor_name: course.profiles?.full_name || '운영진',
-            relevance
-          };
-        })
-        .filter(course => course.relevance > 0)
-        .sort((a, b) => b.relevance - a.relevance)
-        .slice(0, 5); // 최대 5개만 표시
-
-      setLiveSearchResults(results);
-    } catch (error) {
-      console.error('Error performing live search:', error);
-      setLiveSearchResults([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // 메모이제이션된 검색 결과
+  const searchResults = useMemo(() => {
+    return liveSearchResults || [];
+  }, [liveSearchResults]);
 
   const addToRecentSearches = (query: string) => {
     if (!query.trim()) return;
@@ -114,7 +44,7 @@ export const useSearch = () => {
     searchQuery,
     setSearchQuery,
     recentSearches,
-    liveSearchResults,
+    liveSearchResults: searchResults,
     isLoading,
     addToRecentSearches,
     removeFromRecentSearches,

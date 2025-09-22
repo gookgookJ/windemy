@@ -2,7 +2,6 @@ import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
@@ -73,20 +72,17 @@ const PageLoading = () => (
 
 
 
-const queryClient = new QueryClient();
-
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <FavoritesProvider>
-        <TooltipProvider>
-          <OptimizedLayout>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <ScrollToTop />
-              <Suspense fallback={<PageLoading />}>
-                <Routes>
+  <AuthProvider>
+    <FavoritesProvider>
+      <TooltipProvider>
+        <OptimizedLayout>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <Suspense fallback={<PageLoading />}>
+              <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/instructor-apply" element={<InstructorApply />} />
@@ -128,14 +124,13 @@ const App = () => (
                 <Route path="/learn/:courseId" element={<Learn />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </BrowserRouter>
-          </OptimizedLayout>
-        </TooltipProvider>
-      </FavoritesProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </OptimizedLayout>
+      </TooltipProvider>
+    </FavoritesProvider>
+  </AuthProvider>
 );
 
 export default App;

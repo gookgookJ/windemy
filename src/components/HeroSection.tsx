@@ -1,18 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { getOptimizedImageForContext } from "@/utils/imageOptimization";
+import type { HeroSlide } from "@/hooks/queries/useHomepageData";
 
-interface HeroSlide {
-  id: string;
-  title: string;
-  subtitle?: string;
-  description?: string;
-  image_url: string;
-  course_id?: string;
-  link_url?: string;
-  order_index: number;
+interface HeroSectionProps {
+  heroSlides?: HeroSlide[];
 }
 
 const GAP_PX_DESKTOP = 16;
@@ -20,8 +13,7 @@ const AUTOPLAY_INTERVAL = 5000;
 const SWIPE_THRESHOLD = 50;
 const MOBILE_BREAKPOINT = 640; // Tailwind 'sm' breakpoint
 
-const HeroSection = () => {
-  const [slides, setSlides] = useState<HeroSlide[]>([]);
+const HeroSection = ({ heroSlides = [] }: HeroSectionProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [trackIndex, setTrackIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(true);
@@ -44,20 +36,8 @@ const HeroSection = () => {
 
   const navigate = useNavigate();
 
-  // ----- 데이터 로드 -----
-  useEffect(() => {
-    const fetchSlides = async () => {
-      const { data, error } = await supabase
-        .from("hero_slides")
-        .select("id, title, subtitle, description, image_url, course_id, link_url, order_index")
-        .eq("is_active", true)
-        .eq("is_draft", false)
-        .order("order_index")
-        .limit(10);
-      if (!error && data) setSlides(data);
-    };
-    fetchSlides();
-  }, []);
+  // heroSlides를 slides로 설정
+  const slides = heroSlides;
 
   // ----- LCP 프리로드 -----
   useEffect(() => {
