@@ -1,18 +1,44 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCourseDetailImages } from '@/hooks/queries/useCourseDetailImages';
+
+interface DetailImage {
+  id: string;
+  image_url: string;
+  image_name: string;
+  section_title: string;
+  order_index: number;
+}
 
 interface CourseDetailImagesProps {
   courseId: string;
 }
 
 export const CourseDetailImages: React.FC<CourseDetailImagesProps> = ({ courseId }) => {
-  const { data: images = [], isLoading: loading, error } = useCourseDetailImages(courseId);
+  const [images, setImages] = useState<DetailImage[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (error) {
-    console.error('Error fetching detail images:', error);
-  }
+  useEffect(() => {
+    fetchDetailImages();
+  }, [courseId]);
+
+  const fetchDetailImages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('course_detail_images')
+        .select('*')
+        .eq('course_id', courseId)
+        .order('order_index', { ascending: true });
+
+      if (error) throw error;
+      setImages(data || []);
+    } catch (error) {
+      console.error('Error fetching detail images:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -27,7 +53,7 @@ export const CourseDetailImages: React.FC<CourseDetailImagesProps> = ({ courseId
     );
   }
 
-  if (!images || images.length === 0) {
+  if (images.length === 0) {
     return null;
   }
 

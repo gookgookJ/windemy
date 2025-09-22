@@ -1,12 +1,12 @@
-import { memo } from "react";
+import { useState, useEffect, memo } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Zap, Heart, Crown, Monitor, BookOpen, Target } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import InfoBanner from "@/components/InfoBanner";
 import { getOptimizedImageForContext } from "@/utils/imageOptimization";
-import { useFeaturedCourses } from "@/hooks/queries/useFeaturedCourses";
 
 interface Course {
   id: string;
@@ -46,13 +46,126 @@ interface Category {
 }
 
 const FeaturedCourses = memo(() => {
-  const { data, isLoading: loading, error } = useFeaturedCourses();
-  const sections = data?.sections || [];
-  const sectionCourses = data?.sectionCourses || {};
+  const [sections, setSections] = useState<HomepageSection[]>([]);
+  const [sectionCourses, setSectionCourses] = useState<Record<string, Course[]>>({});
+  const [loading, setLoading] = useState(true);
 
-  if (error) {
-    console.error('Error fetching featured courses:', error);
-  }
+  useEffect(() => {
+    fetchHomepageSections();
+  }, []);
+
+  const fetchHomepageSections = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch homepage sections (published only)
+      const { data: sectionsData, error: sectionsError } = await supabase
+        .from('homepage_sections')
+        .select('*')
+        .eq('is_active', true)
+        .eq('is_draft', false)
+        .order('order_index');
+
+      setSections((sectionsData || []).map(section => ({
+        ...section,
+        icon_type: section.icon_type as 'emoji' | 'lucide' | 'custom',
+        filter_type: section.filter_type as 'manual' | 'category' | 'tag' | 'hot_new'
+      })));
+
+      // Fetch courses for each section IN PARALLEL for better performance
+      const coursesData: Record<string, Course[]> = {};
+
+      // Create all promises for parallel execution
+      const sectionPromises = (sectionsData || []).map(async (section) => {
+        let courses: Course[] = [];
+
+        if (section.filter_type === 'manual') {
+          // Fetch manually selected courses (published only)
+          const { data: manualCourses } = await supabase
+            .from('homepage_section_courses')
+            .select(`
+              order_index,
+              courses:course_id(
+                *,
+                profiles:instructor_id(full_name),
+                categories:category_id(name)
+              )
+            `)
+            .eq('section_id', section.id)
+            .eq('is_draft', false)
+            .order('order_index');
+
+          courses = (manualCourses || [])
+            .map((mc: any) => ({
+              ...mc.courses,
+              instructor_name: mc.courses?.profiles?.full_name || '운영진',
+              category: mc.courses?.categories?.name || '기타',
+              thumbnail_url: mc.courses?.thumbnail_url || mc.courses?.thumbnail_path || '/placeholder.svg'
+            }))
+            .slice(0, section.display_limit);
+
+        } else if (section.filter_type === 'category' && section.filter_value) {
+          // Fetch courses by category
+          const { data: categoryCourses } = await supabase
+            .from('courses')
+            .select(`
+              *,
+              profiles:instructor_id(full_name),
+              categories:category_id(name)
+            `)
+            .eq('is_published', true)
+            .eq('categories.name', section.filter_value)
+            .order('created_at', { ascending: false })
+            .limit(section.display_limit);
+
+          courses = (categoryCourses || []).map(course => ({
+            ...course,
+            instructor_name: course.profiles?.full_name || '운영진',
+            category: course.categories?.name || '기타',
+            thumbnail_url: course.thumbnail_url || course.thumbnail_path || '/placeholder.svg'
+          }));
+
+        } else if (section.filter_type === 'hot_new') {
+          // Fetch hot/new courses
+          const { data: hotNewCourses } = await supabase
+            .from('courses')
+            .select(`
+              *,
+              profiles:instructor_id(full_name),
+              categories:category_id(name)
+            `)
+            .eq('is_published', true)
+            .or('is_hot.eq.true,is_new.eq.true')
+            .order('created_at', { ascending: false })
+            .limit(section.display_limit);
+
+          courses = (hotNewCourses || []).map(course => ({
+            ...course,
+            instructor_name: course.profiles?.full_name || '운영진',
+            category: course.categories?.name || '기타',
+            thumbnail_url: course.thumbnail_url || course.thumbnail_path || '/placeholder.svg'
+          }));
+        }
+
+        return { sectionId: section.id, courses };
+      });
+
+      // Execute all promises in parallel
+      const sectionResults = await Promise.all(sectionPromises);
+      
+      // Map results back to coursesData object
+      sectionResults.forEach(({ sectionId, courses }) => {
+        coursesData[sectionId] = courses;
+      });
+
+      setSectionCourses(coursesData);
+
+    } catch (error) {
+      console.error('Error fetching homepage sections:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 기본 부제목 제공 함수
   const getDefaultSubtitle = (section: HomepageSection) => {
@@ -186,7 +299,7 @@ const FeaturedCourses = memo(() => {
           data-image-container
         >
           <img
-            src={getOptimizedImageForContext(course.thumbnail_url || '', 'course-card')}
+            src={getOptimizedImageForContext(course.thumbnail_url, 'course-card')}
             alt={course.title}
             className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300"
             loading={index < 4 ? "eager" : "lazy"}
