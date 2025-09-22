@@ -1369,8 +1369,16 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_user_role_safe: {
+        Args: { user_uuid?: string }
+        Returns: string
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_instructor_safe: {
+        Args: { user_uuid?: string }
         Returns: boolean
       }
       log_security_event: {
@@ -1380,6 +1388,20 @@ export type Database = {
       sanitize_user_input: {
         Args: { input_text: string }
         Returns: string
+      }
+      security_quick_check: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      test_rls_security: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          actual_result: string
+          expected_result: string
+          status: string
+          table_name: string
+          test_name: string
+        }[]
       }
       validate_user_session: {
         Args: Record<PropertyKey, never>
