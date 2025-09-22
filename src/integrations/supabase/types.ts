@@ -1339,6 +1339,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_security: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       cleanup_old_audit_logs: {
         Args: { days_to_keep?: number }
         Returns: number
