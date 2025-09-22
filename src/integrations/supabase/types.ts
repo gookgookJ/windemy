@@ -1447,6 +1447,15 @@ export type Database = {
       }
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          action_name: string
+          max_requests?: number
+          user_uuid: string
+          window_minutes?: number
+        }
+        Returns: boolean
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
