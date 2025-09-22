@@ -30,7 +30,7 @@ const UserSidebar = () => {
 
   const menuItems = [
     {
-      path: '/my-page',
+      path: '/mypage',
       label: '내 강의실',
       icon: BookOpen,
     },
@@ -40,12 +40,12 @@ const UserSidebar = () => {
       icon: CreditCard,
     },
     {
-      path: '/favorite-courses',
+      path: '/favorites',
       label: '관심 클래스',
       icon: Heart,
     },
     {
-      path: '/review-management',
+      path: '/reviews',
       label: '후기 관리',
       icon: FileText,
     }

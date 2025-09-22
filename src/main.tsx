@@ -62,8 +62,8 @@ createRoot(rootElement).render(
                 <Route path="about" element={<About />} />
                 <Route path="faq" element={<FAQ />} />
                 <Route path="courses" element={<CourseCatalog />} />
+                <Route path="courses/:category" element={<CategoryCourses />} />
                 <Route path="course/:id" element={<CourseDetail />} />
-                <Route path="category/:id" element={<CategoryCourses />} />
                 <Route path="search" element={<SearchResults />} />
                 <Route path="learn/:id" element={<Learn />} />
                 <Route path="mypage" element={<MyPage />} />
