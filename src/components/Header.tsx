@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react"; // ✨ useEffect, useRef 추가
 import { Link } from "react-router-dom";
 import { Search, User, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,43 @@ import { useAuth } from "@/hooks/useAuth";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { SearchDropdown } from "@/components/SearchDropdown";
 
+const HEADER_HEIGHT = 64; // ✨ 헤더 높이 (h-16 = 64px)
+const HEADER_SCROLL_THRESHOLD = 5; // ✨ 헤더 숨김 시작점
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState<'signin' | 'signup'>('signup');
   const { user, profile, signOut, isAdmin } = useAuth();
+
+  // ✨ --- 스크롤 감지 로직 추가 ---
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY <= HEADER_SCROLL_THRESHOLD) {
+        setIsVisible(true);
+        lastScrollY.current = currentScrollY;
+        return;
+      }
+      
+      if (currentScrollY > lastScrollY.current) {
+        setIsVisible(false); // 스크롤 내릴 때
+      } else {
+        setIsVisible(true); // 스크롤 올릴 때
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  // ✨ --- 여기까지 ---
 
   const navigationItems = [
     { name: "소개", href: "/about" },
@@ -29,7 +61,11 @@ const Header = () => {
   ];
 
   return (
-    <header className="bg-white border-b border-border fixed top-0 left-0 right-0 z-50 shadow-soft font-sans">
+    // ✨ className과 style 수정
+    <header 
+      className={`bg-white sm:border-b border-border fixed top-0 left-0 right-0 z-50 sm:shadow-soft font-sans transition-transform duration-300 ease-in-out`}
+      style={{ transform: isVisible ? 'translateY(0)' : `translateY(-${HEADER_HEIGHT}px)` }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -43,6 +79,7 @@ const Header = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex space-x-8">
+              {/* ... (내부 코드는 변경 없음) ... */}
               {navigationItems.map((item) => (
                 <div key={item.name} className="relative group">
                   {item.submenu ? (
@@ -87,13 +124,10 @@ const Header = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4">
-            {/* Mobile Search */}
+            {/* ... (내부 코드는 변경 없음) ... */}
             <Button variant="ghost" size="icon" className="md:hidden">
               <Search className="w-5 h-5" />
             </Button>
-
-
-            {/* User Menu */}
             {user ? (
               <div className="flex items-center space-x-2">
                 {isAdmin && (
@@ -134,8 +168,6 @@ const Header = () => {
                 </Button>
               </div>
             )}
-
-            {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="icon"
@@ -150,13 +182,11 @@ const Header = () => {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="lg:hidden border-t border-border bg-white">
+            {/* ... (내부 코드는 변경 없음) ... */}
             <div className="px-4 py-6 space-y-4">
-              {/* Mobile Search */}
               <div className="md:hidden">
                 <SearchDropdown />
               </div>
-
-              {/* Mobile Navigation */}
               <nav className="space-y-3">
                 {navigationItems.map((item) => (
                   <div key={item.name}>
@@ -192,8 +222,6 @@ const Header = () => {
                   </Link>
                 )}
               </nav>
-
-              {/* Mobile Auth Buttons */}
               {!user && (
                 <div className="flex space-x-3 pt-4 border-t border-border sm:hidden">
                   <Button 
