@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+// --- 타입 정의 (기존과 동일) ---
 interface HeroSlide {
   id: string;
   title: string;
@@ -49,47 +50,46 @@ interface Course {
   };
 }
 
+// --- 데이터 패칭 함수 (수정된 부분) ---
 const fetchHomepageData = async () => {
   try {
-    // Hero slides 가져오기
-    const { data: heroSlides, error: heroError } = await supabase
-      .from('hero_slides')
-      .select('*')
-      .eq('is_active', true)
-      .order('order_index');
+    // 1️⃣ Promise.all을 사용하여 데이터 동시 요청 (성능 향상)
+    const [heroResult, sectionsResult, coursesResult] = await Promise.all([
+      supabase
+        .from('hero_slides')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_index'),
+      supabase
+        .from('homepage_sections')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_index'),
+      supabase
+        .from('courses')
+        .select(`
+          id, title, short_description, thumbnail_url, price, level, is_published, is_hot, is_new,
+          profiles!courses_instructor_id_fkey(full_name),
+          categories!courses_category_id_fkey(name)
+        `)
+        .eq('is_published', true)
+        .limit(8)
+    ]);
 
-    if (heroError) {
-      console.error('Error fetching hero slides:', heroError);
-      throw new Error(`Hero slides fetch failed: ${heroError.message}`);
-    }
+    // 에러 처리
+    const { data: heroSlides, error: heroError } = heroResult;
+    if (heroError) throw new Error(`Hero slides fetch failed: ${heroError.message}`);
 
-    // Homepage sections 가져오기  
-    const { data: sections, error: sectionsError } = await supabase
-      .from('homepage_sections')
-      .select('*')
-      .eq('is_active', true)
-      .order('order_index');
+    const { data: sections, error: sectionsError } = sectionsResult;
+    if (sectionsError) throw new Error(`Homepage sections fetch failed: ${sectionsError.message}`);
 
-    if (sectionsError) {
-      console.error('Error fetching homepage sections:', sectionsError);
-      throw new Error(`Homepage sections fetch failed: ${sectionsError.message}`);
-    }
+    const { data: featuredCourses, error: coursesError } = coursesResult;
+    if (coursesError) throw new Error(`Featured courses fetch failed: ${coursesError.message}`);
 
-    // Featured courses 가져오기 (첫 번째 섹션용)
-    const { data: featuredCourses, error: coursesError } = await supabase
-      .from('courses')
-      .select(`
-        id, title, short_description, thumbnail_url, price, level, is_published, is_hot, is_new,
-        profiles!courses_instructor_id_fkey(full_name),
-        categories!courses_category_id_fkey(name)
-      `)
-      .eq('is_published', true)
-      .limit(8);
-
-    if (coursesError) {
-      console.error('Error fetching featured courses:', coursesError);
-      throw new Error(`Featured courses fetch failed: ${coursesError.message}`);
-    }
+    // 2️⃣ ✨ 히어로 슬라이드 중복 제거 로직 추가 (핵심 수정)
+    const uniqueHeroSlides = heroSlides 
+      ? Array.from(new Map(heroSlides.map(slide => [slide.id, slide])).values()) 
+      : [];
 
     // 데이터 변환
     const transformedCourses = featuredCourses?.map(course => ({
@@ -98,10 +98,11 @@ const fetchHomepageData = async () => {
       category_name: course.categories?.name || '미분류'
     })) || [];
 
+    // 3️⃣ 반환 데이터 이름 일관성 유지 (courses로 통일)
     return {
-      heroSlides: heroSlides || [],
+      heroSlides: uniqueHeroSlides,
       sections: sections || [],
-      featuredCourses: transformedCourses
+      courses: transformedCourses 
     };
   } catch (error) {
     console.error('Homepage data fetch error:', error);
@@ -109,6 +110,7 @@ const fetchHomepageData = async () => {
   }
 };
 
+// --- React Query 훅 (기존과 동일, 변수명만 변경) ---
 export const useHomepageData = () => {
   return useQuery({
     queryKey: ['homepage-data'],
@@ -122,5 +124,5 @@ export const useHomepageData = () => {
   });
 };
 
-// 타입 export
+// --- 타입 export (기존과 동일) ---
 export type { HeroSlide, HomepageSection, Course };
