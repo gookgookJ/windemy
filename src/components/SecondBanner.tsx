@@ -150,8 +150,8 @@ const SecondBanner = () => {
         </div>
       </div>
 
-      {/* 비디오 컨텐츠 - 전체 width 사용 */}
-      <div className="w-full px-4 sm:px-6 lg:px-8">
+      {/* 비디오 컨텐츠 - 다른 섹션과 정렬 맞춤 */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 데스크톱 뷰 - 3.5개씩 */}
         <div className="hidden lg:block">
           <div className="relative max-w-7xl mx-auto">
