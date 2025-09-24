@@ -82,7 +82,7 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => setIsOpen(true)}
-          className="pl-10 pr-16 bg-muted/50 border-none rounded-xl focus:bg-white focus:shadow-medium transition-all duration-200"
+          className="pl-10 pr-16 bg-muted/50 border-none rounded-xl focus:bg-white focus:shadow-medium transition-all duration-200 placeholder:text-sm md:placeholder:text-base"
         />
         <Button
           onClick={handleSearchClick}
