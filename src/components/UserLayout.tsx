@@ -1,7 +1,6 @@
 import React from 'react';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
-import MobileUserMenu from '@/components/MobileUserMenu';
 
 interface UserLayoutProps {
   children: React.ReactNode;
@@ -13,7 +12,6 @@ const UserLayout = ({ children, title, description }: UserLayoutProps) => {
   return (
     <div className="bg-background min-h-screen">
       <Header />
-      <MobileUserMenu />
       
       <main className="container mx-auto px-4 py-4 sm:py-8">
         <div className="max-w-7xl mx-auto">
