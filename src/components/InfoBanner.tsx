@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Mail, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import '@/utils/updateBlogPosts'; // 즉시 업데이트 실행
+
 
 const InfoBanner = () => {
   const [email, setEmail] = useState('');
@@ -13,24 +13,8 @@ const InfoBanner = () => {
   const [touchEnd, setTouchEnd] = useState(0);
   const [bestPosts, setBestPosts] = useState([
     {
-      title: "2025 타오바오 할인코드, 할인쿠폰 사용방법",
-      url: "https://windly.cc/blog/2025-taobao-discount-coupon"
-    },
-    {
-      title: "무신사(MUSINSA) 입점 방법ㅣ판매상품, 수수료, 정산 총정리",
-      url: "https://windly.cc/blog/musinsa-onboading-guide"
-    },
-    {
-      title: "일본판 아마존닷컴, 메루카리(Mercari) 초보자 직구 가이드ㅣ회원가입부터 실전까지",
-      url: "https://windly.cc/blog/mercari-japan-guide"
-    },
-    {
-      title: "'쿠팡 파트너스' 시작 가이드- 가입방법, 정산, 주의사항까지",
-      url: "https://windly.cc/blog/kupang-pateuneoseu-sijag-gaideu-gaibbangbeob-jeongsan-juyisahangggaji"
-    },
-    {
-      title: "떠오르는 유통업계 위기론, 사실일까?",
-      url: "https://windly.cc/blog/ecommerce-crisis"
+      title: "블로그 포스트를 불러오는 중...",
+      url: "https://windly.cc/blog"
     }
   ]);
 
@@ -43,17 +27,19 @@ const InfoBanner = () => {
         if (data && data.success && data.posts && data.posts.length > 0) {
           setBestPosts(data.posts);
           console.log('블로그 포스트가 업데이트되었습니다:', data.posts);
+        } else {
+          console.error('블로그 포스트 업데이트 실패:', error || data?.error);
         }
       } catch (error) {
-        console.error('블로그 포스트 업데이트 실패:', error);
+        console.error('블로그 포스트 업데이트 중 오류:', error);
       }
     };
 
     // 컴포넌트 마운트 시 즉시 업데이트
     updateBlogPosts();
 
-    // 24시간마다 자동 업데이트
-    const interval = setInterval(updateBlogPosts, 24 * 60 * 60 * 1000);
+    // 10분마다 자동 업데이트 (더 자주 체크)
+    const interval = setInterval(updateBlogPosts, 10 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);

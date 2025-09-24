@@ -21,42 +21,54 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
     const rawPosts: RawPost[] = [];
     const seen = new Set<string>();
 
-    // 각 카드 a 태그 블록을 추출 (dotAll 대체: [\s\S])
-    const cardPattern = /<a href="(https:\/\/windly\.cc\/blog\/[^"]+)">([\s\S]*?)<\/a>/g;
-    let match: RegExpExecArray | null;
+    // <a href="https://windly.cc/blog/[slug]"> 패턴으로 개별 포스트 링크 찾기
+    const linkPattern = /<a href="(https:\/\/windly\.cc\/blog\/[^"]+)"[^>]*>/g;
+    let linkMatch: RegExpExecArray | null;
 
-    while ((match = cardPattern.exec(html)) !== null) {
-      const url = match[1];
-      const block = match[2];
+    while ((linkMatch = linkPattern.exec(html)) !== null) {
+      const url = linkMatch[1];
       if (seen.has(url)) continue;
       if (url === 'https://windly.cc/blog') continue;
 
-      // 제목 추출: h2.title 우선, 없으면 img alt
+      seen.add(url);
+
+      // 해당 링크 태그 이후 콘텐츠에서 제목과 날짜 찾기
+      const afterLinkIndex = linkMatch.index + linkMatch[0].length;
+      const contentAfterLink = html.substring(afterLinkIndex, afterLinkIndex + 2000); // 2000자만 확인
+
+      // 제목 추출: <h2 class="...title...">제목</h2>
       let title = '';
-      const h2 = /<h2[^>]*class="[^"]*title[^"]*"[^>]*>([^<]+)<\/h2>/.exec(block);
-      if (h2) title = h2[1].trim();
-      if (!title) {
-        const alt = /alt="([^"]+)"/.exec(block);
-        if (alt) title = alt[1].trim();
+      const titleMatch = /<h2[^>]*class="[^"]*title[^"]*"[^>]*>([^<]+)<\/h2>/.exec(contentAfterLink);
+      if (titleMatch) {
+        title = titleMatch[1].trim();
       }
 
-      // 날짜 추출: created-at 클래스 또는 YYYY.MM.DD 패턴
+      // alt 속성에서 제목 추출 (fallback)
+      if (!title) {
+        const beforeLinkIndex = Math.max(0, linkMatch.index - 500);
+        const contentBeforeLink = html.substring(beforeLinkIndex, linkMatch.index + linkMatch[0].length + 500);
+        const altMatch = /alt="([^"]+)"/.exec(contentBeforeLink);
+        if (altMatch) {
+          title = altMatch[1].trim();
+        }
+      }
+
+      // 날짜 추출: <p class="...created-at...">YYYY.MM.DD</p>
       let dateStr = '';
-      const created = /<p[^>]*class="[^"]*created-at[^"]*"[^>]*>(\d{4}\.\d{2}\.\d{2})<\/p>/.exec(block);
-      if (created) dateStr = created[1];
-      if (!dateStr) {
-        const anyDate = /(\d{4}\.\d{2}\.\d{2})/.exec(block);
-        if (anyDate) dateStr = anyDate[1];
+      const dateMatch = /<p[^>]*class="[^"]*created-at[^"]*"[^>]*>(\d{4}\.\d{2}\.\d{2})<\/p>/.exec(contentAfterLink);
+      if (dateMatch) {
+        dateStr = dateMatch[1];
       }
 
       if (title && title.length > 5) {
         rawPosts.push({ title, url, date: dateStr });
-        seen.add(url);
+        console.log(`Found post: ${title} (${dateStr}) - ${url}`);
       }
     }
 
     // 날짜 기준 내림차순 정렬 후 상위 5개 선택
     const sorted = rawPosts
+      .filter(p => p.date) // 날짜가 있는 것만 필터링
       .map(p => ({
         ...p,
         ts: p.date ? Date.parse(p.date.replace(/\./g, '-')) : 0,
@@ -66,6 +78,10 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
       .map(p => ({ title: p.title, url: p.url }));
 
     console.log(`Collected ${sorted.length} posts (sorted by date desc)`);
+    sorted.forEach((post, index) => {
+      console.log(`${index + 1}. ${post.title}`);
+    });
+    
     return sorted;
   } catch (error) {
     console.error('Error fetching blog posts:', error);
