@@ -124,6 +124,10 @@ const InfoBanner = () => {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[800px] sm:max-h-[600px] p-0">
+                  <div className="sr-only">
+                    <h2>이커머스 정보 구독</h2>
+                    <p>무료 이커머스 정보를 구독하는 페이지입니다.</p>
+                  </div>
                   <iframe
                     src="https://page.stibee.com/subscriptions/155399"
                     className="w-full h-[500px] sm:h-[600px] border-0 rounded-lg"
@@ -241,13 +245,17 @@ const InfoBanner = () => {
                           무료 구독하기
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-[800px] sm:max-h-[600px] p-0">
-                        <iframe
-                          src="https://bit.ly/3Vxd2Y4"
-                          className="w-full h-[500px] sm:h-[600px] border-0 rounded-lg"
-                          title="무료 이커머스 정보 구독"
-                        />
-                      </DialogContent>
+                        <DialogContent className="sm:max-w-[800px] sm:max-h-[600px] p-0">
+                          <div className="sr-only">
+                            <h2>이커머스 정보 구독</h2>
+                            <p>무료 이커머스 정보를 구독하는 페이지입니다.</p>
+                          </div>
+                          <iframe
+                            src="https://page.stibee.com/subscriptions/155399"
+                            className="w-full h-[500px] sm:h-[600px] border-0 rounded-lg"
+                            title="무료 이커머스 정보 구독"
+                          />
+                        </DialogContent>
                     </Dialog>
                   </div>
                   
