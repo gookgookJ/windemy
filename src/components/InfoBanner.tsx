@@ -13,35 +13,45 @@ const InfoBanner = () => {
   const [touchEnd, setTouchEnd] = useState(0);
   const [bestPosts, setBestPosts] = useState([
     {
+      title: "일본 역직구 시작은 K-뷰티! 큐텐재팬으로ㅣ입점부터 일본 화장품시장 트렌드까지",
+      url: "https://windly.cc/blog/japan-qoo10-kbeauty-trend"
+    },
+    {
       title: "2026 ver. 마진을 높이는 판매 가격 설정 가이드",
       url: "https://windly.cc/blog/margin-calculation-pricing"
     },
     {
-      title: "배민보다 빠른 배송, 퀵커머스 전쟁의 우승자는?",
-      url: "https://windly.cc/blog/quick-commerce-competition"
-    },
-    {
-      title: "광고비 70원으로 월 1억 버는 세팅법 ① -네이버 스마트스토어 완전정복",
-      url: "https://windly.cc/blog/consignment-sales-agent-interview-trymoney2024"
-    },
-    {
-      title: "2025 타오바오 할인코드, 할인쿠폰 사용방법",
-      url: "https://windly.cc/blog/2025-taobao-discount-coupon"
-    },
-    {
-      title: "무신사(MUSINSA) 입점 방법ㅣ판매상품, 수수료, 정산 총정리",
+      title: "무신사 입점 가이드(판매상품, 수수료, 정산)",
       url: "https://windly.cc/blog/musinsa-onboading-guide"
+    },
+    {
+      title: "일본판 아마존닷컴, 메루카리(mercari) 초보 가이드ㅣ회원가입부터 직구까지",
+      url: "https://windly.cc/blog/mercari-japan-guide"
+    },
+    {
+      title: "쿠팡파트너스 시작가이드ㅣ가입방법, 정산, 주의사",
+      url: "https://windly.cc/blog/kupang-pateuneoseu-sijag-gaideu-gaibbangbeob-jeongsan-juyisahangggaji"
     }
   ]);
 
-  // 블로그 포스트 자동 업데이트 (하루 한 번)
+  // 블로그 포스트 최적화된 업데이트 
   useEffect(() => {
     const updateBlogPosts = async () => {
+      // 세션 스토리지로 중복 호출 방지
+      const lastUpdate = sessionStorage.getItem('lastBlogUpdate');
+      const now = Date.now();
+      
+      // 5분 이내에 업데이트했다면 스킵
+      if (lastUpdate && now - parseInt(lastUpdate) < 5 * 60 * 1000) {
+        return;
+      }
+
       try {
         const { data, error } = await supabase.functions.invoke('update-blog-posts');
         
         if (data && data.success && data.posts && data.posts.length > 0) {
           setBestPosts(data.posts);
+          sessionStorage.setItem('lastBlogUpdate', now.toString());
           console.log('블로그 포스트가 업데이트되었습니다:', data.posts);
         } else {
           console.error('블로그 포스트 업데이트 실패:', error || data?.error);
@@ -51,13 +61,10 @@ const InfoBanner = () => {
       }
     };
 
-    // 컴포넌트 마운트 시 즉시 업데이트 (테스트용)
-    updateBlogPosts();
-
-    // 24시간마다 자동 업데이트
-    const interval = setInterval(updateBlogPosts, 24 * 60 * 60 * 1000);
-
-    return () => clearInterval(interval);
+    // 페이지 로드 후 3초 지연하여 부드러운 사용자 경험 제공
+    const timer = setTimeout(updateBlogPosts, 3000);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const handleSubscribe = () => {
