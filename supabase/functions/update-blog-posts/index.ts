@@ -21,63 +21,88 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
     const rawPosts: RawPost[] = [];
     const seen = new Set<string>();
 
-    // <a href="https://windly.cc/blog/[slug]"> 패턴으로 개별 포스트 링크 찾기
-    const linkPattern = /<a href="(https:\/\/windly\.cc\/blog\/[^"]+)"[^>]*>/g;
-    let linkMatch: RegExpExecArray | null;
+    // 더 단순한 접근: href와 그 이후 content를 순차적으로 파싱
+    const allContent = html;
+    
+    // 모든 windly.cc/blog 링크를 찾기 (기본 /blog 제외)
+    const linkRegex = /href="(https:\/\/windly\.cc\/blog\/[^"]+)"/g;
+    let linkMatch;
 
-    while ((linkMatch = linkPattern.exec(html)) !== null) {
+    while ((linkMatch = linkRegex.exec(allContent)) !== null) {
       const url = linkMatch[1];
       if (seen.has(url)) continue;
-      if (url === 'https://windly.cc/blog') continue;
-
+      
       seen.add(url);
 
-      // 해당 링크 태그 이후 콘텐츠에서 제목과 날짜 찾기
-      const afterLinkIndex = linkMatch.index + linkMatch[0].length;
-      const contentAfterLink = html.substring(afterLinkIndex, afterLinkIndex + 2000); // 2000자만 확인
-
-      // 제목 추출: <h2 class="...title...">제목</h2>
+      // 링크 이후 1000자 내에서 제목과 날짜 찾기
+      const startIndex = linkMatch.index;
+      const searchArea = allContent.substring(startIndex, startIndex + 1000);
+      
+      // 제목 찾기 - 여러 패턴 시도
       let title = '';
-      const titleMatch = /<h2[^>]*class="[^"]*title[^"]*"[^>]*>([^<]+)<\/h2>/.exec(contentAfterLink);
-      if (titleMatch) {
-        title = titleMatch[1].trim();
+      
+      // 패턴 1: alt 속성 (가장 신뢰도 높음)
+      const altMatch = /alt="([^"]+)"/.exec(searchArea);
+      if (altMatch && altMatch[1].length > 10) {
+        title = altMatch[1].trim();
       }
-
-      // alt 속성에서 제목 추출 (fallback)
+      
+      // 패턴 2: title 클래스가 포함된 h2 태그
       if (!title) {
-        const beforeLinkIndex = Math.max(0, linkMatch.index - 500);
-        const contentBeforeLink = html.substring(beforeLinkIndex, linkMatch.index + linkMatch[0].length + 500);
-        const altMatch = /alt="([^"]+)"/.exec(contentBeforeLink);
-        if (altMatch) {
-          title = altMatch[1].trim();
+        const h2Match = /<h2[^>]*title[^>]*>([^<]+)<\/h2>/i.exec(searchArea);
+        if (h2Match) {
+          title = h2Match[1].trim();
+        }
+      }
+      
+      // 패턴 3: 일반적인 h2 태그 (MUI 스타일)
+      if (!title) {
+        const generalH2 = /<h2[^>]*MuiTypography[^>]*>([^<]+)<\/h2>/i.exec(searchArea);
+        if (generalH2) {
+          title = generalH2[1].trim();
         }
       }
 
-      // 날짜 추출: <p class="...created-at...">YYYY.MM.DD</p>
+      // 날짜 찾기
       let dateStr = '';
-      const dateMatch = /<p[^>]*class="[^"]*created-at[^"]*"[^>]*>(\d{4}\.\d{2}\.\d{2})<\/p>/.exec(contentAfterLink);
+      const dateMatch = /(\d{4}\.\d{2}\.\d{2})/.exec(searchArea);
       if (dateMatch) {
         dateStr = dateMatch[1];
       }
 
       if (title && title.length > 5) {
         rawPosts.push({ title, url, date: dateStr });
-        console.log(`Found post: ${title} (${dateStr}) - ${url}`);
+        console.log(`Found post: "${title}" (${dateStr || 'no date'}) - ${url}`);
       }
     }
 
-    // 날짜 기준 내림차순 정렬 후 상위 5개 선택
-    const sorted = rawPosts
-      .filter(p => p.date) // 날짜가 있는 것만 필터링
+    console.log(`Total raw posts found: ${rawPosts.length}`);
+
+    // 날짜가 있는 포스트들을 날짜 기준으로 정렬
+    const postsWithDates = rawPosts.filter(p => p.date);
+    const postsWithoutDates = rawPosts.filter(p => !p.date);
+    
+    console.log(`Posts with dates: ${postsWithDates.length}, without dates: ${postsWithoutDates.length}`);
+
+    const sorted = postsWithDates
       .map(p => ({
         ...p,
-        ts: p.date ? Date.parse(p.date.replace(/\./g, '-')) : 0,
+        ts: Date.parse(p.date!.replace(/\./g, '-')),
       }))
       .sort((a, b) => b.ts - a.ts)
       .slice(0, 5)
       .map(p => ({ title: p.title, url: p.url }));
 
-    console.log(`Collected ${sorted.length} posts (sorted by date desc)`);
+    // 날짜가 있는 포스트가 5개 미만이면 날짜 없는 포스트도 추가
+    if (sorted.length < 5) {
+      const remaining = 5 - sorted.length;
+      const additional = postsWithoutDates
+        .slice(0, remaining)
+        .map(p => ({ title: p.title, url: p.url }));
+      sorted.push(...additional);
+    }
+
+    console.log(`Final sorted posts: ${sorted.length}`);
     sorted.forEach((post, index) => {
       console.log(`${index + 1}. ${post.title}`);
     });

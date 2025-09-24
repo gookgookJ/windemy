@@ -13,12 +13,28 @@ const InfoBanner = () => {
   const [touchEnd, setTouchEnd] = useState(0);
   const [bestPosts, setBestPosts] = useState([
     {
-      title: "블로그 포스트를 불러오는 중...",
-      url: "https://windly.cc/blog"
+      title: "2026 ver. 마진을 높이는 판매 가격 설정 가이드",
+      url: "https://windly.cc/blog/margin-calculation-pricing"
+    },
+    {
+      title: "배민보다 빠른 배송, 퀵커머스 전쟁의 우승자는?",
+      url: "https://windly.cc/blog/quick-commerce-competition"
+    },
+    {
+      title: "광고비 70원으로 월 1억 버는 세팅법 ① -네이버 스마트스토어 완전정복",
+      url: "https://windly.cc/blog/consignment-sales-agent-interview-trymoney2024"
+    },
+    {
+      title: "2025 타오바오 할인코드, 할인쿠폰 사용방법",
+      url: "https://windly.cc/blog/2025-taobao-discount-coupon"
+    },
+    {
+      title: "무신사(MUSINSA) 입점 방법ㅣ판매상품, 수수료, 정산 총정리",
+      url: "https://windly.cc/blog/musinsa-onboading-guide"
     }
   ]);
 
-  // 블로그 포스트 자동 업데이트
+  // 블로그 포스트 자동 업데이트 (하루 한 번)
   useEffect(() => {
     const updateBlogPosts = async () => {
       try {
@@ -35,11 +51,11 @@ const InfoBanner = () => {
       }
     };
 
-    // 컴포넌트 마운트 시 즉시 업데이트
+    // 컴포넌트 마운트 시 즉시 업데이트 (테스트용)
     updateBlogPosts();
 
-    // 10분마다 자동 업데이트 (더 자주 체크)
-    const interval = setInterval(updateBlogPosts, 10 * 60 * 1000);
+    // 24시간마다 자동 업데이트
+    const interval = setInterval(updateBlogPosts, 24 * 60 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
