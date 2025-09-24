@@ -46,7 +46,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="text-lg">로딩 중...</div>
         </div>
