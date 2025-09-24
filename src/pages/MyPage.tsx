@@ -299,7 +299,7 @@ const MyPage = () => {
                   </CardTitle>
                   {enrollments.length > 0 && (
                     <Button variant="outline" size="sm" onClick={() => navigate('/courses')}>
-                      추가 교육 받기
+                      더 보기
                       <ArrowRight className="h-4 w-4 ml-1" />
                     </Button>
                   )}
