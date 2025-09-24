@@ -17,92 +17,43 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
 
     console.log('Fetched HTML length:', html.length);
 
-    type RawPost = { title: string; url: string; date?: string };
-    const rawPosts: RawPost[] = [];
+    const posts: BlogPost[] = [];
     const seen = new Set<string>();
 
-    // 가장 단순한 방법: 모든 windly.cc/blog/* 링크를 찾고, 근처에서 제목과 날짜 찾기
-    const blogLinkRegex = /href="(https:\/\/windly\.cc\/blog\/[^"]+)"/g;
+    // 간단하고 직접적인 방법: <a href="https://windly.cc/blog/xxx"> 다음에 오는 alt 속성과 날짜 찾기
+    const linkPattern = /<a href="(https:\/\/windly\.cc\/blog\/[^"]+)"/g;
     let match;
 
-    console.log('Starting to search for blog links...');
-
-    while ((match = blogLinkRegex.exec(html)) !== null) {
+    while ((match = linkPattern.exec(html)) !== null) {
       const url = match[1];
       if (seen.has(url)) continue;
-      
       seen.add(url);
-      console.log(`Processing URL: ${url}`);
 
-      // 링크 주변 2000자 범위에서 제목과 날짜 찾기
-      const linkPosition = match.index;
-      const startPos = Math.max(0, linkPosition - 1000);
-      const endPos = Math.min(html.length, linkPosition + 2000);
-      const surroundingContent = html.substring(startPos, endPos);
+      // 링크 이후 500자 내에서 alt 속성 찾기 (제목)
+      const afterLink = html.substring(match.index, match.index + 500);
+      const altMatch = /alt="([^"]+)"/.exec(afterLink);
       
-      console.log(`Searching content around position ${linkPosition}...`);
-
-      // 제목 찾기 - 여러 방법 시도
-      let title = '';
-      
-      // 방법 1: alt 속성에서 (가장 정확함)
-      const altMatches = surroundingContent.matchAll(/alt="([^"]+)"/g);
-      for (const altMatch of altMatches) {
-        const altText = altMatch[1].trim();
-        if (altText.length > 10 && !altText.includes('icon') && !altText.includes('mail')) {
-          title = altText;
-          console.log(`Found title via alt: ${title}`);
-          break;
+      if (altMatch) {
+        const title = altMatch[1].trim();
+        
+        // 날짜 찾기 (링크 이후 1000자 내에서)
+        const extendedArea = html.substring(match.index, match.index + 1000);
+        const dateMatch = /(\d{4}\.\d{2}\.\d{2})/.exec(extendedArea);
+        
+        if (title.length > 10 && !title.includes('icon') && !title.includes('mail')) {
+          posts.push({
+            title: title,
+            url: url
+          });
+          console.log(`Found: ${title} - ${url} (${dateMatch ? dateMatch[1] : 'no date'})`);
         }
-      }
-
-      // 방법 2: h2 태그에서
-      if (!title) {
-        const h2Matches = surroundingContent.matchAll(/<h2[^>]*>([^<]+)<\/h2>/g);
-        for (const h2Match of h2Matches) {
-          const h2Text = h2Match[1].trim();
-          if (h2Text.length > 10 && !h2Text.includes('지금 봐야할') && !h2Text.includes('추천 컨텐츠')) {
-            title = h2Text;
-            console.log(`Found title via h2: ${title}`);
-            break;
-          }
-        }
-      }
-
-      // 날짜 찾기 (YYYY.MM.DD 형식)
-      let dateStr = '';
-      const dateMatch = surroundingContent.match(/(\d{4}\.\d{2}\.\d{2})/);
-      if (dateMatch) {
-        dateStr = dateMatch[1];
-        console.log(`Found date: ${dateStr}`);
-      }
-
-      if (title && title.length > 5) {
-        rawPosts.push({ title, url, date: dateStr });
-        console.log(`Added post: "${title}" (${dateStr || 'no date'})`);
-      } else {
-        console.log(`Skipped URL (no valid title): ${url}`);
       }
     }
 
-    console.log(`Total posts found: ${rawPosts.length}`);
-    rawPosts.forEach((post, index) => {
-      console.log(`${index + 1}. "${post.title}" (${post.date || 'no date'}) - ${post.url}`);
-    });
-
-    // 날짜별로 정렬
-    const sorted = rawPosts
-      .filter(p => p.date) // 날짜가 있는 것만
-      .map(p => ({
-        ...p,
-        ts: Date.parse(p.date!.replace(/\./g, '-')),
-      }))
-      .sort((a, b) => b.ts - a.ts) // 최신순
-      .slice(0, 5)
-      .map(p => ({ title: p.title, url: p.url }));
-
-    console.log(`Final result: ${sorted.length} posts`);
-    return sorted;
+    console.log(`Total posts found: ${posts.length}`);
+    
+    // 최대 5개까지만 반환
+    return posts.slice(0, 5);
     
   } catch (error) {
     console.error('Error fetching blog posts:', error);
