@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+
 import { Mail, TrendingUp, DollarSign, BarChart3, Gift, Zap, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,10 +60,8 @@ const InfoBanner = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
-
   const handleSubscribe = () => {
-    setIsSubscribeModalOpen(true);
+    window.open('https://page.stibee.com/subscriptions/155399', '_blank');
   };
 
   // 캐러셀 슬라이드 데이터 (모바일/태블릿용)
@@ -114,27 +112,12 @@ const InfoBanner = () => {
             </div>
             
             <div className="space-y-6">
-              <Dialog open={isSubscribeModalOpen} onOpenChange={setIsSubscribeModalOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    onClick={handleSubscribe}
-                    className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-4 sm:py-5 text-lg sm:text-xl"
-                  >
-                    무료 구독하기
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[800px] sm:max-h-[600px] p-0">
-                  <div className="sr-only">
-                    <h2>이커머스 정보 구독</h2>
-                    <p>무료 이커머스 정보를 구독하는 페이지입니다.</p>
-                  </div>
-                  <iframe
-                    src="https://page.stibee.com/subscriptions/155399"
-                    className="w-full h-[500px] sm:h-[600px] border-0 rounded-lg"
-                    title="무료 이커머스 정보 구독"
-                  />
-                </DialogContent>
-              </Dialog>
+              <Button 
+                onClick={handleSubscribe}
+                className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-4 sm:py-5 text-lg sm:text-xl"
+              >
+                🎁 무료 구독하기
+              </Button>
             </div>
             
             <div className="mt-6 text-sm sm:text-base text-white/70 text-center leading-relaxed">
@@ -236,27 +219,12 @@ const InfoBanner = () => {
                   </div>
                   
                   <div className="space-y-4">
-                    <Dialog open={isSubscribeModalOpen} onOpenChange={setIsSubscribeModalOpen}>
-                      <DialogTrigger asChild>
-                        <Button 
-                          onClick={handleSubscribe}
-                          className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold text-base py-3"
-                        >
-                          무료 구독하기
-                        </Button>
-                      </DialogTrigger>
-                        <DialogContent className="sm:max-w-[800px] sm:max-h-[600px] p-0">
-                          <div className="sr-only">
-                            <h2>이커머스 정보 구독</h2>
-                            <p>무료 이커머스 정보를 구독하는 페이지입니다.</p>
-                          </div>
-                          <iframe
-                            src="https://page.stibee.com/subscriptions/155399"
-                            className="w-full h-[500px] sm:h-[600px] border-0 rounded-lg"
-                            title="무료 이커머스 정보 구독"
-                          />
-                        </DialogContent>
-                    </Dialog>
+                    <Button 
+                      onClick={handleSubscribe}
+                      className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold text-base py-3"
+                    >
+                      🎁 무료 구독하기
+                    </Button>
                   </div>
                   
                   <div className="mt-4 text-sm text-white/70 text-center">
