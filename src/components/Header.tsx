@@ -151,21 +151,26 @@ const Header = () => {
             </nav>
           </div>
 
-          {/* Search Bar */}
-          <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
-            <SearchDropdown />
-          </div>
+          {/* Search Bar - Hidden on MyPage routes */}
+          {!isMyPageRoute && (
+            <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
+              <SearchDropdown />
+            </div>
+          )}
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="md:hidden"
-              onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
-            >
-              <Search className="w-5 h-5" />
-            </Button>
+            {/* Hide mobile search on MyPage routes */}
+            {!isMyPageRoute && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="md:hidden"
+                onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
+              >
+                <Search className="w-5 h-5" />
+              </Button>
+            )}
             {user ? (
               <div className="flex items-center space-x-2">
                 {/* Desktop admin button */}
@@ -228,8 +233,8 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Search Dropdown */}
-        {isMobileSearchOpen && (
+        {/* Mobile Search Dropdown - Hidden on MyPage routes */}
+        {isMobileSearchOpen && !isMyPageRoute && (
           <div className="md:hidden border-t border-border bg-white px-4 py-4">
             <SearchDropdown onClose={() => setIsMobileSearchOpen(false)} />
           </div>
@@ -239,9 +244,12 @@ const Header = () => {
         {isMenuOpen && (
           <div className="lg:hidden border-t border-border bg-white">
             <div className="px-4 py-6 space-y-4">
-              <div className="md:hidden">
-                <SearchDropdown />
-              </div>
+              {/* Hide search in MyPage routes */}
+              {!isMyPageRoute && (
+                <div className="md:hidden">
+                  <SearchDropdown />
+                </div>
+              )}
               <nav className="space-y-3">
                 {isMyPageRoute ? (
                   // MyPage specific menu items

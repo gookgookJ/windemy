@@ -199,11 +199,12 @@ const MyPage = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div className="lg:col-span-1">
+            {/* Hide sidebar on mobile/tablet since hamburger menu contains the items */}
+            <div className="lg:col-span-1 hidden lg:block">
               <UserSidebar />
             </div>
             
-            <div className="lg:col-span-3 space-y-8">
+            <div className="lg:col-span-3 space-y-8">{/* Main content now spans full width on mobile/tablet */}
               {/* 환영 섹션 */}
               <Card>
                 <CardContent className="p-6">
