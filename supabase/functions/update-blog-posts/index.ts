@@ -21,51 +21,43 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
     const rawPosts: RawPost[] = [];
     const seen = new Set<string>();
 
-    // 더 단순한 접근: href와 그 이후 content를 순차적으로 파싱
-    const allContent = html;
-    
-    // 모든 windly.cc/blog 링크를 찾기 (기본 /blog 제외)
-    const linkRegex = /href="(https:\/\/windly\.cc\/blog\/[^"]+)"/g;
-    let linkMatch;
+    // MUI Grid item을 먼저 찾고, 그 안에서 링크와 정보 추출
+    const gridItemRegex = /<div class="MuiGrid-root MuiGrid-item[^"]*"[^>]*>([\s\S]*?)<\/div><\/div>/g;
+    let gridMatch;
 
-    while ((linkMatch = linkRegex.exec(allContent)) !== null) {
+    while ((gridMatch = gridItemRegex.exec(html)) !== null) {
+      const gridContent = gridMatch[1];
+      
+      // subscribe-card는 제외 (구독 카드)
+      if (gridContent.includes('subscribe-card')) continue;
+      
+      // 블로그 포스트 링크 찾기
+      const linkMatch = /<a href="(https:\/\/windly\.cc\/blog\/[^"]+)"/.exec(gridContent);
+      if (!linkMatch) continue;
+      
       const url = linkMatch[1];
       if (seen.has(url)) continue;
       
       seen.add(url);
 
-      // 링크 이후 1000자 내에서 제목과 날짜 찾기
-      const startIndex = linkMatch.index;
-      const searchArea = allContent.substring(startIndex, startIndex + 1000);
-      
-      // 제목 찾기 - 여러 패턴 시도
+      // 제목 추출 - h2 태그의 title 클래스
       let title = '';
-      
-      // 패턴 1: alt 속성 (가장 신뢰도 높음)
-      const altMatch = /alt="([^"]+)"/.exec(searchArea);
-      if (altMatch && altMatch[1].length > 10) {
-        title = altMatch[1].trim();
+      const titleMatch = /<h2[^>]*class="[^"]*title[^"]*"[^>]*>([^<]+)<\/h2>/.exec(gridContent);
+      if (titleMatch) {
+        title = titleMatch[1].trim();
       }
-      
-      // 패턴 2: title 클래스가 포함된 h2 태그
+
+      // 제목이 없으면 alt 속성에서 추출
       if (!title) {
-        const h2Match = /<h2[^>]*title[^>]*>([^<]+)<\/h2>/i.exec(searchArea);
-        if (h2Match) {
-          title = h2Match[1].trim();
-        }
-      }
-      
-      // 패턴 3: 일반적인 h2 태그 (MUI 스타일)
-      if (!title) {
-        const generalH2 = /<h2[^>]*MuiTypography[^>]*>([^<]+)<\/h2>/i.exec(searchArea);
-        if (generalH2) {
-          title = generalH2[1].trim();
+        const altMatch = /alt="([^"]+)"/.exec(gridContent);
+        if (altMatch && altMatch[1].length > 10) {
+          title = altMatch[1].trim();
         }
       }
 
-      // 날짜 찾기
+      // 날짜 추출 - created-at 클래스
       let dateStr = '';
-      const dateMatch = /(\d{4}\.\d{2}\.\d{2})/.exec(searchArea);
+      const dateMatch = /<p[^>]*class="[^"]*created-at[^"]*"[^>]*>(\d{4}\.\d{2}\.\d{2})<\/p>/.exec(gridContent);
       if (dateMatch) {
         dateStr = dateMatch[1];
       }
