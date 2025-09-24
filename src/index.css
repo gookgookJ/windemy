@@ -231,6 +231,7 @@ img {
   html {
     scroll-behavior: smooth;
     overflow-y: scroll; /* 항상 스크롤바 공간 예약 */
+    scrollbar-gutter: stable; /* 스크롤바 공간 고정 (오버레이 스크롤바 환경 포함) */
   }
 
   body {
@@ -255,6 +256,17 @@ img {
   /* Radix UI 모달(Select, Dialog 등)이 열렸을 때 헤더와 바디 동기화 */
   html[data-radix-scroll-locked] {
     padding-right: var(--scrollbar-width) !important;
+  }
+  body[data-radix-scroll-locked] header {
+    padding-right: var(--scrollbar-width) !important;
+  }
+  html[data-radix-scroll-locked] body[style*="padding-right"],
+  html[data-radix-scroll-locked] body,
+  body[data-radix-scroll-locked] {
+    padding-right: 0 !important; /* Radix가 강제로 추가하는 패딩 제거 */
+  }
+  html[data-radix-scroll-locked] header {
+    padding-right: var(--scrollbar-width) !important; /* fixed 헤더와 콘텐츠 동기화 */
   }
 
 }
