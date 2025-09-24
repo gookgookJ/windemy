@@ -478,16 +478,30 @@ const Learn = () => {
     }
   };
   const goToNextSession = () => {
-    const currentIndex = sessions.findIndex(s => s.id === currentSession?.id);
-    if (currentIndex < sessions.length - 1) {
-      setCurrentSession(sessions[currentIndex + 1]);
+    // 모든 세션을 순서대로 정렬하여 다음 세션 찾기
+    const allSessions = sections
+      .sort((a, b) => a.order_index - b.order_index)
+      .flatMap(section => 
+        section.sessions.sort((a, b) => a.order_index - b.order_index)
+      );
+    
+    const currentIndex = allSessions.findIndex(s => s.id === currentSession?.id);
+    if (currentIndex >= 0 && currentIndex < allSessions.length - 1) {
+      setCurrentSession(allSessions[currentIndex + 1]);
     }
   };
 
   const goToPreviousSession = () => {
-    const currentIndex = sessions.findIndex(s => s.id === currentSession?.id);
+    // 모든 세션을 순서대로 정렬하여 이전 세션 찾기
+    const allSessions = sections
+      .sort((a, b) => a.order_index - b.order_index)
+      .flatMap(section => 
+        section.sessions.sort((a, b) => a.order_index - b.order_index)
+      );
+    
+    const currentIndex = allSessions.findIndex(s => s.id === currentSession?.id);
     if (currentIndex > 0) {
-      setCurrentSession(sessions[currentIndex - 1]);
+      setCurrentSession(allSessions[currentIndex - 1]);
     }
   };
 
@@ -551,9 +565,9 @@ const Learn = () => {
 
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {/* 모바일/태블릿: 비디오 우선, 데스크톱: 사이드바 레이아웃 */}
-        <div className="space-y-6 lg:grid lg:grid-cols-4 lg:gap-6 lg:space-y-0">
+        <div className="space-y-6 lg:grid lg:grid-cols-4 lg:gap-6 lg:space-y-0 lg:items-start">
           
-          {/* 비디오 플레이어 - 모바일에서 최상단 */}
+          {/* 비디오 플레이어 - 모바일에서 최상단, PC에서 정렬 맞춤 */}
           <div className="order-1 lg:order-2 lg:col-span-3">
             {currentSession ? (
               <Card>
