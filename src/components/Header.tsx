@@ -62,7 +62,6 @@ const Header = () => {
       name: "클래스", 
       href: "/courses",
       submenu: [
-        { name: "전체", href: "/courses" },
         { name: "무료강의", href: "/courses/free-courses" },
         { name: "VOD 강의", href: "/courses/vod-courses" },
         { name: "프리미엄 강의", href: "/courses/premium-courses" },
@@ -308,8 +307,10 @@ const Header = () => {
                               onClick={() => setIsMenuOpen(false)}
                             >
                               <div className="flex items-center gap-4">
-                                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/80 shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-300">
-                                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-primary to-secondary opacity-70 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-muted/20 to-muted/40 group-hover:from-primary/10 group-hover:to-primary/20 transition-all duration-300">
+                                  <svg className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  </svg>
                                 </div>
                                 <div>
                                   <span className="text-base font-semibold">{item.name}</span>
@@ -355,8 +356,11 @@ const Header = () => {
                             className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-destructive/5 to-red-50 hover:from-destructive/10 hover:to-red-100 border border-destructive/10 hover:border-destructive/20 transition-all duration-300 font-medium text-destructive hover:text-destructive"
                             onClick={() => setIsMenuOpen(false)}
                           >
-                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/80 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300">
-                              <div className="w-3 h-3 rounded-full bg-destructive"></div>
+                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-destructive/10 to-destructive/20 group-hover:from-destructive/20 group-hover:to-destructive/30 transition-all duration-300">
+                              <svg className="w-5 h-5 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
                             </div>
                             <span className="text-base font-semibold">관리자</span>
                           </Link>
