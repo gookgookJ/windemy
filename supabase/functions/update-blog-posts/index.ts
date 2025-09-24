@@ -17,44 +17,97 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
 
     console.log('Fetched HTML length:', html.length);
 
-    const posts: BlogPost[] = [];
+    type RawPost = { title: string; url: string; date?: string };
+    const rawPosts: RawPost[] = [];
     const seen = new Set<string>();
 
-    // 간단하고 직접적인 방법: <a href="https://windly.cc/blog/xxx"> 다음에 오는 alt 속성과 날짜 찾기
-    const linkPattern = /<a href="(https:\/\/windly\.cc\/blog\/[^"]+)"/g;
-    let match;
+    // 더 단순한 접근: href와 그 이후 content를 순차적으로 파싱
+    const allContent = html;
+    
+    // 모든 windly.cc/blog 링크를 찾기 (기본 /blog 제외)
+    const linkRegex = /href="(https:\/\/windly\.cc\/blog\/[^"]+)"/g;
+    let linkMatch;
 
-    while ((match = linkPattern.exec(html)) !== null) {
-      const url = match[1];
+    while ((linkMatch = linkRegex.exec(allContent)) !== null) {
+      const url = linkMatch[1];
       if (seen.has(url)) continue;
+      
       seen.add(url);
 
-      // 링크 이후 500자 내에서 alt 속성 찾기 (제목)
-      const afterLink = html.substring(match.index, match.index + 500);
-      const altMatch = /alt="([^"]+)"/.exec(afterLink);
+      // 링크 이후 1000자 내에서 제목과 날짜 찾기
+      const startIndex = linkMatch.index;
+      const searchArea = allContent.substring(startIndex, startIndex + 1000);
       
-      if (altMatch) {
-        const title = altMatch[1].trim();
-        
-        // 날짜 찾기 (링크 이후 1000자 내에서)
-        const extendedArea = html.substring(match.index, match.index + 1000);
-        const dateMatch = /(\d{4}\.\d{2}\.\d{2})/.exec(extendedArea);
-        
-        if (title.length > 10 && !title.includes('icon') && !title.includes('mail')) {
-          posts.push({
-            title: title,
-            url: url
-          });
-          console.log(`Found: ${title} - ${url} (${dateMatch ? dateMatch[1] : 'no date'})`);
+      // 제목 찾기 - 여러 패턴 시도
+      let title = '';
+      
+      // 패턴 1: alt 속성 (가장 신뢰도 높음)
+      const altMatch = /alt="([^"]+)"/.exec(searchArea);
+      if (altMatch && altMatch[1].length > 10) {
+        title = altMatch[1].trim();
+      }
+      
+      // 패턴 2: title 클래스가 포함된 h2 태그
+      if (!title) {
+        const h2Match = /<h2[^>]*title[^>]*>([^<]+)<\/h2>/i.exec(searchArea);
+        if (h2Match) {
+          title = h2Match[1].trim();
         }
+      }
+      
+      // 패턴 3: 일반적인 h2 태그 (MUI 스타일)
+      if (!title) {
+        const generalH2 = /<h2[^>]*MuiTypography[^>]*>([^<]+)<\/h2>/i.exec(searchArea);
+        if (generalH2) {
+          title = generalH2[1].trim();
+        }
+      }
+
+      // 날짜 찾기
+      let dateStr = '';
+      const dateMatch = /(\d{4}\.\d{2}\.\d{2})/.exec(searchArea);
+      if (dateMatch) {
+        dateStr = dateMatch[1];
+      }
+
+      if (title && title.length > 5) {
+        rawPosts.push({ title, url, date: dateStr });
+        console.log(`Found post: "${title}" (${dateStr || 'no date'}) - ${url}`);
       }
     }
 
-    console.log(`Total posts found: ${posts.length}`);
+    console.log(`Total raw posts found: ${rawPosts.length}`);
+
+    // 날짜가 있는 포스트들을 날짜 기준으로 정렬
+    const postsWithDates = rawPosts.filter(p => p.date);
+    const postsWithoutDates = rawPosts.filter(p => !p.date);
     
-    // 최대 5개까지만 반환
-    return posts.slice(0, 5);
+    console.log(`Posts with dates: ${postsWithDates.length}, without dates: ${postsWithoutDates.length}`);
+
+    const sorted = postsWithDates
+      .map(p => ({
+        ...p,
+        ts: Date.parse(p.date!.replace(/\./g, '-')),
+      }))
+      .sort((a, b) => b.ts - a.ts)
+      .slice(0, 5)
+      .map(p => ({ title: p.title, url: p.url }));
+
+    // 날짜가 있는 포스트가 5개 미만이면 날짜 없는 포스트도 추가
+    if (sorted.length < 5) {
+      const remaining = 5 - sorted.length;
+      const additional = postsWithoutDates
+        .slice(0, remaining)
+        .map(p => ({ title: p.title, url: p.url }));
+      sorted.push(...additional);
+    }
+
+    console.log(`Final sorted posts: ${sorted.length}`);
+    sorted.forEach((post, index) => {
+      console.log(`${index + 1}. ${post.title}`);
+    });
     
+    return sorted;
   } catch (error) {
     console.error('Error fetching blog posts:', error);
     return [];
