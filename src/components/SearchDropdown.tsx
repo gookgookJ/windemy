@@ -36,12 +36,26 @@ export const SearchDropdown = ({ className, onClose }: SearchDropdownProps) => {
         !inputRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
+        onClose?.();
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+        onClose?.();
+        inputRef.current?.blur();
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('keydown', handleEscapeKey);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [isOpen, onClose]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
