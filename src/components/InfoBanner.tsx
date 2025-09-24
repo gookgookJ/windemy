@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Mail, TrendingUp, DollarSign, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import '@/utils/updateBlogPosts'; // 즉시 업데이트 실행
 
 const InfoBanner = () => {
   const [email, setEmail] = useState('');
