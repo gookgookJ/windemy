@@ -33,7 +33,7 @@ const NotFound = React.lazy(() => import("./pages/NotFound"));
 // Lazy load user pages
 const FavoriteCourses = React.lazy(() => import("./pages/FavoriteCourses"));
 const ReviewManagement = React.lazy(() => import("./pages/ReviewManagement"));
-const Inquiry = React.lazy(() => import("./pages/Inquiry"));
+
 const FAQ = React.lazy(() => import("./pages/FAQ"));
 const ProfileSettings = React.lazy(() => import("./pages/ProfileSettings"));
 const About = React.lazy(() => import("./pages/About"));
@@ -105,7 +105,7 @@ const App = () => (
                 <Route path="/my-page" element={<MyPage />} />
                 <Route path="/favorite-courses" element={<FavoriteCourses />} />
                 <Route path="/review-management" element={<ReviewManagement />} />
-                <Route path="/inquiry" element={<Inquiry />} />
+                
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/profile-settings" element={<ProfileSettings />} />
                 <Route path="/admin" element={<Admin />} />

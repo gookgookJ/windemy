@@ -53,9 +53,10 @@ const UserSidebar = () => {
 
   const supportItems = [
     {
-      path: '/inquiry',
+      path: 'https://windemy.channel.io/home',
       label: '1:1 문의',
       icon: Clock,
+      external: true,
     },
     {
       path: '/faq',
@@ -108,9 +109,15 @@ const UserSidebar = () => {
                 key={item.path}
                 variant="ghost"
                 className={`w-full justify-start text-left ${
-                  isActive(item.path) ? 'bg-primary/10 text-primary' : ''
+                  !item.external && isActive(item.path) ? 'bg-primary/10 text-primary' : ''
                 }`}
-                onClick={() => navigate(item.path)}
+                onClick={() => {
+                  if (item.external) {
+                    window.open(item.path, '_blank');
+                  } else {
+                    navigate(item.path);
+                  }
+                }}
               >
                 <item.icon className="w-4 h-4 mr-3" />
                 {item.label}
