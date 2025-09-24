@@ -133,7 +133,6 @@ const Header = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4">
-            {/* ... (내부 코드는 변경 없음) ... */}
             <Button 
               variant="ghost" 
               size="icon" 
@@ -144,8 +143,9 @@ const Header = () => {
             </Button>
             {user ? (
               <div className="flex items-center space-x-2">
+                {/* Desktop admin button */}
                 {isAdmin && (
-                  <Link to="/admin">
+                  <Link to="/admin" className="hidden sm:block">
                     <Button variant="destructive" size="sm" className="text-xs whitespace-nowrap">
                       관리자
                     </Button>
@@ -157,6 +157,15 @@ const Header = () => {
                     <span className="hidden sm:inline">내 강의실</span>
                   </Button>
                 </Link>
+                {/* Mobile hamburger menu */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="sm:hidden"
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                >
+                  {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                </Button>
               </div>
             ) : (
               <div className="hidden sm:flex items-center space-x-2">
@@ -182,10 +191,11 @@ const Header = () => {
                 </Button>
               </div>
             )}
+            {/* Tablet hamburger menu */}
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="hidden sm:block lg:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -200,10 +210,9 @@ const Header = () => {
           </div>
         )}
 
-        {/* Mobile Menu */}
+        {/* Mobile/Tablet Menu */}
         {isMenuOpen && (
           <div className="lg:hidden border-t border-border bg-white">
-            {/* ... (내부 코드는 변경 없음) ... */}
             <div className="px-4 py-6 space-y-4">
               <div className="md:hidden">
                 <SearchDropdown />
@@ -214,6 +223,7 @@ const Header = () => {
                     <Link
                       to={item.href}
                       className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
+                      onClick={() => setIsMenuOpen(false)}
                     >
                       {item.name}
                     </Link>
@@ -224,6 +234,7 @@ const Header = () => {
                             key={subItem.name}
                             to={subItem.href}
                             className="block text-sm text-muted-foreground hover:text-primary transition-colors duration-200 py-1"
+                            onClick={() => setIsMenuOpen(false)}
                           >
                             {subItem.name}
                           </Link>
@@ -233,14 +244,24 @@ const Header = () => {
                   </div>
                 ))}
                 {user && (
-                  <Link to="/my-page" className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2">
-                    마이페이지
-                  </Link>
-                )}
-                {isAdmin && (
-                  <Link to="/admin" className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2">
-                    관리자
-                  </Link>
+                  <>
+                    <Link 
+                      to="/my-page" 
+                      className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2 sm:hidden"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      마이페이지
+                    </Link>
+                    {isAdmin && (
+                      <Link 
+                        to="/admin" 
+                        className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        관리자
+                      </Link>
+                    )}
+                  </>
                 )}
               </nav>
               {!user && (
