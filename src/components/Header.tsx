@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"; // ✨ useEffect, useRef 추가
-import { Link } from "react-router-dom";
-import { Search, User, Menu, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Search, User, Menu, X, BookOpen, CreditCard, Heart, FileText, Clock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,6 +18,8 @@ const Header = () => {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const { user, profile, signOut, isAdmin } = useAuth();
   const isMobile = useIsMobile();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // ✨ --- 스크롤 감지 로직 추가 (모바일에서만 동작) ---
   const [isVisible, setIsVisible] = useState(true);
@@ -68,6 +70,29 @@ const Header = () => {
     },
     { name: "강사 지원", href: "/instructor-apply" },
   ];
+
+  // MyPage menu items
+  const myPageMenuItems = [
+    { name: "내 강의실", href: "/my-page", icon: BookOpen },
+    { name: "구매 내역", href: "/purchase-history", icon: CreditCard },
+    { name: "관심 클래스", href: "/favorite-courses", icon: Heart },
+    { name: "후기 관리", href: "/review-management", icon: FileText },
+    { name: "1:1 문의", href: "https://windemy.channel.io/home", icon: Clock, external: true },
+    { name: "회원정보관리", href: "/profile-settings", icon: User },
+  ];
+
+  // Check if current page is MyPage related
+  const isMyPageRoute = location.pathname.startsWith('/my-page') || 
+                       location.pathname.startsWith('/purchase-history') ||
+                       location.pathname.startsWith('/favorite-courses') ||
+                       location.pathname.startsWith('/review-management') ||
+                       location.pathname.startsWith('/profile-settings');
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+    setIsMenuOpen(false);
+  };
 
   return (
     // ✨ className과 style 수정
@@ -218,32 +243,71 @@ const Header = () => {
                 <SearchDropdown />
               </div>
               <nav className="space-y-3">
-                {navigationItems.map((item) => (
-                  <div key={item.name}>
-                    <Link
-                      to={item.href}
-                      className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.name}
-                    </Link>
-                    {item.submenu && (
-                      <div className="ml-4 mt-2 space-y-2">
-                        {item.submenu.map((subItem) => (
+                {isMyPageRoute ? (
+                  // MyPage specific menu items
+                  <>
+                    {myPageMenuItems.map((item) => (
+                      <div key={item.name}>
+                        {item.external ? (
+                          <button
+                            className="w-full text-left block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2 flex items-center gap-3"
+                            onClick={() => {
+                              window.open(item.href, '_blank');
+                              setIsMenuOpen(false);
+                            }}
+                          >
+                            <item.icon className="w-4 h-4" />
+                            {item.name}
+                          </button>
+                        ) : (
                           <Link
-                            key={subItem.name}
-                            to={subItem.href}
-                            className="block text-sm text-muted-foreground hover:text-primary transition-colors duration-200 py-1"
+                            to={item.href}
+                            className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2 flex items-center gap-3"
                             onClick={() => setIsMenuOpen(false)}
                           >
-                            {subItem.name}
+                            <item.icon className="w-4 h-4" />
+                            {item.name}
                           </Link>
-                        ))}
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))}
-                {user && isAdmin && (
+                    ))}
+                    <button
+                      className="w-full text-left block text-destructive hover:text-destructive transition-colors duration-200 font-medium py-2 flex items-center gap-3"
+                      onClick={handleSignOut}
+                    >
+                      <LogOut className="w-4 h-4" />
+                      로그아웃
+                    </button>
+                  </>
+                ) : (
+                  // Regular navigation items
+                  navigationItems.map((item) => (
+                    <div key={item.name}>
+                      <Link
+                        to={item.href}
+                        className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {item.name}
+                      </Link>
+                      {item.submenu && (
+                        <div className="ml-4 mt-2 space-y-2">
+                          {item.submenu.map((subItem) => (
+                            <Link
+                              key={subItem.name}
+                              to={subItem.href}
+                              className="block text-sm text-muted-foreground hover:text-primary transition-colors duration-200 py-1"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              {subItem.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+                {user && isAdmin && !isMyPageRoute && (
                   <Link 
                     to="/admin" 
                     className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
