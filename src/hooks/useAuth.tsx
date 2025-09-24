@@ -10,6 +10,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
   isAdmin: boolean;
   isInstructor: boolean;
 }
@@ -79,6 +80,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
+  const refreshProfile = async () => {
+    if (user?.id) {
+      await fetchUserProfile(user.id);
+    }
+  };
+
   const signOut = async () => {
     try {
       // 1) 로컬 상태 먼저 초기화 (즉시 UI 반영)
@@ -126,6 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         signIn,
         signOut,
+        refreshProfile,
         isAdmin,
         isInstructor
       }}

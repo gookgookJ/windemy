@@ -33,7 +33,7 @@ const ProfileSettings = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -96,6 +96,9 @@ const ProfileSettings = () => {
         .eq('id', user.id);
 
       if (error) throw error;
+
+      // 프로필 데이터 새로고침
+      await refreshProfile();
 
       toast({
         title: "성공",
@@ -164,6 +167,9 @@ const ProfileSettings = () => {
         .eq('id', user?.id);
 
       if (profileError) throw profileError;
+
+      // 프로필 데이터 새로고침
+      await refreshProfile();
 
       // 원본 데이터 업데이트
       setOriginalFormData({ ...formData });
