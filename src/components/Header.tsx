@@ -242,8 +242,8 @@ const Header = () => {
 
         {/* Mobile/Tablet Menu - Enhanced UI/UX */}
         {isMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-white/95 backdrop-blur-md">
-            <div className="px-6 py-6 space-y-6">
+          <div className="lg:hidden border-t border-border bg-white/95 backdrop-blur-md w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+            <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
               
               <nav className="space-y-2">
                 {isMyPageRoute ? (
@@ -298,51 +298,74 @@ const Header = () => {
                 ) : (
                   // Regular navigation items with enhanced styling
                   <>
-                    <div className="pb-2 mb-4 border-b border-border">
-                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                        메뉴
+                    <div className="pb-3 mb-6 border-b border-border/50">
+                      <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                        내비게이션
                       </h3>
                     </div>
-                    {navigationItems.map((item) => (
-                      <div key={item.name} className="animate-fade-in">
-                        <Link
-                          to={item.href}
-                          className="group flex items-center gap-4 p-3 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted/50 transition-all duration-200 font-medium"
-                          onClick={() => setIsMenuOpen(false)}
-                        >
-                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted/30 group-hover:bg-primary/10 transition-colors duration-200">
-                            <div className="w-2 h-2 rounded-full bg-current opacity-60"></div>
+                    <div className="grid gap-3">
+                      {navigationItems.map((item, index) => (
+                        <div key={item.name} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                          <div className="group">
+                            <Link
+                              to={item.href}
+                              className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-muted/30 to-muted/10 hover:from-primary/5 hover:to-primary/10 border border-transparent hover:border-primary/10 transition-all duration-300 font-medium text-foreground hover:text-primary"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/80 shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-300">
+                                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-primary to-secondary opacity-70 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                </div>
+                                <div>
+                                  <span className="text-base font-semibold">{item.name}</span>
+                                  {item.submenu && (
+                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                      {item.submenu.length}개 항목
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              {item.submenu && (
+                                <div className="text-muted-foreground group-hover:text-primary transition-colors duration-300">
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  </svg>
+                                </div>
+                              )}
+                            </Link>
+                            {item.submenu && (
+                              <div className="mt-3 ml-16 space-y-2">
+                                {item.submenu.map((subItem, subIndex) => (
+                                  <Link
+                                    key={subItem.name}
+                                    to={subItem.href}
+                                    className="block text-sm text-muted-foreground hover:text-primary transition-colors duration-200 py-2 px-4 rounded-lg hover:bg-muted/30"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    style={{ animationDelay: `${(index * 0.1) + (subIndex * 0.05)}s` }}
+                                  >
+                                    • {subItem.name}
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                          <span className="text-base">{item.name}</span>
-                        </Link>
-                        {item.submenu && (
-                          <div className="ml-14 mt-2 space-y-1">
-                            {item.submenu.map((subItem) => (
-                              <Link
-                                key={subItem.name}
-                                to={subItem.href}
-                                className="block text-sm text-muted-foreground hover:text-primary transition-colors duration-200 py-2 px-3 rounded-md hover:bg-muted/30"
-                                onClick={() => setIsMenuOpen(false)}
-                              >
-                                {subItem.name}
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                        </div>
+                      ))}
+                    </div>
                     {user && isAdmin && (
-                      <div className="pt-4 mt-4 border-t border-border">
-                        <Link 
-                          to="/admin" 
-                          className="group flex items-center gap-4 p-3 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10 transition-all duration-200 font-medium"
-                          onClick={() => setIsMenuOpen(false)}
-                        >
-                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-destructive/10 group-hover:bg-destructive/20 transition-colors duration-200">
-                            <div className="w-2 h-2 rounded-full bg-current"></div>
-                          </div>
-                          <span className="text-base">관리자</span>
-                        </Link>
+                      <div className="pt-6 mt-6 border-t border-border/50">
+                        <div className="animate-fade-in">
+                          <Link 
+                            to="/admin" 
+                            className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-destructive/5 to-red-50 hover:from-destructive/10 hover:to-red-100 border border-destructive/10 hover:border-destructive/20 transition-all duration-300 font-medium text-destructive hover:text-destructive"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/80 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300">
+                              <div className="w-3 h-3 rounded-full bg-destructive"></div>
+                            </div>
+                            <span className="text-base font-semibold">관리자 대시보드</span>
+                          </Link>
+                        </div>
                       </div>
                     )}
                   </>
@@ -350,30 +373,32 @@ const Header = () => {
               </nav>
               
               {!user && !isMyPageRoute && (
-                <div className="pt-4 border-t border-border">
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button 
-                      variant="outline" 
-                      className="h-12 text-base font-medium"
-                      onClick={() => {
-                        setAuthModalTab('signin');
-                        setIsAuthModalOpen(true);
-                        setIsMenuOpen(false);
-                      }}
-                    >
-                      로그인
-                    </Button>
-                    <Button 
-                      variant="default" 
-                      className="h-12 text-base font-medium"
-                      onClick={() => {
-                        setAuthModalTab('signup');
-                        setIsAuthModalOpen(true);
-                        setIsMenuOpen(false);
-                      }}
-                    >
-                      회원가입
-                    </Button>
+                <div className="pt-6 border-t border-border/50">
+                  <div className="animate-fade-in">
+                    <div className="grid grid-cols-2 gap-4">
+                      <Button 
+                        variant="outline" 
+                        className="h-14 text-base font-semibold rounded-2xl border-2 hover:border-primary/50 transition-all duration-300"
+                        onClick={() => {
+                          setAuthModalTab('signin');
+                          setIsAuthModalOpen(true);
+                          setIsMenuOpen(false);
+                        }}
+                      >
+                        로그인
+                      </Button>
+                      <Button 
+                        variant="default" 
+                        className="h-14 text-base font-semibold rounded-2xl bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 transition-all duration-300"
+                        onClick={() => {
+                          setAuthModalTab('signup');
+                          setIsAuthModalOpen(true);
+                          setIsMenuOpen(false);
+                        }}
+                      >
+                        회원가입
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
