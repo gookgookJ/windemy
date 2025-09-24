@@ -38,6 +38,7 @@ const FAQ = React.lazy(() => import("./pages/FAQ"));
 const ProfileSettings = React.lazy(() => import("./pages/ProfileSettings"));
 const About = React.lazy(() => import("./pages/About"));
 const InstructorApply = React.lazy(() => import("./pages/InstructorApply"));
+const Policies = React.lazy(() => import("./pages/Policies"));
 const SecurityTest = React.lazy(() => import("./pages/SecurityTest"));
 
 // Lazy load admin pages (heaviest components)
@@ -91,6 +92,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/instructor-apply" element={<InstructorApply />} />
+                <Route path="/policies" element={<Policies />} />
                 <Route path="/search" element={<SearchResults />} />
                 <Route path="/courses" element={<CourseCatalog />} />
                 <Route path="/courses/:category" element={<CategoryCourses />} />

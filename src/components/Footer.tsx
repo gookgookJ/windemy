@@ -12,13 +12,8 @@ const Footer = () => {
             <h3 className="font-medium text-white text-sm sm:text-base mb-4 sm:mb-6">서비스</h3>
             <ul className="space-y-2 sm:space-y-3">
               <li>
-                <Link to="/about" className="text-slate-400 hover:text-white transition-colors duration-200 text-xs sm:text-sm">
-                  윈데미 소개
-                </Link>
-              </li>
-              <li>
-                <Link to="/faq" className="text-slate-400 hover:text-white transition-colors duration-200 text-xs sm:text-sm">
-                  자주 묻는 질문
+                <Link to="/policies" className="text-slate-400 hover:text-white transition-colors duration-200 text-xs sm:text-sm">
+                  공지사항
                 </Link>
               </li>
               <li>
@@ -42,14 +37,14 @@ const Footer = () => {
             <h3 className="font-medium text-white text-sm sm:text-base mb-4 sm:mb-6">개인정보&이용약관</h3>
             <ul className="space-y-2 sm:space-y-3">
               <li>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors duration-200 text-xs sm:text-sm">
+                <Link to="/policies" className="text-slate-400 hover:text-white transition-colors duration-200 text-xs sm:text-sm">
                   개인정보처리방침
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors duration-200 text-xs sm:text-sm">
+                <Link to="/policies" className="text-slate-400 hover:text-white transition-colors duration-200 text-xs sm:text-sm">
                   서비스 이용약관
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
