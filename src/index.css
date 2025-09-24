@@ -274,7 +274,7 @@ img {
     scroll-behavior: smooth;
     /* overflow-x: hidden 제거 - sticky positioning을 방해함 */
     /* iOS 노치 대응 */
-    padding-top: max(0px, env(safe-area-inset-top));
+    padding-top: max(64px, env(safe-area-inset-top));
     padding-bottom: env(safe-area-inset-bottom);
     /* 폰트 줌 방지 */
     -webkit-text-size-adjust: 100%;
