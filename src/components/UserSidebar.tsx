@@ -69,7 +69,7 @@ const UserSidebar = () => {
   ];
 
   return (
-    <Card className="sticky top-24 hidden lg:block">
+    <Card className="sticky top-24">
       <CardContent className="p-6">
         <div className="text-center mb-6">
           <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-3">
