@@ -4,22 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Mail, TrendingUp, DollarSign, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const InfoBanner = () => {
   const [email, setEmail] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
-
-  const handleSubscribe = () => {
-    if (email) {
-      // TODO: 실제 구독 로직 구현
-      console.log('구독:', email);
-      setEmail('');
-    }
-  };
-
-  const bestPosts = [
+  const [bestPosts, setBestPosts] = useState([
     {
       title: "2025 타오바오 할인코드, 할인쿠폰 사용방법",
       url: "https://windly.cc/blog/2025-taobao-discount-coupon"
@@ -40,7 +32,39 @@ const InfoBanner = () => {
       title: "떠오르는 유통업계 위기론, 사실일까?",
       url: "https://windly.cc/blog/ecommerce-crisis"
     }
-  ];
+  ]);
+
+  // 블로그 포스트 자동 업데이트
+  useEffect(() => {
+    const updateBlogPosts = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('update-blog-posts');
+        
+        if (data && data.success && data.posts && data.posts.length > 0) {
+          setBestPosts(data.posts);
+          console.log('블로그 포스트가 업데이트되었습니다:', data.posts);
+        }
+      } catch (error) {
+        console.error('블로그 포스트 업데이트 실패:', error);
+      }
+    };
+
+    // 컴포넌트 마운트 시 즉시 업데이트
+    updateBlogPosts();
+
+    // 24시간마다 자동 업데이트
+    const interval = setInterval(updateBlogPosts, 24 * 60 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSubscribe = () => {
+    if (email) {
+      // TODO: 실제 구독 로직 구현
+      console.log('구독:', email);
+      setEmail('');
+    }
+  };
 
   // 캐러셀 슬라이드 데이터 (모바일/태블릿용)
   const carouselSlides = [
