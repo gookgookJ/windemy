@@ -126,7 +126,7 @@ const FavoriteCourses = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 hidden lg:block">
               <UserSidebar />
             </div>
             

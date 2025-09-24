@@ -240,115 +240,149 @@ const Header = () => {
           </div>
         )}
 
-        {/* Mobile/Tablet Menu */}
+        {/* Mobile/Tablet Menu - Enhanced UI/UX */}
         {isMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-white">
-            <div className="px-4 py-6 space-y-4">
+          <div className="lg:hidden border-t border-border bg-white/95 backdrop-blur-md">
+            <div className="px-6 py-6 space-y-6">
               {/* Hide search in MyPage routes */}
               {!isMyPageRoute && (
                 <div className="md:hidden">
-                  <SearchDropdown />
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <SearchDropdown />
+                  </div>
                 </div>
               )}
-              <nav className="space-y-3">
+              
+              <nav className="space-y-2">
                 {isMyPageRoute ? (
-                  // MyPage specific menu items
+                  // MyPage specific menu items with enhanced styling
                   <>
+                    <div className="pb-2 mb-4 border-b border-border">
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                        마이페이지
+                      </h3>
+                    </div>
                     {myPageMenuItems.map((item) => (
-                      <div key={item.name}>
+                      <div key={item.name} className="animate-fade-in">
                         {item.external ? (
                           <button
-                            className="w-full text-left block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2 flex items-center gap-3"
+                            className="w-full text-left group flex items-center gap-4 p-3 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted/50 transition-all duration-200 font-medium"
                             onClick={() => {
                               window.open(item.href, '_blank');
                               setIsMenuOpen(false);
                             }}
                           >
-                            <item.icon className="w-4 h-4" />
-                            {item.name}
+                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted/30 group-hover:bg-primary/10 transition-colors duration-200">
+                              <item.icon className="w-5 h-5 group-hover:text-primary transition-colors duration-200" />
+                            </div>
+                            <span className="text-base">{item.name}</span>
                           </button>
                         ) : (
                           <Link
                             to={item.href}
-                            className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2 flex items-center gap-3"
+                            className="group flex items-center gap-4 p-3 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted/50 transition-all duration-200 font-medium"
                             onClick={() => setIsMenuOpen(false)}
                           >
-                            <item.icon className="w-4 h-4" />
-                            {item.name}
+                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted/30 group-hover:bg-primary/10 transition-colors duration-200">
+                              <item.icon className="w-5 h-5 group-hover:text-primary transition-colors duration-200" />
+                            </div>
+                            <span className="text-base">{item.name}</span>
                           </Link>
                         )}
                       </div>
                     ))}
-                    <button
-                      className="w-full text-left block text-destructive hover:text-destructive transition-colors duration-200 font-medium py-2 flex items-center gap-3"
-                      onClick={handleSignOut}
-                    >
-                      <LogOut className="w-4 h-4" />
-                      로그아웃
-                    </button>
+                    <div className="pt-4 mt-4 border-t border-border">
+                      <button
+                        className="w-full text-left group flex items-center gap-4 p-3 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10 transition-all duration-200 font-medium"
+                        onClick={handleSignOut}
+                      >
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-destructive/10 group-hover:bg-destructive/20 transition-colors duration-200">
+                          <LogOut className="w-5 h-5" />
+                        </div>
+                        <span className="text-base">로그아웃</span>
+                      </button>
+                    </div>
                   </>
                 ) : (
-                  // Regular navigation items
-                  navigationItems.map((item) => (
-                    <div key={item.name}>
-                      <Link
-                        to={item.href}
-                        className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        {item.name}
-                      </Link>
-                      {item.submenu && (
-                        <div className="ml-4 mt-2 space-y-2">
-                          {item.submenu.map((subItem) => (
-                            <Link
-                              key={subItem.name}
-                              to={subItem.href}
-                              className="block text-sm text-muted-foreground hover:text-primary transition-colors duration-200 py-1"
-                              onClick={() => setIsMenuOpen(false)}
-                            >
-                              {subItem.name}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
+                  // Regular navigation items with enhanced styling
+                  <>
+                    <div className="pb-2 mb-4 border-b border-border">
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                        메뉴
+                      </h3>
                     </div>
-                  ))
-                )}
-                {user && isAdmin && !isMyPageRoute && (
-                  <Link 
-                    to="/admin" 
-                    className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    관리자
-                  </Link>
+                    {navigationItems.map((item) => (
+                      <div key={item.name} className="animate-fade-in">
+                        <Link
+                          to={item.href}
+                          className="group flex items-center gap-4 p-3 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted/50 transition-all duration-200 font-medium"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted/30 group-hover:bg-primary/10 transition-colors duration-200">
+                            <div className="w-2 h-2 rounded-full bg-current opacity-60"></div>
+                          </div>
+                          <span className="text-base">{item.name}</span>
+                        </Link>
+                        {item.submenu && (
+                          <div className="ml-14 mt-2 space-y-1">
+                            {item.submenu.map((subItem) => (
+                              <Link
+                                key={subItem.name}
+                                to={subItem.href}
+                                className="block text-sm text-muted-foreground hover:text-primary transition-colors duration-200 py-2 px-3 rounded-md hover:bg-muted/30"
+                                onClick={() => setIsMenuOpen(false)}
+                              >
+                                {subItem.name}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {user && isAdmin && (
+                      <div className="pt-4 mt-4 border-t border-border">
+                        <Link 
+                          to="/admin" 
+                          className="group flex items-center gap-4 p-3 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10 transition-all duration-200 font-medium"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-destructive/10 group-hover:bg-destructive/20 transition-colors duration-200">
+                            <div className="w-2 h-2 rounded-full bg-current"></div>
+                          </div>
+                          <span className="text-base">관리자</span>
+                        </Link>
+                      </div>
+                    )}
+                  </>
                 )}
               </nav>
-              {!user && (
-                <div className="flex space-x-3 pt-4 border-t border-border sm:hidden">
-                  <Button 
-                    variant="ghost" 
-                    className="flex-1"
-                    onClick={() => {
-                      setAuthModalTab('signin');
-                      setIsAuthModalOpen(true);
-                      setIsMenuOpen(false);
-                    }}
-                  >
-                    로그인
-                  </Button>
-                  <Button 
-                    variant="default" 
-                    className="flex-1"
-                    onClick={() => {
-                      setAuthModalTab('signup');
-                      setIsAuthModalOpen(true);
-                      setIsMenuOpen(false);
-                    }}
-                  >
-                    회원가입
-                  </Button>
+              
+              {!user && !isMyPageRoute && (
+                <div className="pt-4 border-t border-border">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button 
+                      variant="outline" 
+                      className="h-12 text-base font-medium"
+                      onClick={() => {
+                        setAuthModalTab('signin');
+                        setIsAuthModalOpen(true);
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      로그인
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      className="h-12 text-base font-medium"
+                      onClick={() => {
+                        setAuthModalTab('signup');
+                        setIsAuthModalOpen(true);
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      회원가입
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
