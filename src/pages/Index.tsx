@@ -9,7 +9,7 @@ const Index = () => {
   return (
     <div className="bg-background">
       <Header />
-      <main>
+      <main className="pt-16">
         <HeroSection />
         <CategorySection />
         <FeaturedCourses />

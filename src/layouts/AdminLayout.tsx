@@ -64,7 +64,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       <SidebarProvider>
         <div className="flex w-full pt-16">
           <AdminSidebar />
-          <main className="flex-1 overflow-auto relative">
+          <main className="pt-16 flex-1 overflow-auto relative">
             <div className="container mx-auto p-6 pt-8">
               {children}
             </div>
