@@ -477,14 +477,17 @@ const Learn = () => {
       });
     }
   };
-  const goToNextSession = () => {
-    // 모든 세션을 순서대로 정렬하여 다음 세션 찾기
-    const allSessions = sections
+  // 모든 세션을 순서대로 정렬하여 반환하는 함수
+  const getAllSessionsInOrder = () => {
+    return sections
       .sort((a, b) => a.order_index - b.order_index)
       .flatMap(section => 
         section.sessions.sort((a, b) => a.order_index - b.order_index)
       );
-    
+  };
+
+  const goToNextSession = () => {
+    const allSessions = getAllSessionsInOrder();
     const currentIndex = allSessions.findIndex(s => s.id === currentSession?.id);
     if (currentIndex >= 0 && currentIndex < allSessions.length - 1) {
       setCurrentSession(allSessions[currentIndex + 1]);
@@ -492,17 +495,21 @@ const Learn = () => {
   };
 
   const goToPreviousSession = () => {
-    // 모든 세션을 순서대로 정렬하여 이전 세션 찾기
-    const allSessions = sections
-      .sort((a, b) => a.order_index - b.order_index)
-      .flatMap(section => 
-        section.sessions.sort((a, b) => a.order_index - b.order_index)
-      );
-    
+    const allSessions = getAllSessionsInOrder();
     const currentIndex = allSessions.findIndex(s => s.id === currentSession?.id);
     if (currentIndex > 0) {
       setCurrentSession(allSessions[currentIndex - 1]);
     }
+  };
+
+  // 현재 세션의 인덱스 정보를 가져오는 함수
+  const getCurrentSessionIndex = () => {
+    const allSessions = getAllSessionsInOrder();
+    return allSessions.findIndex(s => s.id === currentSession?.id);
+  };
+
+  const getTotalSessionsCount = () => {
+    return getAllSessionsInOrder().length;
   };
 
   if (loading) {
@@ -619,7 +626,7 @@ const Learn = () => {
                       variant="outline"
                       size="sm"
                       onClick={goToPreviousSession}
-                      disabled={sessions.findIndex(s => s.id === currentSession.id) === 0}
+                      disabled={getCurrentSessionIndex() <= 0}
                       className="flex-1 sm:flex-none"
                     >
                       <ArrowLeft className="h-4 w-4" />
@@ -648,7 +655,7 @@ const Learn = () => {
                       variant="outline"
                       size="sm"
                       onClick={goToNextSession}
-                      disabled={sessions.findIndex(s => s.id === currentSession.id) === sessions.length - 1}
+                      disabled={getCurrentSessionIndex() >= getTotalSessionsCount() - 1}
                       className="flex-1 sm:flex-none"
                     >
                       <span className="hidden sm:inline mr-2">다음</span>
