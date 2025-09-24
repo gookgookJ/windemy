@@ -15,26 +15,48 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
     const response = await fetch('https://windly.cc/blog');
     const html = await response.text();
     
-    // 블로그 포스트 링크와 제목을 추출하는 정규식
-    const linkPattern = /\[([^\]]+)\]\((https:\/\/windly\.cc\/blog\/[^)]+)\)/g;
-    const posts: BlogPost[] = [];
-    let match;
+    console.log('Fetched HTML length:', html.length);
     
-    // 중복 제거를 위한 Set
+    // HTML에서 블로그 포스트 링크와 제목을 추출
+    const posts: BlogPost[] = [];
     const seenUrls = new Set<string>();
     
-    while ((match = linkPattern.exec(html)) !== null && posts.length < 5) {
-      const title = match[1].replace(/\*\*/g, '').trim(); // 마크다운 볼드 제거
-      const url = match[2];
+    // href 속성에서 블로그 포스트 URL을 찾는 정규식
+    const hrefPattern = /href="(https:\/\/windly\.cc\/blog\/[^"]+)"/g;
+    let hrefMatch;
+    
+    while ((hrefMatch = hrefPattern.exec(html)) !== null && posts.length < 5) {
+      const url = hrefMatch[1];
       
-      // 중복 URL 체크 및 유효한 블로그 포스트인지 확인
-      if (!seenUrls.has(url) && !url.includes('mail.svg') && title.length > 10) {
+      if (seenUrls.has(url) || url === 'https://windly.cc/blog') continue;
+      
+      // 해당 링크 주변에서 제목 찾기
+      const urlPosition = hrefMatch.index;
+      const surroundingText = html.substring(urlPosition, urlPosition + 2000);
+      
+      // 제목을 찾는 여러 패턴 시도
+      let title = '';
+      
+      // h2 태그 안의 제목 찾기
+      const titleMatch1 = surroundingText.match(/<h2[^>]*class="[^"]*title[^"]*"[^>]*>([^<]+)</);
+      if (titleMatch1) {
+        title = titleMatch1[1].trim();
+      } else {
+        // alt 속성에서 제목 찾기
+        const titleMatch2 = surroundingText.match(/alt="([^"]+)"/);
+        if (titleMatch2) {
+          title = titleMatch2[1].trim();
+        }
+      }
+      
+      if (title && title.length > 10 && !seenUrls.has(url)) {
         seenUrls.add(url);
         posts.push({ title, url });
+        console.log(`Found post: "${title}" -> ${url}`);
       }
     }
     
-    console.log(`Fetched ${posts.length} blog posts:`, posts);
+    console.log(`Successfully fetched ${posts.length} blog posts`);
     return posts;
   } catch (error) {
     console.error('Error fetching blog posts:', error);
