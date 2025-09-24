@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mail, TrendingUp, DollarSign, BarChart3 } from "lucide-react";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Mail, TrendingUp, DollarSign, BarChart3, Gift, Zap, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import '@/utils/updateBlogPosts'; // 즉시 업데이트 실행
@@ -59,12 +60,10 @@ const InfoBanner = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
+
   const handleSubscribe = () => {
-    if (email) {
-      // TODO: 실제 구독 로직 구현
-      console.log('구독:', email);
-      setEmail('');
-    }
+    setIsSubscribeModalOpen(true);
   };
 
   // 캐러셀 슬라이드 데이터 (모바일/태블릿용)
@@ -105,34 +104,54 @@ const InfoBanner = () => {
       id: 2,
       component: (
         <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-xl text-white h-full min-h-[320px]">
-          <CardContent className="p-4 flex flex-col justify-center">
+          <CardContent className="p-6 flex flex-col justify-center h-full">
             <div className="text-center mb-6">
-              <Mail className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-3 text-white/90" />
-              <div className="space-y-1">
-                <div className="text-base sm:text-lg font-bold">돈 버는 이커머스 정보</div>
-                <div className="text-xs sm:text-sm text-white/90">무료로 받아보기</div>
+              <div className="flex justify-center items-center gap-2 mb-4">
+                <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-300" />
+                <Zap className="h-4 w-4 sm:h-6 sm:w-6 text-yellow-300" />
+              </div>
+              <div className="space-y-2">
+                <div className="text-xl sm:text-2xl font-bold">돈 버는 이커머스 정보</div>
+                <div className="text-sm sm:text-base text-white/90 font-medium">무료로 받아보기</div>
               </div>
             </div>
             
-            <div className="space-y-4">
-              <Input
-                type="email"
-                placeholder="이메일 주소 입력하고"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/60"
-              />
-              <Button 
-                onClick={handleSubscribe}
-                className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 sm:py-3 text-sm sm:text-base"
-              >
-                구독하기
-              </Button>
+            <div className="space-y-4 text-center">
+              <div className="flex justify-center items-center gap-1 text-yellow-300">
+                <Star className="h-4 w-4 fill-current" />
+                <Star className="h-4 w-4 fill-current" />
+                <Star className="h-4 w-4 fill-current" />
+                <Star className="h-4 w-4 fill-current" />
+                <Star className="h-4 w-4 fill-current" />
+              </div>
+              <div className="text-sm text-white/80 leading-relaxed">
+                • 월 매출 증가율 평균 30%↑<br />
+                • 실전 노하우 & 트렌드 분석<br />
+                • 성공사례 & 전략 공유
+              </div>
+              
+              <Dialog open={isSubscribeModalOpen} onOpenChange={setIsSubscribeModalOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    onClick={handleSubscribe}
+                    className="w-full bg-white hover:bg-white/90 text-blue-600 font-bold py-3 sm:py-4 text-base sm:text-lg shadow-lg hover:shadow-xl transition-all"
+                  >
+                    🎁 무료 구독하기
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[800px] sm:max-h-[600px] p-0">
+                  <iframe
+                    src="https://page.stibee.com/subscriptions/155399"
+                    className="w-full h-[500px] sm:h-[600px] border-0 rounded-lg"
+                    title="무료 이커머스 정보 구독"
+                  />
+                </DialogContent>
+              </Dialog>
             </div>
             
             <div className="mt-4 text-xs sm:text-sm text-white/70 text-center">
               놓치면 후회하는 정보를<br />
-              가장 먼저 받아보세요
+              가장 먼저 받아보세요 ✨
             </div>
           </CardContent>
         </Card>
@@ -219,34 +238,54 @@ const InfoBanner = () => {
             {/* 오른쪽 - 구독하기 */}
             <div className="lg:col-span-4">
               <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-xl text-white h-full">
-                <CardContent className="p-4">
-                  <div className="text-center mb-3">
-                    <Mail className="h-7 w-7 mx-auto mb-2 text-white/90" />
+                <CardContent className="p-6 flex flex-col justify-center h-full">
+                  <div className="text-center mb-4">
+                    <div className="flex justify-center items-center gap-2 mb-3">
+                      <Gift className="h-6 w-6 text-yellow-300" />
+                      <Zap className="h-5 w-5 text-yellow-300" />
+                    </div>
                     <div className="space-y-1">
-                      <div className="text-sm font-bold">돈 버는 이커머스 정보</div>
-                      <div className="text-xs text-white/90">무료로 받아보기</div>
+                      <div className="text-lg font-bold">돈 버는 이커머스 정보</div>
+                      <div className="text-sm text-white/90 font-medium">무료로 받아보기</div>
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Input
-                      type="email"
-                      placeholder="이메일 주소 입력하고"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/60 text-sm"
-                    />
-                    <Button 
-                      onClick={handleSubscribe}
-                      className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold text-sm py-2"
-                    >
-                      구독하기
-                    </Button>
+                  <div className="space-y-3 text-center">
+                    <div className="flex justify-center items-center gap-1 text-yellow-300">
+                      <Star className="h-3 w-3 fill-current" />
+                      <Star className="h-3 w-3 fill-current" />
+                      <Star className="h-3 w-3 fill-current" />
+                      <Star className="h-3 w-3 fill-current" />
+                      <Star className="h-3 w-3 fill-current" />
+                    </div>
+                    <div className="text-xs text-white/80 leading-relaxed">
+                      • 월 매출 증가율 평균 30%↑<br />
+                      • 실전 노하우 & 트렌드 분석<br />
+                      • 성공사례 & 전략 공유
+                    </div>
+                    
+                    <Dialog open={isSubscribeModalOpen} onOpenChange={setIsSubscribeModalOpen}>
+                      <DialogTrigger asChild>
+                        <Button 
+                          onClick={handleSubscribe}
+                          className="w-full bg-white hover:bg-white/90 text-blue-600 font-bold py-3 text-sm shadow-lg hover:shadow-xl transition-all"
+                        >
+                          🎁 무료 구독하기
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[800px] sm:max-h-[600px] p-0">
+                        <iframe
+                          src="https://page.stibee.com/subscriptions/155399"
+                          className="w-full h-[500px] sm:h-[600px] border-0 rounded-lg"
+                          title="무료 이커머스 정보 구독"
+                        />
+                      </DialogContent>
+                    </Dialog>
                   </div>
                   
-                  <div className="mt-2 text-xs text-white/70 text-center">
+                  <div className="mt-3 text-xs text-white/70 text-center">
                     놓치면 후회하는 정보를<br />
-                    가장 먼저 받아보세요
+                    가장 먼저 받아보세요 ✨
                   </div>
                 </CardContent>
               </Card>
