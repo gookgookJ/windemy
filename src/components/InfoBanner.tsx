@@ -104,39 +104,23 @@ const InfoBanner = () => {
       id: 2,
       component: (
         <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-xl text-white h-full min-h-[320px]">
-          <CardContent className="p-6 flex flex-col justify-center h-full">
-            <div className="text-center mb-6">
-              <div className="flex justify-center items-center gap-2 mb-4">
-                <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-300" />
-                <Zap className="h-4 w-4 sm:h-6 sm:w-6 text-yellow-300" />
-              </div>
+          <CardContent className="p-4 flex flex-col justify-center">
+            <div className="text-center mb-8">
+              <Mail className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-4 text-white/90" />
               <div className="space-y-2">
                 <div className="text-xl sm:text-2xl font-bold">돈 버는 이커머스 정보</div>
-                <div className="text-sm sm:text-base text-white/90 font-medium">무료로 받아보기</div>
+                <div className="text-base sm:text-lg text-white/90">무료로 받아보기</div>
               </div>
             </div>
             
-            <div className="space-y-4 text-center">
-              <div className="flex justify-center items-center gap-1 text-yellow-300">
-                <Star className="h-4 w-4 fill-current" />
-                <Star className="h-4 w-4 fill-current" />
-                <Star className="h-4 w-4 fill-current" />
-                <Star className="h-4 w-4 fill-current" />
-                <Star className="h-4 w-4 fill-current" />
-              </div>
-              <div className="text-sm text-white/80 leading-relaxed">
-                • 월 매출 증가율 평균 30%↑<br />
-                • 실전 노하우 & 트렌드 분석<br />
-                • 성공사례 & 전략 공유
-              </div>
-              
+            <div className="space-y-6">
               <Dialog open={isSubscribeModalOpen} onOpenChange={setIsSubscribeModalOpen}>
                 <DialogTrigger asChild>
                   <Button 
                     onClick={handleSubscribe}
-                    className="w-full bg-white hover:bg-white/90 text-blue-600 font-bold py-3 sm:py-4 text-base sm:text-lg shadow-lg hover:shadow-xl transition-all"
+                    className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-4 sm:py-5 text-lg sm:text-xl"
                   >
-                    🎁 무료 구독하기
+                    무료 구독하기
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[800px] sm:max-h-[600px] p-0">
@@ -149,9 +133,9 @@ const InfoBanner = () => {
               </Dialog>
             </div>
             
-            <div className="mt-4 text-xs sm:text-sm text-white/70 text-center">
+            <div className="mt-6 text-sm sm:text-base text-white/70 text-center leading-relaxed">
               놓치면 후회하는 정보를<br />
-              가장 먼저 받아보세요 ✨
+              가장 먼저 받아보세요
             </div>
           </CardContent>
         </Card>
@@ -238,39 +222,23 @@ const InfoBanner = () => {
             {/* 오른쪽 - 구독하기 */}
             <div className="lg:col-span-4">
               <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-xl text-white h-full">
-                <CardContent className="p-6 flex flex-col justify-center h-full">
-                  <div className="text-center mb-4">
-                    <div className="flex justify-center items-center gap-2 mb-3">
-                      <Gift className="h-6 w-6 text-yellow-300" />
-                      <Zap className="h-5 w-5 text-yellow-300" />
-                    </div>
+                <CardContent className="p-4">
+                  <div className="text-center mb-6">
+                    <Mail className="h-8 w-8 mx-auto mb-3 text-white/90" />
                     <div className="space-y-1">
                       <div className="text-lg font-bold">돈 버는 이커머스 정보</div>
-                      <div className="text-sm text-white/90 font-medium">무료로 받아보기</div>
+                      <div className="text-base text-white/90">무료로 받아보기</div>
                     </div>
                   </div>
                   
-                  <div className="space-y-3 text-center">
-                    <div className="flex justify-center items-center gap-1 text-yellow-300">
-                      <Star className="h-3 w-3 fill-current" />
-                      <Star className="h-3 w-3 fill-current" />
-                      <Star className="h-3 w-3 fill-current" />
-                      <Star className="h-3 w-3 fill-current" />
-                      <Star className="h-3 w-3 fill-current" />
-                    </div>
-                    <div className="text-xs text-white/80 leading-relaxed">
-                      • 월 매출 증가율 평균 30%↑<br />
-                      • 실전 노하우 & 트렌드 분석<br />
-                      • 성공사례 & 전략 공유
-                    </div>
-                    
+                  <div className="space-y-4">
                     <Dialog open={isSubscribeModalOpen} onOpenChange={setIsSubscribeModalOpen}>
                       <DialogTrigger asChild>
                         <Button 
                           onClick={handleSubscribe}
-                          className="w-full bg-white hover:bg-white/90 text-blue-600 font-bold py-3 text-sm shadow-lg hover:shadow-xl transition-all"
+                          className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold text-base py-3"
                         >
-                          🎁 무료 구독하기
+                          무료 구독하기
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[800px] sm:max-h-[600px] p-0">
@@ -283,9 +251,9 @@ const InfoBanner = () => {
                     </Dialog>
                   </div>
                   
-                  <div className="mt-3 text-xs text-white/70 text-center">
+                  <div className="mt-4 text-sm text-white/70 text-center">
                     놓치면 후회하는 정보를<br />
-                    가장 먼저 받아보세요 ✨
+                    가장 먼저 받아보세요
                   </div>
                 </CardContent>
               </Card>
