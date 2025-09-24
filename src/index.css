@@ -90,46 +90,6 @@ All colors MUST be HSL.
     --wind-brand-light-blue: 220 100% 96%;
 }
 
-/* GLOBAL LAYOUT SHIFT PREVENTION */
-
-/* 1. 스크롤바 유무에 관계없이 항상 스크롤바 공간을 확보 (가장 중요) */
-html {
-  overflow-y: scroll !important;
-  scrollbar-gutter: stable;
-}
-
-/* 2. Radix UI 등이 body에 강제로 추가하는 padding-right를 무력화 */
-body[style*="overflow: hidden"] {
-  padding-right: 0 !important;
-}
-
-/* 참고: 이전에 있었던 overflow: auto !important; 는 삭제합니다.
-   Radix UI가 스크롤을 막는 overflow: hidden 자체는 허용하되,
-   레이아웃을 밀어내는 padding-right만 정확히 차단하는 것이 핵심입니다.
-*/
-
-[data-radix-portal] {
-  position: fixed !important;
-  z-index: 200 !important;
-}
-
-
-/* Prevent focus jump */
-[data-radix-dropdown-menu-content],
-[data-radix-dialog-content] {
-  outline: none !important;
-}
-
-/* Ensure dropdown positioning doesn't affect layout */
-[data-radix-popper-content-wrapper] {
-  z-index: 200 !important;
-  transform-origin: var(--radix-dropdown-menu-content-transform-origin) !important;
-}
-
-/* Additional dropdown stability */
-[data-state="open"][data-radix-dropdown-menu-content] {
-  animation-fill-mode: forwards !important;
-}
 
 /* Force GPU acceleration for transitions to prevent reflows */
 .group-hover\\:scale-105,
@@ -290,6 +250,11 @@ img {
   /* Admin pages manage offset internally */
   body.admin-fixed-offset {
     padding-top: 0 !important;
+  }
+
+  /* Radix UI 모달(Select, Dialog 등)이 열렸을 때 헤더와 바디 동기화 */
+  html[data-radix-scroll-locked] {
+    padding-right: var(--scrollbar-width) !important;
   }
 
 }
