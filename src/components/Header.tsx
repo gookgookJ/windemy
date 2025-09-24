@@ -244,14 +244,6 @@ const Header = () => {
         {isMenuOpen && (
           <div className="lg:hidden border-t border-border bg-white/95 backdrop-blur-md">
             <div className="px-6 py-6 space-y-6">
-              {/* Hide search in MyPage routes */}
-              {!isMyPageRoute && (
-                <div className="md:hidden">
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <SearchDropdown />
-                  </div>
-                </div>
-              )}
               
               <nav className="space-y-2">
                 {isMyPageRoute ? (
