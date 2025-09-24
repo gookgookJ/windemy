@@ -98,11 +98,6 @@ All colors MUST be HSL.
   z-index: 200 !important;
 }
 
-/* Prevent body scroll lock that causes layout shift */
-body[style*="overflow: hidden"] {
-  overflow: auto !important;
-  padding-right: 0 !important;
-}
 
 /* Maintain consistent viewport */
 html {
