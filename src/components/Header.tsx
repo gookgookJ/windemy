@@ -243,25 +243,14 @@ const Header = () => {
                     )}
                   </div>
                 ))}
-                {user && (
-                  <>
-                    <Link 
-                      to="/my-page" 
-                      className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2 sm:hidden"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      마이페이지
-                    </Link>
-                    {isAdmin && (
-                      <Link 
-                        to="/admin" 
-                        className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        관리자
-                      </Link>
-                    )}
-                  </>
+                {user && isAdmin && (
+                  <Link 
+                    to="/admin" 
+                    className="block text-muted-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    관리자
+                  </Link>
                 )}
               </nav>
               {!user && (
