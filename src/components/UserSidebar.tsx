@@ -57,11 +57,6 @@ const UserSidebar = () => {
       label: '1:1 문의',
       icon: Clock,
       external: true,
-    },
-    {
-      path: '/faq',
-      label: '자주 묻는 질문',
-      icon: HelpCircle,
     }
   ];
 
