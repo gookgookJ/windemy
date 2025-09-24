@@ -273,18 +273,14 @@ img {
     @apply bg-background text-foreground;
     scroll-behavior: smooth;
     /* overflow-x: hidden 제거 - sticky positioning을 방해함 */
+    padding-top: 64px; /* 헤더 높이만큼 여백 확보 */
+    /* iOS 노치 대응 */
+    padding-top: max(64px, env(safe-area-inset-top));
     padding-bottom: env(safe-area-inset-bottom);
     /* 폰트 줌 방지 */
     -webkit-text-size-adjust: 100%;
     /* 100vh 버그 회피 */
     min-height: 100dvh;
-  }
-
-  /* Desktop/Tablet: offset content below fixed header (h-16 = 64px) */
-  @media (min-width: 640px) {
-    body {
-      padding-top: max(64px, env(safe-area-inset-top));
-    }
   }
 
   /* Admin pages manage offset internally */
