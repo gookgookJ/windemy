@@ -111,7 +111,7 @@ const FavoriteCourses = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="bg-background">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">로딩 중...</div>
@@ -121,7 +121,7 @@ const FavoriteCourses = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">

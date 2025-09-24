@@ -87,7 +87,7 @@ const About = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-background text-foreground font-sans">
+        <div className="bg-background text-foreground font-sans">
             <Header />
 
             {/* Hero Section */}

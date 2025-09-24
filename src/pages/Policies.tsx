@@ -151,7 +151,7 @@ const Policies = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">

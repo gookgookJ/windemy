@@ -320,7 +320,7 @@ const CourseDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="bg-background">
         <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
@@ -335,7 +335,7 @@ const CourseDetail = () => {
 
   if (!courseData) {
     return (
-        <div className="min-h-screen bg-background">
+        <div className="bg-background">
         <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
@@ -353,7 +353,7 @@ const CourseDetail = () => {
 
   // --- Unified Responsive Layout ---
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       {/* Header (가정: 고정되어 있으며 높이는 약 80px, z-50) */}
       <Header />
 

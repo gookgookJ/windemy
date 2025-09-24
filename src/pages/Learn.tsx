@@ -493,7 +493,7 @@ const Learn = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="bg-background flex items-center justify-center py-20">
         <div className="text-center">로딩 중...</div>
       </div>
     );
@@ -504,7 +504,7 @@ const Learn = () => {
   const courseProgress = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <Header />
       <div className="border-b">
         <div className="container mx-auto px-4 py-4">

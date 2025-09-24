@@ -165,7 +165,7 @@ const SearchResults = () => {
   const results = filteredAndSortedResults();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <Header />
       
       <main className="pt-20 pb-16">
