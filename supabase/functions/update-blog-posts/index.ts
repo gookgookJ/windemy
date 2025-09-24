@@ -12,101 +12,194 @@ interface BlogPost {
 
 async function fetchBlogPosts(): Promise<BlogPost[]> {
   try {
-    const response = await fetch('https://windly.cc/blog');
-    const html = await response.text();
-
-    console.log('Fetched HTML length:', html.length);
+    // 1) RSS/Atom 시도 (가장 정확)
+    const rssCandidates = [
+      'https://windly.cc/blog/rss.xml',
+      'https://windly.cc/rss.xml',
+      'https://windly.cc/feed',
+      'https://windly.cc/feed.xml',
+      'https://windly.cc/atom.xml'
+    ];
 
     type RawPost = { title: string; url: string; date?: string };
     const rawPosts: RawPost[] = [];
     const seen = new Set<string>();
 
-    // 더 단순한 접근: href와 그 이후 content를 순차적으로 파싱
-    const allContent = html;
-    
-    // 모든 windly.cc/blog 링크를 찾기 (기본 /blog 제외)
-    const linkRegex = /href="(https:\/\/windly\.cc\/blog\/[^"]+)"/g;
-    let linkMatch;
+    async function tryParseRss(url: string) {
+      try {
+        const res = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; WindlyBot/1.0)',
+            'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8'
+          }
+        });
+        if (!res.ok) return;
+        const xml = await res.text();
+        console.log('RSS fetched from:', url, 'len:', xml.length);
 
-    while ((linkMatch = linkRegex.exec(allContent)) !== null) {
-      const url = linkMatch[1];
-      if (seen.has(url)) continue;
-      
-      seen.add(url);
+        // RSS 2.0: <item><link>..</link><title>..</title><pubDate>..</pubDate>
+        const itemRegex = /<item[\s\S]*?<\/item>/g;
+        const titleRegex = /<title>([\s\S]*?)<\/title>/i;
+        const linkRegex = /<link>([\s\S]*?)<\/link>/i;
+        const dateRegex = /<pubDate>([\s\S]*?)<\/pubDate>/i;
 
-      // 링크 이후 1000자 내에서 제목과 날짜 찾기
-      const startIndex = linkMatch.index;
-      const searchArea = allContent.substring(startIndex, startIndex + 1000);
-      
-      // 제목 찾기 - 여러 패턴 시도
-      let title = '';
-      
-      // 패턴 1: alt 속성 (가장 신뢰도 높음)
-      const altMatch = /alt="([^"]+)"/.exec(searchArea);
-      if (altMatch && altMatch[1].length > 10) {
-        title = altMatch[1].trim();
-      }
-      
-      // 패턴 2: title 클래스가 포함된 h2 태그
-      if (!title) {
-        const h2Match = /<h2[^>]*title[^>]*>([^<]+)<\/h2>/i.exec(searchArea);
-        if (h2Match) {
-          title = h2Match[1].trim();
+        let matched = false;
+        const items = xml.match(itemRegex) || [];
+        for (const item of items) {
+          const title = titleRegex.exec(item)?.[1]?.trim().replace(/\s+/g, ' ') || '';
+          const link = linkRegex.exec(item)?.[1]?.trim() || '';
+          const dateRaw = dateRegex.exec(item)?.[1]?.trim() || '';
+          if (link.includes('/blog/') && title) {
+            const urlNorm = link.startsWith('http') ? link : `https://windly.cc${link}`;
+            if (!seen.has(urlNorm)) {
+              seen.add(urlNorm);
+              const dateStr = dateRaw ? new Date(dateRaw).toISOString().slice(0,10).replace(/-/g, '.') : undefined;
+              rawPosts.push({ title, url: urlNorm, date: dateStr });
+              matched = true;
+            }
+          }
         }
-      }
-      
-      // 패턴 3: 일반적인 h2 태그 (MUI 스타일)
-      if (!title) {
-        const generalH2 = /<h2[^>]*MuiTypography[^>]*>([^<]+)<\/h2>/i.exec(searchArea);
-        if (generalH2) {
-          title = generalH2[1].trim();
+
+        // Atom: <entry><link href="..."/><title>..</title><updated>..</updated>
+        if (!matched) {
+          const entryRegex = /<entry[\s\S]*?<\/entry>/g;
+          const entries = xml.match(entryRegex) || [];
+          for (const entry of entries) {
+            const title = /<title[\s\S]*?>([\s\S]*?)<\/title>/i.exec(entry)?.[1]?.trim().replace(/\s+/g, ' ') || '';
+            const linkTag = /<link[^>]*href=["']([^"']+)["'][^>]*\/>/i.exec(entry)?.[1] || '';
+            const updatedRaw = /<updated>([\s\S]*?)<\/updated>/i.exec(entry)?.[1] || '';
+            if (linkTag.includes('/blog/') && title) {
+              const urlNorm = linkTag.startsWith('http') ? linkTag : `https://windly.cc${linkTag}`;
+              if (!seen.has(urlNorm)) {
+                seen.add(urlNorm);
+                const dateStr = updatedRaw ? updatedRaw.slice(0,10).replace(/-/g, '.') : undefined;
+                rawPosts.push({ title, url: urlNorm, date: dateStr });
+              }
+            }
+          }
         }
+      } catch (e) {
+        console.log('RSS parse failed for', url, e?.message);
+      }
+    }
+
+    for (const rssUrl of rssCandidates) {
+      if (rawPosts.length >= 5) break;
+      await tryParseRss(rssUrl);
+    }
+
+    // 2) RSS에서 부족하면 sitemap 보조
+    if (rawPosts.length < 5) {
+      try {
+        const siteRes = await fetch('https://windly.cc/sitemap.xml', {
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WindlyBot/1.0)' }
+        });
+        if (siteRes.ok) {
+          const sm = await siteRes.text();
+          console.log('Sitemap fetched len:', sm.length);
+          const locRegex = /<loc>([^<]+)<\/loc>/g;
+          let m;
+          const blogUrls: string[] = [];
+          while ((m = locRegex.exec(sm)) !== null) {
+            const loc = m[1];
+            if (loc.includes('/blog/')) blogUrls.push(loc);
+          }
+          // 최신 것들이 보통 상단, 20개만 스캔
+          for (const url of blogUrls.slice(0, 20)) {
+            if (rawPosts.length >= 8) break; // 과도한 요청 방지
+            if (seen.has(url)) continue;
+            try {
+              const pr = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WindlyBot/1.0)' } });
+              if (!pr.ok) continue;
+              const ph = await pr.text();
+              const ogTitle = /property=["']og:title["'][^>]*content=["']([^"']+)["']/i.exec(ph)
+                           || /<title>([^<]+)<\/title>/i.exec(ph);
+              const title = ogTitle?.[1]?.trim() || '';
+              if (title && !seen.has(url)) {
+                seen.add(url);
+                const ogDate = /property=["']article:published_time["'][^>]*content=["']([^"']+)["']/i.exec(ph)?.[1];
+                const dateStr = ogDate ? ogDate.slice(0,10).replace(/-/g, '.') : undefined;
+                rawPosts.push({ title, url, date: dateStr });
+              }
+            } catch {}
+          }
+        }
+      } catch (e) {
+        console.log('Sitemap fetch failed', e?.message);
+      }
+    }
+
+    // 3) 최후수단: /blog HTML에서 링크 스캔 (CSR일 경우 비어있을 수 있음)
+    if (rawPosts.length < 5) {
+      const response = await fetch('https://windly.cc/blog', {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WindlyBot/1.0)', 'Accept-Language': 'ko,en;q=0.9' }
+      });
+      const html = await response.text();
+      console.log('Fetched /blog HTML length:', html.length);
+
+      const allContent = html;
+      const candidates: { url: string; index: number }[] = [];
+      const aHref = /href=['\"](https?:\/\/windly\.cc\/blog\/[^'\"]+|\/blog\/[^'\"]+)['\"]/g;
+      let linkMatch;
+      while ((linkMatch = aHref.exec(allContent)) !== null) {
+        let url = linkMatch[1];
+        if (url.startsWith('/')) url = `https://windly.cc${url}`;
+        if (seen.has(url)) continue;
+        seen.add(url);
+        candidates.push({ url, index: linkMatch.index });
+      }
+      console.log('Blog HTML candidates:', candidates.length);
+
+      async function enrichFromContext(url: string, startIndex: number) {
+        const searchArea = allContent.substring(startIndex, startIndex + 2000);
+        let title = '';
+        let dateStr = '';
+        const altMatch = /alt=["']([^"']+)["']/.exec(searchArea);
+        if (altMatch && altMatch[1].trim().length > 6) title = altMatch[1].trim();
+        if (!title) {
+          const h2Match = /<h2[^>]*>([^<]+)<\/h2>/i.exec(searchArea);
+          if (h2Match) title = h2Match[1].trim();
+        }
+        const dateDot = /(\d{4}[.]\d{2}[.]\d{2})/.exec(searchArea);
+        if (dateDot) dateStr = dateDot[1];
+        if (!title) {
+          try {
+            const pr = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WindlyBot/1.0)' } });
+            const ph = await pr.text();
+            const ogTitle = /property=["']og:title["'][^>]*content=["']([^"']+)["']/i.exec(ph)
+                         || /<title>([^<]+)<\/title>/i.exec(ph);
+            if (ogTitle) title = ogTitle[1].trim();
+          } catch {}
+        }
+        return { title, dateStr };
       }
 
-      // 날짜 찾기
-      let dateStr = '';
-      const dateMatch = /(\d{4}\.\d{2}\.\d{2})/.exec(searchArea);
-      if (dateMatch) {
-        dateStr = dateMatch[1];
-      }
-
-      if (title && title.length > 5) {
-        rawPosts.push({ title, url, date: dateStr });
-        console.log(`Found post: "${title}" (${dateStr || 'no date'}) - ${url}`);
+      for (const { url, index } of candidates.slice(0, 15)) {
+        const { title, dateStr } = await enrichFromContext(url, index);
+        if (title && title.length > 5) {
+          rawPosts.push({ title, url, date: dateStr });
+        }
       }
     }
 
     console.log(`Total raw posts found: ${rawPosts.length}`);
 
-    // 날짜가 있는 포스트들을 날짜 기준으로 정렬
+    // 정렬 및 상위 5개 반환
     const postsWithDates = rawPosts.filter(p => p.date);
     const postsWithoutDates = rawPosts.filter(p => !p.date);
-    
-    console.log(`Posts with dates: ${postsWithDates.length}, without dates: ${postsWithoutDates.length}`);
-
     const sorted = postsWithDates
-      .map(p => ({
-        ...p,
-        ts: Date.parse(p.date!.replace(/\./g, '-')),
-      }))
-      .sort((a, b) => b.ts - a.ts)
-      .slice(0, 5)
+      .map(p => ({ ...p, ts: Date.parse((p.date as string).replace(/\./g, '-')) }))
+      .sort((a,b) => b.ts - a.ts)
+      .slice(0,5)
       .map(p => ({ title: p.title, url: p.url }));
 
-    // 날짜가 있는 포스트가 5개 미만이면 날짜 없는 포스트도 추가
     if (sorted.length < 5) {
       const remaining = 5 - sorted.length;
-      const additional = postsWithoutDates
-        .slice(0, remaining)
-        .map(p => ({ title: p.title, url: p.url }));
-      sorted.push(...additional);
+      sorted.push(...postsWithoutDates.slice(0, remaining).map(p => ({ title: p.title, url: p.url })));
     }
 
     console.log(`Final sorted posts: ${sorted.length}`);
-    sorted.forEach((post, index) => {
-      console.log(`${index + 1}. ${post.title}`);
-    });
-    
+    sorted.forEach((p,i) => console.log(`${i+1}. ${p.title}`));
     return sorted;
   } catch (error) {
     console.error('Error fetching blog posts:', error);
