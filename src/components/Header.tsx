@@ -143,7 +143,7 @@ const Header = () => {
             {user ? (
               <div className="flex items-center space-x-2">
                 {isAdmin && (
-                  <Link to="/admin" className="hidden sm:block">
+                  <Link to="/admin" className="hidden lg:block">
                     <Button variant="destructive" size="sm" className="text-xs whitespace-nowrap">
                       관리자
                     </Button>

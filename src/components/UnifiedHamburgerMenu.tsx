@@ -180,6 +180,21 @@ const UnifiedHamburgerMenu = () => {
                     </div>
                   )}
 
+                  {/* 관리자 메뉴 - lg 이하에서만 보임 */}
+                  {isAdmin && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-muted-foreground px-2 py-1">관리</h4>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-left h-12"
+                        onClick={() => handleNavigation('/admin')}
+                      >
+                        <Shield className="w-5 h-5 mr-3" />
+                        관리자
+                      </Button>
+                    </div>
+                  )}
+
                   {/* 고객지원 */}
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-muted-foreground px-2 py-1">고객지원</h4>
@@ -195,21 +210,6 @@ const UnifiedHamburgerMenu = () => {
                       </Button>
                     ))}
                   </div>
-                  
-                  {/* 관리자 메뉴 */}
-                  {isAdmin && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-muted-foreground px-2 py-1">관리</h4>
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start text-left h-12"
-                        onClick={() => handleNavigation('/admin')}
-                      >
-                        <Shield className="w-5 h-5 mr-3" />
-                        관리자
-                      </Button>
-                    </div>
-                  )}
 
                   {/* 계정 관리 */}
                   <div className="space-y-2">
