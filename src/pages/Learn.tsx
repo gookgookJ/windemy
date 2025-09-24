@@ -506,158 +506,70 @@ const Learn = () => {
   return (
     <div className="bg-background">
       <Header />
-      <div className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+      
+      {/* 헤더 섹션 - 반응형 개선 */}
+      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-16 z-10">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            {/* 좌측: 돌아가기 버튼과 강의 정보 */}
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/my-page')}
+                className="flex-shrink-0 p-2 sm:px-4"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                내 강의실로 돌아가기
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden md:inline ml-2">내 강의실로 돌아가기</span>
               </Button>
-              <div>
-                <h1 className="text-xl font-semibold">{course?.title}</h1>
-                <p className="text-sm text-muted-foreground">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-base sm:text-lg md:text-xl font-semibold truncate">{course?.title}</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">
                   강사: {course?.instructor?.full_name}
                 </p>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-sm text-muted-foreground">
-                진행률: {Math.round(courseProgress)}% ({completedSessions}/{totalSessions})
+            
+            {/* 우측: 진행률 표시 - 개선된 디자인 */}
+            <div className="flex-shrink-0">
+              <div className="text-right">
+                <div className="text-xs sm:text-sm font-medium text-foreground">
+                  {Math.round(courseProgress)}%
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {completedSessions}/{totalSessions}
+                </div>
               </div>
-              <Progress value={courseProgress} className="w-32 h-2 mt-1" />
+              <Progress 
+                value={courseProgress} 
+                className="w-16 sm:w-24 md:w-32 h-2 mt-2" 
+              />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* 세션 목록 */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="font-semibold mb-4">강의 목차</h3>
-                <div className="space-y-6">
-                  {sections.map((section) => (
-                    <div key={section.id} className="space-y-3">
-                      {/* 섹션 헤더 - 더 예쁘게 디자인 */}
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent rounded-xl" />
-                        <div className="relative px-4 py-3 bg-card/80 backdrop-blur-sm rounded-xl border border-primary/20 shadow-sm">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-1 h-6 bg-gradient-to-b from-primary to-primary/60 rounded-full" />
-                              <h3 className="font-bold text-lg text-foreground">
-                                {section.title}
-                              </h3>
-                            </div>
-                            {/* 섹션 자료 다운로드 버튼 */}
-                            {section.attachment_url && section.attachment_name ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => downloadSectionAttachment(section)}
-                                className="flex items-center gap-2 hover:bg-primary/10 transition-colors"
-                              >
-                                <File className="h-4 w-4" />
-                                <span className="hidden sm:inline">자료 보기</span>
-                                <span className="sm:hidden">자료</span>
-                              </Button>
-                            ) : (
-                              <div className="text-xs text-muted-foreground px-2 py-1 bg-muted/30 rounded">
-                                자료 없음
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* 세션 목록 */}
-                      <div className="ml-6 space-y-2">
-                        {section.sessions.map((session) => {
-                          const sessionProgress = getSessionProgress(session.id);
-                          const isCompleted = sessionProgress?.completed || false;
-                          const isCurrent = currentSession?.id === session.id;
-                          
-                          return (
-                            <div
-                              key={session.id}
-                              className={`group p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
-                                isCurrent 
-                                  ? 'bg-primary/10 border-primary shadow-sm' 
-                                  : 'hover:bg-muted/50 hover:border-muted-foreground/30'
-                              }`}
-                              onClick={() => setCurrentSession(session)}
-                            >
-                              <div className="flex items-center gap-3">
-                                {isCompleted ? (
-                                  <div className="flex items-center justify-center w-6 h-6 bg-green-100 rounded-full">
-                                    <CheckCircle className="h-4 w-4 text-green-600" />
-                                  </div>
-                                ) : isCurrent && getVideoProgress(session.id) > 0 ? (
-                                  <div className="relative w-6 h-6">
-                                    <div className="absolute inset-0 bg-muted rounded-full" />
-                                    <div 
-                                      className="absolute inset-0 bg-primary rounded-full origin-center"
-                                      style={{
-                                        clipPath: `inset(0 ${100 - getVideoProgress(session.id)}% 0 0)`
-                                      }}
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center justify-center w-6 h-6 bg-muted/50 rounded-full group-hover:bg-primary/20 transition-colors">
-                                    <PlayCircle className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
-                                  </div>
-                                )}
-                                <span className="text-sm font-medium flex-1">
-                                  {session.order_index}. {session.title}
-                                </span>
-                                {session.is_free && (
-                                  <Badge variant="secondary" className="text-xs">무료</Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1 mt-2 ml-9 text-xs text-muted-foreground">
-                                <Clock className="h-3 w-3" />
-                                <span>{session.duration_minutes}분</span>
-                                {isCurrent && getVideoProgress(session.id) > 0 && (
-                                  <span className="ml-2 text-primary font-medium">
-                                    • {Math.round(getVideoProgress(session.id))}% 시청
-                                  </span>
-                                )}
-                              </div>
-                              {isCurrent && getVideoProgress(session.id) > 0 && (
-                                <div className="mt-2 ml-9">
-                                  <Progress value={getVideoProgress(session.id)} className="h-1" />
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* 비디오 플레이어 */}
-          <div className="lg:col-span-3">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        {/* 모바일/태블릿: 비디오 우선, 데스크톱: 사이드바 레이아웃 */}
+        <div className="space-y-6 lg:grid lg:grid-cols-4 lg:gap-6 lg:space-y-0">
+          
+          {/* 비디오 플레이어 - 모바일에서 최상단 */}
+          <div className="order-1 lg:order-2 lg:col-span-3">
             {currentSession ? (
               <Card>
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-6">
+                  {/* 세션 제목과 설명 */}
                   <div className="mb-4">
-                    <h2 className="text-2xl font-bold mb-2">{currentSession.title}</h2>
-                    <p className="text-muted-foreground">{currentSession.description}</p>
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 leading-tight">
+                      {currentSession.title}
+                    </h2>
+                    <p className="text-sm sm:text-base text-muted-foreground line-clamp-2">
+                      {currentSession.description}
+                    </p>
                   </div>
                   
-                   {/* 비디오 플레이어 영역 */}
-                  <div className="bg-black rounded-lg aspect-video flex items-center justify-center mb-6">
+                  {/* 비디오 플레이어 영역 */}
+                  <div className="bg-black rounded-lg aspect-video flex items-center justify-center mb-4 sm:mb-6">
                     {currentSession.video_url ? (
                       currentSession.video_url.includes('vimeo.com') ? (
                         <div className="w-full h-full relative">
@@ -681,46 +593,52 @@ const Learn = () => {
                       )
                     ) : (
                       <div className="text-white text-center">
-                        <PlayCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                        <p>비디오를 준비 중입니다</p>
+                        <PlayCircle className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-sm sm:text-base">비디오를 준비 중입니다</p>
                       </div>
                     )}
                   </div>
 
-
-                  {/* 컨트롤 버튼 */}
-                  <div className="flex items-center justify-between">
+                  {/* 컨트롤 버튼 - 반응형 개선 */}
+                  <div className="flex items-center justify-between gap-2 sm:gap-4">
                     <Button
                       variant="outline"
+                      size="sm"
                       onClick={goToPreviousSession}
                       disabled={sessions.findIndex(s => s.id === currentSession.id) === 0}
+                      className="flex-1 sm:flex-none"
                     >
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      이전 세션
+                      <ArrowLeft className="h-4 w-4" />
+                      <span className="hidden sm:inline ml-2">이전</span>
                     </Button>
 
                     <Button
+                      size="sm"
                       onClick={() => markSessionComplete(currentSession.id)}
                       disabled={getSessionProgress(currentSession.id)?.completed || false}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none px-3 sm:px-6"
                     >
                       {getSessionProgress(currentSession.id)?.completed ? (
                         <>
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          완료됨
+                          <CheckCircle className="h-4 w-4" />
+                          <span className="hidden sm:inline ml-2">완료됨</span>
                         </>
                       ) : (
-                        '완료 표시'
+                        <>
+                          <span className="text-xs sm:text-sm">완료 표시</span>
+                        </>
                       )}
                     </Button>
 
                     <Button
                       variant="outline"
+                      size="sm"
                       onClick={goToNextSession}
                       disabled={sessions.findIndex(s => s.id === currentSession.id) === sessions.length - 1}
+                      className="flex-1 sm:flex-none"
                     >
-                      다음 세션
-                      <ArrowRight className="h-4 w-4 ml-2" />
+                      <span className="hidden sm:inline mr-2">다음</span>
+                      <ArrowRight className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardContent>
@@ -732,6 +650,118 @@ const Learn = () => {
                 </CardContent>
               </Card>
             )}
+          </div>
+
+          {/* 강의 목차 - 모바일에서 비디오 아래 */}
+          <div className="order-2 lg:order-1 lg:col-span-1">
+            <Card>
+              <CardContent className="p-3 sm:p-4">
+                <h3 className="font-semibold mb-4 text-sm sm:text-base">강의 목차</h3>
+                <div className="space-y-4 sm:space-y-6">
+                  {sections.map((section) => (
+                    <div key={section.id} className="space-y-2 sm:space-y-3">
+                      {/* 섹션 헤더 - 모바일 최적화 */}
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/15 via-primary/8 to-transparent rounded-lg sm:rounded-xl" />
+                        <div className="relative px-3 py-2 sm:px-4 sm:py-3 bg-card/80 backdrop-blur-sm rounded-lg sm:rounded-xl border border-primary/20 shadow-sm">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                              <div className="w-1 h-4 sm:h-6 bg-gradient-to-b from-primary to-primary/60 rounded-full flex-shrink-0" />
+                              <h3 className="font-bold text-sm sm:text-base text-foreground truncate">
+                                {section.title}
+                              </h3>
+                            </div>
+                            {/* 섹션 자료 다운로드 버튼 */}
+                            {section.attachment_url && section.attachment_name ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => downloadSectionAttachment(section)}
+                                className="flex items-center gap-1 hover:bg-primary/10 transition-colors flex-shrink-0 px-2 py-1 h-auto"
+                              >
+                                <File className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="text-xs">자료</span>
+                              </Button>
+                            ) : (
+                              <div className="text-xs text-muted-foreground px-2 py-1 bg-muted/30 rounded flex-shrink-0">
+                                자료 없음
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* 세션 목록 - 모바일 최적화 */}
+                      <div className="ml-3 sm:ml-6 space-y-2">
+                        {section.sessions.map((session) => {
+                          const sessionProgress = getSessionProgress(session.id);
+                          const isCompleted = sessionProgress?.completed || false;
+                          const isCurrent = currentSession?.id === session.id;
+                          
+                          return (
+                            <div
+                              key={session.id}
+                              className={`group p-2 sm:p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
+                                isCurrent 
+                                  ? 'bg-primary/10 border-primary shadow-sm ring-1 ring-primary/20' 
+                                  : 'hover:bg-muted/50 hover:border-muted-foreground/30'
+                              }`}
+                              onClick={() => setCurrentSession(session)}
+                            >
+                              <div className="flex items-start gap-2 sm:gap-3">
+                                {isCompleted ? (
+                                  <div className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-green-100 rounded-full flex-shrink-0 mt-0.5">
+                                    <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+                                  </div>
+                                ) : isCurrent && getVideoProgress(session.id) > 0 ? (
+                                  <div className="relative w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 mt-0.5">
+                                    <div className="absolute inset-0 bg-muted rounded-full" />
+                                    <div 
+                                      className="absolute inset-0 bg-primary rounded-full origin-center transition-all"
+                                      style={{
+                                        clipPath: `inset(0 ${100 - getVideoProgress(session.id)}% 0 0)`
+                                      }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-muted/50 rounded-full group-hover:bg-primary/20 transition-colors flex-shrink-0 mt-0.5">
+                                    <PlayCircle className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground group-hover:text-primary" />
+                                  </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <span className="text-xs sm:text-sm font-medium leading-tight line-clamp-2">
+                                      {session.order_index}. {session.title}
+                                    </span>
+                                    {session.is_free && (
+                                      <Badge variant="secondary" className="text-xs flex-shrink-0">무료</Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                                    <Clock className="h-3 w-3 flex-shrink-0" />
+                                    <span>{session.duration_minutes}분</span>
+                                    {isCurrent && getVideoProgress(session.id) > 0 && (
+                                      <span className="ml-2 text-primary font-medium">
+                                        • {Math.round(getVideoProgress(session.id))}%
+                                      </span>
+                                    )}
+                                  </div>
+                                  {isCurrent && getVideoProgress(session.id) > 0 && (
+                                    <div className="mt-2">
+                                      <Progress value={getVideoProgress(session.id)} className="h-1" />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
