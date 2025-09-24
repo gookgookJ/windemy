@@ -177,9 +177,41 @@ const MyPage = () => {
     }
   };
 
+  const getLastWatchedSession = async (courseId: string) => {
+    try {
+      const { data: sessionsProgress } = await supabase
+        .from('session_progress')
+        .select(`
+          session_id,
+          created_at,
+          session:course_sessions!inner(
+            id,
+            course_id,
+            order_index,
+            section:course_sections!inner(order_index)
+          )
+        `)
+        .eq('user_id', user?.id)
+        .eq('session.course_id', courseId)
+        .order('created_at', { ascending: false });
 
-  const handleCourseClick = (courseId: string) => {
-    navigate(`/learn/${courseId}`);
+      if (sessionsProgress && sessionsProgress.length > 0) {
+        // 가장 최근에 시청한 세션 반환
+        return sessionsProgress[0].session_id;
+      }
+    } catch (error) {
+      console.error('Error getting last watched session:', error);
+    }
+    return null;
+  };
+
+  const handleCourseClick = async (courseId: string) => {
+    const lastSessionId = await getLastWatchedSession(courseId);
+    if (lastSessionId) {
+      navigate(`/learn/${courseId}?session=${lastSessionId}`);
+    } else {
+      navigate(`/learn/${courseId}`);
+    }
   };
 
   if (loading) {
@@ -299,7 +331,7 @@ const MyPage = () => {
                   </CardTitle>
                   {enrollments.length > 0 && (
                     <Button variant="outline" size="sm" onClick={() => navigate('/courses')}>
-                      더 보기
+                      추가 교육 받기
                       <ArrowRight className="h-4 w-4 ml-1" />
                     </Button>
                   )}
