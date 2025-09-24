@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-
-import { Mail, TrendingUp, DollarSign, BarChart3, Gift, Zap, Star } from "lucide-react";
+import { Mail, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import '@/utils/updateBlogPosts'; // 즉시 업데이트 실행
