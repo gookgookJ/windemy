@@ -296,13 +296,8 @@ const Header = () => {
                     </div>
                   </>
                 ) : (
-                  // Regular navigation items with enhanced styling
+                  // Regular navigation items with clean styling
                   <>
-                    <div className="pb-3 mb-6 border-b border-border/50">
-                      <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                        내비게이션
-                      </h3>
-                    </div>
                     <div className="grid gap-3">
                       {navigationItems.map((item, index) => (
                         <div key={item.name} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
@@ -334,7 +329,7 @@ const Header = () => {
                               )}
                             </Link>
                             {item.submenu && (
-                              <div className="mt-3 ml-16 space-y-2">
+                              <div className="mt-2 ml-4 space-y-1">
                                 {item.submenu.map((subItem, subIndex) => (
                                   <Link
                                     key={subItem.name}
@@ -343,7 +338,7 @@ const Header = () => {
                                     onClick={() => setIsMenuOpen(false)}
                                     style={{ animationDelay: `${(index * 0.1) + (subIndex * 0.05)}s` }}
                                   >
-                                    • {subItem.name}
+                                    {subItem.name}
                                   </Link>
                                 ))}
                               </div>
@@ -353,7 +348,7 @@ const Header = () => {
                       ))}
                     </div>
                     {user && isAdmin && (
-                      <div className="pt-6 mt-6 border-t border-border/50">
+                      <div className="pt-4 mt-4">
                         <div className="animate-fade-in">
                           <Link 
                             to="/admin" 
@@ -363,7 +358,7 @@ const Header = () => {
                             <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/80 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300">
                               <div className="w-3 h-3 rounded-full bg-destructive"></div>
                             </div>
-                            <span className="text-base font-semibold">관리자 대시보드</span>
+                            <span className="text-base font-semibold">관리자</span>
                           </Link>
                         </div>
                       </div>
@@ -373,7 +368,7 @@ const Header = () => {
               </nav>
               
               {!user && !isMyPageRoute && (
-                <div className="pt-6 border-t border-border/50">
+                <div className="pt-4">
                   <div className="animate-fade-in">
                     <div className="grid grid-cols-2 gap-4">
                       <Button 
