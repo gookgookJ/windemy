@@ -24,18 +24,7 @@ const Header = () => {
   const lastScrollY = useRef(0);
 
   useEffect(() => {
-    const isScrollLocked = () => {
-      const htmlLocked = document.documentElement.hasAttribute('data-radix-scroll-locked');
-      const bodyLockedAttr = document.body.hasAttribute('data-radix-scroll-locked');
-      const bodyOverflowHidden = (document.body.style.overflow || '').includes('hidden');
-      const bodyFixed = getComputedStyle(document.body).position === 'fixed';
-      return htmlLocked || bodyLockedAttr || bodyOverflowHidden || bodyFixed;
-    };
-
     const handleScroll = () => {
-      // 스크롤 락 중에는 헤더 표시 상태를 변경하지 않음 (레이아웃 점프 방지)
-      if (isScrollLocked()) return;
-
       // PC/태블릿에서는 항상 헤더 표시
       if (!isMobile) {
         setIsVisible(true);
@@ -43,22 +32,24 @@ const Header = () => {
       }
 
       const currentScrollY = window.scrollY;
+      
       if (currentScrollY <= HEADER_SCROLL_THRESHOLD) {
         setIsVisible(true);
         lastScrollY.current = currentScrollY;
         return;
       }
-
+      
       if (currentScrollY > lastScrollY.current) {
         setIsVisible(false); // 스크롤 내릴 때
       } else {
         setIsVisible(true); // 스크롤 올릴 때
       }
-
+      
       lastScrollY.current = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isMobile]);
   // ✨ --- 여기까지 ---
