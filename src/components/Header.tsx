@@ -8,8 +8,8 @@ import { SearchDropdown } from "@/components/SearchDropdown";
 import { useIsMobile } from "@/hooks/use-mobile";
 import UnifiedHamburgerMenu from "@/components/UnifiedHamburgerMenu";
 
-const HEADER_HEIGHT = 64; // ✨ 헤더 높이 (h-16 = 64px)
-const HEADER_SCROLL_THRESHOLD = 5; // ✨ 헤더 숨김 시작점
+const HEADER_HEIGHT = 64; // 헤더 높이 (h-16 = 64px)
+const HEADER_SCROLL_THRESHOLD = 5; // 헤더 숨김 시작점
 
 const Header = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
