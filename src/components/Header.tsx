@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"; // ✨ useEffect, useRef 추가
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, User, Menu, X, BookOpen, CreditCard, Heart, FileText, Clock, LogOut } from "lucide-react";
+import { Search, User, Menu, X, BookOpen, CreditCard, Heart, FileText, Clock, LogOut, Info, GraduationCap, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
@@ -57,17 +57,18 @@ const Header = () => {
   // ✨ --- 여기까지 ---
 
   const navigationItems = [
-    { name: "소개", href: "/about" },
+    { name: "소개", href: "/about", icon: Info },
     { 
       name: "클래스", 
       href: "/courses",
+      icon: GraduationCap,
       submenu: [
         { name: "무료강의", href: "/courses/free-courses" },
         { name: "VOD 강의", href: "/courses/vod-courses" },
         { name: "프리미엄 강의", href: "/courses/premium-courses" },
       ]
     },
-    { name: "강사 지원", href: "/instructor-apply" },
+    { name: "강사 지원", href: "/instructor-apply", icon: UserPlus },
   ];
 
   // MyPage menu items
@@ -308,9 +309,9 @@ const Header = () => {
                             >
                               <div className="flex items-center gap-4">
                                 <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-muted/20 to-muted/40 group-hover:from-primary/10 group-hover:to-primary/20 transition-all duration-300">
-                                  <svg className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                  </svg>
+                                  {item.icon && (
+                                    <item.icon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
+                                  )}
                                 </div>
                                 <div>
                                   <span className="text-base font-semibold">{item.name}</span>
