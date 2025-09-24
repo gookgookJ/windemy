@@ -153,7 +153,7 @@ const Policies = () => {
   return (
     <div className="bg-background">
       <Header />
-      <main className="pt-16 container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-bold mb-3">공지사항 및 정책</h1>

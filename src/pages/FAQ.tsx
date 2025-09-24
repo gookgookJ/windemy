@@ -97,7 +97,7 @@ const FAQ = () => {
   return (
     <div className="bg-background">
       <Header />
-      <main className="pt-16 container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-1">

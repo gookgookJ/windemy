@@ -52,7 +52,7 @@ const AuthCallback = () => {
   return (
     <div className="bg-background">
       <Header />
-      <main className="pt-16 flex items-center justify-center px-6 py-20">
+      <main className="flex items-center justify-center px-6 py-20">
       <article className="w-full max-w-md rounded-2xl border bg-background/50 backdrop-blur p-8 text-center shadow-sm">
         <header className="mb-4">
           <h1 className="text-2xl font-bold">{status === "success" ? "인증 완료" : status === "error" ? "인증 실패" : "인증 확인 중"}</h1>

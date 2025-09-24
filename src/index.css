@@ -273,6 +273,7 @@ img {
     @apply bg-background text-foreground;
     scroll-behavior: smooth;
     /* overflow-x: hidden 제거 - sticky positioning을 방해함 */
+    padding-top: 64px; /* 헤더 높이만큼 여백 확보 */
     /* iOS 노치 대응 */
     padding-top: max(64px, env(safe-area-inset-top));
     padding-bottom: env(safe-area-inset-bottom);
@@ -282,5 +283,9 @@ img {
     min-height: 100dvh;
   }
 
+  /* Admin pages manage offset internally */
+  body.admin-fixed-offset {
+    padding-top: 0 !important;
+  }
 
 }
