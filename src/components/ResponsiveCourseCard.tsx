@@ -37,25 +37,18 @@ const ResponsiveCourseCard = ({ enrollment, onClick }: ResponsiveCourseCardProps
         {/* 모바일 레이아웃 */}
         <div className="block sm:hidden">
           <div className="relative">
-            <img
-              src={enrollment.course.thumbnail_url || '/placeholder.svg'}
-              alt={enrollment.course.title}
-              className="w-full h-48 object-cover rounded-t-lg"
-            />
+            <div className="aspect-video w-full overflow-hidden rounded-t-lg">
+              <img
+                src={enrollment.course.thumbnail_url || '/placeholder.svg'}
+                alt={enrollment.course.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
             {isCompleted && (
               <Badge className="absolute top-3 right-3 bg-green-500 hover:bg-green-600">
                 완료
               </Badge>
             )}
-            <div className="absolute bottom-3 left-3 right-3">
-              <div className="bg-black/70 backdrop-blur-sm rounded-lg p-2">
-                <div className="flex justify-between text-white text-xs mb-1">
-                  <span>진도율</span>
-                  <span className="font-medium">{progressPercentage}%</span>
-                </div>
-                <Progress value={enrollment.progress} className="h-1.5 bg-white/20" />
-              </div>
-            </div>
           </div>
           
           <div className="p-4 space-y-3">
@@ -63,15 +56,9 @@ const ResponsiveCourseCard = ({ enrollment, onClick }: ResponsiveCourseCardProps
               {enrollment.course.title}
             </h3>
             
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <User className="h-3 w-3" />
-                <span className="truncate">{enrollment.course.instructor?.full_name}</span>
-              </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <Clock className="h-3 w-3" />
-                <span>{enrollment.course.duration_hours}시간</span>
-              </div>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <User className="h-3 w-3" />
+              <span className="truncate">{enrollment.course.instructor?.full_name}</span>
             </div>
             
             <div className="flex items-center justify-between">
@@ -90,11 +77,13 @@ const ResponsiveCourseCard = ({ enrollment, onClick }: ResponsiveCourseCardProps
         <div className="hidden sm:block">
           <div className="flex gap-4 p-4">
             <div className="relative flex-shrink-0">
-              <img
-                src={enrollment.course.thumbnail_url || '/placeholder.svg'}
-                alt={enrollment.course.title}
-                className="w-32 h-20 sm:w-40 sm:h-24 lg:w-48 lg:h-28 object-cover rounded-lg"
-              />
+              <div className="aspect-video w-32 sm:w-40 lg:w-48 overflow-hidden rounded-lg">
+                <img
+                  src={enrollment.course.thumbnail_url || '/placeholder.svg'}
+                  alt={enrollment.course.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
               {isCompleted && (
                 <Badge className="absolute -top-2 -right-2 bg-green-500 hover:bg-green-600 text-xs">
                   완료
