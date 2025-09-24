@@ -123,7 +123,7 @@ const SecondBanner = () => {
     <section className="w-full py-16 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-slate-800">
       {/* 헤더 - 다른 섹션과 정렬 맞춤 */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-start sm:items-center justify-between mb-8 sm:mb-12 gap-4 pt-8 lg:pt-12">
+        <div className="flex items-start sm:items-center justify-between mb-8 sm:mb-12 gap-4">
           <div className="text-left flex-1">
             <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-1 sm:mb-2">
               상위 1% 셀러의 판매법
