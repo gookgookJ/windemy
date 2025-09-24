@@ -151,9 +151,9 @@ const Header = () => {
             </nav>
           </div>
 
-          {/* Search Bar - Hidden on MyPage routes */}
+          {/* Search Bar - Hidden on MyPage routes, expanded width */}
           {!isMyPageRoute && (
-            <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
+            <div className="hidden md:flex items-center flex-1 max-w-xl mx-8">
               <SearchDropdown />
             </div>
           )}
@@ -173,9 +173,9 @@ const Header = () => {
             )}
             {user ? (
               <div className="flex items-center space-x-2">
-                {/* Desktop admin button */}
+                {/* Desktop admin button - only show on desktop */}
                 {isAdmin && (
-                  <Link to="/admin" className="hidden sm:block">
+                  <Link to="/admin" className="hidden lg:block">
                     <Button variant="destructive" size="sm" className="text-xs whitespace-nowrap">
                       관리자
                     </Button>
