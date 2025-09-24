@@ -288,4 +288,18 @@ img {
     padding-top: 0 !important;
   }
 
+  /* 드롭다운/모달이 열릴 때도 헤더 오프셋 유지 */
+  body[style*="overflow: hidden"],
+  body[style*="position: fixed"],
+  body[data-radix-scroll-prevent] {
+    padding-top: max(64px, env(safe-area-inset-top)) !important;
+  }
+
+  /* Admin 페이지에서는 드롭다운 시에도 패딩 제거 */
+  body.admin-fixed-offset[style*="overflow: hidden"],
+  body.admin-fixed-offset[style*="position: fixed"],
+  body.admin-fixed-offset[data-radix-scroll-prevent] {
+    padding-top: 0 !important;
+  }
+
 }
