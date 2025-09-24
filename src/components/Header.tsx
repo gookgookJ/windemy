@@ -249,50 +249,53 @@ const Header = () => {
                 {isMyPageRoute ? (
                   // MyPage specific menu items with enhanced styling
                   <>
-                    <div className="pb-2 mb-4 border-b border-border">
-                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                        마이페이지
-                      </h3>
-                    </div>
-                    {myPageMenuItems.map((item) => (
-                      <div key={item.name} className="animate-fade-in">
-                        {item.external ? (
-                          <button
-                            className="w-full text-left group flex items-center gap-4 p-3 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted/50 transition-all duration-200 font-medium"
-                            onClick={() => {
-                              window.open(item.href, '_blank');
-                              setIsMenuOpen(false);
-                            }}
-                          >
-                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted/30 group-hover:bg-primary/10 transition-colors duration-200">
-                              <item.icon className="w-5 h-5 group-hover:text-primary transition-colors duration-200" />
-                            </div>
-                            <span className="text-base">{item.name}</span>
-                          </button>
+                    <div className="grid gap-3">
+                    {myPageMenuItems.map((item, index) => (
+                        <div key={item.name} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                          {item.external ? (
+                            <button
+                              className="w-full text-left flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-muted/30 to-muted/10 hover:from-primary/5 hover:to-primary/10 border border-transparent hover:border-primary/10 transition-all duration-300 font-medium text-foreground hover:text-primary"
+                              onClick={() => {
+                                window.open(item.href, '_blank');
+                                setIsMenuOpen(false);
+                              }}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-muted/20 to-muted/40 group-hover:from-primary/10 group-hover:to-primary/20 transition-all duration-300">
+                                  <item.icon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
+                                </div>
+                                <span className="text-base font-semibold">{item.name}</span>
+                              </div>
+                            </button>
                         ) : (
-                          <Link
-                            to={item.href}
-                            className="group flex items-center gap-4 p-3 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted/50 transition-all duration-200 font-medium"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted/30 group-hover:bg-primary/10 transition-colors duration-200">
-                              <item.icon className="w-5 h-5 group-hover:text-primary transition-colors duration-200" />
-                            </div>
-                            <span className="text-base">{item.name}</span>
-                          </Link>
+                            <Link
+                              to={item.href}
+                              className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-muted/30 to-muted/10 hover:from-primary/5 hover:to-primary/10 border border-transparent hover:border-primary/10 transition-all duration-300 font-medium text-foreground hover:text-primary"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-muted/20 to-muted/40 group-hover:from-primary/10 group-hover:to-primary/20 transition-all duration-300">
+                                  <item.icon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
+                                </div>
+                                <span className="text-base font-semibold">{item.name}</span>
+                              </div>
+                            </Link>
                         )}
-                      </div>
-                    ))}
-                    <div className="pt-4 mt-4 border-t border-border">
-                      <button
-                        className="w-full text-left group flex items-center gap-4 p-3 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10 transition-all duration-200 font-medium"
-                        onClick={handleSignOut}
-                      >
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-destructive/10 group-hover:bg-destructive/20 transition-colors duration-200">
-                          <LogOut className="w-5 h-5" />
                         </div>
-                        <span className="text-base">로그아웃</span>
-                      </button>
+                      ))}
+                    </div>
+                    <div className="pt-4 mt-4">
+                      <div className="animate-fade-in">
+                        <button
+                          className="w-full text-left flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-destructive/5 to-red-50 hover:from-destructive/10 hover:to-red-100 border border-destructive/10 hover:border-destructive/20 transition-all duration-300 font-medium text-destructive hover:text-destructive"
+                          onClick={handleSignOut}
+                        >
+                          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-destructive/10 to-destructive/20 group-hover:from-destructive/20 group-hover:to-destructive/30 transition-all duration-300">
+                            <LogOut className="w-5 h-5 text-destructive" />
+                          </div>
+                          <span className="text-base font-semibold">로그아웃</span>
+                        </button>
+                      </div>
                     </div>
                   </>
                 ) : (
