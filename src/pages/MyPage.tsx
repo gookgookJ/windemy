@@ -6,16 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-// Avatar 및 불필요한 아이콘 제거됨
-import { BookOpen, Play, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { BookOpen, Play, Calendar, ArrowRight, TrendingUp, Clock, Award, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
-
-// ★ 인터페이스 수정 및 추가
-interface NextSessionInfo {
-    id: string;
-    title: string;
-}
 
 interface EnrollmentWithCourse {
   id: string;
@@ -27,167 +21,196 @@ interface EnrollmentWithCourse {
     title: string;
     thumbnail_url: string;
     duration_hours: number;
+    instructor: {
+      full_name: string;
+    };
   };
-  nextSessionInfo?: NextSessionInfo; // ★ 다음 세션 정보
 }
 
 const MyPage = () => {
-  const [enrollments, setEnrollments] = useState<EnrollmentWithCourse[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  // ★ 통계 State 간소화 (총 학습시간 제거)
-  const [stats, setStats] = useState({
-    totalCourses: 0,
-    completedCourses: 0,
-    inProgressCourses: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const { user, profile } = useAuth();
-  const navigate = useNavigate();
-  
-  const itemsPerPage = 5;
+  const [enrollments, setEnrollments] = useState<EnrollmentWithCourse[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [stats, setStats] = useState({
+    totalCourses: 0,
+    completedCourses: 0,
+    inProgressCourses: 0,
+    totalHours: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  
+  const itemsPerPage = 5;
 
-  useEffect(() => {
-    document.title = "내 강의실 | 윈들리아카데미";
-    // ... (기존 useEffect 유지)
-  }, [user, navigate]);
+  useEffect(() => {
+    document.title = "내 강의실 | 윈들리아카데미";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", "수강 중인 강의와 학습 진도를 확인하세요");
+    
+    if (!user) {
+      navigate('/');
+      return;
+    }
+    fetchEnrollments();
+  }, [user, navigate]);
 
-  useEffect(() => {
-    if (user) {
-      fetchEnrollments();
-      
-      // 실시간 업데이트 구독 설정
-      const channel = supabase
-        .channel('enrollment-progress-changes')
-        .on(
-          'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'enrollments', filter: `user_id=eq.${user.id}` },
-          () => fetchEnrollments()
-        )
-        // session_progress 감지는 제거하여 성능 최적화
-        .subscribe();
+  // Refetch when page changes and set up real-time updates
+  useEffect(() => {
+    if (user) {
+      fetchEnrollments();
+      
+      // Set up real-time subscription for enrollment progress updates
+      const channel = supabase
+        .channel('enrollment-progress-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'enrollments',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            fetchEnrollments(); // Refresh data when progress updates
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'session_progress',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            fetchEnrollments(); // Refresh when session progress updates
+          }
+        )
+        .subscribe();
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [currentPage, user]);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [currentPage, user]);
 
-  // ★ 데이터 조회 로직 최적화 및 기능 강화
-  const fetchEnrollments = async () => {
-    if (!user) return;
-    setLoading(true);
+  const fetchEnrollments = async () => {
+    if (!user) return;
 
-    try {
-      // 1. 전체 등록 정보 조회 (통계 및 페이징용)
-      const { data: allEnrollmentsData, count } = await supabase
-            .from('enrollments')
-            .select('progress, completed_at', { count: 'exact' })
-            .eq('user_id', user.id);
+    try {
+      // First get total count for pagination
+      const { count } = await supabase
+        .from('enrollments')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
 
-      const totalCount = count || 0;
-      setTotalPages(Math.ceil(totalCount / itemsPerPage));
+      const totalCount = count || 0;
+      setTotalPages(Math.ceil(totalCount / itemsPerPage));
 
-      // 통계 계산 (최적화됨: 총 학습시간 계산 제거)
-      const completedCourses = allEnrollmentsData?.filter(e => e.completed_at || e.progress >= 100).length || 0;
-      const inProgressCourses = allEnrollmentsData?.filter(e => 
-        !e.completed_at && e.progress > 0 && e.progress < 100
-      ).length || 0;
-      setStats({ totalCourses: totalCount, completedCourses, inProgressCourses });
-
-      // 2. 페이징된 데이터 조회 (최근 등록 순 정렬)
-      const { data: pagedData, error } = await supabase
+      // Then get paginated data
+      const { data, error } = await supabase
         .from('enrollments')
         .select(`
-          id, progress, enrolled_at, completed_at,
-          courses!inner(id, title, thumbnail_url, duration_hours)
+          id,
+          progress,
+          enrolled_at,
+          completed_at,
+          course:courses(
+            id,
+            title,
+            thumbnail_url,
+            duration_hours,
+            instructor:profiles(full_name)
+          )
         `)
         .eq('user_id', user.id)
-        .order('enrolled_at', { ascending: false }) // ★ 최근 등록 순 정렬
+        .order('enrolled_at', { ascending: false })
         .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1);
 
       if (error) throw error;
 
-      const enrollmentsData = pagedData || [];
-      const courseIds = enrollmentsData.map(e => e.courses.id);
+      setEnrollments(data || []);
+      
+      // Calculate comprehensive stats
+      const { data: allEnrollments } = await supabase
+        .from('enrollments')
+        .select(`
+          progress,
+          completed_at,
+          course:courses(duration_hours)
+        `)
+        .eq('user_id', user.id);
 
-      // 3. 다음 세션 정보 조회 (N+1 쿼리 방지를 위한 최적화된 배치 조회)
-      if (courseIds.length > 0) {
-        // 3a. 해당 강의들의 모든 세션 메타데이터 조회
-        const { data: sessionsMetadata } = await supabase
-            .from('course_sessions')
-            .select('id, title, order_index, course_id')
-            .in('course_id', courseIds)
-            .order('order_index', { ascending: true });
-
-        // 3b. 사용자가 완료한 세션 ID 목록 조회
-        const { data: userProgress } = await supabase
-            .from('session_progress')
-            .select('session_id')
-            .eq('user_id', user.id)
-            .eq('completed', true);
-
-        const completedSessionIds = new Set(userProgress?.map(p => p.session_id) || []);
-
-        // 3c. 로컬에서 다음 세션 결정 및 병합
-        const enrollmentsWithNextStep = enrollmentsData.map(enrollment => {
-            const courseSessions = sessionsMetadata?.filter(s => s.course_id === enrollment.courses.id) || [];
-            
-            // 완료하지 않은 첫 번째 세션 찾기
-            let nextSession = courseSessions.find(s => !completedSessionIds.has(s.id));
-
-            // 모두 완료했거나 세션이 없으면 첫 번째 세션으로 설정 (복습용)
-            if (!nextSession && courseSessions.length > 0) {
-                nextSession = courseSessions[0];
-            }
-
-            return {
-                ...enrollment,
-                course: enrollment.courses,
-                nextSessionInfo: nextSession ? { id: nextSession.id, title: nextSession.title } : undefined
-            } as EnrollmentWithCourse;
-        });
-
-        setEnrollments(enrollmentsWithNextStep);
-      } else {
-        setEnrollments([]);
-      }
-
-    } catch (error) {
-      console.error('Error fetching enrollments:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ★ getLastWatchedSession 함수 제거됨 (fetchEnrollments에서 처리)
-
-  // ★ 핸들러 함수 단순화
-  const handleCourseClick = (courseId: string, sessionId?: string) => {
-    const baseUrl = `/learn/${courseId}?from=mypage`;
-    if (sessionId) {
-      navigate(`${baseUrl}&session=${sessionId}`);
-    } else {
-      navigate(baseUrl);
-    }
-  };
-
-  // ★ 헬퍼 함수: 상태 및 CTA 텍스트 결정
-  const getStatusAndCta = (progress: number, completed_at: string | null) => {
-    if (completed_at || progress >= 100) return { status: 'completed', cta: '복습하기' };
-    if (progress > 0) return { status: 'in-progress', cta: '이어 학습하기' };
-    return { status: 'not-started', cta: '학습 시작하기' };
+      // Get actual watched time from session progress
+      const { data: sessionProgress } = await supabase
+        .from('session_progress')
+        .select('watched_duration_seconds')
+        .eq('user_id', user.id);
+      
+      const totalCourses = allEnrollments?.length || 0;
+      const completedCourses = allEnrollments?.filter(e => e.completed_at || e.progress >= 100).length || 0;
+      
+      // 진행 중: 실제로 학습이 시작된 강의 (progress > 5% 이상)
+      const inProgressCourses = allEnrollments?.filter(e => 
+        !e.completed_at && 
+        e.progress >= 5 && 
+        e.progress < 100
+      ).length || 0;
+      
+      // 실제 학습시간 계산 (초 단위를 시간으로 변환)
+      const totalWatchedSeconds = sessionProgress?.reduce((sum, sp) => 
+        sum + (sp.watched_duration_seconds || 0), 0
+      ) || 0;
+      const totalHours = Math.round(totalWatchedSeconds / 3600 * 10) / 10; // 소수점 1자리
+      
+      setStats({
+        totalCourses,
+        completedCourses,
+        inProgressCourses,
+        totalHours
+      });
+    } catch (error) {
+      console.error('Error fetching enrollments:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ★ 헬퍼 컴포넌트: 상태 배지
-  const StatusBadge = ({ status }: { status: string }) => {
-    switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-100 text-green-800 border-green-300" variant="outline">완료</Badge>;
-      case 'in-progress':
-        return <Badge className="bg-blue-100 text-blue-800 border-blue-300" variant="outline">학습 중</Badge>;
-      default:
-        return <Badge variant="secondary">미시작</Badge>;
+  const getLastWatchedSession = async (courseId: string) => {
+    try {
+      const { data: sessionsProgress } = await supabase
+        .from('session_progress')
+        .select(`
+          session_id,
+          created_at,
+          session:course_sessions!inner(
+            id,
+            course_id,
+            order_index,
+            section:course_sections!inner(order_index)
+          )
+        `)
+        .eq('user_id', user?.id)
+        .eq('session.course_id', courseId)
+        .order('created_at', { ascending: false });
+
+      if (sessionsProgress && sessionsProgress.length > 0) {
+        // 가장 최근에 시청한 세션 반환
+        return sessionsProgress[0].session_id;
+      }
+    } catch (error) {
+      console.error('Error getting last watched session:', error);
+    }
+    return null;
+  };
+
+  const handleCourseClick = async (courseId: string) => {
+    const lastSessionId = await getLastWatchedSession(courseId);
+    if (lastSessionId) {
+      navigate(`/learn/${courseId}?session=${lastSessionId}`);
+    } else {
+      navigate(`/learn/${courseId}`);
     }
   };
 
@@ -195,172 +218,229 @@ const MyPage = () => {
     return (
       <div className="bg-background">
         <Header />
-        <main className="container mx-auto px-4 py-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-              <div className="lg:col-span-1 hidden lg:block">
-                <UserSidebar />
-              </div>
-              <div className="lg:col-span-3">
-                <Card>
-                  <CardContent className="p-8 text-center">
-                    <div className="animate-pulse">로딩 중...</div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
-        </main>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">로딩 중...</div>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div className="lg:col-span-1 hidden lg:block">
-              <UserSidebar />
-            </div>
-            
-            <div className="lg:col-span-3 space-y-8">
-              {/* ★ A. 환영 섹션 수정: 디자인 간소화 및 학습 현황 통합 */}
-              <div className="p-4 md:p-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg">
-                <h1 className="text-xl md:text-2xl font-bold text-foreground mb-1">
-                    안녕하세요, {profile?.full_name || '학습자'}님 👋
-                </h1>
-                <p className="text-sm md:text-base text-muted-foreground">
-                    현재 <span className="font-semibold text-primary">{stats.inProgressCourses}개</span>의 강의를 진행 중이며, 총 <span className="font-semibold">{stats.completedCourses}개</span>를 완료했습니다.
-                </p>
-              </div>
+  return (
+    <div className="bg-background">
+      <Header />
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Hide sidebar on mobile/tablet since hamburger menu contains the items */}
+            <div className="lg:col-span-1 hidden lg:block">
+              <UserSidebar />
+            </div>
+            
+            <div className="lg:col-span-3 space-y-8">{/* Main content now spans full width on mobile/tablet */}
+              {/* 환영 섹션 */}
+              <Card className="border-0 shadow-sm bg-gradient-to-r from-primary/5 to-primary/10">
+                <CardContent className="p-4 md:p-6">
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <Avatar className="h-14 w-14 md:h-16 md:w-16 ring-2 ring-primary/20">
+                      <AvatarImage src={profile?.avatar_url} />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                        {profile?.full_name ? profile.full_name[0] : 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <h1 className="text-xl md:text-2xl font-bold text-foreground mb-1">
+                        안녕하세요, {profile?.full_name || '학습자'}님 👋
+                      </h1>
+                      <p className="text-sm md:text-base text-muted-foreground mb-2">
+                        오늘도 새로운 것을 배워보세요
+                      </p>
+                      <div className="flex items-center gap-1 md:gap-2">
+                        <Badge variant="outline" className="bg-background/50 backdrop-blur-sm border-primary/20 text-xs">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          <span className="hidden sm:inline">가입일: </span>
+                          {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('ko-KR') : '-'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-              {/* ★ B. 기존 학습 통계 섹션 (4개 카드) 제거됨 */}
+              {/* 학습 통계 */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-50 rounded-lg">
+                        <BookOpen className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">전체 강의</p>
+                        <p className="text-2xl font-bold">{stats.totalCourses}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-              {/* 수강 중인 강의 */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5" />
-                    내 강의 목록
-                  </CardTitle>
-                  {/* '더보기' 버튼 제거 (페이지네이션이 역할 대체) */}
-                </CardHeader>
-                <CardContent className="p-6">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-50 rounded-lg">
+                        <Award className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">완료</p>
+                        <p className="text-2xl font-bold">{stats.completedCourses}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-orange-50 rounded-lg">
+                        <TrendingUp className="h-5 w-5 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">진행 중</p>
+                        <p className="text-2xl font-bold">{stats.inProgressCourses}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-50 rounded-lg">
+                        <Clock className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">학습시간</p>
+                        <p className="text-2xl font-bold">{stats.totalHours}h</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* 수강 중인 강의 */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Play className="h-5 w-5" />
+                    내 강의 목록
+                  </CardTitle>
+                  {enrollments.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => navigate('/courses')}>
+                      더보기
+                      <ArrowRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent className="p-6">
                   {enrollments.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground mb-4">아직 수강 중인 강의가 없습니다.</p>
-                      <Button onClick={() => navigate('/course-catalog')}>
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                        <BookOpen className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">첫 번째 강의를 시작해보세요</h3>
+                      <p className="text-muted-foreground mb-6">다양한 강의를 통해 새로운 지식을 습득해보세요</p>
+                      <Button onClick={() => navigate('/courses')}>
                         강의 둘러보기
+                        <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>
                     </div>
                   ) : (
-                    <>
-                      <div className="space-y-4 mb-6">
-                        {/* ★ C. 강의 카드 디자인 및 정보 구조 변경 */}
-                        {enrollments.map((enrollment) => {
-                          const { status, cta } = getStatusAndCta(enrollment.progress, enrollment.completed_at);
-                          const nextSession = enrollment.nextSessionInfo;
-
-                          return (
-                        <Card key={enrollment.id} className="hover:shadow-md transition-shadow border-0 shadow-sm group">
-                          <CardContent className="p-3 md:p-4">
-                            <div className="flex gap-4 md:gap-6">
+                    <>
+                      <div className="space-y-4 mb-6">
+                        {enrollments.map((enrollment) => (
+                        <Card key={enrollment.id} className="cursor-pointer hover:shadow-md transition-shadow border-0 shadow-sm" onClick={() => handleCourseClick(enrollment.course.id)}>
+                          <CardContent className="p-3 md:p-4">
+                            <div className="flex gap-4 md:gap-6">
+                              <div className="relative flex-shrink-0">
+                                <img
+                                  src={enrollment.course.thumbnail_url || '/placeholder.svg'}
+                                  alt={enrollment.course.title}
+                                  className="w-24 h-18 md:w-40 md:h-28 object-contain rounded-lg"
+                                />
+                              </div>
                               
-                              {/* 1. 썸네일 (클릭 가능 영역) */}
-                              <div className="relative flex-shrink-0 w-28 md:w-40 aspect-video cursor-pointer" onClick={() => handleCourseClick(enrollment.course.id, nextSession?.id)}>
-                                <img
-                                  src={enrollment.course.thumbnail_url || '/placeholder.svg'}
-                                  alt={enrollment.course.title}
-                                  // object-cover 및 aspect-video 적용
-                                  className="w-full h-full object-cover rounded-lg bg-muted"
-                                />
-                              </div>
-                              
-                              {/* 2. 정보 및 액션 */}
-                              <div className="flex-1 min-w-0 flex flex-col justify-between">
-                                {/* 상단: 상태 및 제목 (클릭 가능 영역) */}
-                                <div className="cursor-pointer" onClick={() => handleCourseClick(enrollment.course.id, nextSession?.id)}>
-                                    <div className="flex items-center justify-between mb-1 gap-2">
-                                        <StatusBadge status={status} />
-                                        {/* 호버 시 나타나는 화살표 */}
-                                        <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </div>
-                                  <h3 className="font-semibold text-sm md:text-lg line-clamp-2 leading-tight mb-3">
-                                    {enrollment.course.title}
-                                  </h3>
-                                </div>
-
-                                {/* 하단: 진도율 및 다음 단계 */}
-                                <div className="mt-auto pt-2">
-                                  {/* 진도율 표시 간소화 */}
-                                  <div className="flex items-center gap-3 mb-3">
-                                    <Progress value={enrollment.progress} className="h-1.5 md:h-2 flex-1" />
-                                    <span className="text-xs md:text-sm font-medium text-foreground w-10 text-right">
-                                      {Math.round(enrollment.progress)}%
-                                    </span>
-                                  </div>
-
-                                    {/* CTA 버튼 및 다음 강의 제목 */}
-                                    <div className="flex items-center gap-3">
-                                        <Button 
-                                            size="sm" 
-                                            className="flex-shrink-0"
-                                            variant={status === 'completed' ? "outline" : "default"}
-                                            onClick={() => handleCourseClick(enrollment.course.id, nextSession?.id)}
-                                        >
-                                            <Play className="h-4 w-4 mr-2" />
-                                            {cta}
-                                        </Button>
-                                        {nextSession && (
-                                            <p className="text-xs md:text-sm text-muted-foreground truncate" title={nextSession.title}>
-                                                다음: {nextSession.title}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                        )})}
-                      </div>
-                    
-                    {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                      <div className="flex justify-center items-center gap-2 mt-6">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between mb-1 md:mb-2">
+                                  <h3 className="font-semibold text-xs md:text-base line-clamp-2 leading-tight">
+                                    {enrollment.course.title}
+                                  </h3>
+                                  <ArrowRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground flex-shrink-0 ml-2" />
+                                </div>
+                                
+                                <p className="text-xs md:text-sm text-muted-foreground mb-2 md:mb-3">
+                                  강사: {enrollment.course.instructor?.full_name}
+                                </p>
+                                
+                                <div className="space-y-1 md:space-y-2">
+                                  <div className="flex justify-between text-xs md:text-sm">
+                                    <span className="text-muted-foreground">학습 진도</span>
+                                    <span className="font-medium">{Math.round(enrollment.progress)}%</span>
+                                  </div>
+                                  <Progress value={enrollment.progress} className="h-1.5 md:h-2" />
+                                </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-6">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      이전
+                    </Button>
+                    
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                         <Button
-                          variant="outline"
+                          key={page}
+                          variant={page === currentPage ? "default" : "outline"}
                           size="sm"
-                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                          disabled={currentPage === 1}
+                          onClick={() => setCurrentPage(page)}
+                          className="w-8 h-8"
                         >
-                          <ChevronLeft className="h-4 w-4" />
+                          {page}
                         </Button>
-                        <span className="text-sm text-muted-foreground">
-                          {currentPage} / {totalPages}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                          disabled={currentPage === totalPages}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
+                      ))}
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                    >
+                      다음
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+);
 };
 
 export default MyPage;
