@@ -798,7 +798,7 @@ const CourseDetail = () => {
             onClick={scrollToTop}
             size="icon"
             // Adjust bottom position on mobile (bottom-20) to avoid overlap with the purchase bar
-            className="fixed bottom-20 right-4 lg:bottom-24 lg:right-4 z-50 w-12 h-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white transition-transform duration-200 hover:scale-105"
+            className="fixed bottom-20 right-4 lg:bottom-8 lg:right-8 z-50 w-12 h-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white transition-transform duration-200 hover:scale-105"
             aria-label="맨 위로 이동"
           >
             <ChevronUp className="w-6 h-6" />
