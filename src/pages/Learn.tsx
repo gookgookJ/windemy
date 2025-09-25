@@ -528,43 +528,68 @@ const Learn = () => {
     <div className="bg-background">
       <Header />
       
-      {/* 헤더 섹션 - 반응형 개선 */}
-      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-16 z-10">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between gap-2 sm:gap-4">
-            {/* 좌측: 돌아가기 버튼과 강의 정보 */}
-            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/my-page')}
-                className="flex-shrink-0 p-2 sm:px-4"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="hidden md:inline ml-2">내 강의실로 돌아가기</span>
-              </Button>
-              <div className="min-w-0 flex-1">
-                <h1 className="text-base sm:text-lg md:text-xl font-semibold truncate">{course?.title}</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  강사: {course?.instructor?.full_name}
-                </p>
-              </div>
-            </div>
+      {/* 헤더 섹션 - 고정 제거하고 일반 섹션으로 변경 */}
+      <div className="bg-gradient-to-r from-background to-muted/30 border-b">
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+            {/* 돌아가기 버튼 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/my-page')}
+              className="self-start sm:self-auto flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="text-sm">내 강의실로 돌아가기</span>
+            </Button>
             
-            {/* 우측: 진행률 표시 - 개선된 디자인 */}
-            <div className="flex-shrink-0">
-              <div className="text-right">
-                <div className="text-xs sm:text-sm font-medium text-foreground">
-                  {Math.round(courseProgress)}%
+            {/* 강의 정보와 진행률 */}
+            <div className="flex-1 w-full">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground leading-tight">
+                    {course?.title}
+                  </h1>
+                  <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                    강사: {course?.instructor?.full_name}
+                  </p>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {completedSessions}/{totalSessions}
+                
+                {/* 진행률 표시 - 개선된 디자인 */}
+                <div className="flex items-center gap-3 sm:gap-4 bg-card/50 backdrop-blur-sm rounded-lg p-3 border border-border/50">
+                  <div className="text-center">
+                    <div className="text-lg sm:text-xl font-bold text-foreground">
+                      {Math.round(courseProgress)}%
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      완료율
+                    </div>
+                  </div>
+                  <div className="h-8 w-px bg-border"></div>
+                  <div className="text-center">
+                    <div className="text-lg sm:text-xl font-bold text-foreground">
+                      {completedSessions}/{totalSessions}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      강의
+                    </div>
+                  </div>
+                  <div className="hidden sm:block">
+                    <Progress 
+                      value={courseProgress} 
+                      className="w-20 md:w-32 h-2" 
+                    />
+                  </div>
                 </div>
               </div>
-              <Progress 
-                value={courseProgress} 
-                className="w-16 sm:w-24 md:w-32 h-2 mt-2" 
-              />
+              
+              {/* 모바일 진행률 바 */}
+              <div className="mt-3 sm:hidden">
+                <Progress 
+                  value={courseProgress} 
+                  className="w-full h-2" 
+                />
+              </div>
             </div>
           </div>
         </div>
