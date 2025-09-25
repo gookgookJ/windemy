@@ -531,30 +531,41 @@ const Learn = () => {
       {/* 헤더 섹션 - 깔끔한 디자인 */}
       <div className="border-b border-border/50">
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            {/* 돌아가기 버튼 - 아이콘만 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/my-page')}
+              className="flex-shrink-0 p-2 hover:bg-muted/50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            
             {/* 강의 정보 */}
             <div className="min-w-0 flex-1">
-              <h1 className="text-lg sm:text-xl font-semibold text-foreground leading-tight">
+              <h1 className="text-base sm:text-lg md:text-xl font-semibold text-foreground leading-tight line-clamp-1">
                 {course?.title}
               </h1>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 line-clamp-1">
                 강사: {course?.instructor?.full_name}
               </p>
             </div>
             
-            {/* 진행률 표시 - 심플한 디자인 */}
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
+            {/* 진행률 표시 - 더 컴팩트한 디자인 */}
+            <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm flex-shrink-0">
+              <div className="hidden sm:flex items-center gap-1">
                 <span className="text-muted-foreground">진행률:</span>
                 <span className="font-medium text-foreground">{Math.round(courseProgress)}%</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">완료:</span>
+              <div className="flex items-center gap-1">
+                <span className="text-muted-foreground sm:hidden">진행:</span>
+                <span className="text-muted-foreground hidden sm:inline">완료:</span>
                 <span className="font-medium text-foreground">{completedSessions}/{totalSessions}</span>
               </div>
               <Progress 
                 value={courseProgress} 
-                className="w-20 sm:w-24 h-2" 
+                className="w-12 sm:w-16 md:w-20 h-1.5 sm:h-2" 
               />
             </div>
           </div>
