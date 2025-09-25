@@ -131,6 +131,22 @@ const CourseDetail = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
           const currentScrollY = window.scrollY;
+          const pageHeight = document.documentElement.scrollHeight - window.innerHeight;
+          const scrollThreshold = pageHeight / 7; // 1/7 of page height
+          
+          // Control ChannelTalk button visibility based on scroll position
+          const channelButton = document.querySelector('#ch-plugin') as HTMLElement;
+          if (channelButton) {
+            if (currentScrollY > scrollThreshold) {
+              // Hide button when scrolled down past 1/7 of page
+              channelButton.style.transform = 'translateY(64px)';
+              channelButton.style.transition = 'transform 0.3s ease';
+            } else {
+              // Show button when at top 1/7 of page
+              channelButton.style.transform = 'translateY(0px)';
+              channelButton.style.transition = 'transform 0.3s ease';
+            }
+          }
           
           // Track header visibility on mobile
           if (window.innerWidth < 1024) { // lg breakpoint
