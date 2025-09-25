@@ -53,71 +53,11 @@ const FormattedContent = ({ content }: { content: string }) => {
           }
         }
         
-        // Handle sections with introduction text followed by numbered items
-        if (section.includes('\n') && section.match(/.*다음과 같습니다\.\n/) && section.match(/^\s*[0-9]+\./m)) {
-          const lines = section.split('\n');
-          const introLines = [];
-          const numberedLines = [];
-          let isNumberedSection = false;
-          
-          lines.forEach(line => {
-            if (line.match(/^\s*[0-9]+\./)) {
-              isNumberedSection = true;
-            }
-            if (isNumberedSection) {
-              numberedLines.push(line);
-            } else {
-              introLines.push(line);
-            }
-          });
-          
-          return (
-            <div key={index} className="space-y-4">
-              {/* Introduction text */}
-              {introLines.length > 0 && (
-                <div className="space-y-2">
-                  {introLines.map((line, lineIndex) => (
-                    line.trim() ? (
-                      <p key={lineIndex} className="leading-relaxed text-base">
-                        {formatInlineContent(line)}
-                      </p>
-                    ) : null
-                  ))}
-                </div>
-              )}
-              
-              {/* Indented numbered items */}
-              {numberedLines.length > 0 && (
-                <div className="ml-6 space-y-3">
-                  {numberedLines.map((line, lineIndex) => {
-                    if (line.match(/^\s*[0-9]+\./)) {
-                      const number = line.match(/^\s*([0-9]+)\./)?.[1];
-                      const content = line.replace(/^\s*[0-9]+\.\s*/, '');
-                      return (
-                        <p key={lineIndex} className="leading-relaxed text-base">
-                          {number}. {formatInlineContent(content)}
-                        </p>
-                      );
-                    } else if (line.trim() && !line.match(/^\s*[-•]/)) {
-                      return (
-                        <p key={lineIndex} className="leading-relaxed text-base ml-4">
-                          {formatInlineContent(line)}
-                        </p>
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        }
-        
-        // Handle regular numbered lists - convert to regular text with indentation
+        // Handle numbered lists - no indentation, simple numbers
         if (section.match(/^\s*[0-9]+\./m)) {
           const lines = section.split('\n');
           return (
-            <div key={index} className="ml-6 space-y-3">
+            <div key={index} className="space-y-3">
               {lines.map((line, lineIndex) => {
                 if (line.match(/^\s*[0-9]+\./)) {
                   const number = line.match(/^\s*([0-9]+)\./)?.[1];
@@ -127,9 +67,9 @@ const FormattedContent = ({ content }: { content: string }) => {
                       {number}. {formatInlineContent(content)}
                     </p>
                   );
-                } else if (line.trim() && !line.match(/^\s*[-•]/)) {
+                } else if (line.trim()) {
                   return (
-                    <p key={lineIndex} className="leading-relaxed text-base ml-4">
+                    <p key={lineIndex} className="leading-relaxed text-base">
                       {formatInlineContent(line)}
                     </p>
                   );
@@ -140,22 +80,21 @@ const FormattedContent = ({ content }: { content: string }) => {
           );
         }
         
-        // Handle bulleted lists with indentation
+        // Handle bulleted lists - no indentation, simple bullets
         if (section.match(/^\s*[-•]/m)) {
           const lines = section.split('\n');
           return (
-            <div key={index} className="ml-6 space-y-2">
+            <div key={index} className="space-y-2">
               {lines.map((line, lineIndex) => {
                 if (line.match(/^\s*[-•]/)) {
                   return (
-                    <div key={lineIndex} className="flex gap-3">
-                      <span className="text-primary flex-shrink-0">•</span>
-                      <span className="flex-1 text-base">{formatInlineContent(line.replace(/^\s*[-•]\s*/, ''))}</span>
-                    </div>
+                    <p key={lineIndex} className="leading-relaxed text-base">
+                      • {formatInlineContent(line.replace(/^\s*[-•]\s*/, ''))}
+                    </p>
                   );
                 } else if (line.trim()) {
                   return (
-                    <p key={lineIndex} className="leading-relaxed text-base ml-6">
+                    <p key={lineIndex} className="leading-relaxed text-base">
                       {formatInlineContent(line)}
                     </p>
                   );
@@ -183,30 +122,12 @@ const FormattedContent = ({ content }: { content: string }) => {
   );
 };
 
-// Helper function to format inline content (only for section titles)
+// Helper function to format inline content - very limited bold formatting
 const formatInlineContent = (text: string) => {
   if (!text) return text;
   
-  // Only bold text that appears to be section headers or important titles
-  const parts = text.split(/(\*\*.*?\*\*)/g);
-  return parts.map((part, index) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      const content = part.slice(2, -2);
-      // Only bold if it's a clear section title (contains words like 항목, 목적, etc.)
-      if (content.includes('항목') || content.includes('목적') || content.includes('정보') || 
-          content.includes('회원') || content.includes('교육') || content.includes('마케팅') ||
-          content.includes('개인정보') || content.includes('보호책임자') || content.includes('권익침해')) {
-        return (
-          <strong key={index} className="font-semibold text-foreground">
-            {content}
-          </strong>
-        );
-      }
-      // For other bold text, just return as normal text
-      return content;
-    }
-    return part;
-  });
+  // Remove all bold formatting - return plain text
+  return text.replace(/\*\*(.*?)\*\*/g, '$1');
 };
 
 // --- 데이터 ---
