@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { PlayCircle, CheckCircle, Clock, ArrowLeft, ArrowRight, File, BookOpen, X } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { PlayCircle, CheckCircle, Clock, ArrowLeft, ArrowRight, File, BookOpen, X, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import '@/types/vimeo.d.ts';
 import { VideoProgressTracker } from '@/utils/VideoProgressTracker';
@@ -54,6 +55,7 @@ const Learn = () => {
   const [videoProgress, setVideoProgress] = useState<{ [key: string]: number }>({});
   const [showSidebar, setShowSidebar] = useState(true);
   const [courseMaterials, setCourseMaterials] = useState<any[]>([]);
+  const [isMaterialsOpen, setIsMaterialsOpen] = useState(true);
 
   // 인스턴스 관리를 위해 useRef 사용
   const playerRef = useRef<any>(null);
@@ -747,70 +749,83 @@ const Learn = () => {
 
             {/* 강의 자료 - 다중 자료 지원 */}
             <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <File className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold">강의 자료</h3>
-                  {courseMaterials.length > 0 && (
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                      {courseMaterials.length}개
-                    </span>
-                  )}
-                </div>
+              <Collapsible open={isMaterialsOpen} onOpenChange={setIsMaterialsOpen}>
+                <CollapsibleTrigger asChild>
+                  <CardContent className="p-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <File className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold">강의 자료</h3>
+                        {courseMaterials.length > 0 && (
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                            {courseMaterials.length}개
+                          </span>
+                        )}
+                      </div>
+                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
+                        isMaterialsOpen ? 'transform rotate-180' : ''
+                      }`} />
+                    </div>
+                  </CardContent>
+                </CollapsibleTrigger>
                 
-                <div className="space-y-3 max-h-80 overflow-y-auto">
-                  {courseMaterials.length > 0 ? (
-                    courseMaterials.map((material, index) => (
-                      <Button
-                        key={material.id}
-                        variant="outline"
-                        onClick={() => downloadCourseMaterial(material)}
-                        className="w-full justify-start h-auto p-4 border-primary/30 hover:bg-primary/5"
-                      >
-                        <div className="flex items-center gap-3 w-full">
-                          <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg text-xs font-medium text-primary">
-                            {index + 1}
-                          </div>
-                          <div className="flex-1 text-left">
-                            <div className="font-medium text-sm">{material.title}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {material.file_name}
-                              {material.file_size && (
-                                <span className="ml-2">
-                                  ({formatFileSize(material.file_size)})
-                                </span>
-                              )}
+                <CollapsibleContent>
+                  <CardContent className="pt-0 px-4 pb-4">
+                    <div className="space-y-3 max-h-80 overflow-y-auto">
+                      {courseMaterials.length > 0 ? (
+                        courseMaterials.map((material, index) => (
+                          <Button
+                            key={material.id}
+                            variant="outline"
+                            onClick={() => downloadCourseMaterial(material)}
+                            className="w-full justify-start h-auto p-4 border-primary/30 hover:bg-primary/5"
+                          >
+                            <div className="flex items-center gap-3 w-full">
+                              <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg text-xs font-medium text-primary">
+                                {index + 1}
+                              </div>
+                              <div className="flex-1 text-left">
+                                <div className="font-medium text-sm">{material.title}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {material.file_name}
+                                  {material.file_size && (
+                                    <span className="ml-2">
+                                      ({formatFileSize(material.file_size)})
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                {material.file_type === 'link' ? (
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                                ) : (
+                                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                )}
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {material.file_type === 'link' ? (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                            ) : (
-                              <div className="w-2 h-2 bg-green-500 rounded-full" />
-                            )}
-                          </div>
+                          </Button>
+                        ))
+                      ) : (
+                        <div className="text-center py-6 text-muted-foreground bg-muted/30 rounded-lg">
+                          <File className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">이 세션에는 강의 자료가 없습니다</p>
                         </div>
-                      </Button>
-                    ))
-                  ) : (
-                    <div className="text-center py-6 text-muted-foreground bg-muted/30 rounded-lg">
-                      <File className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">이 세션에는 강의 자료가 없습니다</p>
+                      )}
                     </div>
-                  )}
-                </div>
-                
-                {courseMaterials.length > 0 && (
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t">
-                    <div className="text-xs text-muted-foreground">
-                      <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1" />
-                      파일 다운로드
-                      <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-1 ml-3" />
-                      외부 링크
-                    </div>
-                  </div>
-                )}
-              </CardContent>
+                    
+                    {courseMaterials.length > 0 && (
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                        <div className="text-xs text-muted-foreground">
+                          <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1" />
+                          파일 다운로드
+                          <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-1 ml-3" />
+                          외부 링크
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
             </Card>
 
             {/* 네비게이션 */}
