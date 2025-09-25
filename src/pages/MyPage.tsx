@@ -179,10 +179,14 @@ const MyPage = () => {
 
   const getLastWatchedSession = async (courseId: string) => {
     try {
+      // 1. 해당 강의의 모든 진도를 가져와서 가장 마지막에 시청한 세션을 찾음
       const { data: sessionsProgress } = await supabase
         .from('session_progress')
         .select(`
           session_id,
+          watched_duration_seconds,
+          completed,
+          completed_at,
           created_at,
           session:course_sessions!inner(
             id,
@@ -193,11 +197,27 @@ const MyPage = () => {
         `)
         .eq('user_id', user?.id)
         .eq('session.course_id', courseId)
-        .order('created_at', { ascending: false });
+        .gt('watched_duration_seconds', 30); // 30초 이상 시청한 세션만
 
       if (sessionsProgress && sessionsProgress.length > 0) {
-        // 가장 최근에 시청한 세션 반환
-        return sessionsProgress[0].session_id;
+        // 완료된 세션과 미완료 세션을 분리
+        const completedSessions = sessionsProgress.filter(sp => sp.completed);
+        const incompleteSessions = sessionsProgress.filter(sp => !sp.completed);
+        
+        // 미완료 세션이 있으면 그 중에서 가장 많이 시청한 것 반환
+        if (incompleteSessions.length > 0) {
+          incompleteSessions.sort((a, b) => b.watched_duration_seconds - a.watched_duration_seconds);
+          return incompleteSessions[0].session_id;
+        }
+        
+        // 모든 세션이 완료된 경우, 가장 최근에 완료된 세션 반환
+        if (completedSessions.length > 0) {
+          completedSessions.sort((a, b) => 
+            new Date(b.completed_at || b.created_at).getTime() - 
+            new Date(a.completed_at || a.created_at).getTime()
+          );
+          return completedSessions[0].session_id;
+        }
       }
     } catch (error) {
       console.error('Error getting last watched session:', error);
