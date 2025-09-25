@@ -62,6 +62,7 @@ export class VideoProgressTracker {
     this.isPlaying = true;
     this.lastPlayTime = Date.now();
     this.currentTime = currentTime;
+    this.lastRecordedTime = currentTime;
   }
 
   onPause(currentTime: number) {
@@ -221,6 +222,18 @@ export class VideoProgressTracker {
       hasReachedEnd &&
       suspiciousJumps <= 2
     );
+  }
+
+  public updateVideoDuration(seconds: number) {
+    if (seconds && seconds > 0) {
+      this.videoDuration = seconds;
+      this.checkpoints = [];
+      this.generateCheckpoints();
+    }
+  }
+
+  public getVideoDuration(): number {
+    return this.videoDuration;
   }
 
   getProgressData() {

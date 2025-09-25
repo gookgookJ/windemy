@@ -79,7 +79,7 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
           }
         }
       } catch (e) {
-        console.log('RSS parse failed for', url, e?.message);
+        console.log('RSS parse failed for', url, (e as any)?.message || e);
       }
     }
 
@@ -125,7 +125,7 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
           }
         }
       } catch (e) {
-        console.log('Sitemap fetch failed', e?.message);
+        console.log('Sitemap fetch failed', (e as any)?.message || e);
       }
     }
 
@@ -226,7 +226,7 @@ ${posts.map(post => `    {
     return { success: true, posts, bestPostsCode };
   } catch (error) {
     console.error('Error updating InfoBanner data:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as any)?.message || 'Unknown error' };
   }
 }
 
@@ -276,7 +276,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: (error as any)?.message || 'Unknown error' 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

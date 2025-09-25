@@ -123,6 +123,14 @@ const Learn = () => {
 
     const player = new window.Vimeo.Player(iframe);
     let lastTime = 0;
+
+    // 플레이어로부터 실제 영상 길이 동기화
+    player.getDuration().then((dur: number) => {
+      if (dur && progressTracker) {
+        progressTracker.updateVideoDuration(Math.round(dur));
+        console.log('Synced video duration from player:', dur);
+      }
+    });
     
     console.log('Vimeo player created, setting up event listeners...');
     

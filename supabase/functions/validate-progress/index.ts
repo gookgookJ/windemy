@@ -22,7 +22,7 @@ serve(async (req) => {
     const requestBody = await req.json();
     console.log('Request body:', requestBody);
     
-    const { sessionId, userId } = requestBody;
+    const { sessionId, userId, actualDuration } = requestBody;
 
     // 1. 세션 정보 가져오기
     console.log('Fetching session info for sessionId:', sessionId);
@@ -43,7 +43,6 @@ serve(async (req) => {
     }
 
     console.log('Session found:', session);
-    const videoDurationSeconds = session.duration_minutes * 60;
 
     // 2. 시청 구간 데이터 가져오기
     console.log('Fetching watch segments for user:', userId, 'session:', sessionId);
@@ -58,7 +57,15 @@ serve(async (req) => {
     }
     console.log('Watch segments found:', segments?.length || 0);
 
-    // 3. 체크포인트 데이터 가져오기
+    // 3. 체크포인트 및 영상 길이 결정
+    let videoDurationSeconds = (session.duration_minutes ?? 0) * 60;
+    const requestedDuration = typeof actualDuration === 'number' ? Math.round(actualDuration) : 0;
+    if (requestedDuration > 0) videoDurationSeconds = requestedDuration;
+    if ((!videoDurationSeconds || videoDurationSeconds <= 0) && segments && segments.length > 0) {
+      videoDurationSeconds = Math.max(...(segments as any[]).map((s: any) => s.end_time || 0));
+    }
+    console.log('Effective videoDurationSeconds:', videoDurationSeconds);
+
     const checkpoints = generateCheckpoints(videoDurationSeconds);
     console.log('Generated checkpoints:', checkpoints);
     
@@ -111,7 +118,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error validating progress:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: (error as any)?.message || 'Unknown error',
       isValid: false,
       watchedPercentage: 0,
       checkpointScore: 0
