@@ -12,49 +12,88 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Validate progress function called');
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { sessionId, userId } = await req.json();
+    const requestBody = await req.json();
+    console.log('Request body:', requestBody);
+    
+    const { sessionId, userId } = requestBody;
 
     // 1. 세션 정보 가져오기
-    const { data: session } = await supabaseClient
+    console.log('Fetching session info for sessionId:', sessionId);
+    const { data: session, error: sessionError } = await supabaseClient
       .from('course_sessions')
       .select('duration_minutes')
       .eq('id', sessionId)
       .single();
 
+    if (sessionError) {
+      console.error('Session fetch error:', sessionError);
+      throw new Error(`Session fetch failed: ${sessionError.message}`);
+    }
+
     if (!session) {
+      console.error('Session not found for id:', sessionId);
       throw new Error('Session not found');
     }
 
+    console.log('Session found:', session);
     const videoDurationSeconds = session.duration_minutes * 60;
 
     // 2. 시청 구간 데이터 가져오기
-    const { data: segments } = await supabaseClient
+    console.log('Fetching watch segments for user:', userId, 'session:', sessionId);
+    const { data: segments, error: segmentsError } = await supabaseClient
       .from('video_watch_segments')
       .select('*')
       .eq('user_id', userId)
       .eq('session_id', sessionId);
 
+    if (segmentsError) {
+      console.error('Segments fetch error:', segmentsError);
+    }
+    console.log('Watch segments found:', segments?.length || 0);
+
     // 3. 체크포인트 데이터 가져오기
     const checkpoints = generateCheckpoints(videoDurationSeconds);
-    const { data: reachedCheckpoints } = await supabaseClient
+    console.log('Generated checkpoints:', checkpoints);
+    
+    const { data: reachedCheckpoints, error: checkpointsError } = await supabaseClient
       .from('video_checkpoints')
       .select('*')
       .eq('user_id', userId)
       .eq('session_id', sessionId);
 
+    if (checkpointsError) {
+      console.error('Checkpoints fetch error:', checkpointsError);
+    }
+    console.log('Reached checkpoints found:', reachedCheckpoints?.length || 0);
+
     // 4. 점프 이벤트 데이터 가져오기
-    const { data: seekEvents } = await supabaseClient
+    const { data: seekEvents, error: seekError } = await supabaseClient
       .from('video_seek_events')
       .select('*')
       .eq('user_id', userId)
       .eq('session_id', sessionId);
 
+    if (seekError) {
+      console.error('Seek events fetch error:', seekError);
+    }
+    console.log('Seek events found:', seekEvents?.length || 0);
+
     // 5. 진도율 계산
+    console.log('Validating progress with data:', {
+      segmentsCount: segments?.length || 0,
+      checkpointsCount: checkpoints.length,
+      reachedCheckpointsCount: reachedCheckpoints?.length || 0,
+      seekEventsCount: seekEvents?.length || 0,
+      videoDuration: videoDurationSeconds
+    });
+
     const validation = validateProgress({
       segments: segments || [],
       checkpoints,
@@ -63,13 +102,20 @@ serve(async (req) => {
       videoDuration: videoDurationSeconds
     });
 
+    console.log('Validation result:', validation);
+
     return new Response(JSON.stringify(validation), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('Error validating progress:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      isValid: false,
+      watchedPercentage: 0,
+      checkpointScore: 0
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

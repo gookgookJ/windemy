@@ -85,6 +85,17 @@ export class VideoProgressTracker {
     }
 
     this.currentTime = currentTime;
+    
+    // 디버깅용 로그 (5초마다)
+    if (Math.floor(currentTime) % 5 === 0 && Math.floor(currentTime) !== Math.floor(this.lastRecordedTime)) {
+      console.log('VideoProgressTracker update:', {
+        currentTime: currentTime.toFixed(2),
+        totalWatchedTime: this.getTotalWatchedTime().toFixed(2),
+        watchedPercentage: this.getWatchedPercentage().toFixed(1) + '%',
+        segments: this.watchSegments.length,
+        checkpoints: this.checkpoints.filter(cp => cp.reached).length + '/' + this.checkpoints.length
+      });
+    }
   }
 
   onSeeked(fromTime: number, toTime: number) {

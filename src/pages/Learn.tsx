@@ -68,95 +68,142 @@ const Learn = () => {
 
   // Vimeo Player API 초기화
   useEffect(() => {
-    if (currentSession && currentSession.video_url?.includes('vimeo.com')) {
-      loadVimeoAPI();
+    if (currentSession && currentSession.video_url?.includes('vimeo.com') && user) {
+      // VideoProgressTracker 먼저 초기화
+      const tracker = new VideoProgressTracker(
+        currentSession.id,
+        user.id,
+        currentSession.duration_minutes * 60
+      );
+      setProgressTracker(tracker);
       
-      // VideoProgressTracker 초기화
-      if (user) {
-        const tracker = new VideoProgressTracker(
-          currentSession.id,
-          user.id,
-          currentSession.duration_minutes * 60
-        );
-        setProgressTracker(tracker);
-      }
+      // Vimeo API 로드 후 플레이어 초기화
+      loadVimeoAPI();
     }
   }, [currentSession, user]);
 
   const loadVimeoAPI = () => {
     if (window.Vimeo) {
-      initializeVimeoPlayer();
+      // Vimeo API가 이미 로드되어 있으면 즉시 초기화
+      setTimeout(() => initializeVimeoPlayer(), 100);
       return;
     }
 
+    console.log('Loading Vimeo API...');
     const script = document.createElement('script');
     script.src = 'https://player.vimeo.com/api/player.js';
-    script.onload = () => initializeVimeoPlayer();
+    script.onload = () => {
+      console.log('Vimeo API loaded successfully');
+      // API 로드 후 약간의 지연을 두고 초기화
+      setTimeout(() => initializeVimeoPlayer(), 100);
+    };
+    script.onerror = () => {
+      console.error('Failed to load Vimeo API');
+    };
     document.head.appendChild(script);
   };
 
   const initializeVimeoPlayer = () => {
-    if (!currentSession || !window.Vimeo || !progressTracker) return;
+    console.log('Initializing Vimeo player...', { 
+      currentSession: !!currentSession, 
+      vimeoAPI: !!window.Vimeo, 
+      progressTracker: !!progressTracker 
+    });
+    
+    if (!currentSession || !window.Vimeo || !progressTracker) {
+      console.log('Missing requirements for Vimeo player initialization');
+      return;
+    }
 
     const iframe = document.getElementById(`vimeo-player-${currentSession.id}`);
-    if (!iframe) return;
+    if (!iframe) {
+      console.log('Vimeo iframe not found');
+      return;
+    }
 
     const player = new window.Vimeo.Player(iframe);
+    let lastTime = 0;
+    
+    console.log('Vimeo player created, setting up event listeners...');
     
     // 재생/일시정지 이벤트
     player.on('play', (data: any) => {
-      player.getCurrentTime().then(time => progressTracker.onPlay(time));
+      console.log('Video play event:', data);
+      player.getCurrentTime().then(time => {
+        progressTracker.onPlay(time);
+        lastTime = time;
+      });
     });
 
     player.on('pause', (data: any) => {
-      player.getCurrentTime().then(time => progressTracker.onPause(time));
+      console.log('Video pause event:', data);
+      player.getCurrentTime().then(time => {
+        progressTracker.onPause(time);
+        lastTime = time;
+      });
     });
 
-    // 시간 업데이트 이벤트
+    // 시간 업데이트 이벤트 (통합)
     player.on('timeupdate', (data: any) => {
       progressTracker.onTimeUpdate(data.seconds);
+      lastTime = data.seconds;
       
       // UI 업데이트
+      const watchedPercentage = progressTracker.getWatchedPercentage();
       setVideoProgress(prev => ({
         ...prev,
-        [currentSession.id]: progressTracker.getWatchedPercentage()
+        [currentSession.id]: watchedPercentage
       }));
+      
+      console.log('Progress updated:', {
+        currentTime: data.seconds,
+        watchedPercentage,
+        totalWatchedTime: progressTracker.getTotalWatchedTime()
+      });
     });
 
     // 점프 이벤트 감지
-    let lastTime = 0;
     player.on('seeked', (data: any) => {
+      console.log('Video seek event:', { from: lastTime, to: data.seconds });
       progressTracker.onSeeked(lastTime, data.seconds);
       
       // 의심스러운 점프 감지시 경고
-      if (data.seconds - lastTime > 30) {
+      const jumpAmount = data.seconds - lastTime;
+      if (jumpAmount > 30) {
+        console.log('Suspicious jump detected:', jumpAmount);
         toast({
           title: "진도 조작 감지",
           description: "영상을 건너뛰면 학습 시간에 반영되지 않습니다.",
           variant: "destructive"
         });
       }
-    });
-
-    // 현재 시간 추적
-    player.on('timeupdate', (data: any) => {
+      
       lastTime = data.seconds;
     });
 
     // 영상 완료
     player.on('ended', async () => {
-      await progressTracker.saveProgress();
-      
-      if (progressTracker.isValidForCompletion()) {
-        markSessionComplete(currentSession.id);
-      } else {
-        toast({
-          title: "학습 시간 부족",
-          description: "영상을 충분히 시청하지 않았습니다. 다시 시청해주세요.",
-          variant: "destructive"
-        });
+      console.log('Video ended, saving progress...');
+      try {
+        await progressTracker.saveProgress();
+        
+        if (progressTracker.isValidForCompletion()) {
+          console.log('Video completion is valid, marking session complete');
+          markSessionComplete(currentSession.id);
+        } else {
+          console.log('Video completion is not valid:', progressTracker.getProgressData());
+          toast({
+            title: "학습 시간 부족",
+            description: "영상을 충분히 시청하지 않았습니다. 다시 시청해주세요.",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error handling video end:', error);
       }
     });
+
+    console.log('Vimeo player event listeners set up successfully');
   };
 
   const fetchCourseData = async () => {
@@ -298,18 +345,41 @@ const Learn = () => {
   };
 
   const markSessionComplete = async (sessionId: string) => {
-    if (!progressTracker || !user) return;
+    if (!user) {
+      console.log('No user found for session completion');
+      return;
+    }
+
+    console.log('Marking session complete:', { sessionId, userId: user.id });
 
     try {
-      // 1. 백엔드 검증 수행
-      const { data: validation } = await supabase.functions.invoke('validate-progress', {
+      // 1. 먼저 진행 상황 저장
+      if (progressTracker) {
+        console.log('Saving progress before validation...');
+        await progressTracker.saveProgress();
+      }
+
+      // 2. 백엔드 검증 수행
+      console.log('Invoking validate-progress function...');
+      const { data: validation, error: functionError } = await supabase.functions.invoke('validate-progress', {
         body: { sessionId, userId: user.id }
       });
 
-      if (!validation.isValid) {
+      if (functionError) {
+        console.error('Function invocation error:', functionError);
+        throw functionError;
+      }
+
+      console.log('Validation result:', validation);
+
+      if (!validation || !validation.isValid) {
+        const watchedPercentage = validation?.watchedPercentage || 0;
+        const checkpointScore = validation?.checkpointScore || 0;
+        
+        console.log('Validation failed:', { watchedPercentage, checkpointScore });
         toast({
           title: "학습 검증 실패",
-          description: `시청률: ${validation.watchedPercentage}%, 체크포인트: ${validation.checkpointScore}%`,
+          description: `시청률: ${watchedPercentage}%, 체크포인트: ${checkpointScore}%`,
           variant: "destructive"
         });
         return;
