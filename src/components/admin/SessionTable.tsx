@@ -33,6 +33,7 @@ interface SessionTableProps {
   onPageChange: (page: number) => void;
   onEdit: (session: CourseSession) => void;
   onDelete: (sessionId: string, sessionTitle: string) => void;
+  onMaterialManage?: (session: CourseSession) => void;
 }
 
 export const SessionTable = ({
@@ -42,7 +43,8 @@ export const SessionTable = ({
   itemsPerPage,
   onPageChange,
   onEdit,
-  onDelete
+  onDelete,
+  onMaterialManage
 }: SessionTableProps) => {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -145,6 +147,17 @@ export const SessionTable = ({
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
+                    {onMaterialManage && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => onMaterialManage(session)}
+                        className="h-8 px-3"
+                      >
+                        <Upload className="h-3 w-3 mr-1" />
+                        자료
+                      </Button>
+                    )}
                     {session.video_url && (
                       <Button 
                         variant="outline" 

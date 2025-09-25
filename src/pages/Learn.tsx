@@ -53,6 +53,7 @@ const Learn = () => {
   const [loading, setLoading] = useState(true);
   const [videoProgress, setVideoProgress] = useState<{ [key: string]: number }>({});
   const [showSidebar, setShowSidebar] = useState(true);
+  const [courseMaterials, setCourseMaterials] = useState<any[]>([]);
 
   // 인스턴스 관리를 위해 useRef 사용
   const playerRef = useRef<any>(null);
@@ -295,11 +296,16 @@ const Learn = () => {
         const targetSession = allSessions.find(s => s.id === initialSessionId);
         if (targetSession) {
           setCurrentSession(targetSession);
+          await fetchCourseMaterials(targetSession.id);
         } else {
-          setCurrentSession(allSessions[0] || null);
+          const firstSession = allSessions[0] || null;
+          setCurrentSession(firstSession);
+          if (firstSession) await fetchCourseMaterials(firstSession.id);
         }
       } else {
-        setCurrentSession(allSessions[0] || null);
+        const firstSession = allSessions[0] || null;
+        setCurrentSession(firstSession);
+        if (firstSession) await fetchCourseMaterials(firstSession.id);
       }
 
     } catch (error: any) {
@@ -454,15 +460,67 @@ const Learn = () => {
     return sessionProgress?.watched_duration_seconds || 0;
   };
 
-  const navigateToSession = (session: CourseSession) => {
+  const navigateToSession = async (session: CourseSession) => {
     setCurrentSession(session);
     // URL 업데이트 (새로고침 없이)
     const url = new URL(window.location.href);
     url.searchParams.set('session', session.id);
     window.history.pushState({}, '', url.toString());
+    
+    // 새 세션의 자료 로드
+    await fetchCourseMaterials(session.id);
   };
 
-  const downloadFile = async (fileUrl: string, fileName: string, sessionId: string) => {
+  const fetchCourseMaterials = async (sessionId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('course_materials')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('order_index');
+
+      if (error) throw error;
+      setCourseMaterials(data || []);
+    } catch (error) {
+      console.error('Error fetching course materials:', error);
+      setCourseMaterials([]);
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const downloadCourseMaterial = async (material: any) => {
+    if (material.file_type === 'link') {
+      // 외부 링크인 경우 새 창에서 열기
+      window.open(material.file_url, '_blank');
+      
+      // 다운로드 로그 기록
+      await supabase
+        .from('session_file_downloads')
+        .insert({
+          user_id: user?.id,
+          session_id: currentSession?.id,
+          file_name: material.title
+        });
+      
+      toast({
+        title: "링크 열기",
+        description: `${material.title} 링크를 새 창에서 열었습니다.`,
+      });
+      return;
+    }
+
+    // 파일 다운로드
+    downloadFile(material.file_url, material.file_name, currentSession?.id || '', material.title);
+  };
+
+  const downloadFile = async (fileUrl: string, fileName: string, sessionId: string, materialTitle?: string) => {
     try {
       // 다운로드 로그 기록
       await supabase
@@ -489,7 +547,7 @@ const Learn = () => {
       
       toast({
         title: "다운로드 완료",
-        description: `${fileName} 파일이 다운로드되었습니다.`,
+        description: `${materialTitle || fileName} 파일이 다운로드되었습니다.`,
       });
     } catch (error) {
       console.error('File download error:', error);
@@ -621,110 +679,160 @@ const Learn = () => {
               </CardContent>
             </Card>
 
-            {/* 진도율 - 개선된 디자인 */}
-            <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-foreground">학습 진도</span>
+            {/* 진도율 - 고급 디자인 */}
+            <Card className="bg-gradient-to-br from-primary/8 via-primary/4 to-transparent border-primary/30 shadow-lg">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-primary">
+                    <div className="p-1.5 bg-primary/10 rounded-lg">
+                      <PlayCircle className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="text-sm font-semibold text-foreground">학습 진도</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                       {Math.round(videoProgress[currentSession.id] || 0)}%
                     </span>
-                    <div className={`w-2 h-2 rounded-full ${
+                    <div className={`relative flex items-center justify-center w-6 h-6 rounded-full ${
                       (videoProgress[currentSession.id] || 0) >= 80 
                         ? 'bg-green-500' 
-                        : 'bg-yellow-500'
-                    }`} />
+                        : (videoProgress[currentSession.id] || 0) >= 50 
+                        ? 'bg-yellow-500' 
+                        : 'bg-gray-400'
+                    }`}>
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                    </div>
                   </div>
                 </div>
-                <div className="relative">
-                  <Progress 
-                    value={videoProgress[currentSession.id] || 0} 
-                    className="h-3 bg-muted/50"
-                  />
-                  {/* 80% 완료 기준선 */}
-                  <div 
-                    className="absolute top-0 h-3 w-0.5 bg-green-500/70"
-                    style={{ left: '80%' }}
-                  />
-                </div>
-                <div className="flex items-center justify-between mt-2 text-xs">
-                  <span className="text-muted-foreground">
-                    80% 이상 시청 시 완료
-                  </span>
-                  <span className={`font-medium ${
-                    (videoProgress[currentSession.id] || 0) >= 80 
-                      ? 'text-green-600' 
-                      : 'text-muted-foreground'
-                  }`}>
-                    {(videoProgress[currentSession.id] || 0) >= 80 ? '완료 가능' : '시청 중'}
-                  </span>
+                
+                {/* 메인 프로그레스바 */}
+                <div className="space-y-3">
+                  <div className="relative">
+                    <div className="h-4 bg-muted/50 rounded-full overflow-hidden shadow-inner">
+                      {/* 배경 그라데이션 */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-gray-200/50 to-gray-300/30" />
+                      
+                      {/* 진도 표시 */}
+                      <div 
+                        className="h-full bg-gradient-to-r from-primary via-primary to-secondary transition-all duration-700 ease-out rounded-full relative overflow-hidden"
+                        style={{ width: `${Math.max(videoProgress[currentSession.id] || 0, 2)}%` }}
+                      >
+                        {/* 애니메이션 효과 */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
+                        <div className="absolute top-0 left-0 w-full h-1 bg-white/30" />
+                      </div>
+                      
+                      {/* 80% 완료 기준선 */}
+                      <div className="absolute top-0 h-full w-0.5 bg-green-500 shadow-sm" style={{ left: '80%' }}>
+                        <div className="absolute -top-1 -left-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-sm" />
+                      </div>
+                    </div>
+                    
+                    {/* 퍼센트 라벨들 */}
+                    <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+                      <span>0%</span>
+                      <span className="text-green-600 font-medium">80%</span>
+                      <span>100%</span>
+                    </div>
+                  </div>
+                  
+                  {/* 상태 정보 */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        (videoProgress[currentSession.id] || 0) >= 80 
+                          ? 'bg-green-500' 
+                          : 'bg-yellow-500'
+                      }`} />
+                      <span className="text-xs text-muted-foreground">
+                        80% 이상 시청 시 완료
+                      </span>
+                    </div>
+                    
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      (videoProgress[currentSession.id] || 0) >= 80 
+                        ? 'bg-green-500/10 text-green-700 border border-green-200' 
+                        : (videoProgress[currentSession.id] || 0) >= 50
+                        ? 'bg-yellow-500/10 text-yellow-700 border border-yellow-200'
+                        : 'bg-gray-500/10 text-gray-700 border border-gray-200'
+                    }`}>
+                      {(videoProgress[currentSession.id] || 0) >= 80 
+                        ? '✅ 완료 가능' 
+                        : (videoProgress[currentSession.id] || 0) >= 50 
+                        ? '🟡 진행 중'
+                        : '⚪ 시작'
+                      }
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* 강의 자료 - 명확하게 표시 */}
+            {/* 강의 자료 - 다중 자료 지원 */}
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <File className="h-5 w-5 text-primary" />
                   <h3 className="font-semibold">강의 자료</h3>
+                  {courseMaterials.length > 0 && (
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                      {courseMaterials.length}개
+                    </span>
+                  )}
                 </div>
                 
-                <div className="space-y-3">
-                  {/* 현재 섹션 자료 */}
-                  {getCurrentSectionData()?.attachment_url && (
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        const section = getCurrentSectionData()!;
-                        downloadFile(section.attachment_url!, section.attachment_name || '섹션자료', section.id);
-                      }}
-                      className="w-full justify-start h-auto p-4 border-primary/30 hover:bg-primary/5"
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <File className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <div className="font-medium text-sm">섹션 자료</div>
-                          <div className="text-xs text-muted-foreground">
-                            {getCurrentSectionData()?.attachment_name || '강의자료.pdf'}
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {courseMaterials.length > 0 ? (
+                    courseMaterials.map((material, index) => (
+                      <Button
+                        key={material.id}
+                        variant="outline"
+                        onClick={() => downloadCourseMaterial(material)}
+                        className="w-full justify-start h-auto p-4 border-primary/30 hover:bg-primary/5"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg text-xs font-medium text-primary">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1 text-left">
+                            <div className="font-medium text-sm">{material.title}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {material.file_name}
+                              {material.file_size && (
+                                <span className="ml-2">
+                                  ({formatFileSize(material.file_size)})
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {material.file_type === 'link' ? (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                            ) : (
+                              <div className="w-2 h-2 bg-green-500 rounded-full" />
+                            )}
                           </div>
                         </div>
-                      </div>
-                    </Button>
-                  )}
-                  
-                  {/* 현재 세션 자료 */}
-                  {currentSession.attachment_url && (
-                    <Button
-                      variant="outline"
-                      onClick={() => downloadFile(currentSession.attachment_url!, currentSession.attachment_name || '세션자료', currentSession.id)}
-                      className="w-full justify-start h-auto p-4 border-primary/30 hover:bg-primary/5"
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <File className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <div className="font-medium text-sm">세션 자료</div>
-                          <div className="text-xs text-muted-foreground">
-                            {currentSession.attachment_name || '세션자료.pdf'}
-                          </div>
-                        </div>
-                      </div>
-                    </Button>
-                  )}
-                  
-                  {/* 자료 없음 표시 */}
-                  {!getCurrentSectionData()?.attachment_url && !currentSession.attachment_url && (
+                      </Button>
+                    ))
+                  ) : (
                     <div className="text-center py-6 text-muted-foreground bg-muted/30 rounded-lg">
                       <File className="h-8 w-8 mx-auto mb-2 opacity-50" />
                       <p className="text-sm">이 세션에는 강의 자료가 없습니다</p>
                     </div>
                   )}
                 </div>
+                
+                {courseMaterials.length > 0 && (
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                    <div className="text-xs text-muted-foreground">
+                      <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1" />
+                      파일 다운로드
+                      <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-1 ml-3" />
+                      외부 링크
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

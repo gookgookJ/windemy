@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Search, Filter, Plus, Loader2 } from 'lucide-react';
 import { SessionTable } from '@/components/admin/SessionTable';
 import { SessionEditModal } from '@/components/admin/SessionEditModal';
+import { MaterialUploadModal } from '@/components/admin/MaterialUploadModal';
 
 import { getVimeoVideoInfo, isValidVimeoUrl } from '@/utils/vimeoUtils';
 
@@ -50,6 +51,8 @@ export const SessionManagement = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<CourseSession | null>(null);
   const [loadingVideoInfo, setLoadingVideoInfo] = useState(false);
+  const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
+  const [managingSession, setManagingSession] = useState<CourseSession | null>(null);
   
   const [newSession, setNewSession] = useState({
     title: '',
@@ -225,6 +228,11 @@ export const SessionManagement = () => {
   const handleEdit = (session: CourseSession) => {
     setEditingSession(session);
     setIsEditModalOpen(true);
+  };
+
+  const handleMaterialManage = (session: CourseSession) => {
+    setManagingSession(session);
+    setIsMaterialModalOpen(true);
   };
 
 
@@ -434,8 +442,8 @@ export const SessionManagement = () => {
               itemsPerPage={itemsPerPage}
               onPageChange={handlePageChange}
               onEdit={handleEdit}
-              
               onDelete={deleteSession}
+              onMaterialManage={handleMaterialManage}
             />
           </CardContent>
         </Card>
@@ -449,6 +457,17 @@ export const SessionManagement = () => {
             setEditingSession(null);
           }}
           onUpdate={fetchSessions}
+        />
+
+        <MaterialUploadModal
+          isOpen={isMaterialModalOpen}
+          onClose={() => {
+            setIsMaterialModalOpen(false);
+            setManagingSession(null);
+          }}
+          onUpdate={fetchSessions}
+          courseId={managingSession?.course?.id || ''}
+          sessionId={managingSession?.id}
         />
 
       </div>

@@ -38,6 +38,20 @@ export const SectionUploadModal = ({ section, isOpen, onClose, onUpdate }: Secti
     }
   };
 
+  const generateSignedUrl = async (filePath: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('course-files')
+        .createSignedUrl(filePath, 365 * 24 * 60 * 60); // 1년 만료
+
+      if (error) throw error;
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error generating signed URL:', error);
+      throw error;
+    }
+  };
+
   const handleUpload = async () => {
     if (!section) {
       toast({
@@ -73,20 +87,21 @@ export const SectionUploadModal = ({ section, isOpen, onClose, onUpdate }: Secti
 
       if (uploadType === 'file') {
         const fileExt = selectedFile!.name.split('.').pop();
-        const fileName = `section-${section.id}-${Date.now()}.${fileExt}`;
-        const filePath = `${section.course_id}/${fileName}`;
+        const uniqueFileName = `section-${section.id}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${section.course_id}/${uniqueFileName}`;
 
+        // Upload to private storage bucket
         const { error: uploadError } = await supabase.storage
           .from('course-files')
-          .upload(filePath, selectedFile!);
+          .upload(filePath, selectedFile!, {
+            upsert: false,
+            contentType: selectedFile!.type
+          });
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('course-files')
-          .getPublicUrl(filePath);
-
-        attachmentUrl = publicUrl;
+        // Generate signed URL for private bucket access
+        attachmentUrl = await generateSignedUrl(filePath);
         attachmentName = selectedFile!.name;
       } else {
         // 링크 업로드

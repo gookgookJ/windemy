@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Upload, MoreHorizontal, File, Edit, Trash2, Plus, X } from 'lucide-react';
-import { SectionUploadModal } from '@/components/admin/SectionUploadModal';
+import { MaterialUploadModal } from '@/components/admin/MaterialUploadModal';
 
 interface CourseSection {
   id: string;
@@ -274,7 +274,7 @@ export const SectionManagement = () => {
                             className="h-8 px-3"
                           >
                             <Upload className="h-3 w-3 mr-1" />
-                            {section.attachment_url ? '자료 변경' : '자료 업로드'}
+                            자료 관리
                           </Button>
                           
                           {section.attachment_url && (
@@ -316,14 +316,15 @@ export const SectionManagement = () => {
         </Card>
 
         {/* 업로드 모달 */}
-        <SectionUploadModal
-          section={uploadingSection}
+        <MaterialUploadModal
           isOpen={isUploadModalOpen}
           onClose={() => {
             setIsUploadModalOpen(false);
             setUploadingSection(null);
           }}
           onUpdate={fetchSections}
+          courseId={uploadingSection?.course_id || ''}
+          sectionId={uploadingSection?.id}
         />
       </div>
     </AdminLayout>
