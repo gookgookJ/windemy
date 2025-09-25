@@ -40,7 +40,7 @@ const FormattedContent = ({ content }: { content: string }) => {
                         <tr key={lineIndex}>
                           {cells.map((cell, cellIndex) => (
                             <td key={cellIndex} className="border border-border px-4 py-3 bg-muted/30">
-                              <span className="text-sm">{cell}</span>
+                              <span className="text-base">{cell}</span>
                             </td>
                           ))}
                         </tr>
@@ -53,29 +53,49 @@ const FormattedContent = ({ content }: { content: string }) => {
           }
         }
         
-        // Handle numbered/bulleted lists
-        if (section.match(/^\s*[0-9]+\.|^\s*[-•]/m)) {
+        // Handle numbered lists - convert to regular text with numbers
+        if (section.match(/^\s*[0-9]+\./m)) {
+          const lines = section.split('\n');
+          return (
+            <div key={index} className="space-y-3">
+              {lines.map((line, lineIndex) => {
+                if (line.match(/^\s*[0-9]+\./)) {
+                  const number = line.match(/^\s*([0-9]+)\./)?.[1];
+                  const content = line.replace(/^\s*[0-9]+\.\s*/, '');
+                  return (
+                    <p key={lineIndex} className="leading-relaxed text-base">
+                      {number}. {formatInlineContent(content)}
+                    </p>
+                  );
+                } else if (line.trim() && !line.match(/^\s*[-•]/)) {
+                  return (
+                    <p key={lineIndex} className="leading-relaxed text-base ml-4">
+                      {formatInlineContent(line)}
+                    </p>
+                  );
+                }
+                return null;
+              })}
+            </div>
+          );
+        }
+        
+        // Handle bulleted lists
+        if (section.match(/^\s*[-•]/m)) {
           const lines = section.split('\n');
           return (
             <div key={index} className="space-y-2 ml-4">
               {lines.map((line, lineIndex) => {
-                if (line.match(/^\s*[0-9]+\./)) {
-                  return (
-                    <div key={lineIndex} className="flex gap-3">
-                      <span className="font-medium text-primary flex-shrink-0">{line.match(/^\s*[0-9]+\./)?.[0]}</span>
-                      <span className="flex-1">{formatInlineContent(line.replace(/^\s*[0-9]+\.\s*/, ''))}</span>
-                    </div>
-                  );
-                } else if (line.match(/^\s*[-•]/)) {
+                if (line.match(/^\s*[-•]/)) {
                   return (
                     <div key={lineIndex} className="flex gap-3">
                       <span className="text-primary flex-shrink-0">•</span>
-                      <span className="flex-1">{formatInlineContent(line.replace(/^\s*[-•]\s*/, ''))}</span>
+                      <span className="flex-1 text-base">{formatInlineContent(line.replace(/^\s*[-•]\s*/, ''))}</span>
                     </div>
                   );
                 } else if (line.trim()) {
                   return (
-                    <p key={lineIndex} className="leading-relaxed ml-6">
+                    <p key={lineIndex} className="leading-relaxed text-base ml-6">
                       {formatInlineContent(line)}
                     </p>
                   );
@@ -91,7 +111,7 @@ const FormattedContent = ({ content }: { content: string }) => {
           <div key={index} className="space-y-3">
             {section.split('\n').map((line, lineIndex) => (
               line.trim() ? (
-                <p key={lineIndex} className="leading-relaxed text-sm">
+                <p key={lineIndex} className="leading-relaxed text-base">
                   {formatInlineContent(line)}
                 </p>
               ) : null
@@ -115,7 +135,7 @@ const formatInlineContent = (text: string) => {
       // Only bold if it's a clear section title (contains words like 항목, 목적, etc.)
       if (content.includes('항목') || content.includes('목적') || content.includes('정보') || 
           content.includes('회원') || content.includes('교육') || content.includes('마케팅') ||
-          content.includes('개인정보') || content.includes('보호책임자')) {
+          content.includes('개인정보') || content.includes('보호책임자') || content.includes('권익침해')) {
         return (
           <strong key={index} className="font-semibold text-foreground">
             {content}
@@ -184,7 +204,8 @@ const privacyData = [
     { id: "privacy-7", title: "제7조 (개인정보의 안전성 확보 조치)", content: "회사는 개인정보의 안전성 확보를 위해 다음과 같은 관리적, 기술적, 물리적 조치를 취하고 있습니다. (내부관리계획 수립·시행, 접근권한 관리, 개인정보의 암호화, 보안프로그램 설치 등)" },
     { id: "privacy-8", title: "제8조 (개인정보 자동 수집 장치의 설치·운영 및 거부에 관한 사항)", content: "① 회사는 이용자에게 개별적인 맞춤 서비스를 제공하기 위해 이용 정보를 저장하고 수시로 불러오는 '쿠키(cookie)'를 사용합니다.\n② 이용자는 웹 브라우저의 옵션 설정(예: 웹 브라우저 상단의 도구 > 인터넷 옵션 > 개인정보 메뉴)을 통해 쿠키 저장을 거부할 수 있습니다. 단, 쿠키 저장을 거부할 경우 맞춤형 서비스 이용에 어려움이 발생할 수 있습니다." },
     { id: "privacy-9", title: "제9조 (개인정보 보호책임자)", content: "회사는 개인정보 처리에 관한 업무를 총괄해서 책임지고, 개인정보 처리와 관련한 이용자의 불만처리 및 피해구제 등을 위하여 아래와 같이 개인정보 보호책임자를 지정하고 있습니다.\n\n- **개인정보 보호책임자**\n  - 성명: 김승현\n  - 직책: 대표\n  - 이메일: support@windly.cc" },
-    { id: "privacy-10", title: "제10조 (개인정보처리방침의 변경)", content: `본 개인정보처리방침은 시행일로부터 적용되며, 법령 및 방침에 따른 변경내용의 추가, 삭제 및 정정이 있는 경우에는 변경사항의 시행 7일 전부터 공지사항을 통하여 고지할 것입니다.\n\n- 공고일자: ${formattedDate}\n- 시행일자: ${formattedDate}` }
+    { id: "privacy-10", title: "제10조 (개인정보처리방침의 변경)", content: `본 개인정보처리방침은 시행일로부터 적용되며, 법령 및 방침에 따른 변경내용의 추가, 삭제 및 정정이 있는 경우에는 변경사항의 시행 7일 전부터 공지사항을 통하여 고지할 것입니다.\n\n- 공고일자: ${formattedDate}\n- 시행일자: ${formattedDate}` },
+    { id: "privacy-11", title: "제11조 (권익침해 구제방법)", content: "회원은 아래의 기관에 대해 개인정보 침해에 대한 피해구제, 상담 등을 문의하실 수 있습니다. 아래의 기관은 회사와는 별개의 기관으로서, 회사의 자체적인 개인정보 불만처리, 피해구제 결과에 만족하지 못하시거나 보다 자세한 도움이 필요하시면 문의하여 주시기 바랍니다.\n\n- **개인정보분쟁조정위원회:** www.kopico.go.kr, 1833-6972\n- **개인정보침해신고센터:** privacy.kisa.or.kr, 118\n- **대검찰청:** www.spo.go.kr, 1301\n- **경찰청:** ecrm.police.go.kr, 182" }
 ];
 
 // --- 콘텐츠 렌더링 컴포넌트들 ---
@@ -257,7 +278,7 @@ const PolicyContent = ({ title, data }) => {
                   {data.map((item) => (
                       <section key={item.id} className="space-y-4">
                           {item.title && (
-                              <h3 className="font-bold text-lg md:text-xl text-foreground">
+                              <h3 className="font-bold text-xl text-foreground">
                                   {item.title}
                               </h3>
                           )}
@@ -296,14 +317,14 @@ const PoliciesPage = () => {
     <div className="flex flex-col min-h-screen bg-muted/20">
       <Header />
       <main className="w-full max-w-6xl mx-auto px-4 py-8 md:py-12 flex-grow">
-        <div className="grid lg:grid-cols-[220px_1fr] gap-6 md:gap-10">
-          <aside className="lg:sticky top-24 h-fit">
+        <div className="grid lg:grid-cols-[280px_1fr] gap-6 md:gap-10">
+          <aside className="lg:sticky lg:top-24 lg:h-fit">
             <nav className="flex flex-row lg:flex-col gap-2">
               {navItems.map((item) => (
                 <Button
                   key={item.id}
                   variant={activeTab === item.id ? 'secondary' : 'ghost'}
-                  className="w-full justify-start gap-3 px-3 h-12 lg:h-auto lg:py-3 text-sm md:text-base"
+                  className="w-full justify-start gap-3 px-3 h-12 lg:h-auto lg:py-3 text-sm md:text-base whitespace-nowrap"
                   onClick={() => setActiveTab(item.id)}
                 >
                   <item.icon className="h-5 w-5 flex-shrink-0" />
