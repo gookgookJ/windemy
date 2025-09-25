@@ -363,29 +363,29 @@ const MyPage = () => {
                         {enrollments.map((enrollment) => (
                         <Card key={enrollment.id} className="cursor-pointer hover:shadow-md transition-shadow border-0 shadow-sm" onClick={() => handleCourseClick(enrollment.course.id)}>
                           <CardContent className="p-3 md:p-4">
-                            <div className="flex gap-4 md:gap-5">
+                            <div className="flex gap-4 md:gap-6">
                               <div className="relative flex-shrink-0">
                                 <img
                                   src={enrollment.course.thumbnail_url || '/placeholder.svg'}
                                   alt={enrollment.course.title}
-                                  className="w-24 h-18 md:w-32 md:h-24 object-contain rounded-lg"
+                                  className="w-24 h-18 md:w-40 md:h-28 object-contain rounded-lg"
                                 />
                               </div>
                               
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between mb-1 md:mb-2">
-                                  <h3 className="font-semibold text-xs md:text-sm line-clamp-2 leading-tight">
+                                  <h3 className="font-semibold text-xs md:text-base line-clamp-2 leading-tight">
                                     {enrollment.course.title}
                                   </h3>
                                   <ArrowRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground flex-shrink-0 ml-2" />
                                 </div>
                                 
-                                <p className="text-xs text-muted-foreground mb-2 md:mb-3">
+                                <p className="text-xs md:text-sm text-muted-foreground mb-2 md:mb-3">
                                   강사: {enrollment.course.instructor?.full_name}
                                 </p>
                                 
                                 <div className="space-y-1 md:space-y-2">
-                                  <div className="flex justify-between text-xs">
+                                  <div className="flex justify-between text-xs md:text-sm">
                                     <span className="text-muted-foreground">학습 진도</span>
                                     <span className="font-medium">{Math.round(enrollment.progress)}%</span>
                                   </div>
