@@ -151,10 +151,10 @@ const MyPage = () => {
       const totalCourses = allEnrollments?.length || 0;
       const completedCourses = allEnrollments?.filter(e => e.completed_at || e.progress >= 100).length || 0;
       
-      // 진행 중: 실제로 학습이 시작된 강의 (progress > 5% 이상)
+      // 진행 중: 실제로 학습이 시작된 강의 (progress > 0.1% 이상)
       const inProgressCourses = allEnrollments?.filter(e => 
         !e.completed_at && 
-        e.progress >= 5 && 
+        e.progress > 0.1 && 
         e.progress < 100
       ).length || 0;
       
