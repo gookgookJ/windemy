@@ -122,14 +122,31 @@ const CourseDetail = () => {
     }
   }, [courseId]);
 
-  // Scroll to top functionality (Optimized with requestAnimationFrame)
+  // Scroll to top functionality and header visibility tracking
+  const [headerVisible, setHeaderVisible] = useState(true);
+
   useEffect(() => {
     let ticking = false;
+    let lastScrollY = 0;
 
     const handleScroll = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
-          setShowScrollToTop(window.scrollY > 500);
+          const currentScrollY = window.scrollY;
+          setShowScrollToTop(currentScrollY > 500);
+          
+          // Track header visibility on mobile
+          if (window.innerWidth < 1024) { // lg breakpoint
+            if (currentScrollY > lastScrollY && currentScrollY > 100) {
+              setHeaderVisible(false);
+            } else if (currentScrollY < lastScrollY) {
+              setHeaderVisible(true);
+            }
+          } else {
+            setHeaderVisible(true);
+          }
+          
+          lastScrollY = currentScrollY;
           ticking = false;
         });
         ticking = true;
@@ -296,13 +313,17 @@ const CourseDetail = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // (수정됨) 스크롤 오프셋 조정
+  // (수정됨) 스크롤 오프셋 조정 - 헤더 상태에 따라 다르게 처리
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      // Adjusted scroll position to account for sticky header/navigation
-      // 예상 높이: 헤더(80px) + 네비게이션 바(약 50px) = 130px.
-      const headerOffset = 130; 
+      // 모바일에서 헤더 상태에 따라 오프셋 조정
+      let headerOffset = 130; // 기본값: 헤더(80px) + 네비게이션 바(약 50px)
+      
+      if (window.innerWidth < 1024) { // 모바일/태블릿
+        headerOffset = headerVisible ? 130 : 80; // 헤더가 사라지면 네비게이션 바만 고려
+      }
+      
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -447,8 +468,10 @@ const CourseDetail = () => {
 
 
             {/* Sticky Navigation Bar */}
-            {/* 수정됨: rounded-lg 제거하여 직각 모서리로 변경 */}
-            <div className="sticky top-16 z-50 bg-background border border-border mb-8 overflow-hidden shadow-md">
+            {/* 수정됨: 모바일에서 헤더 상태에 따라 top 위치 조정 */}
+            <div className={`sticky z-50 bg-background border border-border mb-8 overflow-hidden shadow-md transition-all duration-300 ${
+              headerVisible ? 'top-16' : 'top-0'
+            }`}>
               <div className="grid grid-cols-4 gap-0">
                 {/* Responsive Button Styles */}
                 <button
