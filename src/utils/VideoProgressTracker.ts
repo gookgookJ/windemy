@@ -74,7 +74,15 @@ export class VideoProgressTracker {
   }
 
   onTimeUpdate(currentTime: number) {
-    if (!this.isPlaying) return;
+    // 재생 이벤트가 누락되어도 안전하게 동작하도록 보정
+    if (!this.isPlaying) {
+      this.isPlaying = true;
+      this.lastPlayTime = Date.now();
+      this.currentTime = currentTime;
+      this.lastRecordedTime = currentTime;
+      this.checkCheckpoints(currentTime);
+      return;
+    }
 
     // 체크포인트 확인
     this.checkCheckpoints(currentTime);

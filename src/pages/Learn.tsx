@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,6 +51,8 @@ const Learn = () => {
   const [loading, setLoading] = useState(true);
   const [videoProgress, setVideoProgress] = useState<{ [key: string]: number }>({});
   const [progressTracker, setProgressTracker] = useState<VideoProgressTracker | null>(null);
+  const [playerInitialized, setPlayerInitialized] = useState(false);
+  const lastSavedRef = useRef(0);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -65,6 +67,12 @@ const Learn = () => {
       fetchCourseData();
     }
   }, [courseId, user]);
+
+  // 현재 세션 변경 시 초기화
+  useEffect(() => {
+    setPlayerInitialized(false);
+    lastSavedRef.current = 0;
+  }, [currentSession?.id]);
 
   // Vimeo Player API 초기화
   useEffect(() => {
@@ -81,6 +89,14 @@ const Learn = () => {
       loadVimeoAPI();
     }
   }, [currentSession, user]);
+
+  // Vimeo API와 트래커 준비되면 실제 플레이어 초기화
+  useEffect(() => {
+    if (!playerInitialized && currentSession?.video_url?.includes('vimeo.com') && window.Vimeo && progressTracker) {
+      initializeVimeoPlayer();
+      setPlayerInitialized(true);
+    }
+  }, [playerInitialized, currentSession?.id, progressTracker]);
 
   const loadVimeoAPI = () => {
     if (window.Vimeo) {
@@ -162,6 +178,13 @@ const Learn = () => {
         ...prev,
         [currentSession.id]: watchedPercentage
       }));
+      
+      // 주기적 서버 저장 (10초 간격)
+      const now = Date.now();
+      if (now - lastSavedRef.current > 10000) {
+        progressTracker.saveProgress().catch((e: any) => console.error('Auto save error:', e));
+        lastSavedRef.current = now;
+      }
       
       console.log('Progress updated:', {
         currentTime: data.seconds,
@@ -370,7 +393,7 @@ const Learn = () => {
       // 2. 백엔드 검증 수행
       console.log('Invoking validate-progress function...');
       const { data: validation, error: functionError } = await supabase.functions.invoke('validate-progress', {
-        body: { sessionId, userId: user.id }
+        body: { sessionId, userId: user.id, actualDuration: progressTracker?.getVideoDuration() }
       });
 
       if (functionError) {
