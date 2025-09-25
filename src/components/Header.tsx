@@ -171,6 +171,22 @@ const Header = () => {
                 <Search className="w-5 h-5" />
               </Button>
             )}
+            
+            {/* Mobile login button for non-logged in users */}
+            {!user && (
+              <Button 
+                variant="default" 
+                size="sm"
+                className="sm:hidden text-xs px-2"
+                onClick={() => {
+                  setAuthModalTab('signin');
+                  setIsAuthModalOpen(true);
+                }}
+              >
+                로그인
+              </Button>
+            )}
+            
             {user ? (
               <div className="flex items-center space-x-2">
                 {/* Desktop admin button - only show on desktop */}
