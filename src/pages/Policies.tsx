@@ -22,20 +22,25 @@ const FormattedContent = ({ content }: { content: string }) => {
         // Handle tables (content with | characters)
         if (section.includes('|') && section.split('|').length > 2) {
           const lines = section.split('\n');
-          const tableLines = lines.filter(line => line.includes('|'));
+          const tableLines = lines.filter(line => 
+            line.includes('|') && 
+            !line.includes(':---') && 
+            !line.includes(':-') &&
+            line.trim() !== ''
+          );
           
           if (tableLines.length > 0) {
             return (
-              <div key={index} className="overflow-x-auto my-4">
-                <table className="min-w-full border-collapse border border-border">
+              <div key={index} className="overflow-x-auto my-6">
+                <table className="min-w-full border-collapse border border-border rounded-lg">
                   <tbody>
                     {tableLines.map((line, lineIndex) => {
                       const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell);
                       return (
                         <tr key={lineIndex}>
                           {cells.map((cell, cellIndex) => (
-                            <td key={cellIndex} className="border border-border px-4 py-2 bg-muted/50">
-                              {formatInlineContent(cell)}
+                            <td key={cellIndex} className="border border-border px-4 py-3 bg-muted/30">
+                              <span className="text-sm">{cell}</span>
                             </td>
                           ))}
                         </tr>
@@ -48,42 +53,29 @@ const FormattedContent = ({ content }: { content: string }) => {
           }
         }
         
-        // Handle bold text sections (content with **)
-        if (section.includes('**')) {
-          return (
-            <div key={index} className="space-y-2">
-              {section.split('\n').map((line, lineIndex) => (
-                <p key={lineIndex} className="leading-relaxed">
-                  {formatInlineContent(line)}
-                </p>
-              ))}
-            </div>
-          );
-        }
-        
         // Handle numbered/bulleted lists
         if (section.match(/^\s*[0-9]+\.|^\s*[-•]/m)) {
           const lines = section.split('\n');
           return (
-            <div key={index} className="space-y-2">
+            <div key={index} className="space-y-2 ml-4">
               {lines.map((line, lineIndex) => {
                 if (line.match(/^\s*[0-9]+\./)) {
                   return (
-                    <div key={lineIndex} className="flex gap-2">
-                      <span className="font-medium text-primary">{line.match(/^\s*[0-9]+\./)?.[0]}</span>
+                    <div key={lineIndex} className="flex gap-3">
+                      <span className="font-medium text-primary flex-shrink-0">{line.match(/^\s*[0-9]+\./)?.[0]}</span>
                       <span className="flex-1">{formatInlineContent(line.replace(/^\s*[0-9]+\.\s*/, ''))}</span>
                     </div>
                   );
                 } else if (line.match(/^\s*[-•]/)) {
                   return (
-                    <div key={lineIndex} className="flex gap-2">
-                      <span className="text-primary">•</span>
+                    <div key={lineIndex} className="flex gap-3">
+                      <span className="text-primary flex-shrink-0">•</span>
                       <span className="flex-1">{formatInlineContent(line.replace(/^\s*[-•]\s*/, ''))}</span>
                     </div>
                   );
                 } else if (line.trim()) {
                   return (
-                    <p key={lineIndex} className="leading-relaxed ml-4">
+                    <p key={lineIndex} className="leading-relaxed ml-6">
                       {formatInlineContent(line)}
                     </p>
                   );
@@ -96,10 +88,10 @@ const FormattedContent = ({ content }: { content: string }) => {
         
         // Regular paragraphs
         return (
-          <div key={index} className="space-y-2">
+          <div key={index} className="space-y-3">
             {section.split('\n').map((line, lineIndex) => (
               line.trim() ? (
-                <p key={lineIndex} className="leading-relaxed">
+                <p key={lineIndex} className="leading-relaxed text-sm">
                   {formatInlineContent(line)}
                 </p>
               ) : null
@@ -111,19 +103,27 @@ const FormattedContent = ({ content }: { content: string }) => {
   );
 };
 
-// Helper function to format inline content (bold, etc.)
+// Helper function to format inline content (only for section titles)
 const formatInlineContent = (text: string) => {
   if (!text) return text;
   
-  // Handle bold text
+  // Only bold text that appears to be section headers or important titles
   const parts = text.split(/(\*\*.*?\*\*)/g);
   return parts.map((part, index) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      return (
-        <strong key={index} className="font-semibold text-foreground">
-          {part.slice(2, -2)}
-        </strong>
-      );
+      const content = part.slice(2, -2);
+      // Only bold if it's a clear section title (contains words like 항목, 목적, etc.)
+      if (content.includes('항목') || content.includes('목적') || content.includes('정보') || 
+          content.includes('회원') || content.includes('교육') || content.includes('마케팅') ||
+          content.includes('개인정보') || content.includes('보호책임자')) {
+        return (
+          <strong key={index} className="font-semibold text-foreground">
+            {content}
+          </strong>
+        );
+      }
+      // For other bold text, just return as normal text
+      return content;
     }
     return part;
   });
@@ -253,11 +253,11 @@ const PolicyContent = ({ title, data }) => {
       <Card>
           <CardContent className="p-6 md:p-8">
               <h1 className="text-2xl md:text-3xl font-bold mb-8 text-foreground">{title}</h1>
-              <div className="space-y-6">
+              <div className="space-y-8">
                   {data.map((item) => (
-                      <section key={item.id} className="pb-6 border-b border-border last:border-b-0">
+                      <section key={item.id} className="space-y-4">
                           {item.title && (
-                              <h3 className="font-semibold text-lg md:text-xl mb-4 text-foreground">
+                              <h3 className="font-bold text-lg md:text-xl text-foreground">
                                   {item.title}
                               </h3>
                           )}
