@@ -4,7 +4,6 @@ import CategorySection from "@/components/CategorySection";
 import FeaturedCourses from "@/components/FeaturedCourses";
 import SecondBanner from "@/components/SecondBanner";
 import Footer from "@/components/Footer";
-import InquiryButton from "@/components/InquiryButton";
 
 const Index = () => {
   return (
@@ -17,7 +16,6 @@ const Index = () => {
         <SecondBanner />
       </main>
       <Footer />
-      <InquiryButton />
     </div>
   );
 };
