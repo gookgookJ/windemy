@@ -4,9 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
-import { useAuth } from "@/hooks/useAuth";
 import { getOptimizedImageForContext } from "@/utils/imageOptimization";
-import { navigateToLastWatchedSession } from "@/utils/courseNavigation";
 
 interface CourseCardProps {
   id: string;
@@ -23,8 +21,7 @@ interface CourseCardProps {
   category: string;
   isHot?: boolean;
   isNew?: boolean;
-  priority?: boolean;
-  showLearnButton?: boolean; // 학습 버튼을 표시할지 여부
+  priority?: boolean; // Add priority prop for LCP optimization
 }
 
 const CourseCard = ({
@@ -43,10 +40,8 @@ const CourseCard = ({
   isHot,
   isNew,
   priority = false,
-  showLearnButton = false,
 }: CourseCardProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { toggleFavorite, isFavorite } = useFavorites();
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
@@ -55,18 +50,7 @@ const CourseCard = ({
   };
 
   const handleCardClick = () => {
-    if (showLearnButton) {
-      // 학습 버튼이 있으면 마지막 시청 위치로 이동
-      navigateToLastWatchedSession(id, user?.id, navigate);
-    } else {
-      // 일반 강의 카드는 상세 페이지로 이동
-      navigate(`/course/${id}`);
-    }
-  };
-
-  const handleLearnClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigateToLastWatchedSession(id, user?.id, navigate);
+    navigate(`/course/${id}`);
   };
 
   return (
@@ -128,7 +112,7 @@ const CourseCard = ({
         </div>
 
         {/* Tags */}
-        <div className="flex flex-wrap gap-2 mb-3">
+        <div className="flex flex-wrap gap-2">
           {isHot && (
             <Badge className="bg-red-500 text-white font-medium text-xs px-2 py-1">
               BEST
@@ -155,16 +139,6 @@ const CourseCard = ({
             {level === "beginner" ? "초급" : level === "intermediate" ? "중급" : "고급"}
           </Badge>
         </div>
-
-        {/* Learn Button for MyPage */}
-        {showLearnButton && (
-          <Button 
-            className="w-full mt-2"
-            onClick={handleLearnClick}
-          >
-            학습 계속하기
-          </Button>
-        )}
       </CardContent>
     </Card>
   );

@@ -10,7 +10,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BookOpen, Play, Calendar, ArrowRight, TrendingUp, Clock, Award, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
-import { navigateToLastWatchedSession } from '@/utils/courseNavigation';
 
 interface EnrollmentWithCourse {
   id: string;
@@ -178,8 +177,41 @@ const MyPage = () => {
     }
   };
 
+  const getLastWatchedSession = async (courseId: string) => {
+    try {
+      const { data: sessionsProgress } = await supabase
+        .from('session_progress')
+        .select(`
+          session_id,
+          created_at,
+          session:course_sessions!inner(
+            id,
+            course_id,
+            order_index,
+            section:course_sections!inner(order_index)
+          )
+        `)
+        .eq('user_id', user?.id)
+        .eq('session.course_id', courseId)
+        .order('created_at', { ascending: false });
+
+      if (sessionsProgress && sessionsProgress.length > 0) {
+        // 가장 최근에 시청한 세션 반환
+        return sessionsProgress[0].session_id;
+      }
+    } catch (error) {
+      console.error('Error getting last watched session:', error);
+    }
+    return null;
+  };
+
   const handleCourseClick = async (courseId: string) => {
-    navigateToLastWatchedSession(courseId, user?.id, navigate);
+    const lastSessionId = await getLastWatchedSession(courseId);
+    if (lastSessionId) {
+      navigate(`/learn/${courseId}?session=${lastSessionId}`);
+    } else {
+      navigate(`/learn/${courseId}`);
+    }
   };
 
   if (loading) {
