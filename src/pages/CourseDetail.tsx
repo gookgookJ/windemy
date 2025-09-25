@@ -441,17 +441,6 @@ const CourseDetail = () => {
                              </div>
                          )}
 
-                          {/* Price (중앙 정렬로 변경) */}
-                          <div className="text-center">
-                              <div className="text-xl sm:text-2xl font-bold text-primary">
-                                  {(selectedCourse?.price ?? 0).toLocaleString()}원
-                              </div>
-                              {selectedCourse?.original_price && (
-                                  <div className="text-sm sm:text-base text-muted-foreground line-through">
-                                      {selectedCourse.original_price.toLocaleString()}원
-                                  </div>
-                              )}
-                          </div>
 
                          {/* Options Selection (옵션명만 표시) */}
                          <div className="space-y-3 sm:space-y-4">
@@ -635,17 +624,6 @@ const CourseDetail = () => {
                           {instructorInfo ? '강사 소개가 준비 중입니다.' : '강사 정보를 불러오는 중...'}
                         </p>
                       )}
-                       {/* Instructor Stats */}
-                       <div className="flex items-center gap-4 text-xs lg:text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                            <Users className="w-3 h-3 lg:w-4 lg:h-4" />
-                            <span>{courseData.total_students}명 수강</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <Star className="w-3 h-3 lg:w-4 lg:h-4 text-yellow-400 fill-current" />
-                            <span>{courseData.rating} 평점</span>
-                        </div>
-                       </div>
                      </div>
                    </div>
                  </div>
