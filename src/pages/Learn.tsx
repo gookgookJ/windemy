@@ -679,89 +679,55 @@ const Learn = () => {
               </CardContent>
             </Card>
 
-            {/* 진도율 - 고급 디자인 */}
-            <Card className="bg-gradient-to-br from-primary/8 via-primary/4 to-transparent border-primary/30 shadow-lg">
+            {/* 진도율 - 깔끔한 디자인 */}
+            <Card>
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-primary/10 rounded-lg">
-                      <PlayCircle className="h-4 w-4 text-primary" />
-                    </div>
-                    <span className="text-sm font-semibold text-foreground">학습 진도</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                      {Math.round(videoProgress[currentSession.id] || 0)}%
-                    </span>
-                    <div className={`relative flex items-center justify-center w-6 h-6 rounded-full ${
-                      (videoProgress[currentSession.id] || 0) >= 80 
-                        ? 'bg-green-500' 
-                        : (videoProgress[currentSession.id] || 0) >= 50 
-                        ? 'bg-yellow-500' 
-                        : 'bg-gray-400'
-                    }`}>
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                    </div>
-                  </div>
+                  <span className="text-sm font-medium text-foreground">학습 진도</span>
+                  <span className="text-xl font-bold text-foreground">
+                    {Math.round(videoProgress[currentSession.id] || 0)}%
+                  </span>
                 </div>
                 
-                {/* 메인 프로그레스바 */}
                 <div className="space-y-3">
+                  {/* 심플한 프로그레스바 */}
                   <div className="relative">
-                    <div className="h-4 bg-muted/50 rounded-full overflow-hidden shadow-inner">
-                      {/* 배경 그라데이션 */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-gray-200/50 to-gray-300/30" />
-                      
-                      {/* 진도 표시 */}
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-gradient-to-r from-primary via-primary to-secondary transition-all duration-700 ease-out rounded-full relative overflow-hidden"
-                        style={{ width: `${Math.max(videoProgress[currentSession.id] || 0, 2)}%` }}
-                      >
-                        {/* 애니메이션 효과 */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
-                        <div className="absolute top-0 left-0 w-full h-1 bg-white/30" />
-                      </div>
-                      
-                      {/* 80% 완료 기준선 */}
-                      <div className="absolute top-0 h-full w-0.5 bg-green-500 shadow-sm" style={{ left: '80%' }}>
-                        <div className="absolute -top-1 -left-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-sm" />
-                      </div>
+                        className="h-full bg-primary transition-all duration-700 ease-out rounded-full"
+                        style={{ width: `${Math.max(videoProgress[currentSession.id] || 0, 0)}%` }}
+                      />
                     </div>
                     
-                    {/* 퍼센트 라벨들 */}
-                    <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-                      <span>0%</span>
-                      <span className="text-green-600 font-medium">80%</span>
-                      <span>100%</span>
-                    </div>
+                    {/* 80% 완료 기준 표시 */}
+                    {(videoProgress[currentSession.id] || 0) < 80 && (
+                      <div className="absolute top-0 left-[80%] transform -translate-x-1/2">
+                        <div className="w-0.5 h-2 bg-border" />
+                        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 mt-1">
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">80%</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   {/* 상태 정보 */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      80% 이상 시청 시 완료 처리
+                    </span>
                     <div className="flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full ${
                         (videoProgress[currentSession.id] || 0) >= 80 
                           ? 'bg-green-500' 
-                          : 'bg-yellow-500'
+                          : 'bg-muted-foreground/50'
                       }`} />
-                      <span className="text-xs text-muted-foreground">
-                        80% 이상 시청 시 완료
+                      <span className={`text-sm font-medium ${
+                        (videoProgress[currentSession.id] || 0) >= 80 
+                          ? 'text-green-600' 
+                          : 'text-muted-foreground'
+                      }`}>
+                        {(videoProgress[currentSession.id] || 0) >= 80 ? '완료 가능' : '시청 중'}
                       </span>
-                    </div>
-                    
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      (videoProgress[currentSession.id] || 0) >= 80 
-                        ? 'bg-green-500/10 text-green-700 border border-green-200' 
-                        : (videoProgress[currentSession.id] || 0) >= 50
-                        ? 'bg-yellow-500/10 text-yellow-700 border border-yellow-200'
-                        : 'bg-gray-500/10 text-gray-700 border border-gray-200'
-                    }`}>
-                      {(videoProgress[currentSession.id] || 0) >= 80 
-                        ? '✅ 완료 가능' 
-                        : (videoProgress[currentSession.id] || 0) >= 50 
-                        ? '🟡 진행 중'
-                        : '⚪ 시작'
-                      }
                     </div>
                   </div>
                 </div>
