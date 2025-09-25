@@ -561,77 +561,38 @@ const Learn = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      {/* 메인 학습 인터페이스 */}
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* 상단 정보 바 */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate('/my-page')}
-              className="hover:bg-muted"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              내 강의실
-            </Button>
-            
-            <div className="hidden sm:block h-6 w-px bg-border" />
-            
-            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
-              <span>{currentIndex + 1}/{sessions.length}</span>
-              <span>•</span>
-              <span>{currentSession.duration_minutes}분</span>
-              <span>•</span>
-              <span>진도 {Math.round((progress.filter(p => p.completed).length / sessions.length) * 100)}%</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* 강의자료 버튼 */}
-            {(getCurrentSectionData()?.attachment_url || currentSession.attachment_url) && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (currentSession.attachment_url) {
-                    downloadFile(currentSession.attachment_url!, currentSession.attachment_name || '세션자료', currentSession.id);
-                  } else if (getCurrentSectionData()?.attachment_url) {
-                    const section = getCurrentSectionData()!;
-                    downloadFile(section.attachment_url!, section.attachment_name || '섹션자료', section.id);
-                  }
-                }}
-                className="hidden sm:flex"
-              >
-                <File className="mr-2 h-4 w-4" />
-                강의자료
-              </Button>
-            )}
-
-            {/* 목차 토글 버튼 */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSidebar(!showSidebar)}
-              className="hidden lg:flex"
-            >
-              <BookOpen className="mr-2 h-4 w-4" />
-              목차
-            </Button>
+      {/* 모바일 우선 반응형 레이아웃 */}
+      <div className="container mx-auto px-4 py-4 max-w-7xl">
+        {/* 상단 헤더 - 모든 화면 크기에서 표시 */}
+        <div className="flex items-center justify-between mb-4">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate('/my-page')}
+            className="hover:bg-muted"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            내 강의실
+          </Button>
+          
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{currentIndex + 1}/{sessions.length}</span>
+            <span>•</span>
+            <span>{Math.round((progress.filter(p => p.completed).length / sessions.length) * 100)}%</span>
           </div>
         </div>
 
-        <div className="flex gap-6">
-          {/* 메인 비디오 영역 */}
-          <div className="flex-1 space-y-6">
-            {/* 코스 제목 */}
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold mb-2">
-                {currentSession.title}
-              </h1>
-              <p className="text-muted-foreground">{course.title}</p>
-            </div>
+        {/* 제목 */}
+        <div className="mb-4">
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold mb-1">
+            {currentSession.title}
+          </h1>
+          <p className="text-sm text-muted-foreground">{course.title}</p>
+        </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* 메인 비디오 영역 */}
+          <div className="lg:col-span-3 space-y-4">
             {/* 비디오 플레이어 */}
             <Card className="overflow-hidden shadow-lg">
               <CardContent className="p-0">
@@ -658,10 +619,9 @@ const Learn = () => {
               </CardContent>
             </Card>
 
-            {/* 비디오 하단 컨트롤 */}
-            <div className="space-y-4">
-              {/* 진도율 */}
-              <div className="bg-card rounded-lg p-4 border">
+            {/* 진도율 */}
+            <Card>
+              <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">학습 진도</span>
                   <span className="text-sm font-semibold text-primary">
@@ -673,211 +633,295 @@ const Learn = () => {
                   className="h-2"
                 />
                 <p className="text-xs text-muted-foreground mt-2">
-                  80% 이상 시청하면 자동으로 완료 처리됩니다
+                  80% 이상 시청하면 완료 처리됩니다
                 </p>
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* 네비게이션 */}
-              <div className="flex items-center justify-between">
-                <Button 
-                  onClick={goToPreviousSession}
-                  disabled={currentIndex === 0}
-                  variant="outline"
-                  size="lg"
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  이전 세션
-                </Button>
-                
-                <div className="flex items-center gap-3">
-                  {isSessionCompleted(currentSession.id) ? (
-                    <div className="flex items-center gap-2 text-green-600">
-                      <CheckCircle className="h-5 w-5" />
-                      <span className="font-medium">완료</span>
-                    </div>
-                  ) : (
-                    <Button 
-                      onClick={() => markSessionComplete(currentSession.id)}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      완료 표시
-                    </Button>
-                  )}
+            {/* 강의 자료 - 명확하게 표시 */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <File className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold">강의 자료</h3>
                 </div>
                 
-                <Button 
-                  onClick={goToNextSession}
-                  disabled={currentIndex === sessions.length - 1}
-                  variant="outline"
-                  size="lg"
-                >
-                  다음 세션
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <div className="space-y-3">
+                  {/* 현재 섹션 자료 */}
+                  {getCurrentSectionData()?.attachment_url && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const section = getCurrentSectionData()!;
+                        downloadFile(section.attachment_url!, section.attachment_name || '섹션자료', section.id);
+                      }}
+                      className="w-full justify-start h-auto p-4 border-primary/30 hover:bg-primary/5"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <File className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <div className="font-medium text-sm">섹션 자료</div>
+                          <div className="text-xs text-muted-foreground">
+                            {getCurrentSectionData()?.attachment_name || '강의자료.pdf'}
+                          </div>
+                        </div>
+                      </div>
+                    </Button>
+                  )}
+                  
+                  {/* 현재 세션 자료 */}
+                  {currentSession.attachment_url && (
+                    <Button
+                      variant="outline"
+                      onClick={() => downloadFile(currentSession.attachment_url!, currentSession.attachment_name || '세션자료', currentSession.id)}
+                      className="w-full justify-start h-auto p-4 border-primary/30 hover:bg-primary/5"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <File className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <div className="font-medium text-sm">세션 자료</div>
+                          <div className="text-xs text-muted-foreground">
+                            {currentSession.attachment_name || '세션자료.pdf'}
+                          </div>
+                        </div>
+                      </div>
+                    </Button>
+                  )}
+                  
+                  {/* 자료 없음 표시 */}
+                  {!getCurrentSectionData()?.attachment_url && !currentSession.attachment_url && (
+                    <div className="text-center py-6 text-muted-foreground bg-muted/30 rounded-lg">
+                      <File className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">이 세션에는 강의 자료가 없습니다</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 네비게이션 */}
+            <div className="flex items-center justify-between gap-4">
+              <Button 
+                onClick={goToPreviousSession}
+                disabled={currentIndex === 0}
+                variant="outline"
+                size="lg"
+                className="flex-1 sm:flex-none"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                이전
+              </Button>
+              
+              <div className="flex items-center justify-center">
+                {isSessionCompleted(currentSession.id) ? (
+                  <div className="flex items-center gap-2 text-green-600">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="font-medium text-sm">완료</span>
+                  </div>
+                ) : (
+                  <Button 
+                    onClick={() => markSessionComplete(currentSession.id)}
+                    className="bg-green-600 hover:bg-green-700 px-6"
+                  >
+                    완료 표시
+                  </Button>
+                )}
               </div>
+              
+              <Button 
+                onClick={goToNextSession}
+                disabled={currentIndex === sessions.length - 1}
+                variant="outline"
+                size="lg"
+                className="flex-1 sm:flex-none"
+              >
+                다음
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
             </div>
           </div>
 
-          {/* 우측 사이드바 - 목차 (토글 가능) */}
-          {showSidebar && (
-            <div className="hidden lg:block w-80">
-              <Card className="sticky top-6">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="font-semibold text-lg">강의 목차</h3>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowSidebar(false)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-4 max-h-[70vh] overflow-y-auto">
-                    {sections.map((section) => (
-                      <div key={section.id} className="space-y-2">
-                        <div className="flex items-center justify-between py-2">
-                          <h4 className="font-medium text-sm text-foreground/90">
-                            {section.title}
-                          </h4>
-                          {(section.attachment_url || section.sessions?.some((s: any) => s.attachment_url)) && (
-                            <Badge variant="outline" className="text-xs">
-                              자료
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        <div className="space-y-1">
-                          {section.sessions?.map((session: any) => (
-                            <div
-                              key={session.id}
-                              onClick={() => navigateToSession(session)}
-                              className={`cursor-pointer rounded-lg p-3 transition-all duration-200 ${
-                                currentSession?.id === session.id
-                                  ? 'bg-primary text-primary-foreground shadow-sm'
-                                  : 'hover:bg-muted/50'
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="flex-shrink-0">
-                                  {isSessionCompleted(session.id) ? (
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
-                                  ) : (
-                                    <PlayCircle className={`h-4 w-4 ${
-                                      currentSession?.id === session.id 
-                                        ? 'text-primary-foreground' 
-                                        : 'text-muted-foreground'
-                                    }`} />
-                                  )}
+          {/* 우측 사이드바 - 데스크톱에서만 표시 */}
+          <div className="hidden lg:block lg:col-span-1">
+            <Card className="sticky top-6">
+              <CardContent className="p-6">
+                <h3 className="font-semibold text-lg mb-4">강의 목차</h3>
+                
+                <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                  {sections.map((section) => (
+                    <div key={section.id} className="space-y-2">
+                      <div className="flex items-center justify-between py-2">
+                        <h4 className="font-medium text-sm text-foreground/90">
+                          {section.title}
+                        </h4>
+                        {(section.attachment_url || section.sessions?.some((s: any) => s.attachment_url)) && (
+                          <Badge variant="outline" className="text-xs">
+                            자료
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-1">
+                        {section.sessions?.map((session: any) => (
+                          <div
+                            key={session.id}
+                            onClick={() => navigateToSession(session)}
+                            className={`cursor-pointer rounded-lg p-3 transition-all duration-200 ${
+                              currentSession?.id === session.id
+                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                : 'hover:bg-muted/50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex-shrink-0">
+                                {isSessionCompleted(session.id) ? (
+                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <PlayCircle className={`h-4 w-4 ${
+                                    currentSession?.id === session.id 
+                                      ? 'text-primary-foreground' 
+                                      : 'text-muted-foreground'
+                                  }`} />
+                                )}
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <div className={`text-sm font-medium line-clamp-2 ${
+                                  currentSession?.id === session.id ? 'text-primary-foreground' : ''
+                                }`}>
+                                  {session.title}
                                 </div>
-                                
-                                <div className="flex-1 min-w-0">
-                                  <div className={`text-sm font-medium line-clamp-2 ${
-                                    currentSession?.id === session.id ? 'text-primary-foreground' : ''
+                                <div className="flex items-center justify-between mt-1">
+                                  <div className={`text-xs flex items-center gap-1 ${
+                                    currentSession?.id === session.id 
+                                      ? 'text-primary-foreground/70' 
+                                      : 'text-muted-foreground'
                                   }`}>
-                                    {session.title}
+                                    <Clock className="h-3 w-3" />
+                                    {session.duration_minutes}분
                                   </div>
-                                  <div className="flex items-center justify-between mt-1">
-                                    <div className={`text-xs flex items-center gap-1 ${
-                                      currentSession?.id === session.id 
-                                        ? 'text-primary-foreground/70' 
-                                        : 'text-muted-foreground'
-                                    }`}>
-                                      <Clock className="h-3 w-3" />
-                                      {session.duration_minutes}분
-                                    </div>
-                                    
-                                    {session.attachment_url && (
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          downloadFile(session.attachment_url!, session.attachment_name || '세션자료', session.id);
-                                        }}
-                                        className="h-6 w-6 p-0"
-                                      >
-                                        <File className="h-3 w-3" />
-                                      </Button>
-                                    )}
-                                  </div>
+                                  
+                                  {session.attachment_url && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        downloadFile(session.attachment_url!, session.attachment_name || '세션자료', session.id);
+                                      }}
+                                      className="h-6 w-6 p-0"
+                                    >
+                                      <File className="h-3 w-3" />
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        {/* 모바일 하단 네비게이션 */}
-        <div className="lg:hidden mt-6 space-y-4">
-          {/* 모바일 강의자료 */}
-          {(getCurrentSectionData()?.attachment_url || currentSession.attachment_url) && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (currentSession.attachment_url) {
-                  downloadFile(currentSession.attachment_url!, currentSession.attachment_name || '세션자료', currentSession.id);
-                } else if (getCurrentSectionData()?.attachment_url) {
-                  const section = getCurrentSectionData()!;
-                  downloadFile(section.attachment_url!, section.attachment_name || '섹션자료', section.id);
-                }
-              }}
-              className="w-full"
-            >
-              <File className="mr-2 h-4 w-4" />
-              강의자료 다운로드
-            </Button>
-          )}
-
-          {/* 모바일 목차 */}
-          <details className="bg-card rounded-lg border">
-            <summary className="cursor-pointer p-4 font-medium flex items-center justify-between">
-              <span>강의 목차</span>
-              <BookOpen className="h-4 w-4" />
-            </summary>
-            <div className="px-4 pb-4 space-y-3">
-              {sections.map((section) => (
-                <div key={section.id} className="space-y-2">
-                  <h4 className="font-medium text-sm text-foreground/90 py-2">
-                    {section.title}
-                  </h4>
-                  <div className="space-y-1">
-                    {section.sessions?.map((session: any) => (
-                      <div
-                        key={session.id}
-                        onClick={() => navigateToSession(session)}
-                        className={`cursor-pointer rounded p-2 transition-colors ${
-                          currentSession?.id === session.id
-                            ? 'bg-primary text-primary-foreground'
-                            : 'hover:bg-muted/50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          {isSessionCompleted(session.id) ? (
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <PlayCircle className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <span className="text-sm flex-1">{session.title}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {session.duration_minutes}분
-                          </span>
+        {/* 모바일 목차 - 하단에 배치 */}
+        <div className="lg:hidden mt-6">
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="font-semibold mb-4">강의 목차</h3>
+              <div className="space-y-4">
+                {sections.map((section) => (
+                  <div key={section.id} className="space-y-2">
+                    <div className="flex items-center justify-between py-2">
+                      <h4 className="font-medium text-sm text-foreground/90">
+                        {section.title}
+                      </h4>
+                      {(section.attachment_url || section.sessions?.some((s: any) => s.attachment_url)) && (
+                        <Badge variant="outline" className="text-xs">
+                          자료
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {section.sessions?.map((session: any) => (
+                        <div
+                          key={session.id}
+                          onClick={() => navigateToSession(session)}
+                          className={`cursor-pointer rounded-lg p-3 transition-all duration-200 ${
+                            currentSession?.id === session.id
+                              ? 'bg-primary text-primary-foreground'
+                              : 'hover:bg-muted/50 border border-border'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0">
+                              {isSessionCompleted(session.id) ? (
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <PlayCircle className={`h-4 w-4 ${
+                                  currentSession?.id === session.id 
+                                    ? 'text-primary-foreground' 
+                                    : 'text-muted-foreground'
+                                }`} />
+                              )}
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className={`text-sm font-medium ${
+                                currentSession?.id === session.id ? 'text-primary-foreground' : ''
+                              }`}>
+                                {session.title}
+                              </div>
+                              <div className="flex items-center justify-between mt-1">
+                                <div className={`text-xs flex items-center gap-1 ${
+                                  currentSession?.id === session.id 
+                                    ? 'text-primary-foreground/70' 
+                                    : 'text-muted-foreground'
+                                }`}>
+                                  <Clock className="h-3 w-3" />
+                                  {session.duration_minutes}분
+                                </div>
+                                
+                                <div className="flex items-center gap-2">
+                                  {isSessionCompleted(session.id) && (
+                                    <Badge variant="secondary" className="text-xs px-2 py-0">
+                                      완료
+                                    </Badge>
+                                  )}
+                                  {session.attachment_url && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        downloadFile(session.attachment_url!, session.attachment_name || '세션자료', session.id);
+                                      }}
+                                      className="h-6 w-6 p-0"
+                                    >
+                                      <File className="h-3 w-3 text-primary" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </details>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
