@@ -53,11 +53,71 @@ const FormattedContent = ({ content }: { content: string }) => {
           }
         }
         
-        // Handle numbered lists - convert to regular text with numbers
+        // Handle sections with introduction text followed by numbered items
+        if (section.includes('\n') && section.match(/.*다음과 같습니다\.\n/) && section.match(/^\s*[0-9]+\./m)) {
+          const lines = section.split('\n');
+          const introLines = [];
+          const numberedLines = [];
+          let isNumberedSection = false;
+          
+          lines.forEach(line => {
+            if (line.match(/^\s*[0-9]+\./)) {
+              isNumberedSection = true;
+            }
+            if (isNumberedSection) {
+              numberedLines.push(line);
+            } else {
+              introLines.push(line);
+            }
+          });
+          
+          return (
+            <div key={index} className="space-y-4">
+              {/* Introduction text */}
+              {introLines.length > 0 && (
+                <div className="space-y-2">
+                  {introLines.map((line, lineIndex) => (
+                    line.trim() ? (
+                      <p key={lineIndex} className="leading-relaxed text-base">
+                        {formatInlineContent(line)}
+                      </p>
+                    ) : null
+                  ))}
+                </div>
+              )}
+              
+              {/* Indented numbered items */}
+              {numberedLines.length > 0 && (
+                <div className="ml-6 space-y-3">
+                  {numberedLines.map((line, lineIndex) => {
+                    if (line.match(/^\s*[0-9]+\./)) {
+                      const number = line.match(/^\s*([0-9]+)\./)?.[1];
+                      const content = line.replace(/^\s*[0-9]+\.\s*/, '');
+                      return (
+                        <p key={lineIndex} className="leading-relaxed text-base">
+                          {number}. {formatInlineContent(content)}
+                        </p>
+                      );
+                    } else if (line.trim() && !line.match(/^\s*[-•]/)) {
+                      return (
+                        <p key={lineIndex} className="leading-relaxed text-base ml-4">
+                          {formatInlineContent(line)}
+                        </p>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        }
+        
+        // Handle regular numbered lists - convert to regular text with indentation
         if (section.match(/^\s*[0-9]+\./m)) {
           const lines = section.split('\n');
           return (
-            <div key={index} className="space-y-3">
+            <div key={index} className="ml-6 space-y-3">
               {lines.map((line, lineIndex) => {
                 if (line.match(/^\s*[0-9]+\./)) {
                   const number = line.match(/^\s*([0-9]+)\./)?.[1];
@@ -80,11 +140,11 @@ const FormattedContent = ({ content }: { content: string }) => {
           );
         }
         
-        // Handle bulleted lists
+        // Handle bulleted lists with indentation
         if (section.match(/^\s*[-•]/m)) {
           const lines = section.split('\n');
           return (
-            <div key={index} className="space-y-2 ml-4">
+            <div key={index} className="ml-6 space-y-2">
               {lines.map((line, lineIndex) => {
                 if (line.match(/^\s*[-•]/)) {
                   return (
