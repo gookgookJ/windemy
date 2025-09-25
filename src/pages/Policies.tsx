@@ -9,6 +9,126 @@ import { Bell, HelpCircle, FileText, Shield, Search, Calendar } from 'lucide-rea
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
+// Formatted content component to handle markdown-like formatting
+const FormattedContent = ({ content }: { content: string }) => {
+  if (!content) return null;
+  
+  // Split content by double newlines to identify paragraphs and sections
+  const sections = content.split('\n\n');
+  
+  return (
+    <div className="space-y-4">
+      {sections.map((section, index) => {
+        // Handle tables (content with | characters)
+        if (section.includes('|') && section.split('|').length > 2) {
+          const lines = section.split('\n');
+          const tableLines = lines.filter(line => line.includes('|'));
+          
+          if (tableLines.length > 0) {
+            return (
+              <div key={index} className="overflow-x-auto my-4">
+                <table className="min-w-full border-collapse border border-border">
+                  <tbody>
+                    {tableLines.map((line, lineIndex) => {
+                      const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell);
+                      return (
+                        <tr key={lineIndex}>
+                          {cells.map((cell, cellIndex) => (
+                            <td key={cellIndex} className="border border-border px-4 py-2 bg-muted/50">
+                              {formatInlineContent(cell)}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          }
+        }
+        
+        // Handle bold text sections (content with **)
+        if (section.includes('**')) {
+          return (
+            <div key={index} className="space-y-2">
+              {section.split('\n').map((line, lineIndex) => (
+                <p key={lineIndex} className="leading-relaxed">
+                  {formatInlineContent(line)}
+                </p>
+              ))}
+            </div>
+          );
+        }
+        
+        // Handle numbered/bulleted lists
+        if (section.match(/^\s*[0-9]+\.|^\s*[-•]/m)) {
+          const lines = section.split('\n');
+          return (
+            <div key={index} className="space-y-2">
+              {lines.map((line, lineIndex) => {
+                if (line.match(/^\s*[0-9]+\./)) {
+                  return (
+                    <div key={lineIndex} className="flex gap-2">
+                      <span className="font-medium text-primary">{line.match(/^\s*[0-9]+\./)?.[0]}</span>
+                      <span className="flex-1">{formatInlineContent(line.replace(/^\s*[0-9]+\.\s*/, ''))}</span>
+                    </div>
+                  );
+                } else if (line.match(/^\s*[-•]/)) {
+                  return (
+                    <div key={lineIndex} className="flex gap-2">
+                      <span className="text-primary">•</span>
+                      <span className="flex-1">{formatInlineContent(line.replace(/^\s*[-•]\s*/, ''))}</span>
+                    </div>
+                  );
+                } else if (line.trim()) {
+                  return (
+                    <p key={lineIndex} className="leading-relaxed ml-4">
+                      {formatInlineContent(line)}
+                    </p>
+                  );
+                }
+                return null;
+              })}
+            </div>
+          );
+        }
+        
+        // Regular paragraphs
+        return (
+          <div key={index} className="space-y-2">
+            {section.split('\n').map((line, lineIndex) => (
+              line.trim() ? (
+                <p key={lineIndex} className="leading-relaxed">
+                  {formatInlineContent(line)}
+                </p>
+              ) : null
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// Helper function to format inline content (bold, etc.)
+const formatInlineContent = (text: string) => {
+  if (!text) return text;
+  
+  // Handle bold text
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={index} className="font-semibold text-foreground">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    return part;
+  });
+};
+
 // --- 데이터 ---
 
 // 오늘 날짜를 YYYY년 MM월 DD일 형식으로 생성
@@ -132,12 +252,18 @@ const PolicyContent = ({ title, data }) => {
   return (
       <Card>
           <CardContent className="p-6 md:p-8">
-              <h1 className="text-2xl md:text-3xl font-bold mb-8">{title}</h1>
-              <div className="prose prose-sm md:prose-base max-w-none space-y-8 dark:prose-invert">
+              <h1 className="text-2xl md:text-3xl font-bold mb-8 text-foreground">{title}</h1>
+              <div className="space-y-6">
                   {data.map((item) => (
-                      <section key={item.id}>
-                          {item.title && <h3 className="font-semibold text-base md:text-lg">{item.title}</h3>}
-                          <p className="whitespace-pre-line text-muted-foreground leading-relaxed">{item.content}</p>
+                      <section key={item.id} className="pb-6 border-b border-border last:border-b-0">
+                          {item.title && (
+                              <h3 className="font-semibold text-lg md:text-xl mb-4 text-foreground">
+                                  {item.title}
+                              </h3>
+                          )}
+                          <div className="text-muted-foreground leading-relaxed">
+                              <FormattedContent content={item.content} />
+                          </div>
                       </section>
                   ))}
               </div>
