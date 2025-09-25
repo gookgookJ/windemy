@@ -251,14 +251,11 @@ const CourseDetail = () => {
 
   const fetchInstructorInfo = async (instructorId: string) => {
     try {
-        console.log('Fetching instructor info for ID:', instructorId);
         const { data, error } = await supabase
             .from('instructors')
             .select('full_name, instructor_bio, instructor_avatar_url')
             .eq('id', instructorId)
             .maybeSingle();
-
-        console.log('Instructor query result:', { data, error });
 
         if (error) {
             console.warn('Failed to load detailed instructor info', error);
@@ -428,7 +425,7 @@ const CourseDetail = () => {
                          {/* Selected Course Benefits (PC와 유사한 구조) */}
                          {selectedCourse?.benefits && selectedCourse.benefits.length > 0 && (
                              <div className="bg-muted/30 rounded-lg p-3 sm:p-4">
-                             <h3 className="text-sm sm:text-base font-medium mb-2 sm:mb-3">포함된 혜택</h3>
+                             <h3 className="text-sm sm:text-base font-medium mb-2 sm:mb-3 text-foreground">포함 혜택</h3>
                              <ul className="space-y-1 sm:space-y-2">
                                  {selectedCourse.benefits.map((benefit, index) => (
                                  <li key={index} className="flex items-start gap-2">
@@ -440,19 +437,17 @@ const CourseDetail = () => {
                              </div>
                          )}
 
-                         {/* Price */}
-                         <div className="flex justify-end">
-                             <div className="text-right">
-                                 <div className="text-xl sm:text-2xl font-bold text-primary">
-                                     {(selectedCourse?.price ?? 0).toLocaleString()}원
-                                 </div>
-                                 {selectedCourse?.original_price && (
-                                     <div className="text-sm sm:text-base text-muted-foreground line-through">
-                                         {selectedCourse.original_price.toLocaleString()}원
-                                     </div>
-                                 )}
-                             </div>
-                         </div>
+                          {/* Price (중앙 정렬로 변경) */}
+                          <div className="text-center">
+                              <div className="text-xl sm:text-2xl font-bold text-primary">
+                                  {(selectedCourse?.price ?? 0).toLocaleString()}원
+                              </div>
+                              {selectedCourse?.original_price && (
+                                  <div className="text-sm sm:text-base text-muted-foreground line-through">
+                                      {selectedCourse.original_price.toLocaleString()}원
+                                  </div>
+                              )}
+                          </div>
 
                          {/* Options Selection (옵션명만 표시) */}
                          <div className="space-y-3 sm:space-y-4">
