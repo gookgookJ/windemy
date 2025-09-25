@@ -246,7 +246,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-[95vw] max-w-lg p-0 gap-0 bg-white safe-area-padding overflow-hidden">{/* Increased from max-w-md to max-w-lg */}
+      <DialogContent className="w-full h-full max-w-none p-0 gap-0 bg-white overflow-hidden sm:w-[95vw] sm:max-w-lg sm:h-auto sm:rounded-lg">{/* Mobile: full screen, Desktop: modal */}
         <div className="relative flex flex-col">
           {/* Header */}
           <DialogHeader className="px-8 pt-8 pb-6 text-center flex-shrink-0">{/* Increased padding from px-6 pt-6 pb-4 to px-8 pt-8 pb-6 */}
