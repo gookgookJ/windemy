@@ -558,7 +558,7 @@ const Learn = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => navigate('/mypage')}
+              onClick={() => navigate('/my-page')}
               className="p-0 h-auto"
             >
               <ArrowLeft className="mr-1 h-4 w-4" />
