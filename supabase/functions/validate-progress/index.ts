@@ -103,7 +103,9 @@ serve(async (req) => {
       error: (error as any)?.message || 'Unknown error',
       isValid: false,
       watchedPercentage: 0,
-      checkpointScore: 0
+      forwardJumps: 0,
+      suspiciousJumps: 0,
+      hasReachedEnd: false
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

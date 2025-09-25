@@ -23,6 +23,34 @@ export class VideoProgressTracker {
     this.sessionId = sessionId;
     this.userId = userId;
     this.videoDuration = videoDuration;
+
+    // Visibility API 설정
+    this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
+    this.setupVisibilityListener();
+  }
+
+  // Visibility API 관련 메서드
+  private setupVisibilityListener() {
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', this.handleVisibilityChange);
+    }
+  }
+
+  private handleVisibilityChange() {
+    if (document.visibilityState === 'hidden') {
+      // 탭이 숨겨질 때 진도 저장
+      console.log('Visibility hidden, attempting to save progress...');
+      this.saveProgress().catch(e => console.error("Error saving on visibility change:", e));
+    }
+  }
+
+  // 컴포넌트 언마운트 시 호출될 메서드 (최종 저장 및 리스너 정리)
+  public destroy() {
+    console.log('Destroying tracker...');
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    }
+    return this.saveProgress();
   }
 
   // 초기화 및 데이터 로드 (새로고침 대응)

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -69,7 +69,7 @@ const Learn = () => {
     if (courseId) {
       fetchCourseData();
     }
-  }, [courseId, user]);
+  }, [courseId, user?.id]); // 의존성 변경: user -> user?.id
 
   // 1. Vimeo API 스크립트 로드 (전역에서 한 번만 실행)
   useEffect(() => {
@@ -132,16 +132,16 @@ const Learn = () => {
       clearTimeout(initializationTimer);
       
       if (trackerRef.current) {
-        // 마지막 진행 상황 저장
-        trackerRef.current.saveProgress().catch(e => console.error('Final save error:', e));
+        // destroy()는 최종 저장과 리스너 정리를 포함합니다.
+        trackerRef.current.destroy().catch(e => console.error('Error during tracker destroy:', e));
         trackerRef.current = null;
       }
       if (playerRef.current) {
         // 플레이어 리소스 해제 (destroy 사용 권장)
         try {
-          playerRef.current.destroy().catch(e => console.error("Error destroying player:", e));
+            playerRef.current.destroy().catch(e => console.error("Error destroying player:", e));
         } catch (e) {
-          console.error("Error during player cleanup:", e);
+            console.error("Error during player cleanup:", e);
         }
         playerRef.current = null;
       }
@@ -311,10 +311,17 @@ const Learn = () => {
     }
   };
 
-  // markSessionComplete 수정 (trackerRef 사용)
+  // 다음 세션 이동 함수
+  const goToNextSession = useCallback(() => {
+    const currentIndex = getCurrentSessionIndex();
+    if (currentIndex < sessions.length - 1) {
+      navigateToSession(sessions[currentIndex + 1]);
+    }
+  }, [sessions]);
+
+  // markSessionComplete 수정 (새로고침 제거 및 상태 업데이트)
   const markSessionComplete = async (sessionId: string) => {
     if (!user) return;
-    // progressTracker 대신 trackerRef.current 사용
     const tracker = trackerRef.current;
 
     if (!tracker) {
@@ -333,7 +340,6 @@ const Learn = () => {
 
       // 2. 백엔드 검증 수행
       const { data: validation, error: functionError } = await supabase.functions.invoke('validate-progress', {
-        // tracker에서 실제 영상 길이 전달
         body: { sessionId, userId: user.id, actualDuration: tracker.getVideoDuration() }
       });
 
@@ -345,15 +351,20 @@ const Learn = () => {
       console.log('Validation result:', validation);
 
       if (!validation || !validation.isValid) {
+        const message = validation?.watchedPercentage < 80 
+          ? `시청률이 부족합니다 (현재: ${validation?.watchedPercentage || 0}%, 필요: 80%)`
+          : "완료 조건을 만족하지 않습니다.";
+        
         toast({
-          title: "학습 검증 실패",
-          description: `진도율: ${validation?.watchedPercentage || 0}% (80% 이상 필요)`,
+          title: "완료 조건 미달",
+          description: message,
           variant: "destructive",
         });
         return;
       }
 
       // 3. 검증 성공 시 완료 처리
+      const totalWatchedTime = Math.round(tracker.getTotalWatchedTime());
       const { error: updateError } = await supabase
         .from('session_progress')
         .upsert({
@@ -361,7 +372,8 @@ const Learn = () => {
           session_id: sessionId,
           completed: true,
           completed_at: new Date().toISOString(),
-          watched_duration_seconds: Math.round(tracker.getTotalWatchedTime())
+          watched_duration_seconds: totalWatchedTime,
+          watched_ranges: tracker.getProgressData().watchedRanges,
         }, {
           onConflict: 'user_id,session_id'
         });
@@ -371,14 +383,46 @@ const Learn = () => {
         throw updateError;
       }
 
+      // 4. 로컬 상태 업데이트
+      const updatedSessionProgress = [...progress];
+      const index = updatedSessionProgress.findIndex(p => p.session_id === sessionId);
+      if (index > -1) {
+        updatedSessionProgress[index] = { ...updatedSessionProgress[index], completed: true, watched_duration_seconds: totalWatchedTime };
+      } else {
+        updatedSessionProgress.push({ session_id: sessionId, completed: true, watched_duration_seconds: totalWatchedTime });
+      }
+      setProgress(updatedSessionProgress);
+
+      // 5. 전체 강의 진도율 계산 및 업데이트
+      const completedSessions = updatedSessionProgress.filter(p => p.completed).length;
+      const totalSessions = sessions.length;
+      const newCourseProgress = totalSessions > 0 ? Math.min((completedSessions / totalSessions) * 100, 100) : 0;
+
+      if (enrollment) {
+        await supabase
+          .from('enrollments')
+          .update({ 
+            progress: newCourseProgress,
+            completed_at: newCourseProgress >= 100 ? new Date().toISOString() : null
+          })
+          .eq('id', enrollment.id);
+        
+        // 로컬 enrollment 상태 업데이트
+        setEnrollment((prev: any) => ({ ...prev, progress: newCourseProgress }));
+      }
+
       toast({
-        title: "세션 완료",
+        title: "세션 완료! 🎉",
         description: `진도율 ${validation.watchedPercentage}%로 세션이 완료되었습니다.`,
         variant: "default",
       });
 
-      // 페이지 새로고침으로 진도 반영
-      window.location.reload();
+      // 6. 다음 세션으로 자동 이동
+      if (newCourseProgress < 100) {
+        setTimeout(() => {
+          goToNextSession();
+        }, 1500);
+      }
 
     } catch (error: any) {
       console.error('Error marking session complete:', error);
@@ -457,12 +501,6 @@ const Learn = () => {
     }
   };
 
-  const goToNextSession = () => {
-    const currentIndex = getCurrentSessionIndex();
-    if (currentIndex < sessions.length - 1) {
-      navigateToSession(sessions[currentIndex + 1]);
-    }
-  };
 
   const extractVimeoId = (url: string) => {
     const match = url.match(/vimeo\.com\/(?:video\/)?(\d+)(?:\?.*)?/);
@@ -538,7 +576,7 @@ const Learn = () => {
           <div className="lg:col-span-2">
             <Card>
               <CardContent className="p-0">
-                <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
+                <div className="aspect-video rounded-t-lg overflow-hidden">
                   {currentSession.video_url?.includes('vimeo.com') && vimeoId ? (
                     <div className="w-full h-full relative">
                       <iframe
@@ -553,8 +591,8 @@ const Learn = () => {
                       />
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <p className="text-white">비디오를 불러올 수 없습니다</p>
+                    <div className="flex items-center justify-center h-full bg-muted">
+                      <p className="text-muted-foreground">비디오를 불러올 수 없습니다</p>
                     </div>
                   )}
                 </div>
