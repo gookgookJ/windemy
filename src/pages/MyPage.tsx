@@ -111,7 +111,7 @@ const MyPage = () => {
       if (error) throw error;
 
       const enrollmentsData = pagedData || [];
-      const courseIds = enrollmentsData.map(e => e.course.id);
+      const courseIds = enrollmentsData.map((e: any) => e.courses?.id).filter(Boolean);
 
       // 3. 다음 세션 정보 조회 (N+1 쿼리 방지를 위한 최적화된 배치 조회)
       if (courseIds.length > 0) {
@@ -132,8 +132,8 @@ const MyPage = () => {
         const completedSessionIds = new Set(userProgress?.map(p => p.session_id) || []);
 
         // 3c. 로컬에서 다음 세션 결정 및 병합
-        const enrollmentsWithNextStep = enrollmentsData.map(enrollment => {
-            const courseSessions = sessionsMetadata?.filter(s => s.course_id === enrollment.course.id) || [];
+        const enrollmentsWithNextStep = enrollmentsData.map((enrollment: any) => {
+            const courseSessions = sessionsMetadata?.filter(s => s.course_id === enrollment.courses?.id) || [];
             
             // 완료하지 않은 첫 번째 세션 찾기
             let nextSession = courseSessions.find(s => !completedSessionIds.has(s.id));
@@ -144,7 +144,17 @@ const MyPage = () => {
             }
 
             return {
-                ...enrollment,
+                id: enrollment.id,
+                progress: enrollment.progress,
+                enrolled_at: enrollment.enrolled_at,
+                updated_at: enrollment.updated_at,
+                completed_at: enrollment.completed_at,
+                course: {
+                  id: enrollment.courses?.id,
+                  title: enrollment.courses?.title,
+                  thumbnail_url: enrollment.courses?.thumbnail_url,
+                  duration_hours: enrollment.courses?.duration_hours,
+                },
                 nextSessionInfo: nextSession ? { id: nextSession.id, title: nextSession.title } : undefined
             } as EnrollmentWithCourse;
         });
@@ -192,9 +202,27 @@ const MyPage = () => {
     }
   };
 
-  if (loading) {
-    // ... (로딩 화면 유지)
-  }
+  if (loading) {
+    return (
+      <div className="bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+              <div className="lg:col-span-1 hidden lg:block">
+                <UserSidebar />
+              </div>
+              <div className="lg:col-span-3">
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">로딩 중...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background">
@@ -229,9 +257,11 @@ const MyPage = () => {
                   {/* '더보기' 버튼 제거 (페이지네이션이 역할 대체) */}
                 </CardHeader>
                 <CardContent className="p-6">
-                  {enrollments.length === 0 ? (
-                    // ... (강의 없음 화면 유지)
-                  ) : (
+                  {enrollments.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">등록된 강의가 없습니다.</p>
+                    </div>
+                  ) : (
                     <>
                       <div className="space-y-4 mb-6">
                         {/* ★ C. 강의 카드 디자인 및 정보 구조 변경 */}
@@ -303,10 +333,30 @@ const MyPage = () => {
                         )})}
                       </div>
                     
-                    {/* Pagination Controls (유지) */}
-                    {totalPages > 1 && (
-                        // ... (페이지네이션 UI 유지)
-                    )}
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-2 mt-6">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          {currentPage} / {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          disabled={currentPage === totalPages}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                     </>
                   )}
                 </CardContent>
