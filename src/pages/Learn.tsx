@@ -473,10 +473,21 @@ const Learn = () => {
 
   const fetchCourseMaterials = async (sessionId: string) => {
     try {
+      // 현재 세션의 section_id를 찾습니다
+      const currentSection = sections.find(section => 
+        section.sessions?.some((session: any) => session.id === sessionId)
+      );
+      
+      if (!currentSection) {
+        setCourseMaterials([]);
+        return;
+      }
+      
+      // 해당 섹션의 모든 자료를 가져옵니다
       const { data, error } = await supabase
         .from('course_materials')
         .select('*')
-        .eq('session_id', sessionId)
+        .eq('section_id', currentSection.id)
         .order('order_index');
 
       if (error) throw error;
@@ -726,7 +737,7 @@ const Learn = () => {
                           ? 'text-green-600' 
                           : 'text-muted-foreground'
                       }`}>
-                        {(videoProgress[currentSession.id] || 0) >= 80 ? '완료 가능' : '시청 중'}
+                        {(videoProgress[currentSession.id] || 0) >= 80 ? '완료 가능' : ''}
                       </span>
                     </div>
                   </div>

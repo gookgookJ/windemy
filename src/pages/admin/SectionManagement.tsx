@@ -27,6 +27,7 @@ interface CourseSection {
     id: string;
     title: string;
   }[];
+  materials?: any[];
 }
 
 export const SectionManagement = () => {
@@ -50,7 +51,8 @@ export const SectionManagement = () => {
         .select(`
           *,
           course:courses(title, id),
-          sessions:course_sessions(id, title)
+          sessions:course_sessions(id, title),
+          materials:course_materials(id, title, file_name, file_type, order_index)
         `)
         .order('course_id', { ascending: true })
         .order('order_index', { ascending: true });
@@ -254,16 +256,24 @@ export const SectionManagement = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {section.attachment_url && section.attachment_name ? (
-                          <div className="flex items-center gap-2">
-                            <File className="h-4 w-4 text-blue-600" />
-                            <span className="text-sm text-blue-600 truncate max-w-[150px]" title={section.attachment_name}>
-                              {section.attachment_name}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">자료 없음</span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {section.materials && section.materials.length > 0 ? (
+                            <>
+                              <div className="flex items-center gap-1">
+                                <File className="h-4 w-4 text-green-600" />
+                                <span className="text-sm font-medium text-green-600">
+                                  {section.materials.length}개 자료
+                                </span>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {section.materials.slice(0, 2).map(m => m.title).join(', ')}
+                                {section.materials.length > 2 && ' 외 ' + (section.materials.length - 2) + '개'}
+                              </div>
+                            </>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">자료 없음</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -325,6 +335,7 @@ export const SectionManagement = () => {
           onUpdate={fetchSections}
           courseId={uploadingSection?.course_id || ''}
           sectionId={uploadingSection?.id}
+          existingMaterials={uploadingSection?.materials || []}
         />
       </div>
     </AdminLayout>

@@ -468,6 +468,7 @@ export const SessionManagement = () => {
           onUpdate={fetchSessions}
           courseId={managingSession?.course?.id || ''}
           sessionId={managingSession?.id}
+          existingMaterials={[]}
         />
 
       </div>

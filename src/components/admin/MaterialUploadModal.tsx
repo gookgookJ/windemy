@@ -278,11 +278,35 @@ export const MaterialUploadModal = ({
                         />
                       </div>
 
-                      {material.type === 'file' ? (
-                        <div>
-                          <Label>파일</Label>
-                          <div 
-                            className="mt-1 border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                    {material.type === 'file' ? (
+                      <div>
+                        <Label>파일 선택</Label>
+                        {material.file ? (
+                          <div className="mt-1 p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <File className="h-4 w-4 text-green-600" />
+                                <span className="text-sm font-medium text-green-800">
+                                  {material.file.name}
+                                </span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => updateNewMaterial(index, { file: undefined })}
+                                className="h-6 w-6 p-0 hover:bg-red-100"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <div className="text-xs text-green-600 mt-1">
+                              크기: {Math.round(material.file.size / 1024)} KB
+                            </div>
+                          </div>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
                             onClick={() => {
                               const input = document.createElement('input');
                               input.type = 'file';
@@ -293,33 +317,29 @@ export const MaterialUploadModal = ({
                               };
                               input.click();
                             }}
+                            className="w-full h-12 mt-1 border-2 border-dashed hover:bg-muted/50"
                           >
-                            {material.file ? (
-                              <div className="flex items-center justify-center gap-2">
-                                <File className="h-5 w-5 text-primary" />
-                                <span className="text-sm">{material.file.name}</span>
-                              </div>
-                            ) : (
-                              <>
-                                <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                                <p className="text-sm text-muted-foreground">
-                                  클릭하여 파일 선택 (최대 20MB)
-                                </p>
-                              </>
-                            )}
+                            <Upload className="h-4 w-4 mr-2" />
+                            파일 선택 (최대 20MB)
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        <Label>링크 URL</Label>
+                        <Input
+                          type="url"
+                          value={material.url || ''}
+                          onChange={(e) => updateNewMaterial(index, { url: e.target.value })}
+                          placeholder="https://example.com/file.pdf"
+                          className="mt-1"
+                        />
+                        {material.url && (
+                          <div className="mt-1 text-xs text-blue-600">
+                            ✓ 링크가 입력되었습니다
                           </div>
-                        </div>
-                      ) : (
-                        <div>
-                          <Label>링크 URL</Label>
-                          <Input
-                            type="url"
-                            value={material.url || ''}
-                            onChange={(e) => updateNewMaterial(index, { url: e.target.value })}
-                            placeholder="https://example.com/file.pdf"
-                            className="mt-1"
-                          />
-                        </div>
+                        )}
+                      </div>
                       )}
                     </div>
                   </div>
@@ -328,31 +348,40 @@ export const MaterialUploadModal = ({
             </div>
           )}
 
-          {/* 자료 추가 버튼들 */}
-          {materials.length + newMaterials.length < 10 && (
-            <div className="flex gap-2">
+        {/* 자료 추가 버튼들 */}
+        {materials.length + newMaterials.length < 10 && (
+          <div>
+            <h4 className="font-medium text-sm text-muted-foreground mb-3">자료 추가</h4>
+            <div className="grid grid-cols-2 gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => addNewMaterial('file')}
-                className="flex-1"
+                className="h-20 flex-col gap-2 text-center"
                 disabled={uploading}
               >
-                <Upload className="h-4 w-4 mr-2" />
-                파일 추가
+                <Upload className="h-6 w-6 text-primary" />
+                <div className="space-y-1">
+                  <div className="text-sm font-medium">파일 업로드</div>
+                  <div className="text-xs text-muted-foreground">PDF, DOC, 이미지 등</div>
+                </div>
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => addNewMaterial('link')}
-                className="flex-1"
+                className="h-20 flex-col gap-2 text-center"
                 disabled={uploading}
               >
-                <Link className="h-4 w-4 mr-2" />
-                링크 추가
+                <Link className="h-6 w-6 text-secondary" />
+                <div className="space-y-1">
+                  <div className="text-sm font-medium">링크 추가</div>
+                  <div className="text-xs text-muted-foreground">외부 링크, URL</div>
+                </div>
               </Button>
             </div>
-          )}
+          </div>
+        )}
 
           {/* 액션 버튼들 */}
           <div className="flex gap-2 pt-4">
