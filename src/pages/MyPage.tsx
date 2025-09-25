@@ -18,18 +18,16 @@ interface NextSessionInfo {
 }
 
 interface EnrollmentWithCourse {
-  id: string;
-  progress: number;
-  enrolled_at: string;
-  updated_at: string; // 최근 활동 시간
-  completed_at: string | null;
-  course: {
-    id: string;
-    title: string;
-    thumbnail_url: string;
-    duration_hours: number;
-    // 강사 정보는 목록에서 사용하지 않으므로 제거
-  };
+  id: string;
+  progress: number;
+  enrolled_at: string;
+  completed_at: string | null;
+  course: {
+    id: string;
+    title: string;
+    thumbnail_url: string;
+    duration_hours: number;
+  };
   nextSessionInfo?: NextSessionInfo; // ★ 다음 세션 정보
 }
 
@@ -97,21 +95,21 @@ const MyPage = () => {
       ).length || 0;
       setStats({ totalCourses: totalCount, completedCourses, inProgressCourses });
 
-      // 2. 페이징된 데이터 조회 (최근 활동 순 정렬)
-      const { data: pagedData, error } = await supabase
-        .from('enrollments')
-        .select(`
-          id, progress, enrolled_at, completed_at, updated_at,
-          course:courses(id, title, thumbnail_url, duration_hours)
-        `)
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false }) // ★ 최근 활동 순 정렬
-        .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1);
+      // 2. 페이징된 데이터 조회 (최근 등록 순 정렬)
+      const { data: pagedData, error } = await supabase
+        .from('enrollments')
+        .select(`
+          id, progress, enrolled_at, completed_at,
+          courses!inner(id, title, thumbnail_url, duration_hours)
+        `)
+        .eq('user_id', user.id)
+        .order('enrolled_at', { ascending: false }) // ★ 최근 등록 순 정렬
+        .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1);
 
-      if (error) throw error;
+      if (error) throw error;
 
       const enrollmentsData = pagedData || [];
-      const courseIds = enrollmentsData.map(e => e.course.id);
+      const courseIds = enrollmentsData.map(e => e.courses.id);
 
       // 3. 다음 세션 정보 조회 (N+1 쿼리 방지를 위한 최적화된 배치 조회)
       if (courseIds.length > 0) {
@@ -133,7 +131,7 @@ const MyPage = () => {
 
         // 3c. 로컬에서 다음 세션 결정 및 병합
         const enrollmentsWithNextStep = enrollmentsData.map(enrollment => {
-            const courseSessions = sessionsMetadata?.filter(s => s.course_id === enrollment.course.id) || [];
+            const courseSessions = sessionsMetadata?.filter(s => s.course_id === enrollment.courses.id) || [];
             
             // 완료하지 않은 첫 번째 세션 찾기
             let nextSession = courseSessions.find(s => !completedSessionIds.has(s.id));
@@ -145,6 +143,7 @@ const MyPage = () => {
 
             return {
                 ...enrollment,
+                course: enrollment.courses,
                 nextSessionInfo: nextSession ? { id: nextSession.id, title: nextSession.title } : undefined
             } as EnrollmentWithCourse;
         });
@@ -192,9 +191,29 @@ const MyPage = () => {
     }
   };
 
-  if (loading) {
-    // ... (로딩 화면 유지)
-  }
+  if (loading) {
+    return (
+      <div className="bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+              <div className="lg:col-span-1 hidden lg:block">
+                <UserSidebar />
+              </div>
+              <div className="lg:col-span-3">
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <div className="animate-pulse">로딩 중...</div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background">
@@ -229,9 +248,14 @@ const MyPage = () => {
                   {/* '더보기' 버튼 제거 (페이지네이션이 역할 대체) */}
                 </CardHeader>
                 <CardContent className="p-6">
-                  {enrollments.length === 0 ? (
-                    // ... (강의 없음 화면 유지)
-                  ) : (
+                  {enrollments.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground mb-4">아직 수강 중인 강의가 없습니다.</p>
+                      <Button onClick={() => navigate('/course-catalog')}>
+                        강의 둘러보기
+                      </Button>
+                    </div>
+                  ) : (
                     <>
                       <div className="space-y-4 mb-6">
                         {/* ★ C. 강의 카드 디자인 및 정보 구조 변경 */}
@@ -303,10 +327,30 @@ const MyPage = () => {
                         )})}
                       </div>
                     
-                    {/* Pagination Controls (유지) */}
-                    {totalPages > 1 && (
-                        // ... (페이지네이션 UI 유지)
-                    )}
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                      <div className="flex justify-center items-center gap-2 mt-6">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          {currentPage} / {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                     </>
                   )}
                 </CardContent>
