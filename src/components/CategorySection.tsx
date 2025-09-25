@@ -36,8 +36,8 @@ const CategorySection = memo(() => {
       icon: MessageCircle, 
       label: "1:1문의", 
       color: "bg-green-100 text-green-600",
-      link: "https://windemy.channel.io/home",
-      isExternal: true
+      link: "channeltalk",
+      isExternal: false
     },
     { 
       icon: Youtube, 
@@ -70,6 +70,22 @@ const CategorySection = memo(() => {
                 </span>
               </div>
             );
+
+            if (category.link === "channeltalk") {
+              return (
+                <div
+                  key={index}
+                  className="block cursor-pointer"
+                  onClick={() => {
+                    if (window.ChannelIO) {
+                      window.ChannelIO('showMessenger');
+                    }
+                  }}
+                >
+                  {content}
+                </div>
+              );
+            }
 
             return category.isExternal ? (
               <a

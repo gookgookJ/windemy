@@ -110,18 +110,17 @@ const Footer = () => {
           {/* 다섯 번째 컬럼 - 문의하기 */}
           <div className="space-y-3 sm:space-y-4">
             <div className="space-y-3 sm:space-y-4">
-              <a 
-                href="https://windemy.channel.io/home" 
-                target="_blank" 
-                rel="noopener noreferrer"
-              >
                 <Button 
                   size="sm"
                   className="w-full bg-white text-slate-900 hover:bg-slate-100 font-medium text-xs sm:text-sm h-8 sm:h-9"
+                  onClick={() => {
+                    if (window.ChannelIO) {
+                      window.ChannelIO('showMessenger');
+                    }
+                  }}
                 >
                   고객센터
                 </Button>
-              </a>
               <div className="text-xs text-slate-500 space-y-1 sm:space-y-1.5">
                 <p>평일 10:00 - 18:00</p>
                 <p>점심시간 12:30 - 13:30</p>

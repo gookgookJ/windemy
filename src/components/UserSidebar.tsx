@@ -53,10 +53,10 @@ const UserSidebar = () => {
 
   const supportItems = [
     {
-      path: 'https://windemy.channel.io/home',
+      path: 'channeltalk',
       label: '1:1 문의',
       icon: Clock,
-      external: true,
+      external: false,
     }
   ];
 
@@ -107,7 +107,11 @@ const UserSidebar = () => {
                   !item.external && isActive(item.path) ? 'bg-primary/10 text-primary' : ''
                 }`}
                 onClick={() => {
-                  if (item.external) {
+                  if (item.path === 'channeltalk') {
+                    if (window.ChannelIO) {
+                      window.ChannelIO('showMessenger');
+                    }
+                  } else if (item.external) {
                     window.open(item.path, '_blank');
                   } else {
                     navigate(item.path);
