@@ -296,13 +296,15 @@ const CourseDetail = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // (수정됨) 스크롤 오프셋 조정
+  // (수정됨) 스크롤 오프셋 조정 - 모바일과 데스크톱 대응
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      // Adjusted scroll position to account for sticky header/navigation
-      // 예상 높이: 헤더(80px) + 네비게이션 바(약 50px) = 130px.
-      const headerOffset = 130; 
+      // 모바일과 데스크톱에서 다른 헤더 높이 적용
+      // 모바일: 헤더(64px) + 네비게이션 바(약 48px) = 112px
+      // 데스크톱: 헤더(64px) + 네비게이션 바(약 52px) = 116px
+      const isMobile = window.innerWidth < 1024;
+      const headerOffset = isMobile ? 120 : 130; 
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -447,8 +449,13 @@ const CourseDetail = () => {
 
 
             {/* Sticky Navigation Bar */}
-            {/* 수정됨: rounded-lg 제거하여 직각 모서리로 변경 */}
-            <div className="sticky top-16 z-50 bg-background border border-border mb-8 overflow-hidden shadow-md">
+            {/* 수정됨: 모바일에서 올바른 top offset과 z-index 적용 */}
+            <div className="sticky top-16 sm:top-16 z-40 bg-background border border-border mb-8 overflow-hidden shadow-md"
+                 style={{ 
+                   position: '-webkit-sticky', 
+                   backdropFilter: 'blur(8px)', 
+                   backgroundColor: 'rgba(255, 255, 255, 0.95)' 
+                 }}>
               <div className="grid grid-cols-4 gap-0">
                 {/* Responsive Button Styles */}
                 <button
@@ -480,7 +487,8 @@ const CourseDetail = () => {
             </div>
 
             {/* Main Content Area */}
-            <div className="space-y-12 lg:space-y-16">
+            {/* 수정됨: 콘텐츠가 sticky 네비게이션 아래에 제대로 표시되도록 여백 조정 */}
+            <div className="space-y-12 lg:space-y-16" style={{ paddingTop: '1rem' }}>
 
               {/* Course Detail Images */}
               <div id="overview">
