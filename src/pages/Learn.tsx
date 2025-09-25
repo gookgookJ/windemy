@@ -785,7 +785,6 @@ const Learn = () => {
                                 {index + 1}
                               </div>
                               <div className="flex-1 text-left min-w-0">
-                                <div className="font-medium text-sm truncate">{material.title}</div>
                                 <div className="text-xs text-muted-foreground truncate">
                                   {material.file_name}
                                   {material.file_size && (

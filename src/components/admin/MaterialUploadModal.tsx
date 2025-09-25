@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -36,7 +36,7 @@ export const MaterialUploadModal = ({
   sessionId,
   existingMaterials = []
 }: MaterialUploadModalProps) => {
-  const [materials, setMaterials] = useState<CourseMaterial[]>(existingMaterials);
+  const [materials, setMaterials] = useState<CourseMaterial[]>([]);
   const [newMaterials, setNewMaterials] = useState<Array<{
     file?: File;
     title: string;
@@ -46,6 +46,15 @@ export const MaterialUploadModal = ({
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // 모달이 열릴 때마다 상태 초기화
+  useEffect(() => {
+    if (isOpen) {
+      setMaterials(existingMaterials);
+      setNewMaterials([]);
+      setUploading(false);
+    }
+  }, [isOpen, existingMaterials]);
 
   const addNewMaterial = (type: 'file' | 'link') => {
     if (materials.length + newMaterials.length >= 10) {
