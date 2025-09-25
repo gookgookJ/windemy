@@ -7,8 +7,7 @@ import {
   Star,
   BookOpen,
   CheckCircle,
-  User,
-  ChevronUp
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -103,7 +102,6 @@ const CourseDetail = () => {
   const [courseReviews, setCourseReviews] = useState<CourseReview[]>([]);
   const [groupedSections, setGroupedSections] = useState<SectionUI[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [showAlreadyEnrolledModal, setShowAlreadyEnrolledModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [instructorInfo, setInstructorInfo] = useState<InstructorInfo | null>(null);
@@ -133,7 +131,6 @@ const CourseDetail = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
           const currentScrollY = window.scrollY;
-          setShowScrollToTop(currentScrollY > 500);
           
           // Track header visibility on mobile
           if (window.innerWidth < 1024) { // lg breakpoint
@@ -332,9 +329,6 @@ const CourseDetail = () => {
     navigate(paymentUrl);
   };
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   // (수정됨) 스크롤 오프셋 조정 - 헤더 상태에 따라 다르게 처리
   const scrollToSection = (sectionId: string) => {
@@ -792,18 +786,6 @@ const CourseDetail = () => {
           </div>
         </div>
 
-        {/* Scroll to Top Button */}
-        {showScrollToTop && (
-          <Button
-            onClick={scrollToTop}
-            size="icon"
-            // Adjust bottom position on mobile (bottom-20) to avoid overlap with the purchase bar
-            className="fixed bottom-20 right-4 lg:bottom-8 lg:right-8 z-50 w-12 h-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white transition-transform duration-200 hover:scale-105"
-            aria-label="맨 위로 이동"
-          >
-            <ChevronUp className="w-6 h-6" />
-          </Button>
-        )}
 
         {/* Modals */}
         <AlertDialog open={showAlreadyEnrolledModal} onOpenChange={setShowAlreadyEnrolledModal}>
