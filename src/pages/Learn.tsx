@@ -558,11 +558,11 @@ const Learn = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => navigate(fromPage === 'mypage' ? '/mypage' : `/course/${courseId}`)}
+              onClick={() => navigate('/mypage')}
               className="p-0 h-auto"
             >
               <ArrowLeft className="mr-1 h-4 w-4" />
-              {fromPage === 'mypage' ? '마이페이지로' : '강의 상세로'} 돌아가기
+              내 강의실로 돌아가기
             </Button>
           </div>
           <h1 className="text-2xl font-bold">{course.title}</h1>
