@@ -251,19 +251,41 @@ const CourseDetail = () => {
 
   const fetchInstructorInfo = async (instructorId: string) => {
     try {
+        console.log('Fetching instructor info for ID:', instructorId);
         const { data, error } = await supabase
             .from('instructors')
             .select('full_name, instructor_bio, instructor_avatar_url')
             .eq('id', instructorId)
             .maybeSingle();
 
+        console.log('Instructor query result:', { data, error });
+
         if (error) {
             console.warn('Failed to load detailed instructor info', error);
+            // 강사 정보를 찾을 수 없는 경우 기본값 설정
+            setInstructorInfo({
+                full_name: '강사',
+                instructor_bio: '강사 정보를 불러올 수 없습니다.',
+                instructor_avatar_url: null
+            });
         } else if (data) {
             setInstructorInfo(data);
+        } else {
+            console.warn('No instructor data found for ID:', instructorId);
+            // 데이터가 없는 경우 기본값 설정
+            setInstructorInfo({
+                full_name: '강사',
+                instructor_bio: '강사 정보를 불러올 수 없습니다.',
+                instructor_avatar_url: null
+            });
         }
     } catch (e) {
         console.warn('Error during instructor info fetching', e);
+        setInstructorInfo({
+            full_name: '강사',
+            instructor_bio: '강사 정보를 불러올 수 없습니다.',
+            instructor_avatar_url: null
+        });
     }
   };
 
@@ -397,76 +419,79 @@ const CourseDetail = () => {
             </div>
 
             {/* Mobile Purchase Card (Visible only on Mobile/Tablet) */}
-            <div className="lg:hidden mb-8">
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="space-y-4">
-                        <h1 className="text-lg font-bold leading-tight">{courseData.title}</h1>
+             <div className="lg:hidden mb-8">
+                 <Card>
+                     <CardContent className="p-4 sm:p-6">
+                         <div className="space-y-4 sm:space-y-6">
+                         <h1 className="text-lg sm:text-xl font-bold leading-tight">{courseData.title}</h1>
 
-                        {/* Price Only (Rating removed) */}
-                        <div className="flex justify-end">
-                            <div className="text-right">
-                                <div className="text-xl font-bold text-primary">
-                                    {(selectedCourse?.price ?? 0).toLocaleString()}원
-                                </div>
-                                {selectedCourse?.original_price && (
-                                    <div className="text-xs text-muted-foreground line-through">
-                                        {selectedCourse.original_price.toLocaleString()}원
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                         {/* Selected Course Benefits (PC와 유사한 구조) */}
+                         {selectedCourse?.benefits && selectedCourse.benefits.length > 0 && (
+                             <div className="bg-muted/30 rounded-lg p-3 sm:p-4">
+                             <h3 className="text-sm sm:text-base font-medium mb-2 sm:mb-3">포함된 혜택</h3>
+                             <ul className="space-y-1 sm:space-y-2">
+                                 {selectedCourse.benefits.map((benefit, index) => (
+                                 <li key={index} className="flex items-start gap-2">
+                                     <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                     <span className="text-xs sm:text-sm text-muted-foreground">{benefit}</span>
+                                 </li>
+                                 ))}
+                             </ul>
+                             </div>
+                         )}
 
-                        {/* Options Selection with Benefits */}
-                        <div className="space-y-2">
-                            {courseOptions.map((option) => (
-                            <div
-                                key={option.id}
-                                className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                                selectedOption === option.id
-                                    ? 'border-primary bg-primary/5'
-                                    : 'border-border hover:border-primary/50'
-                                }`}
-                                onClick={() => setSelectedOption(option.id)}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedOption(option.id)}
-                            >
-                                <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm font-medium">{option.name}</span>
-                                    <div className="text-right">
-                                    <div className="font-bold text-primary text-sm">
-                                        {option.price.toLocaleString()}원
-                                    </div>
-                                    {option.original_price && (
-                                        <div className="text-xs text-muted-foreground line-through">
-                                        {option.original_price.toLocaleString()}원
-                                        </div>
-                                    )}
-                                    </div>
-                                </div>
-                                {/* Benefits */}
-                                {option.benefits && option.benefits.length > 0 && (
-                                    <div className="mt-2">
-                                    <ul className="text-xs text-muted-foreground space-y-1">
-                                        {option.benefits.map((benefit, index) => (
-                                        <li key={index} className="flex items-start gap-1">
-                                            <CheckCircle className="w-3 h-3 text-green-500 mt-0.5 flex-shrink-0" />
-                                            {benefit}
-                                        </li>
-                                        ))}
-                                    </ul>
-                                    </div>
-                                )}
-                                </div>
-                            </div>
-                            ))}
-                        </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+                         {/* Price */}
+                         <div className="flex justify-end">
+                             <div className="text-right">
+                                 <div className="text-xl sm:text-2xl font-bold text-primary">
+                                     {(selectedCourse?.price ?? 0).toLocaleString()}원
+                                 </div>
+                                 {selectedCourse?.original_price && (
+                                     <div className="text-sm sm:text-base text-muted-foreground line-through">
+                                         {selectedCourse.original_price.toLocaleString()}원
+                                     </div>
+                                 )}
+                             </div>
+                         </div>
+
+                         {/* Options Selection (옵션명만 표시) */}
+                         <div className="space-y-3 sm:space-y-4">
+                             <h3 className="text-sm sm:text-base font-medium text-muted-foreground">강의 구성</h3>
+                             <div className="space-y-2">
+                             {courseOptions.map((option) => (
+                                 <div
+                                 key={option.id}
+                                 className={`p-3 sm:p-4 border rounded-lg cursor-pointer transition-colors ${
+                                     selectedOption === option.id
+                                     ? 'border-primary bg-primary/5'
+                                     : 'border-border hover:border-primary/50'
+                                 }`}
+                                 onClick={() => setSelectedOption(option.id)}
+                                 role="button"
+                                 tabIndex={0}
+                                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedOption(option.id)}
+                                 >
+                                 <div className="flex items-center justify-between">
+                                     <span className="text-sm sm:text-base font-medium">{option.name}</span>
+                                     <div className="text-right">
+                                     <div className="font-bold text-primary text-sm sm:text-base">
+                                         {option.price.toLocaleString()}원
+                                     </div>
+                                     {option.original_price && (
+                                         <div className="text-xs sm:text-sm text-muted-foreground line-through">
+                                         {option.original_price.toLocaleString()}원
+                                         </div>
+                                     )}
+                                     </div>
+                                 </div>
+                                 </div>
+                             ))}
+                             </div>
+                         </div>
+                         </div>
+                     </CardContent>
+                 </Card>
+             </div>
 
 
             {/* Sticky Navigation Bar */}
@@ -599,25 +624,33 @@ const CourseDetail = () => {
                       )}
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg lg:text-xl font-semibold mb-2">{instructorInfo?.full_name || '강사'}</h3>
-                      {instructorInfo?.instructor_bio && (
-                        <p className="text-muted-foreground text-sm lg:text-base mb-3">{instructorInfo.instructor_bio}</p>
+                      <h3 className="text-lg lg:text-xl font-semibold mb-2">
+                        {instructorInfo?.full_name || '강사 정보를 불러오는 중...'}
+                      </h3>
+                      {instructorInfo?.instructor_bio ? (
+                        <p className="text-muted-foreground text-sm lg:text-base mb-3 whitespace-pre-wrap">
+                          {instructorInfo.instructor_bio}
+                        </p>
+                      ) : (
+                        <p className="text-muted-foreground text-sm lg:text-base mb-3">
+                          {instructorInfo ? '강사 소개가 준비 중입니다.' : '강사 정보를 불러오는 중...'}
+                        </p>
                       )}
                        {/* Instructor Stats */}
                        <div className="flex items-center gap-4 text-xs lg:text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                             <Users className="w-3 h-3 lg:w-4 lg:h-4" />
-                            <span>{courseData.total_students.toLocaleString()}명 수강생</span>
+                            <span>{courseData.total_students}명 수강</span>
                         </div>
                         <div className="flex items-center gap-1">
                             <Star className="w-3 h-3 lg:w-4 lg:h-4 text-yellow-400 fill-current" />
-                            <span>{courseData.rating}점</span>
+                            <span>{courseData.rating} 평점</span>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               </section>
 
               {/* Reviews */}
               <section id="reviews">
