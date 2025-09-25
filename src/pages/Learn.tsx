@@ -502,12 +502,14 @@ const Learn = () => {
   };
 
 
-  const extractVimeoId = (url: string) => {
+  const extractVimeoId = (url: string | null | undefined) => {
+    if (!url) return null;
     const match = url.match(/vimeo\.com\/(?:video\/)?(\d+)(?:\?.*)?/);
     return match ? match[1] : null;
   };
 
-  const extractVimeoHash = (url: string) => {
+  const extractVimeoHash = (url: string | null | undefined) => {
+    if (!url) return null;
     const match = url.match(/[?&]h=([a-zA-Z0-9]+)/);
     return match ? match[1] : null;
   };
