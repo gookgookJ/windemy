@@ -180,5 +180,34 @@
         "pluginKey": "8ebb2176-ca18-4bb4-ad27-24da67f6024b"
       });
     </script>
+    
+    <!-- ChannelTalk Mobile Positioning Fix -->
+    <style>
+      /* Fix ChannelTalk positioning on mobile */
+      @media (max-width: 768px) {
+        #ch-plugin {
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          right: auto !important;
+          max-width: 90vw !important;
+        }
+        
+        #ch-plugin-script + div,
+        div[id*="ch-plugin"] {
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          right: auto !important;
+          max-width: 90vw !important;
+        }
+        
+        /* Ensure messenger container is properly centered */
+        iframe[src*="channel.io"] {
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          right: auto !important;
+          max-width: 90vw !important;
+        }
+      }
+    </style>
   </body>
 </html>
