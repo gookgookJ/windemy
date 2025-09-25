@@ -317,10 +317,18 @@ const Learn = () => {
   // 다음 세션 이동 함수
   const goToNextSession = useCallback(() => {
     const currentIndex = getCurrentSessionIndex();
-    if (currentIndex < sessions.length - 1) {
+    if (currentIndex >= 0 && currentIndex < sessions.length - 1) {
       navigateToSession(sessions[currentIndex + 1]);
     }
-  }, [sessions]);
+  }, [sessions, currentSession]);
+
+  // 이전 세션 이동 함수
+  const goToPreviousSession = useCallback(() => {
+    const currentIndex = getCurrentSessionIndex();
+    if (currentIndex > 0) {
+      navigateToSession(sessions[currentIndex - 1]);
+    }
+  }, [sessions, currentSession]);
 
   // markSessionComplete 수정 (새로고침 제거 및 상태 업데이트)
   const markSessionComplete = async (sessionId: string) => {
@@ -504,12 +512,6 @@ const Learn = () => {
     );
   };
 
-  const goToPreviousSession = () => {
-    const currentIndex = getCurrentSessionIndex();
-    if (currentIndex > 0) {
-      navigateToSession(sessions[currentIndex - 1]);
-    }
-  };
 
 
   const extractVimeoId = (url: string) => {
@@ -619,22 +621,45 @@ const Learn = () => {
               </CardContent>
             </Card>
 
-            {/* 진도율 */}
-            <Card>
+            {/* 진도율 - 개선된 디자인 */}
+            <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">학습 진도</span>
-                  <span className="text-sm font-semibold text-primary">
-                    {Math.round(videoProgress[currentSession.id] || 0)}%
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-foreground">학습 진도</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold text-primary">
+                      {Math.round(videoProgress[currentSession.id] || 0)}%
+                    </span>
+                    <div className={`w-2 h-2 rounded-full ${
+                      (videoProgress[currentSession.id] || 0) >= 80 
+                        ? 'bg-green-500' 
+                        : 'bg-yellow-500'
+                    }`} />
+                  </div>
+                </div>
+                <div className="relative">
+                  <Progress 
+                    value={videoProgress[currentSession.id] || 0} 
+                    className="h-3 bg-muted/50"
+                  />
+                  {/* 80% 완료 기준선 */}
+                  <div 
+                    className="absolute top-0 h-3 w-0.5 bg-green-500/70"
+                    style={{ left: '80%' }}
+                  />
+                </div>
+                <div className="flex items-center justify-between mt-2 text-xs">
+                  <span className="text-muted-foreground">
+                    80% 이상 시청 시 완료
+                  </span>
+                  <span className={`font-medium ${
+                    (videoProgress[currentSession.id] || 0) >= 80 
+                      ? 'text-green-600' 
+                      : 'text-muted-foreground'
+                  }`}>
+                    {(videoProgress[currentSession.id] || 0) >= 80 ? '완료 가능' : '시청 중'}
                   </span>
                 </div>
-                <Progress 
-                  value={videoProgress[currentSession.id] || 0} 
-                  className="h-2"
-                />
-                <p className="text-xs text-muted-foreground mt-2">
-                  80% 이상 시청하면 완료 처리됩니다
-                </p>
               </CardContent>
             </Card>
 
