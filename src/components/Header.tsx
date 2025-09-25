@@ -203,11 +203,11 @@ const Header = () => {
                     <span className="hidden sm:inline">내 강의실</span>
                   </Button>
                 </Link>
-                {/* Mobile hamburger menu */}
+                {/* 통합 햄버거 메뉴 (모바일 + 태블릿) */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="sm:hidden"
+                  className="sm:block lg:hidden"
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                 >
                   {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -237,15 +237,6 @@ const Header = () => {
                 </Button>
               </div>
             )}
-            {/* Tablet hamburger menu */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden sm:block lg:hidden flex items-center justify-center"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </Button>
           </div>
         </div>
 
