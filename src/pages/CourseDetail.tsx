@@ -251,38 +251,42 @@ const CourseDetail = () => {
 
   const fetchInstructorInfo = async (instructorId: string) => {
     try {
-        const { data, error } = await supabase
-            .from('instructors')
-            .select('full_name, instructor_bio, instructor_avatar_url')
-            .eq('id', instructorId)
-            .maybeSingle();
+      // Use security definer function to bypass RLS safely and fetch public instructor info
+      const { data, error } = await supabase.rpc('get_instructor_public_info', {
+        instructor_id: instructorId,
+      });
 
-        if (error) {
-            console.warn('Failed to load detailed instructor info', error);
-            // 강사 정보를 찾을 수 없는 경우 기본값 설정
-            setInstructorInfo({
-                full_name: '강사',
-                instructor_bio: '강사 정보를 불러올 수 없습니다.',
-                instructor_avatar_url: null
-            });
-        } else if (data) {
-            setInstructorInfo(data);
-        } else {
-            console.warn('No instructor data found for ID:', instructorId);
-            // 데이터가 없는 경우 기본값 설정
-            setInstructorInfo({
-                full_name: '강사',
-                instructor_bio: '강사 정보를 불러올 수 없습니다.',
-                instructor_avatar_url: null
-            });
-        }
-    } catch (e) {
-        console.warn('Error during instructor info fetching', e);
+      if (error) {
+        console.warn('Failed to load instructor info via RPC', error);
         setInstructorInfo({
-            full_name: '강사',
-            instructor_bio: '강사 정보를 불러올 수 없습니다.',
-            instructor_avatar_url: null
+          full_name: '강사',
+          instructor_bio: '강사 정보를 불러올 수 없습니다.',
+          instructor_avatar_url: null,
         });
+        return;
+      }
+
+      const row = Array.isArray(data) ? data[0] : null;
+      if (row) {
+        setInstructorInfo({
+          full_name: row.full_name,
+          instructor_bio: row.instructor_bio,
+          instructor_avatar_url: row.instructor_avatar_url,
+        });
+      } else {
+        setInstructorInfo({
+          full_name: '강사',
+          instructor_bio: '강사 정보를 불러올 수 없습니다.',
+          instructor_avatar_url: null,
+        });
+      }
+    } catch (e) {
+      console.warn('Error during instructor info fetching', e);
+      setInstructorInfo({
+        full_name: '강사',
+        instructor_bio: '강사 정보를 불러올 수 없습니다.',
+        instructor_avatar_url: null,
+      });
     }
   };
 
