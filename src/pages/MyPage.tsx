@@ -238,34 +238,29 @@ const MyPage = () => {
             
             <div className="lg:col-span-3 space-y-8">{/* Main content now spans full width on mobile/tablet */}
               {/* 환영 섹션 */}
-              <Card>
+              <Card className="border-0 shadow-sm bg-gradient-to-r from-primary/5 to-primary/10">
                 <CardContent className="p-4 md:p-6">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-                    <Avatar className="h-12 w-12 md:h-16 md:w-16">
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <Avatar className="h-14 w-14 md:h-16 md:w-16 ring-2 ring-primary/20">
                       <AvatarImage src={profile?.avatar_url} />
-                      <AvatarFallback className="bg-primary text-primary-foreground text-sm md:text-lg">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-lg">
                         {profile?.full_name ? profile.full_name[0] : 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 space-y-1">
-                      <h1 className="text-lg md:text-2xl font-bold leading-tight">
-                        안녕하세요, {profile?.full_name || '학습자'}님
+                    <div className="flex-1 min-w-0">
+                      <h1 className="text-xl md:text-2xl font-bold text-foreground mb-1">
+                        안녕하세요, {profile?.full_name || '학습자'}님 👋
                       </h1>
-                      <p className="text-sm md:text-base text-muted-foreground">
+                      <p className="text-sm md:text-base text-muted-foreground mb-2">
                         오늘도 새로운 것을 배워보세요
                       </p>
-                      <div className="sm:hidden">
-                        <Badge variant="secondary" className="flex items-center gap-1 text-xs">
-                          <Calendar className="h-3 w-3" />
-                          {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : '-'}
+                      <div className="flex items-center gap-1 md:gap-2">
+                        <Badge variant="outline" className="bg-background/50 backdrop-blur-sm border-primary/20 text-xs">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          <span className="hidden sm:inline">가입일: </span>
+                          {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('ko-KR') : '-'}
                         </Badge>
                       </div>
-                    </div>
-                    <div className="hidden sm:block">
-                      <Badge variant="secondary" className="flex items-center gap-1 text-xs md:text-sm whitespace-nowrap">
-                        <Calendar className="h-3 w-3" />
-                        가입일: {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : '-'}
-                      </Badge>
                     </div>
                   </div>
                 </CardContent>
