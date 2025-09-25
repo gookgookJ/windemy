@@ -379,13 +379,6 @@ const CourseDetail = () => {
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-3 text-sm mb-6">
-          <span className="text-primary font-medium">{courseData.categories?.name || "카테고리"}</span>
-          <span className="text-muted-foreground">{">"}</span>
-          <span className="text-muted-foreground">{courseData.level}</span>
-        </div>
-
         {/* Main Layout: Responsive Flex Container */}
         {/* 수정됨: lg:items-start 추가하여 데스크톱에서 컬럼 상단을 정렬 */}
         <div className="flex flex-col lg:flex-row gap-8 justify-center lg:items-start">
@@ -410,19 +403,8 @@ const CourseDetail = () => {
                         <div className="space-y-4">
                         <h1 className="text-lg font-bold leading-tight">{courseData.title}</h1>
 
-                        {/* Rating and Price */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="flex items-center">
-                                    {[...Array(5)].map((_, i) => (
-                                    <Star
-                                        key={i}
-                                        className={`w-4 h-4 ${i < Math.floor(courseData.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-                                    />
-                                    ))}
-                                </div>
-                                <span className="text-sm font-medium">{courseData.rating}</span>
-                            </div>
+                        {/* Price Only (Rating removed) */}
+                        <div className="flex justify-end">
                             <div className="text-right">
                                 <div className="text-xl font-bold text-primary">
                                     {(selectedCourse?.price ?? 0).toLocaleString()}원
@@ -435,7 +417,7 @@ const CourseDetail = () => {
                             </div>
                         </div>
 
-                        {/* Options Selection */}
+                        {/* Options Selection with Benefits */}
                         <div className="space-y-2">
                             {courseOptions.map((option) => (
                             <div
@@ -450,13 +432,33 @@ const CourseDetail = () => {
                                 tabIndex={0}
                                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedOption(option.id)}
                             >
+                                <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium">{option.name}</span>
-                                <div className="text-right">
+                                    <span className="text-sm font-medium">{option.name}</span>
+                                    <div className="text-right">
                                     <div className="font-bold text-primary text-sm">
-                                    {option.price.toLocaleString()}원
+                                        {option.price.toLocaleString()}원
+                                    </div>
+                                    {option.original_price && (
+                                        <div className="text-xs text-muted-foreground line-through">
+                                        {option.original_price.toLocaleString()}원
+                                        </div>
+                                    )}
                                     </div>
                                 </div>
+                                {/* Benefits */}
+                                {option.benefits && option.benefits.length > 0 && (
+                                    <div className="mt-2">
+                                    <ul className="text-xs text-muted-foreground space-y-1">
+                                        {option.benefits.map((benefit, index) => (
+                                        <li key={index} className="flex items-start gap-1">
+                                            <CheckCircle className="w-3 h-3 text-green-500 mt-0.5 flex-shrink-0" />
+                                            {benefit}
+                                        </li>
+                                        ))}
+                                    </ul>
+                                    </div>
+                                )}
                                 </div>
                             </div>
                             ))}
