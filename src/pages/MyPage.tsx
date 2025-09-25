@@ -239,26 +239,34 @@ const MyPage = () => {
             <div className="lg:col-span-3 space-y-8">{/* Main content now spans full width on mobile/tablet */}
               {/* 환영 섹션 */}
               <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16">
+                <CardContent className="p-4 md:p-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                    <Avatar className="h-12 w-12 md:h-16 md:w-16">
                       <AvatarImage src={profile?.avatar_url} />
-                      <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-sm md:text-lg">
                         {profile?.full_name ? profile.full_name[0] : 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
-                      <h1 className="text-2xl font-bold mb-1">
+                    <div className="flex-1 space-y-1">
+                      <h1 className="text-lg md:text-2xl font-bold leading-tight">
                         안녕하세요, {profile?.full_name || '학습자'}님
                       </h1>
-                      <p className="text-muted-foreground">
+                      <p className="text-sm md:text-base text-muted-foreground">
                         오늘도 새로운 것을 배워보세요
                       </p>
+                      <div className="sm:hidden">
+                        <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                          <Calendar className="h-3 w-3" />
+                          {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : '-'}
+                        </Badge>
+                      </div>
                     </div>
-                    <Badge variant="secondary" className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      가입일: {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : '-'}
-                    </Badge>
+                    <div className="hidden sm:block">
+                      <Badge variant="secondary" className="flex items-center gap-1 text-xs md:text-sm whitespace-nowrap">
+                        <Calendar className="h-3 w-3" />
+                        가입일: {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : '-'}
+                      </Badge>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -353,35 +361,35 @@ const MyPage = () => {
                     <>
                       <div className="space-y-4 mb-6">
                         {enrollments.map((enrollment) => (
-                        <Card key={enrollment.id} className="cursor-pointer" onClick={() => handleCourseClick(enrollment.course.id)}>
-                          <CardContent className="p-4">
-                            <div className="flex gap-4">
+                        <Card key={enrollment.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCourseClick(enrollment.course.id)}>
+                          <CardContent className="p-3 md:p-4">
+                            <div className="flex gap-3 md:gap-4">
                               <div className="relative flex-shrink-0">
                                 <img
                                   src={enrollment.course.thumbnail_url || '/placeholder.svg'}
                                   alt={enrollment.course.title}
-                                  className="w-24 h-16 object-cover rounded-lg"
+                                  className="w-20 h-20 md:w-28 md:h-20 object-contain rounded-lg bg-muted"
                                 />
                               </div>
                               
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between mb-2">
-                                  <h3 className="font-semibold text-base line-clamp-2">
+                                <div className="flex items-start justify-between mb-1 md:mb-2">
+                                  <h3 className="font-semibold text-sm md:text-base line-clamp-2 leading-tight">
                                     {enrollment.course.title}
                                   </h3>
-                                  <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0 ml-2" />
+                                  <ArrowRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground flex-shrink-0 ml-2" />
                                 </div>
                                 
-                                <p className="text-sm text-muted-foreground mb-3">
+                                <p className="text-xs md:text-sm text-muted-foreground mb-2 md:mb-3">
                                   강사: {enrollment.course.instructor?.full_name}
                                 </p>
                                 
-                                <div className="space-y-2">
-                                  <div className="flex justify-between text-sm">
+                                <div className="space-y-1 md:space-y-2">
+                                  <div className="flex justify-between text-xs md:text-sm">
                                     <span className="text-muted-foreground">학습 진도</span>
                                     <span className="font-medium">{Math.round(enrollment.progress)}%</span>
                                   </div>
-                                  <Progress value={enrollment.progress} className="h-2" />
+                                  <Progress value={enrollment.progress} className="h-1.5 md:h-2" />
                                 </div>
                           </div>
                         </div>
