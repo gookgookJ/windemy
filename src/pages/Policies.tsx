@@ -5,68 +5,148 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Bell, HelpCircle, FileText, Shield, Search, Calendar, Info } from 'lucide-react';
+import { Bell, HelpCircle, FileText, Shield, Search, Calendar } from 'lucide-react';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
-// --- 오류 해결을 위한 임시 컴포넌트 ---
-// The Header and Footer components are defined here to resolve the import error.
-const Header = () => (
-  <header className="bg-white dark:bg-gray-900 border-b sticky top-0 z-50">
-    <div className="w-full max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-      <h1 className="text-xl font-bold">윈들리 아카데미</h1>
-      <Button variant="outline" size="sm">로그인</Button>
+// Formatted content component to handle markdown-like formatting
+const FormattedContent = ({ content }: { content: string }) => {
+  if (!content) return null;
+  
+  // Split content by double newlines to identify paragraphs and sections
+  const sections = content.split('\n\n');
+  
+  return (
+    <div className="space-y-4">
+      {sections.map((section, index) => {
+        // Handle tables (content with | characters)
+        if (section.includes('|') && section.split('|').length > 2) {
+          const lines = section.split('\n');
+          const tableLines = lines.filter(line => 
+            line.includes('|') && 
+            !line.includes(':---') && 
+            !line.includes(':-') &&
+            line.trim() !== ''
+          );
+          
+          if (tableLines.length > 0) {
+            return (
+              <div key={index} className="overflow-x-auto my-6">
+                <table className="min-w-full border-collapse border border-border rounded-lg">
+                  <tbody>
+                    {tableLines.map((line, lineIndex) => {
+                      const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell);
+                      return (
+                        <tr key={lineIndex}>
+                          {cells.map((cell, cellIndex) => (
+                            <td key={cellIndex} className="border border-border px-4 py-3 bg-muted/30">
+                              <span className="text-base">{cell}</span>
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          }
+        }
+        
+        // Handle numbered lists - no indentation, simple numbers
+        if (section.match(/^\s*[0-9]+\./m)) {
+          const lines = section.split('\n');
+          return (
+            <div key={index} className="space-y-3">
+              {lines.map((line, lineIndex) => {
+                if (line.match(/^\s*[0-9]+\./)) {
+                  const number = line.match(/^\s*([0-9]+)\./)?.[1];
+                  const content = line.replace(/^\s*[0-9]+\.\s*/, '');
+                  return (
+                    <p key={lineIndex} className="leading-relaxed text-base">
+                      {number}. {formatInlineContent(content)}
+                    </p>
+                  );
+                } else if (line.trim()) {
+                  return (
+                    <p key={lineIndex} className="leading-relaxed text-base">
+                      {formatInlineContent(line)}
+                    </p>
+                  );
+                }
+                return null;
+              })}
+            </div>
+          );
+        }
+        
+        // Handle bulleted lists - no indentation, simple bullets
+        if (section.match(/^\s*[-•]/m)) {
+          const lines = section.split('\n');
+          return (
+            <div key={index} className="space-y-2">
+              {lines.map((line, lineIndex) => {
+                if (line.match(/^\s*[-•]/)) {
+                  return (
+                    <p key={lineIndex} className="leading-relaxed text-base">
+                      • {formatInlineContent(line.replace(/^\s*[-•]\s*/, ''))}
+                    </p>
+                  );
+                } else if (line.trim()) {
+                  return (
+                    <p key={lineIndex} className="leading-relaxed text-base">
+                      {formatInlineContent(line)}
+                    </p>
+                  );
+                }
+                return null;
+              })}
+            </div>
+          );
+        }
+        
+        // Regular paragraphs
+        return (
+          <div key={index} className="space-y-3">
+            {section.split('\n').map((line, lineIndex) => (
+              line.trim() ? (
+                <p key={lineIndex} className="leading-relaxed text-base">
+                  {formatInlineContent(line)}
+                </p>
+              ) : null
+            ))}
+          </div>
+        );
+      })}
     </div>
-  </header>
-);
+  );
+};
 
-const Footer = () => (
-  <footer className="bg-gray-100 dark:bg-gray-900 border-t">
-    <div className="w-full max-w-6xl mx-auto px-4 py-8 text-center text-sm text-gray-500">
-      <p>&copy; {new Date().getFullYear()} (주) 어베어. All Rights Reserved.</p>
-      <p className="mt-2">서울특별시 강남구 | support@windly.cc</p>
-    </div>
-  </footer>
-);
-
+// Helper function to format inline content - very limited bold formatting
+const formatInlineContent = (text: string) => {
+  if (!text) return text;
+  
+  // Remove all bold formatting - return plain text
+  return text.replace(/\*\*(.*?)\*\*/g, '$1');
+};
 
 // --- 데이터 ---
 
 // 오늘 날짜를 YYYY년 MM월 DD일 형식으로 생성
-const today = new Date('2025-09-25T11:08:00+09:00');
+const today = new Date();
 const formattedDate = `${today.getFullYear()}년 ${String(today.getMonth() + 1).padStart(2, '0')}월 ${String(today.getDate()).padStart(2, '0')}일`;
 
-// [요청사항 반영] 공지사항 데이터를 빈 배열로 수정
-const announcements = [];
-
-// [요청사항 반영] FAQ 데이터 보강
-const faqData = [
-  { 
-    category: "강의 수강", 
-    items: [ 
-      { question: "강의는 언제까지 수강할 수 있나요?", answer: "구매한 강의는 별도의 기간이 명시되지 않은 경우 평생 소장하여 언제든지 수강하실 수 있습니다. 단, 일부 라이브 강의나 특별 프로그램은 수강 기간이 제한될 수 있습니다." }, 
-      { question: "모바일에서도 강의를 들을 수 있나요?", answer: "네, 모바일 브라우저를 통해 언제 어디서든 강의를 수강하실 수 있습니다. 현재 더 나은 학습 경험을 위한 모바일 앱도 준비 중입니다." },
-      { question: "강의 자료(PDF, 소스코드 등)는 어디서 받을 수 있나요?", answer: "각 강의 페이지 내 '강의 자료' 탭에서 다운로드하실 수 있습니다. 자료는 수강 기간 동안 무제한으로 이용 가능합니다." },
-      { question: "강의를 듣다가 모르는 점이 생기면 어떻게 질문하나요?", answer: "각 강의별로 운영되는 질의응답 커뮤니티(슬랙, 디스코드 등)를 통해 질문을 남겨주시면, 강사님이나 조교님들이 답변해 드립니다. 커뮤니티 링크는 강의실 페이지에서 확인하실 수 있습니다." }
-    ] 
-  },
-  { 
-    category: "결제 및 환불", 
-    items: [ 
-      { question: "어떤 결제 방법을 지원하나요?", answer: "신용카드, 체크카드, 계좌이체, 카카오페이, 토스페이 등 다양한 결제 방법을 지원합니다." }, 
-      { question: "환불 정책은 어떻게 되나요?", answer: "자세한 환불 정책은 '이용약관' 제13조 (환불 규정)을 참고해주시기 바랍니다. 온라인 강의, 오프라인 교육 등 서비스 형태에 따라 규정이 다르니 꼼꼼히 확인해주세요." },
-      { question: "카드 할부 결제도 가능한가요?", answer: "네, 5만원 이상 결제 시 카드사별 무이자 할부 혜택을 받으실 수 있습니다. 결제 페이지에서 카드사를 선택하면 적용 가능한 할부 개월 수를 확인하실 수 있습니다." }
-    ] 
-  },
-  {
-    category: "기타 문의",
-    items: [
-      { question: "다른 수강생들과 소통할 수 있는 커뮤니티가 있나요?", answer: "네, 윈들리 아카데미는 모든 수강생이 참여할 수 있는 온라인 커뮤니티를 운영하고 있습니다. 스터디 그룹을 만들거나, 프로젝트에 대한 의견을 나누고, 유용한 정보를 공유하며 함께 성장하는 공간입니다." },
-      { question: "수료 후 취업이나 이직에 대한 지원도 받을 수 있나요?", answer: "일부 전문 과정(부트캠프 등)에서는 이력서 첨삭, 모의 면접, 채용 연계 등 커리어 지원 서비스를 제공합니다. 과정별 상세 페이지에서 커리어 지원 여부를 확인해주세요." },
-      { question: "강의를 다 들으면 수료증이 발급되나요?", answer: "네, 각 강의의 진도율을 80% 이상 달성하시면 '마이페이지'에서 수료증을 직접 발급받으실 수 있습니다." }
-    ]
-  }
+const announcements = [
+  { id: 1, date: "2024.03.15", title: "신규 강의 업데이트 및 할인 이벤트 안내", content: `안녕하세요 윈들리아카데미입니다.\n\n3월 신규 강의가 업데이트되었으며, 오픈 기념 할인 이벤트를 진행합니다.\n\n📚 신규 강의 목록:\n• 실전 React 마스터 클래스\n• Python 데이터 분석 완주반\n• UI/UX 디자인 실무 과정` },
+  { id: 2, date: "2024.03.10", title: "플랫폼 정기 점검 안내", content: `안녕하세요 윈들리아카데미입니다.\n\n시스템 안정성 향상 및 신규 기능 적용을 위한 정기 점검을 실시합니다.\n\n🔧 점검 일정:\n• 일시: 2024년 3월 12일(화) 02:00~06:00 (4시간)` },
 ];
 
-// --- 이용약관 데이터 ---
+const faqData = [
+  { category: "강의 수강", items: [ { question: "강의는 언제까지 수강할 수 있나요?", answer: "구매한 강의는 평생 소장하여 언제든지 수강하실 수 있습니다. 단, 일부 라이브 강의나 특별 프로그램은 수강 기간이 제한될 수 있습니다." }, { question: "모바일에서도 강의를 들을 수 있나요?", answer: "네, 모바일 브라우저를 통해 언제 어디서든 강의를 수강하실 수 있습니다. 모바일 앱도 준비 중이니 조금만 기다려주세요." } ] },
+  { category: "결제 및 환불", items: [ { question: "어떤 결제 방법을 지원하나요?", answer: "신용카드, 체크카드, 계좌이체, 카카오페이, 토스페이 등 다양한 결제 방법을 지원합니다." }, { question: "환불 정책이 어떻게 되나요?", answer: "구매 후 7일 이내, 강의 진도율 10% 미만일 경우 100% 환불이 가능합니다. 자세한 환불 정책은 이용약관을 참고해주세요." } ] }
+];
+
+// --- [업데이트] 이용약관 데이터 ---
 const termsData = [
     { id: "terms-intro", title: "제1장 총칙", content: "" },
     { id: "terms-1", title: "제1조 (목적)", content: "이 약관은 (주) 어베어(이하 '회사')이 운영하는 윈들리 아카데미(Windly Academy) 및 관련 플랫폼(이하 '서비스')에서 제공하는 교육 콘텐츠 및 제반 서비스의 이용과 관련하여 회사와 이용자의 권리, 의무 및 책임사항 등을 규정함을 목적으로 합니다." },
@@ -92,7 +172,8 @@ const termsData = [
     { id: "terms-date", title: "", content: `- 공고일자: ${formattedDate}\n- 시행일자: ${formattedDate}` }
 ];
 
-// --- 개인정보처리방침 데이터 ---
+
+// --- [업데이트] 개인정보처리방침 데이터 ---
 const privacyData = [
     { id: "privacy-intro", title: "", content: "(주) 어베어 (이하 '회사')은 윈들리 아카데미 서비스(이하 ‘서비스’) 이용자의 개인정보보호를 매우 중요시하며, 「개인정보 보호법」 등 관련 법령을 준수하고 있습니다. 회사는 본 개인정보처리방침을 통하여 이용자가 제공하는 개인정보가 어떠한 용도와 방식으로 이용되고 있으며, 개인정보보호를 위해 어떠한 조치가 취해지고 있는지 알려드립니다." },
     { id: "privacy-1", title: "제1조 (개인정보의 수집 항목 및 이용 목적)", content: "회사는 회원가입, 원활한 고객 상담, 교육 서비스 제공을 위해 아래와 같은 개인정보를 수집하고 있습니다.\n\n1. **회원가입 및 서비스 이용**\n   - **필수 항목:** 이름, 이메일 주소(ID), 휴대전화번호, 비밀번호\n   - **이용 목적:** 회원 식별 및 가입 의사 확인, 만 14세 미만 아동 가입 제한, 서비스 이용 및 강의 수강료 결제, 고객 문의 응대(채널톡 등), 공지사항 전달\n\n2. **교육 서비스 제공 및 학습 관리**\n   - **수집 항목:** 강의 진도율, 학습 이력, 결제 내역\n   - **이용 목적:** 강의 콘텐츠 제공(VOD, 라이브, 오프라인, 코칭 등), 학습 진도 관리 및 독려, 맞춤형 강의 추천\n\n3. **마케팅 및 광고에의 활용 (선택 동의 시)**\n   - **수집 항목:** 이름, 이메일 주소, 휴대전화번호, 서비스 이용 기록\n   - **이용 목적:** 신규 강의 및 이벤트 정보 안내(SMS, 이메일, 알림톡 등), 프로모션 제공\n\n4. **서비스 이용과정에서 자동 생성 정보**\n   - **수집 항목:** 서비스 이용 기록, 접속 로그, 쿠키, 접속 IP 정보, 기기 정보(OS 버전 등)\n   - **이용 목적:** 서비스 이용 통계 분석, 서비스 품질 개선, 부정 이용 방지" },
@@ -104,7 +185,8 @@ const privacyData = [
     { id: "privacy-7", title: "제7조 (개인정보의 안전성 확보 조치)", content: "회사는 개인정보의 안전성 확보를 위해 다음과 같은 관리적, 기술적, 물리적 조치를 취하고 있습니다. (내부관리계획 수립·시행, 접근권한 관리, 개인정보의 암호화, 보안프로그램 설치 등)" },
     { id: "privacy-8", title: "제8조 (개인정보 자동 수집 장치의 설치·운영 및 거부에 관한 사항)", content: "① 회사는 이용자에게 개별적인 맞춤 서비스를 제공하기 위해 이용 정보를 저장하고 수시로 불러오는 '쿠키(cookie)'를 사용합니다.\n② 이용자는 웹 브라우저의 옵션 설정(예: 웹 브라우저 상단의 도구 > 인터넷 옵션 > 개인정보 메뉴)을 통해 쿠키 저장을 거부할 수 있습니다. 단, 쿠키 저장을 거부할 경우 맞춤형 서비스 이용에 어려움이 발생할 수 있습니다." },
     { id: "privacy-9", title: "제9조 (개인정보 보호책임자)", content: "회사는 개인정보 처리에 관한 업무를 총괄해서 책임지고, 개인정보 처리와 관련한 이용자의 불만처리 및 피해구제 등을 위하여 아래와 같이 개인정보 보호책임자를 지정하고 있습니다.\n\n- **개인정보 보호책임자**\n  - 성명: 김승현\n  - 직책: 대표\n  - 이메일: support@windly.cc" },
-    { id: "privacy-10", title: "제10조 (개인정보처리방침의 변경)", content: `본 개인정보처리방침은 시행일로부터 적용되며, 법령 및 방침에 따른 변경내용의 추가, 삭제 및 정정이 있는 경우에는 변경사항의 시행 7일 전부터 공지사항을 통하여 고지할 것입니다.\n\n- 공고일자: ${formattedDate}\n- 시행일자: ${formattedDate}` }
+    { id: "privacy-10", title: "제10조 (권익침해 구제방법)", content: "회원은 아래의 기관에 대해 개인정보 침해에 대한 피해구제, 상담 등을 문의하실 수 있습니다. 아래의 기관은 회사와는 별개의 기관으로서, 회사의 자체적인 개인정보 불만처리, 피해구제 결과에 만족하지 못하시거나 보다 자세한 도움이 필요하시면 문의하여 주시기 바랍니다.\n\n- **개인정보분쟁조정위원회:** www.kopico.go.kr, 1833-6972\n- **개인정보침해신고센터:** privacy.kisa.or.kr, 118\n- **대검찰청:** www.spo.go.kr, 1301\n- **경찰청:** ecrm.police.go.kr, 182" },
+    { id: "privacy-11", title: "제11조 (개인정보처리방침의 변경)", content: `본 개인정보처리방침은 시행일로부터 적용되며, 법령 및 방침에 따른 변경내용의 추가, 삭제 및 정정이 있는 경우에는 변경사항의 시행 7일 전부터 공지사항을 통하여 고지할 것입니다.\n\n- 공고일자: ${formattedDate}\n- 시행일자: ${formattedDate}` }
 ];
 
 // --- 콘텐츠 렌더링 컴포넌트들 ---
@@ -137,12 +219,7 @@ const AnnouncementsContent = () => {
                 </AccordionItem>
               ))}
             </Accordion>
-          ) : ( 
-            <div className="text-center py-24 text-muted-foreground flex flex-col items-center justify-center space-y-3">
-              <Info className="h-10 w-10 text-gray-400" />
-              <p className="text-base">등록된 공지사항이 없습니다.</p>
-            </div> 
-          )}
+          ) : ( <div className="text-center py-24 text-muted-foreground"><p>검색 결과가 없습니다.</p></div> )}
         </CardContent>
       </Card>
     </div>
@@ -177,12 +254,20 @@ const PolicyContent = ({ title, data }) => {
   return (
       <Card>
           <CardContent className="p-6 md:p-8">
-              <h1 className="text-2xl md:text-3xl font-bold mb-8">{title}</h1>
-              <div className="prose prose-sm md:prose-base max-w-none space-y-8 dark:prose-invert">
+              <h1 className="text-2xl md:text-3xl font-bold mb-8 text-foreground">{title}</h1>
+              <div className="space-y-8">
                   {data.map((item) => (
-                      <section key={item.id}>
-                          {item.title && <h3 className="font-semibold text-base md:text-lg">{item.title}</h3>}
-                          <p className="whitespace-pre-line text-muted-foreground leading-relaxed">{item.content}</p>
+                      <section key={item.id} className="space-y-4">
+                          {item.title && (
+                              <h3 className={`font-bold text-foreground ${
+                                item.title.includes('장') ? 'text-2xl' : 'text-lg'
+                              }`}>
+                                  {item.title}
+                              </h3>
+                          )}
+                          <div className="text-muted-foreground leading-relaxed">
+                              <FormattedContent content={item.content} />
+                          </div>
                       </section>
                   ))}
               </div>
@@ -215,14 +300,14 @@ const PoliciesPage = () => {
     <div className="flex flex-col min-h-screen bg-muted/20">
       <Header />
       <main className="w-full max-w-6xl mx-auto px-4 py-8 md:py-12 flex-grow">
-        <div className="grid lg:grid-cols-[220px_1fr] gap-6 md:gap-10">
-          <aside className="lg:sticky top-24 h-fit">
+        <div className="grid lg:grid-cols-[280px_1fr] gap-6 md:gap-10">
+          <aside className="lg:sticky lg:top-24 lg:h-fit">
             <nav className="flex flex-row lg:flex-col gap-2">
               {navItems.map((item) => (
                 <Button
                   key={item.id}
                   variant={activeTab === item.id ? 'secondary' : 'ghost'}
-                  className="w-full justify-start gap-3 px-3 h-12 lg:h-auto lg:py-3 text-sm md:text-base"
+                  className="w-full justify-start gap-3 px-3 h-12 lg:h-auto lg:py-3 text-sm md:text-base whitespace-nowrap"
                   onClick={() => setActiveTab(item.id)}
                 >
                   <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -242,4 +327,3 @@ const PoliciesPage = () => {
 };
 
 export default PoliciesPage;
-
