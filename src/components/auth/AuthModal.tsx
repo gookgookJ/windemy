@@ -246,24 +246,24 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-full h-full max-w-none p-0 gap-0 bg-white overflow-hidden sm:w-[95vw] sm:max-w-lg sm:h-auto sm:rounded-lg">{/* Mobile: full screen, Desktop: modal */}
-        <div className="relative flex flex-col">
+      <DialogContent className="w-full h-full max-w-none p-0 gap-0 bg-white overflow-hidden flex flex-col sm:w-[95vw] sm:max-w-lg sm:h-auto sm:rounded-lg">{/* Mobile: full screen with flex layout */}
+        <div className="relative flex flex-col h-full">
           {/* Header */}
-          <DialogHeader className="px-8 pt-8 pb-6 text-center flex-shrink-0">{/* Increased padding from px-6 pt-6 pb-4 to px-8 pt-8 pb-6 */}
-            <div className="flex flex-col items-center space-y-4">{/* Increased space from space-y-3 to space-y-4 */}
+          <DialogHeader className="px-6 pt-8 pb-4 text-center flex-shrink-0 sm:px-8 sm:pt-8 sm:pb-6">{/* Reduced mobile padding */}
+            <div className="flex flex-col items-center space-y-3 sm:space-y-4">{/* Reduced mobile space */}
               {currentView !== 'main' && (
                 <button
                   onClick={() => setCurrentView('main')}
-                  className="absolute left-8 top-3 p-2 hover:bg-gray-100 rounded-full"
+                  className="absolute left-6 top-3 p-2 hover:bg-gray-100 rounded-full sm:left-8"
                 >
-                  <ArrowLeft className="h-6 w-6 text-gray-600" />{/* Increased from h-5 w-5 to h-6 w-6 */}
+                  <ArrowLeft className="h-5 w-5 text-gray-600 sm:h-6 sm:w-6" />{/* Smaller on mobile */}
                 </button>
               )}
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">{/* Increased from w-14 h-14 to w-16 h-16 */}
-                <BookOpen className="h-8 w-8 text-white" />{/* Increased from h-7 w-7 to h-8 w-8 */}
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center sm:w-16 sm:h-16">{/* Smaller on mobile */}
+                <BookOpen className="h-6 w-6 text-white sm:h-8 sm:w-8" />{/* Smaller on mobile */}
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">윈들리아카데미</h2>{/* Increased from text-xl to text-2xl */}
-              <DialogDescription className="text-gray-600 text-base">{/* Increased from text-sm to text-base */}
+              <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">윈들리아카데미</h2>{/* Smaller on mobile */}
+              <DialogDescription className="text-sm text-gray-600 sm:text-base">{/* Smaller on mobile */}
                 {currentView === 'main' && "지금 가입 하고\n첫구매 할인쿠폰을 받으세요!"}
                 {currentView === 'signup' && "새 계정을 만들어보세요"}
                 {currentView === 'forgot-password' && "비밀번호를 재설정하세요"}
@@ -272,73 +272,73 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
             </div>
           </DialogHeader>
 
-          <div className="px-8 pb-8">{/* Increased padding from px-6 pb-6 to px-8 pb-8 */}
+          <div className="flex-1 px-6 pb-6 overflow-y-auto sm:px-8 sm:pb-8">{/* Flex-1 for scrollable content, reduced mobile padding */}
             {/* Main Login View */}
             {currentView === 'main' && (
               <>
                 {/* Kakao Login Button */}
                 <Button 
                   onClick={handleKakaoLogin}
-                  className="w-full h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold text-base mb-4 rounded-lg touch-target"
+                  className="w-full h-11 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold text-sm mb-3 rounded-lg touch-target sm:h-12 sm:text-base sm:mb-4"
                 >
-                  <div className="flex items-center justify-center space-x-3">{/* Increased space from space-x-2 to space-x-3 */}
-                    <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center">{/* Increased from w-5 h-5 to w-6 h-6 */}
-                      <span className="text-yellow-400 text-sm font-bold">K</span>{/* Increased from text-xs to text-sm */}
+                  <div className="flex items-center justify-center space-x-2 sm:space-x-3">{/* Reduced mobile space */}
+                    <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center sm:w-6 sm:h-6">{/* Smaller on mobile */}
+                      <span className="text-yellow-400 text-xs font-bold sm:text-sm">K</span>{/* Smaller on mobile */}
                     </div>
                     <span>카카오로 3초만에 시작하기</span>
                   </div>
                 </Button>
 
                 {/* Email Login Form */}
-                <form onSubmit={handleSignIn} className="space-y-4">{/* Increased space from space-y-3 to space-y-4 */}
-                  <div className="space-y-3">{/* Increased space from space-y-2 to space-y-3 */}
+                <form onSubmit={handleSignIn} className="space-y-3 sm:space-y-4">{/* Reduced mobile space */}
+                  <div className="space-y-2 sm:space-y-3">{/* Reduced mobile space */}
                     <Input
                       type="email"
                       placeholder="이메일 또는 아이디"
                       value={signInData.email}
                       onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
-                      className="h-12 border-gray-200 rounded-lg mobile-input touch-target"
+                      className="h-11 border-gray-200 rounded-lg mobile-input touch-target sm:h-12"
                       required
                     />
                   </div>
-                  <div className="space-y-3">{/* Increased space from space-y-2 to space-y-3 */}
+                  <div className="space-y-2 sm:space-y-3">{/* Reduced mobile space */}
                     <Input
                       type="password"
                       placeholder="비밀번호"
                       value={signInData.password}
                       onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
-                      className="h-12 border-gray-200 rounded-lg mobile-input touch-target"
+                      className="h-11 border-gray-200 rounded-lg mobile-input touch-target sm:h-12"
                       required
                     />
                    </div>
                    <Button 
                      type="submit" 
-                     className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-lg mt-2 touch-target"
+                     className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg mt-3 touch-target sm:h-12 sm:text-base sm:mt-2"
                      disabled={isLoading}
                    >
                      {isLoading ? '로그인 중...' : '로그인'}
                    </Button>
                  </form>
 
-                 {/* Footer Links */}
-                 <div className="flex justify-center space-x-4 mt-4 text-base text-gray-500">{/* Increased margin from mt-2 to mt-4, text from text-sm to text-base */}
+                 {/* Footer Links - Improved mobile layout */}
+                 <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-2 mt-4 text-sm text-gray-500 sm:gap-x-4 sm:text-base">{/* Better responsive layout */}
                   <button 
                     onClick={() => setCurrentView('find-id')}
-                    className="hover:text-gray-700"
+                    className="hover:text-gray-700 whitespace-nowrap"
                   >
                     ID 찾기
                   </button>
-                  <span>|</span>
+                  <span className="text-gray-300">|</span>
                   <button 
                     onClick={() => setCurrentView('forgot-password')}
-                    className="hover:text-gray-700"
+                    className="hover:text-gray-700 whitespace-nowrap"
                   >
                     비밀번호 찾기
                   </button>
-                  <span>|</span>
+                  <span className="text-gray-300">|</span>
                   <button 
                     onClick={() => setCurrentView('signup')}
-                    className="hover:text-gray-700"
+                    className="hover:text-gray-700 whitespace-nowrap"
                   >
                     이메일 회원가입
                   </button>
