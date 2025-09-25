@@ -686,10 +686,6 @@ const CourseDetail = () => {
                     <span className="text-3xl font-bold text-primary">
                         {(selectedCourse?.price ?? 0).toLocaleString()}원
                     </span>
-                    {/* Example Badge, replace with dynamic data if available */}
-                    <Badge variant="destructive" className="text-sm">
-                        2차 얼리버드
-                    </Badge>
                     </div>
                     {selectedCourse?.original_price && (
                          <div className="text-sm text-muted-foreground line-through">
