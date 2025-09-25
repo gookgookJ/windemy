@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Upload, MoreHorizontal, File, Edit, Trash2, Plus, X } from 'lucide-react';
+import { Search, Upload, MoreHorizontal, File, Edit, Trash2, Plus, X, Eye } from 'lucide-react';
 import { MaterialUploadModal } from '@/components/admin/MaterialUploadModal';
+import { MaterialViewModal } from '@/components/admin/MaterialViewModal';
 
 interface CourseSection {
   id: string;
@@ -37,6 +38,8 @@ export const SectionManagement = () => {
   const [selectedCourse, setSelectedCourse] = useState<string>('all');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadingSection, setUploadingSection] = useState<CourseSection | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewingSection, setViewingSection] = useState<CourseSection | null>(null);
   
   const { toast } = useToast();
 
@@ -75,6 +78,11 @@ export const SectionManagement = () => {
   const handleUpload = (section: CourseSection) => {
     setUploadingSection(section);
     setIsUploadModalOpen(true);
+  };
+
+  const handleViewMaterials = (section: CourseSection) => {
+    setViewingSection(section);
+    setIsViewModalOpen(true);
   };
 
   const removeAttachment = async (section: CourseSection) => {
@@ -258,18 +266,20 @@ export const SectionManagement = () => {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {section.materials && section.materials.length > 0 ? (
-                            <>
-                              <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewMaterials(section)}
+                              className="h-auto p-2 hover:bg-muted/50"
+                            >
+                              <div className="flex items-center gap-2">
                                 <File className="h-4 w-4 text-green-600" />
                                 <span className="text-sm font-medium text-green-600">
-                                  {section.materials.length}개 자료
+                                  {section.materials.length}개 자료 업로드
                                 </span>
+                                <Eye className="h-3 w-3 text-muted-foreground" />
                               </div>
-                              <div className="text-xs text-muted-foreground">
-                                {section.materials.slice(0, 2).map(m => m.title).join(', ')}
-                                {section.materials.length > 2 && ' 외 ' + (section.materials.length - 2) + '개'}
-                              </div>
-                            </>
+                            </Button>
                           ) : (
                             <span className="text-sm text-muted-foreground">자료 없음</span>
                           )}
@@ -336,6 +346,17 @@ export const SectionManagement = () => {
           courseId={uploadingSection?.course_id || ''}
           sectionId={uploadingSection?.id}
           existingMaterials={uploadingSection?.materials || []}
+        />
+
+        {/* 자료 보기 모달 */}
+        <MaterialViewModal
+          isOpen={isViewModalOpen}
+          onClose={() => {
+            setIsViewModalOpen(false);
+            setViewingSection(null);
+          }}
+          materials={viewingSection?.materials || []}
+          sectionTitle={viewingSection?.title || ''}
         />
       </div>
     </AdminLayout>

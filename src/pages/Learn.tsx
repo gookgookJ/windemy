@@ -55,7 +55,7 @@ const Learn = () => {
   const [videoProgress, setVideoProgress] = useState<{ [key: string]: number }>({});
   const [showSidebar, setShowSidebar] = useState(true);
   const [courseMaterials, setCourseMaterials] = useState<any[]>([]);
-  const [isMaterialsOpen, setIsMaterialsOpen] = useState(true);
+  const [isMaterialsOpen, setIsMaterialsOpen] = useState(false);
 
   // 인스턴스 관리를 위해 useRef 사용
   const playerRef = useRef<any>(null);
@@ -784,9 +784,9 @@ const Learn = () => {
                               <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg text-xs font-medium text-primary">
                                 {index + 1}
                               </div>
-                              <div className="flex-1 text-left">
-                                <div className="font-medium text-sm">{material.title}</div>
-                                <div className="text-xs text-muted-foreground">
+                              <div className="flex-1 text-left min-w-0">
+                                <div className="font-medium text-sm truncate">{material.title}</div>
+                                <div className="text-xs text-muted-foreground truncate">
                                   {material.file_name}
                                   {material.file_size && (
                                     <span className="ml-2">
