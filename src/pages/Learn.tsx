@@ -50,9 +50,12 @@ const Learn = () => {
   const [enrollment, setEnrollment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [videoProgress, setVideoProgress] = useState<{ [key: string]: number }>({});
-  const [progressTracker, setProgressTracker] = useState<VideoProgressTracker | null>(null);
-  const [playerInitialized, setPlayerInitialized] = useState(false);
-  const lastSavedRef = useRef(0);
+
+  // 인스턴스 관리를 위해 useRef 사용
+  const playerRef = useRef<any>(null);
+  const trackerRef = useRef<VideoProgressTracker | null>(null);
+  const lastSavedTimeRef = useRef(Date.now());
+
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -68,819 +71,612 @@ const Learn = () => {
     }
   }, [courseId, user]);
 
-  // 현재 세션 변경 시 초기화
+  // 1. Vimeo API 스크립트 로드 (전역에서 한 번만 실행)
   useEffect(() => {
-    setPlayerInitialized(false);
-    lastSavedRef.current = 0;
-  }, [currentSession?.id]);
+    if (!window.Vimeo) {
+      const script = document.createElement('script');
+      script.src = 'https://player.vimeo.com/api/player.js';
+      script.onerror = () => console.error('Failed to load Vimeo API');
+      document.head.appendChild(script);
+    }
+  }, []);
 
-  // Vimeo Player API 초기화
+  // 2. 세션 변경 시 초기화/정리 (핵심 로직 통합)
   useEffect(() => {
-    if (currentSession && currentSession.video_url?.includes('vimeo.com') && user) {
-      // VideoProgressTracker 먼저 초기화
+    if (!currentSession || !user || !currentSession.video_url?.includes('vimeo.com')) {
+      return;
+    }
+
+    console.log('Initializing session:', currentSession.id);
+    let initializationTimer: NodeJS.Timeout;
+
+    const initializeSession = async () => {
+      // A. 트래커 생성 및 데이터 로드
       const tracker = new VideoProgressTracker(
         currentSession.id,
         user.id,
         currentSession.duration_minutes * 60
       );
-      setProgressTracker(tracker);
+      await tracker.initialize(); // 기존 데이터 로드 대기
+      trackerRef.current = tracker;
       
-      // Vimeo API 로드 후 플레이어 초기화
-      loadVimeoAPI();
-    }
-  }, [currentSession, user]);
-
-  // Vimeo API와 트래커 준비되면 실제 플레이어 초기화
-  useEffect(() => {
-    if (!playerInitialized && currentSession?.video_url?.includes('vimeo.com') && window.Vimeo && progressTracker) {
-      initializeVimeoPlayer();
-      setPlayerInitialized(true);
-    }
-  }, [playerInitialized, currentSession?.id, progressTracker]);
-
-  const loadVimeoAPI = () => {
-    if (window.Vimeo) {
-      // Vimeo API가 이미 로드되어 있으면 즉시 초기화
-      setTimeout(() => initializeVimeoPlayer(), 100);
-      return;
-    }
-
-    console.log('Loading Vimeo API...');
-    const script = document.createElement('script');
-    script.src = 'https://player.vimeo.com/api/player.js';
-    script.onload = () => {
-      console.log('Vimeo API loaded successfully');
-      // API 로드 후 약간의 지연을 두고 초기화
-      setTimeout(() => initializeVimeoPlayer(), 100);
-    };
-    script.onerror = () => {
-      console.error('Failed to load Vimeo API');
-    };
-    document.head.appendChild(script);
-  };
-
-  const initializeVimeoPlayer = () => {
-    console.log('Initializing Vimeo player...', { 
-      currentSession: !!currentSession, 
-      vimeoAPI: !!window.Vimeo, 
-      progressTracker: !!progressTracker 
-    });
-    
-    if (!currentSession || !window.Vimeo || !progressTracker) {
-      console.log('Missing requirements for Vimeo player initialization');
-      return;
-    }
-
-    const iframe = document.getElementById(`vimeo-player-${currentSession.id}`);
-    if (!iframe) {
-      console.log('Vimeo iframe not found');
-      return;
-    }
-
-    const player = new window.Vimeo.Player(iframe);
-    let lastTime = 0;
-
-    // 플레이어로부터 실제 영상 길이 동기화
-    player.getDuration().then((dur: number) => {
-      if (dur && progressTracker) {
-        progressTracker.updateVideoDuration(Math.round(dur));
-        console.log('Synced video duration from player:', dur);
-      }
-    });
-    
-    console.log('Vimeo player created, setting up event listeners...');
-    
-    // 재생/일시정지 이벤트
-    player.on('play', (data: any) => {
-      console.log('Video play event:', data);
-      player.getCurrentTime().then(time => {
-        progressTracker.onPlay(time);
-        lastTime = time;
-      });
-    });
-
-    player.on('pause', (data: any) => {
-      console.log('Video pause event:', data);
-      player.getCurrentTime().then(time => {
-        progressTracker.onPause(time);
-        lastTime = time;
-      });
-    });
-
-    // 시간 업데이트 이벤트 (통합)
-    player.on('timeupdate', (data: any) => {
-      progressTracker.onTimeUpdate(data.seconds);
-      lastTime = data.seconds;
-      
-      // UI 업데이트
-      const watchedPercentage = progressTracker.getWatchedPercentage();
+      // 초기 진도율 UI 반영
       setVideoProgress(prev => ({
         ...prev,
-        [currentSession.id]: watchedPercentage
+        [currentSession.id]: tracker.getWatchedPercentage()
       }));
+
+      // B. 플레이어 초기화
+      const initializePlayer = () => {
+        // API 및 Iframe 준비 상태 확인 (렌더링 지연 대비)
+        if (!window.Vimeo || !document.getElementById(`vimeo-player-${currentSession.id}`)) {
+          console.log('Vimeo API or Iframe not ready, waiting...');
+          initializationTimer = setTimeout(initializePlayer, 200);
+          return;
+        }
+
+        const iframe = document.getElementById(`vimeo-player-${currentSession.id}`);
+        const player = new window.Vimeo.Player(iframe);
+        playerRef.current = player;
+        setupPlayerEventListeners(player, tracker);
+      };
+
+      initializePlayer();
+    };
+
+    initializeSession();
+
+    // ★ Cleanup 함수: 세션 변경(useEffect 재실행) 또는 언마운트 전에 실행
+    return () => {
+      console.log('Cleaning up session...');
+      clearTimeout(initializationTimer);
       
-      // 주기적 서버 저장 (10초 간격)
-      const now = Date.now();
-      if (now - lastSavedRef.current > 10000) {
-        progressTracker.saveProgress().catch((e: any) => console.error('Auto save error:', e));
-        lastSavedRef.current = now;
+      if (trackerRef.current) {
+        // 마지막 진행 상황 저장
+        trackerRef.current.saveProgress().catch(e => console.error('Final save error:', e));
+        trackerRef.current = null;
       }
-      
-      console.log('Progress updated:', {
-        currentTime: data.seconds,
-        watchedPercentage,
-        totalWatchedTime: progressTracker.getTotalWatchedTime()
+      if (playerRef.current) {
+        // 플레이어 리소스 해제 (destroy 사용 권장)
+        try {
+          playerRef.current.destroy().catch(e => console.error("Error destroying player:", e));
+        } catch (e) {
+          console.error("Error during player cleanup:", e);
+        }
+        playerRef.current = null;
+      }
+    };
+  }, [currentSession?.id, user?.id]); // 의존성 명확화
+
+  // 이벤트 리스너 설정 함수 분리 (기존 initializeVimeoPlayer 내용 이동)
+  const setupPlayerEventListeners = (player: any, tracker: VideoProgressTracker) => {
+    let lastTime = 0;
+
+    player.ready().then(() => {
+      // 실제 영상 길이 동기화
+      player.getDuration().then((dur: number) => {
+        if (dur && tracker) {
+          tracker.updateVideoDuration(Math.round(dur));
+          console.log('Synced video duration from player:', dur);
+        }
       });
     });
 
-    // 점프 이벤트 감지
+    player.on('play', () => {
+      player.getCurrentTime().then(time => {
+        tracker.onPlay(time);
+        lastTime = time;
+      });
+    });
+
+    player.on('pause', () => {
+      player.getCurrentTime().then(time => {
+        tracker.onPause(time);
+        lastTime = time;
+      });
+    });
+
+    player.on('timeupdate', (data: any) => {
+      if (!currentSession) return;
+
+      tracker.onTimeUpdate(data.seconds);
+      lastTime = data.seconds;
+
+      // UI 업데이트
+      setVideoProgress(prev => ({
+        ...prev,
+        [currentSession.id]: tracker.getWatchedPercentage()
+      }));
+
+      // 주기적 서버 저장 (10초 간격)
+      const now = Date.now();
+      if (now - lastSavedTimeRef.current > 10000) {
+        tracker.saveProgress().catch(e => console.error('Auto save error:', e));
+        lastSavedTimeRef.current = now;
+      }
+    });
+
     player.on('seeked', (data: any) => {
-      console.log('Video seek event:', { from: lastTime, to: data.seconds });
-      progressTracker.onSeeked(lastTime, data.seconds);
-      
-      // 의심스러운 점프 감지시 경고
+      tracker.onSeeked(lastTime, data.seconds);
       const jumpAmount = data.seconds - lastTime;
-      if (jumpAmount > 30) {
-        console.log('Suspicious jump detected:', jumpAmount);
+      
+      if (jumpAmount > 10) {
         toast({
-          title: "진도 조작 감지",
-          description: "영상을 건너뛰면 학습 시간에 반영되지 않습니다.",
-          variant: "destructive"
+          title: "진도 확인",
+          description: "비디오를 건너뛴 것이 감지되었습니다.",
+          variant: "destructive",
         });
       }
-      
       lastTime = data.seconds;
     });
 
-    // 영상 완료
     player.on('ended', async () => {
-      console.log('Video ended, saving progress...');
-      try {
-        await progressTracker.saveProgress();
-        
-        if (progressTracker.isValidForCompletion()) {
-          console.log('Video completion is valid, marking session complete');
-          markSessionComplete(currentSession.id);
-        } else {
-          console.log('Video completion is not valid:', progressTracker.getProgressData());
-          toast({
-            title: "학습 시간 부족",
-            description: "영상을 충분히 시청하지 않았습니다. 다시 시청해주세요.",
-            variant: "destructive"
-          });
-        }
-      } catch (error) {
-        console.error('Error handling video end:', error);
+      // 영상 종료 시 최종 저장 후 서버 검증 요청
+      if (currentSession) {
+        markSessionComplete(currentSession.id);
       }
     });
-
-    console.log('Vimeo player event listeners set up successfully');
   };
 
   const fetchCourseData = async () => {
+    if (!courseId || !user) return;
+
     try {
-      // 강의 정보
+      setLoading(true);
+
+      // 강의 정보 조회
       const { data: courseData, error: courseError } = await supabase
         .from('courses')
-        .select(`
-          *,
-          instructor:profiles(full_name)
-        `)
+        .select('*')
         .eq('id', courseId)
         .single();
 
       if (courseError) throw courseError;
-      setCourse(courseData);
 
-      // 등록 확인
-      const { data: enrollmentData } = await supabase
+      // 수강 등록 확인
+      const { data: enrollmentData, error: enrollmentError } = await supabase
         .from('enrollments')
         .select('*')
         .eq('course_id', courseId)
-        .eq('user_id', user?.id)
-        .maybeSingle();
+        .eq('user_id', user.id)
+        .single();
 
-      if (!enrollmentData) {
-        navigate(`/course/${courseId}`);
+      if (enrollmentError) {
+        console.error('Enrollment check error:', enrollmentError);
         toast({
-          title: "접근 권한 없음",
-          description: "이 강의를 수강하려면 먼저 등록해주세요.",
-          variant: "destructive"
+          title: "수강 등록 필요",
+          description: "이 강의에 수강 등록하지 않았습니다.",
+          variant: "destructive",
         });
+        navigate(`/course/${courseId}`);
         return;
       }
-      setEnrollment(enrollmentData);
 
-      // Fetch course sections with sessions
+      // 섹션 및 세션 데이터 조회
       const { data: sectionsData, error: sectionsError } = await supabase
         .from('course_sections')
         .select(`
           *,
-          course_sessions(*)
+          sessions:course_sessions(*)
         `)
         .eq('course_id', courseId)
         .order('order_index');
 
-      const { data: sessionsData, error: sessionsFetchError } = await supabase
-        .from('course_sessions')
-        .select('*')
-        .eq('course_id', courseId)
-        .order('order_index');
+      if (sectionsError) throw sectionsError;
 
-      if (sectionsError || sessionsFetchError) throw sectionsError || sessionsFetchError;
-
-      // Transform sections data
-      const transformedSections: CourseSection[] = (sectionsData || []).map(section => ({
-        id: section.id,
-        title: section.title,
-        order_index: section.order_index,
-        attachment_url: section.attachment_url,
-        attachment_name: section.attachment_name,
-        sessions: (section.course_sessions || [])
-          .sort((a: any, b: any) => a.order_index - b.order_index)
-          .map((session: any) => ({
-            ...session,
-            section_id: section.id
-          }))
-      }));
-
-      setSections(transformedSections);
-      setSessions(sessionsData || []);
-      
-      // Debug: 섹션 데이터 확인
-      console.log('Sections with attachments:', transformedSections.filter(s => s.attachment_url));
-      
-      if (sessionsData && sessionsData.length > 0) {
-        const initial = initialSessionId ? sessionsData.find(s => s.id === initialSessionId) : null;
-        setCurrentSession(initial || sessionsData[0]);
-      }
-
-      // 진행 상황
-      const { data: progressData } = await supabase
+      // 진도 데이터 조회
+      const { data: progressData, error: progressError } = await supabase
         .from('session_progress')
         .select('*')
-        .eq('user_id', user?.id)
-        .in('session_id', sessionsData?.map(s => s.id) || []);
+        .eq('user_id', user.id);
 
+      if (progressError) console.error('Progress fetch error:', progressError);
+
+      setCourse(courseData);
+      setEnrollment(enrollmentData);
+      setSections(sectionsData || []);
       setProgress(progressData || []);
-    } catch (error) {
+
+      // 모든 세션을 평면화
+      const allSessions = sectionsData?.flatMap(section => 
+        section.sessions?.map((session: any) => ({
+          ...session,
+          section_id: section.id
+        })) || []
+      ) || [];
+
+      setSessions(allSessions);
+
+      // 초기 세션 설정
+      if (initialSessionId) {
+        const targetSession = allSessions.find(s => s.id === initialSessionId);
+        if (targetSession) {
+          setCurrentSession(targetSession);
+        } else {
+          setCurrentSession(allSessions[0] || null);
+        }
+      } else {
+        setCurrentSession(allSessions[0] || null);
+      }
+
+    } catch (error: any) {
       console.error('Error fetching course data:', error);
       toast({
-        title: "오류",
-        description: "강의 데이터를 불러오는데 실패했습니다.",
-        variant: "destructive"
+        title: "데이터 로드 오류",
+        description: error.message || "강의 데이터를 불러오는데 실패했습니다.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVideoProgress = async (currentTime: number, duration: number) => {
-    if (!currentSession || !user || duration === 0) return;
-
-    const progressPercent = Math.min((currentTime / duration) * 100, 100);
-    const watchedSeconds = Math.floor(currentTime);
-
-    // 로컬 상태 업데이트
-    setVideoProgress(prev => ({
-      ...prev,
-      [currentSession.id]: progressPercent
-    }));
-
-    // 80% 이상 시청하면 자동 완료 처리
-    if (progressPercent >= 80) {
-      const sessionProgress = getSessionProgress(currentSession.id);
-      if (!sessionProgress?.completed) {
-        markSessionComplete(currentSession.id);
-      }
-    }
-
-    // 진도 저장 (10초마다 업데이트)
-    if (watchedSeconds > 0 && watchedSeconds % 10 === 0) {
-      try {
-        await supabase
-          .from('session_progress')
-          .upsert({
-            user_id: user.id,
-            session_id: currentSession.id,
-            watched_duration_seconds: watchedSeconds,
-            completed: progressPercent >= 80,
-            completed_at: progressPercent >= 80 ? new Date().toISOString() : null
-          }, {
-            onConflict: 'user_id,session_id'
-          });
-      } catch (error) {
-        console.error('Error saving progress:', error);
-      }
-    }
-  };
-
+  // markSessionComplete 수정 (trackerRef 사용)
   const markSessionComplete = async (sessionId: string) => {
-    if (!user) {
-      console.log('No user found for session completion');
+    if (!user) return;
+    // progressTracker 대신 trackerRef.current 사용
+    const tracker = trackerRef.current;
+
+    if (!tracker) {
+      console.error('Tracker not initialized.');
+      toast({
+        title: "오류",
+        description: "진도 추적기가 초기화되지 않았습니다.",
+        variant: "destructive",
+      });
       return;
     }
 
-    console.log('Marking session complete:', { sessionId, userId: user.id });
-
     try {
-      // 1. 먼저 진행 상황 저장
-      if (progressTracker) {
-        console.log('Saving progress before validation...');
-        await progressTracker.saveProgress();
-      }
+      // 1. 최종 저장 확인
+      await tracker.saveProgress();
 
       // 2. 백엔드 검증 수행
-      console.log('Invoking validate-progress function...');
       const { data: validation, error: functionError } = await supabase.functions.invoke('validate-progress', {
-        body: { sessionId, userId: user.id, actualDuration: progressTracker?.getVideoDuration() }
+        // tracker에서 실제 영상 길이 전달
+        body: { sessionId, userId: user.id, actualDuration: tracker.getVideoDuration() }
       });
 
       if (functionError) {
-        console.error('Function invocation error:', functionError);
-        throw functionError;
+        console.error('Function error:', functionError);
+        throw new Error(`서버 검증 실패: ${functionError.message}`);
       }
 
       console.log('Validation result:', validation);
 
       if (!validation || !validation.isValid) {
-        const watchedPercentage = validation?.watchedPercentage || 0;
-        const checkpointScore = validation?.checkpointScore || 0;
-        
-        console.log('Validation failed:', { watchedPercentage, checkpointScore });
         toast({
           title: "학습 검증 실패",
-          description: `시청률: ${watchedPercentage}%, 체크포인트: ${checkpointScore}%`,
-          variant: "destructive"
+          description: `진도율: ${validation?.watchedPercentage || 0}% (80% 이상 필요)`,
+          variant: "destructive",
         });
         return;
       }
 
-      // 2. 세션 완료 처리
-      const { error } = await supabase
+      // 3. 검증 성공 시 완료 처리
+      const { error: updateError } = await supabase
         .from('session_progress')
         .upsert({
           user_id: user.id,
           session_id: sessionId,
           completed: true,
-          watched_duration_seconds: validation.totalWatchedTime,
-          completed_at: new Date().toISOString()
+          completed_at: new Date().toISOString(),
+          watched_duration_seconds: Math.round(tracker.getTotalWatchedTime())
+        }, {
+          onConflict: 'user_id,session_id'
         });
 
-      if (error) throw error;
-
-      // 3. 진행 상황 업데이트
-      setProgress(prev => {
-        const existing = prev.find(p => p.session_id === sessionId);
-        if (existing) {
-          return prev.map(p => 
-            p.session_id === sessionId 
-              ? { ...p, completed: true }
-              : p
-          );
-        } else {
-          return [...prev, { session_id: sessionId, completed: true, watched_duration_seconds: validation.totalWatchedTime }];
-        }
-      });
-
-      // 4. 전체 진행률 계산 및 업데이트
-      const updatedProgress = [...progress];
-      const existingIndex = updatedProgress.findIndex(p => p.session_id === sessionId);
-      
-      if (existingIndex >= 0) {
-        updatedProgress[existingIndex] = { ...updatedProgress[existingIndex], completed: true };
-      } else {
-        updatedProgress.push({ 
-          session_id: sessionId, 
-          completed: true, 
-          watched_duration_seconds: validation.totalWatchedTime
-        });
+      if (updateError) {
+        console.error('Update error:', updateError);
+        throw updateError;
       }
-      
-      const completedSessions = updatedProgress.filter(p => p.completed).length;
-      const totalSessions = sessions.length;
-      const newProgress = totalSessions > 0 ? Math.min((completedSessions / totalSessions) * 100, 100) : 0;
-
-      // 강의 전체 진도율 업데이트
-      await supabase
-        .from('enrollments')
-        .update({ 
-          progress: newProgress,
-          completed_at: newProgress >= 100 ? new Date().toISOString() : null
-        })
-        .eq('id', enrollment.id);
-
-      // 로컬 enrollment 상태도 업데이트
-      setEnrollment(prev => prev ? { ...prev, progress: newProgress } : prev);
 
       toast({
-        title: "세션 완료! 🎉",
-        description: `전체 진도율: ${newProgress.toFixed(1)}% (${completedSessions}/${totalSessions})`,
+        title: "세션 완료",
+        description: `진도율 ${validation.watchedPercentage}%로 세션이 완료되었습니다.`,
+        variant: "default",
       });
 
-      console.log('Progress updated:', {
-        completedSessions,
-        totalSessions,
-        newProgress,
-        enrollmentId: enrollment.id
-      });
+      // 페이지 새로고침으로 진도 반영
+      window.location.reload();
 
-      // 5. 자동으로 다음 세션으로 이동
-      if (newProgress < 100) {
-        setTimeout(() => {
-          goToNextSession();
-        }, 1500);
-      }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error marking session complete:', error);
       toast({
-        title: "오류",
-        description: "진행 상황 저장에 실패했습니다.",
-        variant: "destructive"
+        title: "완료 처리 오류",
+        description: error.message || "알 수 없는 오류가 발생했습니다.",
+        variant: "destructive",
       });
     }
+  };
+
+  const isSessionCompleted = (sessionId: string) => {
+    return progress.some(p => p.session_id === sessionId && p.completed);
   };
 
   const getSessionProgress = (sessionId: string) => {
-    return progress.find(p => p.session_id === sessionId);
+    const sessionProgress = progress.find(p => p.session_id === sessionId);
+    return sessionProgress?.watched_duration_seconds || 0;
   };
 
-  const getVideoProgress = (sessionId: string) => {
-    return videoProgress[sessionId] || 0;
+  const navigateToSession = (session: CourseSession) => {
+    setCurrentSession(session);
+    // URL 업데이트 (새로고침 없이)
+    const url = new URL(window.location.href);
+    url.searchParams.set('session', session.id);
+    window.history.pushState({}, '', url.toString());
   };
 
-  const downloadSectionAttachment = async (section: CourseSection) => {
-    if (!section.attachment_url || !user) return;
-    
+  const downloadFile = async (fileUrl: string, fileName: string, sessionId: string) => {
     try {
-      // URL이 http로 시작하면 외부 링크로 처리
-      if (section.attachment_url.startsWith('http') && !section.attachment_url.includes('supabase.co')) {
-        window.open(section.attachment_url, '_blank');
-        
-        toast({
-          title: "링크 열기",
-          description: "새 탭에서 자료 링크가 열렸습니다."
+      // 다운로드 로그 기록
+      await supabase
+        .from('session_file_downloads')
+        .insert({
+          user_id: user?.id,
+          session_id: sessionId,
+          file_name: fileName
         });
-        return;
-      }
 
-      // Supabase Storage 파일 처리
-      let path = section.attachment_url;
-      if (path.startsWith('http')) {
-        const marker = '/course-files/';
-        const idx = path.indexOf(marker);
-        if (idx !== -1) {
-          path = path.substring(idx + marker.length);
-        }
-      }
-
-      // Signed URL 생성
-      const { data, error } = await supabase.storage
-        .from('course-files')
-        .createSignedUrl(path, 60);
-      
-      if (error || !data?.signedUrl) {
-        throw error || new Error('Signed URL 생성 실패');
-      }
-
-      // fetch로 파일을 다운로드해서 blob으로 변환
-      const response = await fetch(data.signedUrl);
-      if (!response.ok) {
-        throw new Error(`파일 다운로드 실패: ${response.status}`);
-      }
-      
+      // 파일 다운로드
+      const response = await fetch(fileUrl);
       const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       
-      // Blob URL을 생성해서 다운로드
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = section.attachment_name || 'download';
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
       
-      // Blob URL 정리
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
       toast({
         title: "다운로드 완료",
-        description: "파일이 성공적으로 다운로드되었습니다."
+        description: `${fileName} 파일이 다운로드되었습니다.`,
       });
-
-    } catch (err) {
-      console.error('download error', err);
-      toast({ 
-        title: '다운로드 실패', 
-        description: '파일 다운로드에 실패했습니다. 잠시 후 다시 시도해주세요.', 
-        variant: 'destructive' 
+    } catch (error) {
+      console.error('File download error:', error);
+      toast({
+        title: "다운로드 실패",
+        description: "파일 다운로드 중 오류가 발생했습니다.",
+        variant: "destructive",
       });
     }
   };
-  // 모든 세션을 순서대로 정렬하여 반환하는 함수
-  const getAllSessionsInOrder = () => {
-    return sections
-      .sort((a, b) => a.order_index - b.order_index)
-      .flatMap(section => 
-        section.sessions.sort((a, b) => a.order_index - b.order_index)
-      );
-  };
 
-  const goToNextSession = () => {
-    const allSessions = getAllSessionsInOrder();
-    const currentIndex = allSessions.findIndex(s => s.id === currentSession?.id);
-    if (currentIndex >= 0 && currentIndex < allSessions.length - 1) {
-      setCurrentSession(allSessions[currentIndex + 1]);
-    }
+  const getCurrentSessionIndex = () => {
+    return sessions.findIndex(s => s.id === currentSession?.id);
   };
 
   const goToPreviousSession = () => {
-    const allSessions = getAllSessionsInOrder();
-    const currentIndex = allSessions.findIndex(s => s.id === currentSession?.id);
+    const currentIndex = getCurrentSessionIndex();
     if (currentIndex > 0) {
-      setCurrentSession(allSessions[currentIndex - 1]);
+      navigateToSession(sessions[currentIndex - 1]);
     }
   };
 
-  // 현재 세션의 인덱스 정보를 가져오는 함수
-  const getCurrentSessionIndex = () => {
-    const allSessions = getAllSessionsInOrder();
-    return allSessions.findIndex(s => s.id === currentSession?.id);
+  const goToNextSession = () => {
+    const currentIndex = getCurrentSessionIndex();
+    if (currentIndex < sessions.length - 1) {
+      navigateToSession(sessions[currentIndex + 1]);
+    }
   };
 
-  const getTotalSessionsCount = () => {
-    return getAllSessionsInOrder().length;
+  const extractVimeoId = (url: string) => {
+    const match = url.match(/vimeo\.com\/(?:video\/)?(\d+)(?:\?.*)?/);
+    return match ? match[1] : null;
+  };
+
+  const extractVimeoHash = (url: string) => {
+    const match = url.match(/[?&]h=([a-zA-Z0-9]+)/);
+    return match ? match[1] : null;
   };
 
   if (loading) {
     return (
-      <div className="bg-background flex items-center justify-center py-20">
-        <div className="text-center">로딩 중...</div>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">강의 데이터를 불러오는 중...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
-  const completedSessions = progress.filter(p => p.completed).length;
-  const totalSessions = sessions.length;
-  const courseProgress = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
-
-  return (
-    <div className="bg-background">
-      <Header />
-      
-      {/* 헤더 섹션 - 깔끔한 디자인 */}
-      <div className="border-b border-border/50">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <div className="flex items-center gap-3 sm:gap-4">
-            {/* 돌아가기 버튼 - 아이콘만 */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/my-page')}
-              className="flex-shrink-0 p-2 hover:bg-muted/50"
-            >
-              <ArrowLeft className="h-4 w-4" />
+  if (!course || !currentSession) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">강의를 찾을 수 없습니다</h1>
+            <Button onClick={() => navigate(-1)} variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              돌아가기
             </Button>
-            
-            {/* 강의 정보 */}
-            <div className="min-w-0 flex-1">
-              <h1 className="text-base sm:text-lg md:text-xl font-semibold text-foreground leading-tight line-clamp-1">
-                {course?.title}
-              </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 line-clamp-1">
-                강사: {course?.instructor?.full_name}
-              </p>
-            </div>
-            
-            {/* 진행률 표시 - 더 컴팩트한 디자인 */}
-            <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm flex-shrink-0">
-              <div className="hidden sm:flex items-center gap-1">
-                <span className="text-muted-foreground">진행률:</span>
-                <span className="font-medium text-foreground">{Math.round(courseProgress)}%</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-muted-foreground sm:hidden">진행:</span>
-                <span className="text-muted-foreground hidden sm:inline">완료:</span>
-                <span className="font-medium text-foreground">{completedSessions}/{totalSessions}</span>
-              </div>
-              <Progress 
-                value={courseProgress} 
-                className="w-12 sm:w-16 md:w-20 h-1.5 sm:h-2" 
-              />
-            </div>
           </div>
         </div>
       </div>
+    );
+  }
 
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        {/* 모바일/태블릿: 비디오 우선, 데스크톱: 사이드바 레이아웃 */}
-        <div className="space-y-6 lg:grid lg:grid-cols-4 lg:gap-6 lg:space-y-0 lg:items-start">
-          
-          {/* 비디오 플레이어 - 모바일에서 최상단, PC에서 정렬 맞춤 */}
-          <div className="order-1 lg:order-2 lg:col-span-3">
-            {currentSession ? (
-              <Card>
-                <CardContent className="p-3 sm:p-6">
-                  {/* 세션 제목과 설명 */}
-                  <div className="mb-4">
-                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 leading-tight">
-                      {currentSession.title}
-                    </h2>
-                    <p className="text-sm sm:text-base text-muted-foreground line-clamp-2">
-                      {currentSession.description}
-                    </p>
-                  </div>
-                  
-                  {/* 비디오 플레이어 영역 */}
-                  <div className="bg-black rounded-lg aspect-video flex items-center justify-center mb-4 sm:mb-6">
-                    {currentSession.video_url ? (
-                      currentSession.video_url.includes('vimeo.com') ? (
-                        <div className="w-full h-full relative">
-                          <iframe
-                            id={`vimeo-player-${currentSession.id}`}
-                            src={`https://player.vimeo.com/video/${currentSession.video_url.split('/').pop()}?title=0&byline=0&portrait=0&autoplay=0`}
-                            width="100%"
-                            height="100%"
-                            className="rounded-lg"
-                            allow="autoplay; fullscreen; picture-in-picture"
-                            allowFullScreen
-                          />
-                        </div>
-                      ) : (
-                        <video
-                          controls
-                          className="w-full h-full rounded-lg"
-                          src={currentSession.video_url}
-                          onTimeUpdate={(e) => handleVideoProgress(e.currentTarget.currentTime, e.currentTarget.duration)}
-                        />
-                      )
-                    ) : (
-                      <div className="text-white text-center">
-                        <PlayCircle className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4 opacity-50" />
-                        <p className="text-sm sm:text-base">비디오를 준비 중입니다</p>
+  const vimeoId = extractVimeoId(currentSession.video_url);
+  const hashParam = extractVimeoHash(currentSession.video_url);
+  const currentIndex = getCurrentSessionIndex();
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      <div className="container mx-auto px-4 py-6">
+        {/* 헤더 */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate(fromPage === 'mypage' ? '/mypage' : `/course/${courseId}`)}
+              className="p-0 h-auto"
+            >
+              <ArrowLeft className="mr-1 h-4 w-4" />
+              {fromPage === 'mypage' ? '마이페이지로' : '강의 상세로'} 돌아가기
+            </Button>
+          </div>
+          <h1 className="text-2xl font-bold">{course.title}</h1>
+          <p className="text-muted-foreground mt-1">
+            세션 {currentIndex + 1} / {sessions.length}: {currentSession.title}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* 메인 영상 영역 */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardContent className="p-0">
+                <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
+                  {currentSession.video_url?.includes('vimeo.com') && vimeoId ? (
+                    <div className="w-full h-full relative">
+                      <iframe
+                        // ★ 중요: 세션 변경 시 iframe이 확실히 새로 로드되도록 key 설정
+                        key={currentSession.id}
+                        id={`vimeo-player-${currentSession.id}`}
+                        src={`https://player.vimeo.com/video/${vimeoId}?h=${hashParam || ''}&controls=1&playsinline=1`}
+                        className="w-full h-full rounded-lg"
+                        frameBorder="0"
+                        allow="autoplay; fullscreen; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-white">비디오를 불러올 수 없습니다</p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* 진도율 및 완료 버튼 */}
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex-1 mr-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm font-medium">진도율</span>
+                        <span className="text-sm text-muted-foreground">
+                          {Math.round(videoProgress[currentSession.id] || 0)}%
+                        </span>
                       </div>
-                    )}
-                  </div>
-
-                  {/* 컨트롤 버튼 - 반응형 개선 */}
-                  <div className="flex items-center justify-between gap-2 sm:gap-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={goToPreviousSession}
-                      disabled={getCurrentSessionIndex() <= 0}
-                      className="flex-1 sm:flex-none"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      <span className="hidden sm:inline ml-2">이전</span>
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      onClick={() => markSessionComplete(currentSession.id)}
-                      disabled={getSessionProgress(currentSession.id)?.completed || false}
-                      className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none px-3 sm:px-6"
-                    >
-                      {getSessionProgress(currentSession.id)?.completed ? (
-                        <>
-                          <CheckCircle className="h-4 w-4" />
-                          <span className="hidden sm:inline ml-2">완료됨</span>
-                        </>
+                      <Progress 
+                        value={videoProgress[currentSession.id] || 0} 
+                        className="h-2"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      {isSessionCompleted(currentSession.id) ? (
+                        <Badge variant="default" className="bg-green-100 text-green-800">
+                          <CheckCircle className="mr-1 h-3 w-3" />
+                          완료
+                        </Badge>
                       ) : (
-                        <>
-                          <span className="text-xs sm:text-sm">완료 표시</span>
-                        </>
+                        <Button 
+                          onClick={() => markSessionComplete(currentSession.id)}
+                          size="sm"
+                          variant="default"
+                        >
+                          완료 표시
+                        </Button>
                       )}
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={goToNextSession}
-                      disabled={getCurrentSessionIndex() >= getTotalSessionsCount() - 1}
-                      className="flex-1 sm:flex-none"
-                    >
-                      <span className="hidden sm:inline mr-2">다음</span>
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <p>세션을 선택해주세요</p>
-                </CardContent>
-              </Card>
-            )}
+
+                  <h2 className="text-xl font-semibold mb-2">{currentSession.title}</h2>
+                  {currentSession.description && (
+                    <p className="text-muted-foreground mb-4">{currentSession.description}</p>
+                  )}
+                  
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      {currentSession.duration_minutes}분
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 네비게이션 버튼 */}
+            <div className="flex justify-between mt-4">
+              <Button 
+                onClick={goToPreviousSession}
+                disabled={currentIndex === 0}
+                variant="outline"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                이전 세션
+              </Button>
+              
+              <Button 
+                onClick={goToNextSession}
+                disabled={currentIndex === sessions.length - 1}
+                variant="outline"
+              >
+                다음 세션
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
-          {/* 강의 목차 - 모바일에서 비디오 아래 */}
-          <div className="order-2 lg:order-1 lg:col-span-1">
+          {/* 사이드바 - 세션 목록 */}
+          <div className="space-y-4">
             <Card>
-              <CardContent className="p-3 sm:p-4">
-                <h3 className="font-semibold mb-4 text-sm sm:text-base">강의 목차</h3>
-                <div className="space-y-4 sm:space-y-6">
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-4">강의 목차</h3>
+                <div className="space-y-2 max-h-[600px] overflow-y-auto">
                   {sections.map((section) => (
-                    <div key={section.id} className="space-y-2 sm:space-y-3">
-                      {/* 섹션 헤더 - 모바일 최적화 */}
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary/15 via-primary/8 to-transparent rounded-lg sm:rounded-xl" />
-                        <div className="relative px-3 py-2 sm:px-4 sm:py-3 bg-card/80 backdrop-blur-sm rounded-lg sm:rounded-xl border border-primary/20 shadow-sm">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                              <div className="w-1 h-4 sm:h-6 bg-gradient-to-b from-primary to-primary/60 rounded-full flex-shrink-0" />
-                              <h3 className="font-bold text-sm sm:text-base text-foreground truncate">
-                                {section.title}
-                              </h3>
-                            </div>
-                            {/* 섹션 자료 다운로드 버튼 */}
-                            {section.attachment_url && section.attachment_name ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => downloadSectionAttachment(section)}
-                                className="flex items-center gap-1 hover:bg-primary/10 transition-colors flex-shrink-0 px-2 py-1 h-auto"
-                              >
-                                <File className="h-3 w-3 sm:h-4 sm:w-4" />
-                                <span className="text-xs">자료</span>
-                              </Button>
-                            ) : (
-                              <div className="text-xs text-muted-foreground px-2 py-1 bg-muted/30 rounded flex-shrink-0">
-                                자료 없음
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                    <div key={section.id} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-sm">{section.title}</h4>
+                        {section.attachment_url && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => downloadFile(section.attachment_url!, section.attachment_name || '첨부파일', section.id)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <File className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                       
-                      {/* 세션 목록 - 모바일 최적화 */}
-                      <div className="ml-3 sm:ml-6 space-y-2">
-                        {section.sessions.map((session) => {
-                          const sessionProgress = getSessionProgress(session.id);
-                          const isCompleted = sessionProgress?.completed || false;
-                          const isCurrent = currentSession?.id === session.id;
-                          
-                          return (
-                            <div
-                              key={session.id}
-                              className={`group p-2 sm:p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
-                                isCurrent 
-                                  ? 'bg-primary/10 border-primary shadow-sm ring-1 ring-primary/20' 
-                                  : 'hover:bg-muted/50 hover:border-muted-foreground/30'
-                              }`}
-                              onClick={() => setCurrentSession(session)}
-                            >
-                              <div className="flex items-start gap-2 sm:gap-3">
-                                {isCompleted ? (
-                                  <div className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-green-100 rounded-full flex-shrink-0 mt-0.5">
-                                    <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-                                  </div>
-                                ) : isCurrent && getVideoProgress(session.id) > 0 ? (
-                                  <div className="relative w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 mt-0.5">
-                                    <div className="absolute inset-0 bg-muted rounded-full" />
-                                    <div 
-                                      className="absolute inset-0 bg-primary rounded-full origin-center transition-all"
-                                      style={{
-                                        clipPath: `inset(0 ${100 - getVideoProgress(session.id)}% 0 0)`
-                                      }}
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-muted/50 rounded-full group-hover:bg-primary/20 transition-colors flex-shrink-0 mt-0.5">
-                                    <PlayCircle className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground group-hover:text-primary" />
-                                  </div>
-                                )}
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <span className="text-xs sm:text-sm font-medium leading-tight line-clamp-2">
-                                      {session.order_index}. {session.title}
-                                    </span>
-                                    {session.is_free && (
-                                      <Badge variant="secondary" className="text-xs flex-shrink-0">무료</Badge>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                                    <Clock className="h-3 w-3 flex-shrink-0" />
-                                    <span>{session.duration_minutes}분</span>
-                                    {isCurrent && getVideoProgress(session.id) > 0 && (
-                                      <span className="ml-2 text-primary font-medium">
-                                        • {Math.round(getVideoProgress(session.id))}%
-                                      </span>
-                                    )}
-                                  </div>
-                                  {isCurrent && getVideoProgress(session.id) > 0 && (
-                                    <div className="mt-2">
-                                      <Progress value={getVideoProgress(session.id)} className="h-1" />
-                                    </div>
-                                  )}
+                      {section.sessions?.map((session: any) => (
+                        <div key={session.id} className="ml-2">
+                          <Button
+                            variant={currentSession?.id === session.id ? "default" : "ghost"}
+                            size="sm"
+                            onClick={() => navigateToSession(session)}
+                            className="w-full justify-start text-left h-auto py-2 px-3"
+                          >
+                            <div className="flex items-center gap-2 w-full">
+                              {isSessionCompleted(session.id) ? (
+                                <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                              ) : (
+                                <PlayCircle className="h-4 w-4 flex-shrink-0" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium truncate">
+                                  {session.title}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {session.duration_minutes}분
                                 </div>
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
+                          </Button>
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>

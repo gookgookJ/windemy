@@ -44,41 +44,32 @@ serve(async (req) => {
 
     console.log('Session found:', session);
 
-    // 2. 시청 구간 데이터 가져오기
-    console.log('Fetching watch segments for user:', userId, 'session:', sessionId);
-    const { data: segments, error: segmentsError } = await supabaseClient
-      .from('video_watch_segments')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('session_id', sessionId);
+    // 2. 시청 데이터 가져오기 (session_progress 사용)
+    const { data: progressData, error: progressError } = await supabaseClient
+        .from('session_progress')
+        .select('watched_ranges, watched_duration_seconds')
+        .eq('user_id', userId)
+        .eq('session_id', sessionId)
+        .single();
 
-    if (segmentsError) {
-      console.error('Segments fetch error:', segmentsError);
+    if (progressError || !progressData) throw new Error('Progress data fetch failed');
+
+    // watched_ranges 파싱
+    let watchedRanges = [];
+    if (progressData.watched_ranges) {
+        watchedRanges = typeof progressData.watched_ranges === 'string' 
+                        ? JSON.parse(progressData.watched_ranges) 
+                        : progressData.watched_ranges;
     }
-    console.log('Watch segments found:', segments?.length || 0);
 
-    // 3. 체크포인트 및 영상 길이 결정
+    // 3. 영상 길이 결정
     let videoDurationSeconds = (session.duration_minutes ?? 0) * 60;
     const requestedDuration = typeof actualDuration === 'number' ? Math.round(actualDuration) : 0;
     if (requestedDuration > 0) videoDurationSeconds = requestedDuration;
-    if ((!videoDurationSeconds || videoDurationSeconds <= 0) && segments && segments.length > 0) {
-      videoDurationSeconds = Math.max(...(segments as any[]).map((s: any) => s.end_time || 0));
-    }
-    console.log('Effective videoDurationSeconds:', videoDurationSeconds);
-
-    const checkpoints = generateCheckpoints(videoDurationSeconds);
-    console.log('Generated checkpoints:', checkpoints);
     
-    const { data: reachedCheckpoints, error: checkpointsError } = await supabaseClient
-      .from('video_checkpoints')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('session_id', sessionId);
-
-    if (checkpointsError) {
-      console.error('Checkpoints fetch error:', checkpointsError);
+    if (videoDurationSeconds <= 0) {
+        throw new Error('Invalid video duration.');
     }
-    console.log('Reached checkpoints found:', reachedCheckpoints?.length || 0);
 
     // 4. 점프 이벤트 데이터 가져오기
     const { data: seekEvents, error: seekError } = await supabaseClient
@@ -92,19 +83,10 @@ serve(async (req) => {
     }
     console.log('Seek events found:', seekEvents?.length || 0);
 
-    // 5. 진도율 계산
-    console.log('Validating progress with data:', {
-      segmentsCount: segments?.length || 0,
-      checkpointsCount: checkpoints.length,
-      reachedCheckpointsCount: reachedCheckpoints?.length || 0,
-      seekEventsCount: seekEvents?.length || 0,
-      videoDuration: videoDurationSeconds
-    });
-
+    // 5. 진도율 계산 및 검증
     const validation = validateProgress({
-      segments: segments || [],
-      checkpoints,
-      reachedCheckpoints: reachedCheckpoints || [],
+      watchedRanges: watchedRanges,
+      storedWatchedTime: progressData.watched_duration_seconds,
       seekEvents: seekEvents || [],
       videoDuration: videoDurationSeconds
     });
@@ -147,57 +129,45 @@ function generateCheckpoints(videoDuration: number): number[] {
 }
 
 function validateProgress(data: {
-  segments: any[];
-  checkpoints: number[];
-  reachedCheckpoints: any[];
+  watchedRanges: { start: number; end: number }[];
+  storedWatchedTime: number;
   seekEvents: any[];
   videoDuration: number;
 }) {
-  const { segments, checkpoints, reachedCheckpoints, seekEvents, videoDuration } = data;
+  const { watchedRanges, storedWatchedTime, seekEvents, videoDuration } = data;
 
-  // 1. 누적 시청 시간 계산 (가중치 적용)
-  const totalWatchedTime = segments.reduce((total, segment) => {
-    return total + (segment.duration * segment.weight);
+  // 1. 고유 시청 시간 재계산 (서버 측 보안 검증)
+  const calculatedWatchedTime = watchedRanges.reduce((total, range) => {
+    const duration = (range.end || 0) - (range.start || 0);
+    return total + (duration > 0 ? duration : 0);
   }, 0);
 
-  // 2. 실제 시청 비율 계산
-  const watchedPercentage = Math.min((totalWatchedTime / videoDuration) * 100, 100);
+  // 2. 시청 비율 계산
+  const watchedPercentage = Math.min((calculatedWatchedTime / videoDuration) * 100, 100);
 
-  // 3. 체크포인트 검증
-  const requiredCheckpoints = checkpoints.length;
-  const naturalCheckpoints = reachedCheckpoints.filter(cp => cp.is_natural).length;
-  const checkpointScore = naturalCheckpoints / requiredCheckpoints;
-
-  // 4. 점프 패턴 분석
+  // 3. 점프 패턴 분석
   const forwardJumps = seekEvents.filter(event => event.jump_amount > 10).length;
   const suspiciousJumps = seekEvents.filter(event => event.jump_amount > 60).length;
 
-  // 5. 마지막 30초 체크
-  const lastCheckpoint = Math.max(videoDuration - 30, videoDuration * 0.9);
-  const hasReachedEnd = reachedCheckpoints.some(cp => 
-    cp.checkpoint_time >= lastCheckpoint && cp.is_natural
-  );
+  // 4. 마지막 구간 시청 확인 (마지막 30초 또는 90% 지점)
+  const lastSegmentThreshold = Math.max(videoDuration - 30, videoDuration * 0.9);
+  const hasReachedEnd = watchedRanges.some(range => range.end >= lastSegmentThreshold);
 
-  // 6. 종합 검증
-  const isValidProgress = 
-    watchedPercentage >= 80 &&           // 80% 이상 시청
-    checkpointScore >= 0.8 &&            // 80% 이상 체크포인트 자연 도달
-    hasReachedEnd &&                     // 마지막 구간 자연 도달
-    suspiciousJumps <= 2;                // 의심스러운 점프 2회 이하
+  // 5. 종합 검증
+  const isValidProgress =
+    watchedPercentage >= 80 &&          // 80% 이상 고유 구간 시청
+    hasReachedEnd &&                    // 마지막 구간 시청 완료
+    suspiciousJumps <= 2;               // 의심스러운 점프 2회 이하
 
   return {
     isValid: isValidProgress,
     watchedPercentage: Math.round(watchedPercentage),
-    totalWatchedTime,
-    checkpointScore: Math.round(checkpointScore * 100),
+    totalWatchedTime: calculatedWatchedTime,
     forwardJumps,
     suspiciousJumps,
     hasReachedEnd,
     details: {
-      segments: segments.length,
-      checkpointsReached: naturalCheckpoints,
-      checkpointsRequired: requiredCheckpoints,
-      videoDuration
+        videoDuration
     }
   };
 }

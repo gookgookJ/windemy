@@ -1077,6 +1077,7 @@ export type Database = {
           session_id: string | null
           user_id: string | null
           watched_duration_seconds: number | null
+          watched_ranges: Json | null
         }
         Insert: {
           completed?: boolean | null
@@ -1086,6 +1087,7 @@ export type Database = {
           session_id?: string | null
           user_id?: string | null
           watched_duration_seconds?: number | null
+          watched_ranges?: Json | null
         }
         Update: {
           completed?: boolean | null
@@ -1095,6 +1097,7 @@ export type Database = {
           session_id?: string | null
           user_id?: string | null
           watched_duration_seconds?: number | null
+          watched_ranges?: Json | null
         }
         Relationships: [
           {

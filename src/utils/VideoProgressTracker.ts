@@ -1,15 +1,4 @@
-interface WatchSegment {
-  startTime: number;
-  endTime: number;
-  duration: number;
-  weight: number;
-}
-
-interface Checkpoint {
-  time: number;
-  reached: boolean;
-  isNatural: boolean;
-}
+import { supabase } from '@/integrations/supabase/client';
 
 interface SeekEvent {
   fromTime: number;
@@ -22,289 +11,164 @@ export class VideoProgressTracker {
   private sessionId: string;
   private userId: string;
   private videoDuration: number;
-  private currentTime: number = 0;
-  private lastRecordedTime: number = 0;
-  private watchSegments: WatchSegment[] = [];
-  private checkpoints: Checkpoint[] = [];
-  private seekEvents: SeekEvent[] = [];
-  private watchedRanges: { start: number; end: number; weight: number }[] = [];
+  private lastUpdateTime: number = 0;
   private isPlaying: boolean = false;
-  private lastPlayTime: number = 0;
+  private isInitialized: boolean = false;
+
+  // 핵심 데이터 구조: 병합된 고유 시청 구간
+  private mergedWatchedRanges: { start: number; end: number }[] = [];
+  private seekEventsToSave: SeekEvent[] = []; // 서버 저장 대기열
 
   constructor(sessionId: string, userId: string, videoDuration: number) {
     this.sessionId = sessionId;
     this.userId = userId;
     this.videoDuration = videoDuration;
-    this.generateCheckpoints();
   }
 
-  private generateCheckpoints() {
-    const intervalMinutes = Math.max(1, Math.floor(this.videoDuration / 180));
-    
-    for (let i = intervalMinutes * 60; i < this.videoDuration; i += intervalMinutes * 60) {
-      this.checkpoints.push({
-        time: i,
-        reached: false,
-        isNatural: false
-      });
+  // 초기화 및 데이터 로드 (새로고침 대응)
+  public async initialize() {
+    if (this.isInitialized) return;
+    try {
+      const { data } = await supabase
+        .from('session_progress')
+        .select('watched_ranges')
+        .eq('user_id', this.userId)
+        .eq('session_id', this.sessionId)
+        .maybeSingle();
+
+      if (data && data.watched_ranges) {
+        // JSON 파싱 및 데이터 복원
+        this.mergedWatchedRanges = typeof data.watched_ranges === 'string' 
+                                   ? JSON.parse(data.watched_ranges) 
+                                   : data.watched_ranges || [];
+        console.log('Loaded existing progress:', this.mergedWatchedRanges.length, 'ranges');
+      }
+    } catch (error) {
+      console.error('Error loading existing progress:', error);
+    } finally {
+      this.isInitialized = true;
     }
-    
-    // 마지막 30초 전 필수 체크포인트
-    const lastCheckpoint = Math.max(this.videoDuration - 30, this.videoDuration * 0.9);
-    this.checkpoints.push({
-      time: Math.floor(lastCheckpoint),
-      reached: false,
-      isNatural: false
-    });
   }
 
   onPlay(currentTime: number) {
     this.isPlaying = true;
-    this.lastPlayTime = Date.now();
-    this.currentTime = currentTime;
-    this.lastRecordedTime = currentTime;
+    this.lastUpdateTime = currentTime;
   }
 
   onPause(currentTime: number) {
     if (this.isPlaying) {
-      this.recordWatchSegment(this.currentTime, currentTime);
+      this.recordWatchRange(this.lastUpdateTime, currentTime);
     }
     this.isPlaying = false;
-    this.currentTime = currentTime;
+    this.lastUpdateTime = currentTime;
   }
 
   onTimeUpdate(currentTime: number) {
-    // 재생 이벤트가 누락되어도 안전하게 동작하도록 보정
-    if (!this.isPlaying) {
-      this.isPlaying = true;
-      this.lastPlayTime = Date.now();
-      this.currentTime = currentTime;
-      this.lastRecordedTime = currentTime;
-      this.checkCheckpoints(currentTime);
-      return;
+    if (!this.isPlaying || !this.isInitialized) return;
+
+    const timeDiff = currentTime - this.lastUpdateTime;
+
+    // 비정상적인 시간 점프 감지 (3초 이상 차이나면 무시 - 네트워크 지연 등 고려)
+    if (currentTime > this.lastUpdateTime && timeDiff > 0 && timeDiff < 3) {
+      this.recordWatchRange(this.lastUpdateTime, currentTime);
     }
-
-    // 체크포인트 확인
-    this.checkCheckpoints(currentTime);
-
-    // 연속 재생 확인 (1초마다)
-    if (currentTime - this.lastRecordedTime >= 1) {
-      this.recordWatchSegment(this.lastRecordedTime, currentTime);
-      this.lastRecordedTime = currentTime;
-    }
-
-    this.currentTime = currentTime;
     
-    // 디버깅용 로그 (5초마다)
-    if (Math.floor(currentTime) % 5 === 0 && Math.floor(currentTime) !== Math.floor(this.lastRecordedTime)) {
-      console.log('VideoProgressTracker update:', {
-        currentTime: currentTime.toFixed(2),
-        totalWatchedTime: this.getTotalWatchedTime().toFixed(2),
-        watchedPercentage: this.getWatchedPercentage().toFixed(1) + '%',
-        segments: this.watchSegments.length,
-        checkpoints: this.checkpoints.filter(cp => cp.reached).length + '/' + this.checkpoints.length
-      });
-    }
+    this.lastUpdateTime = currentTime;
   }
 
   onSeeked(fromTime: number, toTime: number) {
     const jumpAmount = toTime - fromTime;
-    
-    // 점프 이벤트 기록
-    this.seekEvents.push({
-      fromTime,
-      toTime,
-      jumpAmount,
-      timestamp: Date.now()
-    });
-
-    // 앞으로 점프한 경우 구간 무효화
-    if (jumpAmount > 10) {
-      this.invalidateSkippedRange(fromTime, toTime);
-    }
-
-    this.currentTime = toTime;
-    this.lastRecordedTime = toTime;
+    this.seekEventsToSave.push({ fromTime, toTime, jumpAmount, timestamp: Date.now() });
+    this.lastUpdateTime = toTime;
   }
 
-  private recordWatchSegment(startTime: number, endTime: number) {
-    if (endTime <= startTime) return;
-
-    const duration = endTime - startTime;
-    const weight = this.calculateWeight(startTime, endTime);
-
-    // 기존 시청 범위와 겹치는지 확인
-    this.updateWatchedRanges(startTime, endTime, weight);
-
-    const segment: WatchSegment = {
-      startTime,
-      endTime,
-      duration,
-      weight
-    };
-
-    this.watchSegments.push(segment);
+  private recordWatchRange(start: number, end: number) {
+    if (end <= start + 0.1) return; // 너무 짧은 구간은 무시
+    this.mergedWatchedRanges.push({ start, end });
+    this.mergeRanges();
   }
 
-  private calculateWeight(startTime: number, endTime: number): number {
-    // 이미 본 구간인지 확인
-    const overlaps = this.watchedRanges.filter(range => 
-      !(endTime <= range.start || startTime >= range.end)
-    );
+  // 시청 구간 병합 로직 (핵심)
+  private mergeRanges() {
+    if (this.mergedWatchedRanges.length < 2) return;
 
-    if (overlaps.length > 0) {
-      // 반복 시청은 30% 가중치
-      return 0.3;
-    }
-
-    return 1.0;
-  }
-
-  private updateWatchedRanges(startTime: number, endTime: number, weight: number) {
-    this.watchedRanges.push({ start: startTime, end: endTime, weight });
-    
-    // 겹치는 범위들을 병합
-    this.watchedRanges.sort((a, b) => a.start - b.start);
+    this.mergedWatchedRanges.sort((a, b) => a.start - b.start);
     const merged = [];
-    
-    for (const range of this.watchedRanges) {
-      if (merged.length === 0 || merged[merged.length - 1].end < range.start) {
-        merged.push(range);
+    let current = { ...this.mergedWatchedRanges[0] };
+
+    for (let i = 1; i < this.mergedWatchedRanges.length; i++) {
+      const next = this.mergedWatchedRanges[i];
+      // 0.5초 이내의 간격은 이어진 것으로 간주 (오차 허용)
+      if (next.start <= current.end + 0.5) {
+        current.end = Math.max(current.end, next.end);
       } else {
-        merged[merged.length - 1].end = Math.max(merged[merged.length - 1].end, range.end);
+        merged.push(current);
+        current = { ...next };
       }
     }
-    
-    this.watchedRanges = merged;
+    merged.push(current);
+    this.mergedWatchedRanges = merged;
   }
 
-  private invalidateSkippedRange(fromTime: number, toTime: number) {
-    // 건너뛴 구간을 시청하지 않은 것으로 처리
-    this.watchedRanges = this.watchedRanges.filter(range => 
-      !(range.start >= fromTime && range.end <= toTime)
-    );
-  }
-
-  private checkCheckpoints(currentTime: number) {
-    this.checkpoints.forEach(checkpoint => {
-      if (!checkpoint.reached && currentTime >= checkpoint.time) {
-        checkpoint.reached = true;
-        
-        // 최근 점프가 있었는지 확인 (5초 내)
-        const recentJump = this.seekEvents.find(event => 
-          Date.now() - event.timestamp < 5000 && 
-          event.jumpAmount > 5
-        );
-        
-        checkpoint.isNatural = !recentJump;
-      }
-    });
-  }
-
+  // 총 고유 시청 시간 계산
   getTotalWatchedTime(): number {
-    return this.watchSegments.reduce((total, segment) => 
-      total + (segment.duration * segment.weight), 0
-    );
+    return this.mergedWatchedRanges.reduce((total, range) => total + (range.end - range.start), 0);
   }
 
   getWatchedPercentage(): number {
+    if (this.videoDuration === 0) return 0;
     return Math.min((this.getTotalWatchedTime() / this.videoDuration) * 100, 100);
-  }
-
-  isValidForCompletion(): boolean {
-    const watchedPercentage = this.getWatchedPercentage();
-    const requiredCheckpoints = this.checkpoints.length;
-    const naturalCheckpoints = this.checkpoints.filter(cp => cp.reached && cp.isNatural).length;
-    const checkpointScore = naturalCheckpoints / requiredCheckpoints;
-    
-    // 마지막 체크포인트 자연 도달 확인
-    const lastCheckpoint = this.checkpoints[this.checkpoints.length - 1];
-    const hasReachedEnd = lastCheckpoint.reached && lastCheckpoint.isNatural;
-    
-    // 의심스러운 점프 확인
-    const suspiciousJumps = this.seekEvents.filter(event => event.jumpAmount > 60).length;
-
-    return (
-      watchedPercentage >= 80 &&
-      checkpointScore >= 0.8 &&
-      hasReachedEnd &&
-      suspiciousJumps <= 2
-    );
   }
 
   public updateVideoDuration(seconds: number) {
     if (seconds && seconds > 0) {
       this.videoDuration = seconds;
-      this.checkpoints = [];
-      this.generateCheckpoints();
     }
   }
 
-  public getVideoDuration(): number {
-    return this.videoDuration;
+  public getVideoDuration(): number { 
+    return this.videoDuration; 
   }
 
   getProgressData() {
     return {
       sessionId: this.sessionId,
       userId: this.userId,
-      watchSegments: this.watchSegments,
-      checkpoints: this.checkpoints,
-      seekEvents: this.seekEvents,
+      watchedRanges: this.mergedWatchedRanges,
+      seekEvents: this.seekEventsToSave,
       totalWatchedTime: this.getTotalWatchedTime(),
       watchedPercentage: this.getWatchedPercentage(),
-      isValidForCompletion: this.isValidForCompletion()
+      isInitialized: this.isInitialized
     };
   }
 
+  // 데이터 저장 로직 수정
   async saveProgress() {
-    const { supabase } = await import('@/integrations/supabase/client');
-    
+    if (!this.isInitialized) return;
+    this.mergeRanges(); // 최종 병합
+
+    const totalWatchedTime = this.getTotalWatchedTime();
+
     try {
-      // 시청 세그먼트 저장
-      if (this.watchSegments.length > 0) {
-        const segmentsToSave = this.watchSegments.map(segment => ({
+      // 1. session_progress 업데이트 (요약 데이터 저장)
+      const { error: progressError } = await supabase
+        .from('session_progress')
+        .upsert({
           user_id: this.userId,
           session_id: this.sessionId,
-          start_time: segment.startTime,
-          end_time: segment.endTime,
-          duration: segment.duration,
-          weight: segment.weight
-        }));
+          watched_duration_seconds: Math.round(totalWatchedTime),
+          // 병합된 시청 범위를 저장 (JSON 형태로)
+          watched_ranges: this.mergedWatchedRanges,
+        }, {
+          onConflict: 'user_id,session_id'
+        });
 
-        const { error: segmentError } = await supabase
-          .from('video_watch_segments')
-          .insert(segmentsToSave);
+      if (progressError) throw progressError;
 
-        if (segmentError) {
-          console.error('Error saving watch segments:', segmentError);
-        }
-      }
-
-      // 체크포인트 저장
-      const reachedCheckpoints = this.checkpoints.filter(cp => cp.reached);
-      if (reachedCheckpoints.length > 0) {
-        const checkpointsToSave = reachedCheckpoints.map(checkpoint => ({
-          user_id: this.userId,
-          session_id: this.sessionId,
-          checkpoint_time: checkpoint.time,
-          is_natural: checkpoint.isNatural
-        }));
-
-        const { error: checkpointError } = await supabase
-          .from('video_checkpoints')
-          .upsert(checkpointsToSave, {
-            onConflict: 'user_id,session_id,checkpoint_time'
-          });
-
-        if (checkpointError) {
-          console.error('Error saving checkpoints:', checkpointError);
-        }
-      }
-
-      // Seek 이벤트 저장
-      if (this.seekEvents.length > 0) {
-        const seekEventsToSave = this.seekEvents.map(event => ({
+      // 2. Seek 이벤트 저장 (증분 저장)
+      if (this.seekEventsToSave.length > 0) {
+        const eventsBatch = [...this.seekEventsToSave];
+        const eventsData = eventsBatch.map(event => ({
           user_id: this.userId,
           session_id: this.sessionId,
           from_time: event.fromTime,
@@ -314,41 +178,18 @@ export class VideoProgressTracker {
 
         const { error: seekError } = await supabase
           .from('video_seek_events')
-          .insert(seekEventsToSave);
+          .insert(eventsData);
 
-        if (seekError) {
-          console.error('Error saving seek events:', seekError);
+        if (!seekError) {
+          // 성공 시에만 대기열에서 제거
+          this.seekEventsToSave = this.seekEventsToSave.filter(s => !eventsBatch.includes(s));
         }
       }
-
-      // 세션 진도 업데이트
-      const watchedPercentage = this.getWatchedPercentage();
-      const isCompleted = this.isValidForCompletion();
-      
-      const { error: progressError } = await supabase
-        .from('session_progress')
-        .upsert({
-          user_id: this.userId,
-          session_id: this.sessionId,
-          watched_duration_seconds: Math.round(this.getTotalWatchedTime()),
-          completed: isCompleted,
-          completed_at: isCompleted ? new Date().toISOString() : null
-        }, {
-          onConflict: 'user_id,session_id'
-        });
-
-      if (progressError) {
-        console.error('Error updating session progress:', progressError);
-      }
-
-      // 클리어 데이터 (중복 저장 방지)
-      this.watchSegments = [];
-      this.seekEvents = [];
-
-      const data = this.getProgressData();
-      console.log('Progress saved successfully:', data);
-      return data;
-      
+      console.log('Progress saved successfully:', {
+        totalWatchedTime,
+        watchedPercentage: this.getWatchedPercentage(),
+        ranges: this.mergedWatchedRanges.length
+      });
     } catch (error) {
       console.error('Error saving progress:', error);
       throw error;
