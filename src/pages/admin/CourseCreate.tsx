@@ -1137,20 +1137,13 @@ const AdminCourseCreate = () => {
 
   return (
     <AdminLayout>
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="p-6">
         {/* 헤더 */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">새 강의 생성</h1>
           <p className="text-muted-foreground">
             단계별로 강의를 생성하고 관리하세요. 자동 저장 기능으로 작업 내용이 보호됩니다.
           </p>
-          
-          <div className="mt-4">
-            <Button onClick={() => saveCourse(true)} variant="outline" size="sm">
-              <Save className="w-4 h-4 mr-2" />
-              수동 저장
-            </Button>
-          </div>
         </div>
 
         {/* 진행 상태 */}
