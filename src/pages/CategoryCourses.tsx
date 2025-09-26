@@ -41,9 +41,9 @@ const CategoryCourses = () => {
   const { toast } = useToast();
 
   const categoryNames: Record<string, string> = {
-    "free-courses": "무료강의",
-    "vod-courses": "VOD 강의", 
-    "premium-courses": "프리미엄 강의"
+    "free-courses": "무료",
+    "vod-courses": "VOD", 
+    "premium-courses": "프리미엄"
   };
 
   const categoryDescriptions: Record<string, string> = {
@@ -66,9 +66,9 @@ const CategoryCourses = () => {
     // Set initial category selection based on route
     if (category && categories.length > 0) {
       const routeCategoryNameMap: Record<string, string> = {
-        "free-courses": "무료강의",
-        "vod-courses": "VOD 강의", 
-        "premium-courses": "프리미엄 강의"
+        "free-courses": "무료",
+        "vod-courses": "VOD", 
+        "premium-courses": "프리미엄"
       };
       
       const categoryName = routeCategoryNameMap[category];

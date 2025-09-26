@@ -63,9 +63,10 @@ const Header = () => {
       href: "/courses",
       icon: GraduationCap,
       submenu: [
-        { name: "무료강의", href: "/courses/free-courses" },
-        { name: "VOD 강의", href: "/courses/vod-courses" },
-        { name: "프리미엄 강의", href: "/courses/premium-courses" },
+        { name: "전체", href: "/courses" },
+        { name: "무료", href: "/courses/free-courses" },
+        { name: "VOD", href: "/courses/vod-courses" },
+        { name: "프리미엄", href: "/courses/premium-courses" },
       ]
     },
     { name: "강사 지원", href: "/instructor-apply", icon: UserPlus },

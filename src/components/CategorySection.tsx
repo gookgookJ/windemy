@@ -13,14 +13,14 @@ const CategorySection = memo(() => {
   const categories = [
     { 
       icon: BookOpen, 
-      label: "무료강의", 
+      label: "무료", 
       color: "bg-blue-100 text-blue-600",
       link: "/courses/free-courses",
       isExternal: false
     },
     { 
       icon: Crown, 
-      label: "프리미엄 강의", 
+      label: "프리미엄", 
       color: "bg-purple-100 text-purple-600",
       link: "/courses/premium-courses",
       isExternal: false
