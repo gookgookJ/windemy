@@ -133,7 +133,13 @@ const CourseCreate = () => {
         .order('order_index');
       
       if (error) throw error;
-      setHomepageSections(data || []);
+      
+      // 중복 제거: 같은 title을 가진 섹션 중 첫 번째만 유지
+      const uniqueSections = (data || []).filter((section, index, self) => 
+        index === self.findIndex(s => s.title === section.title)
+      );
+      
+      setHomepageSections(uniqueSections);
     } catch (error: any) {
       toast({
         title: "오류",
