@@ -207,7 +207,7 @@ const Header = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="sm:block lg:hidden"
+                  className="sm:block lg:hidden flex items-center justify-center"
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                 >
                   {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
