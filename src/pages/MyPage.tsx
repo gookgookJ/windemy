@@ -48,11 +48,50 @@ const MyPage = () => {
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute("content", "수강 중인 강의와 학습 진도를 확인하세요");
     
+    // 모바일/태블릿에서 ChannelTalk 위젯 숨기기
+    const hideChannelTalkOnMobile = () => {
+      const isMobileOrTablet = window.innerWidth < 1024; // lg breakpoint
+      const channelButton = document.querySelector('#ch-plugin') as HTMLElement;
+      if (channelButton) {
+        channelButton.style.display = isMobileOrTablet ? 'none' : '';
+      }
+    };
+
+    // 초기 실행
+    hideChannelTalkOnMobile();
+    
+    // 리사이즈 이벤트 리스너
+    const handleResize = () => {
+      hideChannelTalkOnMobile();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    // ChannelTalk 위젯이 로드되기까지 약간의 지연 후 다시 체크
+    const checkChannelTalkInterval = setInterval(() => {
+      hideChannelTalkOnMobile();
+      const channelButton = document.querySelector('#ch-plugin');
+      if (channelButton) {
+        clearInterval(checkChannelTalkInterval);
+      }
+    }, 100);
+    
     if (!user) {
       navigate('/');
       return;
     }
     fetchEnrollments();
+
+    // 컴포넌트 언마운트 시 정리
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearInterval(checkChannelTalkInterval);
+      // 페이지 이동 시 ChannelTalk 위젯 다시 보이게 하기
+      const channelButton = document.querySelector('#ch-plugin') as HTMLElement;
+      if (channelButton) {
+        channelButton.style.display = '';
+      }
+    };
   }, [user, navigate]);
 
   // Refetch when page changes and set up real-time updates
