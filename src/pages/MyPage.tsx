@@ -185,12 +185,12 @@ const MyPage = () => {
         };
       }));
 
-      setEnrollments(enrichedData);
-      
-      // 사용자 후기 정보 조회
+      // 사용자 후기 정보를 먼저 조회한 후 enrollments 설정
       if (user && enrichedData.length > 0) {
-        fetchUserReviews(enrichedData.map(e => e.course.id));
+        await fetchUserReviews(enrichedData.map(e => e.course.id));
       }
+      
+      setEnrollments(enrichedData);
     } catch (error) {
       console.error('Error fetching enrollments:', error);
     } finally {
