@@ -18,6 +18,7 @@ interface EnrollmentWithCourse {
   completed_at: string | null;
   total_sessions: number;
   completed_sessions: number;
+  real_progress: number;
   course: {
     id: string;
     title: string;
@@ -127,32 +128,58 @@ const MyPage = () => {
 
       if (error) throw error;
 
-      // Get session counts for each enrollment
+      // Get session data and calculate real progress for each enrollment
       const enrichedData = await Promise.all((data || []).map(async (enrollment) => {
-        // Get total sessions for the course
-        const { count: totalSessions } = await supabase
+        // Get all sessions for the course with their durations
+        const { data: sessions } = await supabase
           .from('course_sessions')
-          .select('*', { count: 'exact', head: true })
+          .select('id, duration_minutes')
           .eq('course_id', enrollment.course.id);
 
-        // Get completed sessions for the user
-        const { count: completedSessions } = await supabase
+        if (!sessions || sessions.length === 0) {
+          return {
+            ...enrollment,
+            total_sessions: 0,
+            completed_sessions: 0,
+            real_progress: 0
+          };
+        }
+
+        // Get user's progress for these sessions
+        const { data: sessionProgress } = await supabase
           .from('session_progress')
-          .select('*', { count: 'exact', head: true })
+          .select('session_id, watched_duration_seconds')
           .eq('user_id', user.id)
-          .eq('completed', true)
-          .in('session_id', 
-            (await supabase
-              .from('course_sessions')
-              .select('id')
-              .eq('course_id', enrollment.course.id)
-            ).data?.map(s => s.id) || []
-          );
+          .in('session_id', sessions.map(s => s.id));
+
+        // Calculate total duration in seconds
+        const totalDurationSeconds = sessions.reduce((total, session) => 
+          total + (session.duration_minutes || 0) * 60, 0);
+
+        // Calculate total watched duration
+        const totalWatchedSeconds = sessionProgress?.reduce((total, progress) => 
+          total + (progress.watched_duration_seconds || 0), 0) || 0;
+
+        // Calculate completed sessions (80% or more watched)
+        const completedSessions = sessions.filter(session => {
+          const progress = sessionProgress?.find(p => p.session_id === session.id);
+          if (!progress || !session.duration_minutes) return false;
+          
+          const sessionDurationSeconds = session.duration_minutes * 60;
+          const watchedPercentage = progress.watched_duration_seconds / sessionDurationSeconds;
+          return watchedPercentage >= 0.8; // 80% completion threshold
+        }).length;
+
+        // Calculate real progress percentage
+        const realProgress = totalDurationSeconds > 0 
+          ? (totalWatchedSeconds / totalDurationSeconds) * 100 
+          : 0;
 
         return {
           ...enrollment,
-          total_sessions: totalSessions || 0,
-          completed_sessions: completedSessions || 0
+          total_sessions: sessions.length,
+          completed_sessions: completedSessions,
+          real_progress: Math.min(realProgress, 100) // Cap at 100%
         };
       }));
 
@@ -353,20 +380,20 @@ const MyPage = () => {
                                 {enrollment.course.title}
                               </h3>
                               
-                              {/* 세션 기반 진도율 표시 */}
+                              {/* 실제 시청률 기반 진도율 표시 */}
                               <div className="space-y-2">
                                 <div className="flex justify-between items-center text-xs md:text-sm">
                                   <span className="font-medium text-foreground">
                                     {enrollment.completed_sessions} / {enrollment.total_sessions}강
                                   </span>
                                   <span className="text-muted-foreground">
-                                    ({enrollment.total_sessions > 0 ? Math.round((enrollment.completed_sessions / enrollment.total_sessions) * 100) : 0}%)
+                                    ({Math.round(enrollment.real_progress)}%)
                                   </span>
                                 </div>
                                 <div className="w-full bg-muted rounded-full h-2">
                                   <div 
                                     className="h-2 bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-300"
-                                    style={{ width: `${enrollment.total_sessions > 0 ? (enrollment.completed_sessions / enrollment.total_sessions) * 100 : 0}%` }}
+                                    style={{ width: `${enrollment.real_progress}%` }}
                                   />
                                 </div>
                               </div>
