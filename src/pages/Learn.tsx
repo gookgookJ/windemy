@@ -658,7 +658,7 @@ const Learn = () => {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>{currentIndex + 1}/{sessions.length}</span>
             <span>•</span>
-            <span>{Math.round((progress.filter(p => p.completed).length / sessions.length) * 100)}%</span>
+            <span>{Math.round(videoProgress[currentSession.id] || 0)}%</span>
           </div>
         </div>
 
