@@ -16,6 +16,8 @@ interface EnrollmentWithCourse {
   progress: number;
   enrolled_at: string;
   completed_at: string | null;
+  total_sessions: number;
+  completed_sessions: number;
   course: {
     id: string;
     title: string;
@@ -32,6 +34,7 @@ const MyPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   
@@ -102,7 +105,7 @@ const MyPage = () => {
       const totalCount = count || 0;
       setTotalPages(Math.ceil(totalCount / itemsPerPage));
 
-      // Then get paginated data
+      // Then get paginated data with session counts
       const { data, error } = await supabase
         .from('enrollments')
         .select(`
@@ -124,7 +127,36 @@ const MyPage = () => {
 
       if (error) throw error;
 
-      setEnrollments(data || []);
+      // Get session counts for each enrollment
+      const enrichedData = await Promise.all((data || []).map(async (enrollment) => {
+        // Get total sessions for the course
+        const { count: totalSessions } = await supabase
+          .from('course_sessions')
+          .select('*', { count: 'exact', head: true })
+          .eq('course_id', enrollment.course.id);
+
+        // Get completed sessions for the user
+        const { count: completedSessions } = await supabase
+          .from('session_progress')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('completed', true)
+          .in('session_id', 
+            (await supabase
+              .from('course_sessions')
+              .select('id')
+              .eq('course_id', enrollment.course.id)
+            ).data?.map(s => s.id) || []
+          );
+
+        return {
+          ...enrollment,
+          total_sessions: totalSessions || 0,
+          completed_sessions: completedSessions || 0
+        };
+      }));
+
+      setEnrollments(enrichedData);
     } catch (error) {
       console.error('Error fetching enrollments:', error);
     } finally {
@@ -276,32 +308,28 @@ const MyPage = () => {
                   </Card>
                 ) : (
                   <>
-                    {/* 필터 및 정렬 옵션 */}
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80">
-                          학습중
-                        </Badge>
-                        <Badge variant="outline" className="cursor-pointer hover:bg-accent">
-                          완료
-                        </Badge>
-                        <Badge variant="outline" className="cursor-pointer hover:bg-accent">
-                          수강평 작성 가능
-                        </Badge>
-                        <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
-                          만료 제한
-                        </Badge>
+                    {/* 검색 필터 */}
+                    <div className="mb-6">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="강의명 또는 강사명으로 검색..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full px-4 py-2 pr-10 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        />
+                        <BookOpen className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       </div>
-                      <select className="px-3 py-1.5 text-sm border rounded-md bg-background">
-                        <option value="latest">최근 학습순</option>
-                        <option value="progress">진도순</option>
-                        <option value="title">제목순</option>
-                      </select>
                     </div>
 
                     {/* 강의 카드 그리드 */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                      {enrollments.map((enrollment) => (
+                      {enrollments
+                        .filter(enrollment => 
+                          enrollment.course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          enrollment.course.instructor?.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
+                        )
+                        .map((enrollment) => (
                         <Card key={enrollment.id} className="group cursor-pointer hover:shadow-lg transition-all duration-200 overflow-hidden">
                           <div className="relative" onClick={() => handleCourseClick(enrollment.course.id)}>
                             <div className="aspect-video w-full bg-muted">
@@ -311,9 +339,9 @@ const MyPage = () => {
                                 className="w-full h-full object-cover"
                               />
                               {/* 재생 버튼 오버레이 */}
-                              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                                <div className="w-12 h-12 md:w-16 md:h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                                  <Play className="h-6 w-6 md:h-8 md:w-8 text-primary ml-1" fill="currentColor" />
+                              <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                <div className="w-8 h-8 md:w-10 md:h-10 bg-white/70 rounded-full flex items-center justify-center group-hover:scale-105 transition-transform">
+                                  <Play className="h-4 w-4 md:h-5 md:w-5 text-gray-700 ml-0.5" fill="currentColor" />
                                 </div>
                               </div>
                             </div>
@@ -325,20 +353,20 @@ const MyPage = () => {
                                 {enrollment.course.title}
                               </h3>
                               
-                              {/* 진도율 표시 */}
+                              {/* 세션 기반 진도율 표시 */}
                               <div className="space-y-2">
                                 <div className="flex justify-between items-center text-xs md:text-sm">
-                                  <span className="text-muted-foreground">
-                                    {Math.round(enrollment.progress) === 100 ? '완료' : '진행중'}
+                                  <span className="font-medium text-foreground">
+                                    {enrollment.completed_sessions} / {enrollment.total_sessions}강
                                   </span>
-                                  <span className="font-medium text-primary">
-                                    {Math.round(enrollment.progress)}%
+                                  <span className="text-muted-foreground">
+                                    ({enrollment.total_sessions > 0 ? Math.round((enrollment.completed_sessions / enrollment.total_sessions) * 100) : 0}%)
                                   </span>
                                 </div>
                                 <div className="w-full bg-muted rounded-full h-2">
                                   <div 
                                     className="h-2 bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-300"
-                                    style={{ width: `${enrollment.progress}%` }}
+                                    style={{ width: `${enrollment.total_sessions > 0 ? (enrollment.completed_sessions / enrollment.total_sessions) * 100 : 0}%` }}
                                   />
                                 </div>
                               </div>
