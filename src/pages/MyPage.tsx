@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BookOpen, Play, Calendar, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, Play, Calendar, ArrowRight, ChevronLeft, ChevronRight, Star, MessageSquare, MoreHorizontal } from 'lucide-react';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
 
@@ -243,115 +243,196 @@ const MyPage = () => {
 
 
               {/* 수강 중인 강의 */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Play className="h-5 w-5" />
-                    내 강의 목록
-                  </CardTitle>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+                    <Play className="h-5 w-5 md:h-6 md:w-6" />
+                    내 강의실
+                  </h2>
                   {enrollments.length > 0 && (
                     <Button variant="outline" size="sm" onClick={() => navigate('/courses')}>
-                      더보기
+                      <span className="hidden sm:inline">강의 더보기</span>
+                      <span className="sm:hidden">더보기</span>
                       <ArrowRight className="h-4 w-4 ml-1" />
                     </Button>
                   )}
-                </CardHeader>
-                <CardContent className="p-6">
-                  {enrollments.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                        <BookOpen className="h-8 w-8 text-muted-foreground" />
-                      </div>
-                      <h3 className="text-lg font-semibold mb-2">첫 번째 강의를 시작해보세요</h3>
-                      <p className="text-muted-foreground mb-6">다양한 강의를 통해 새로운 지식을 습득해보세요</p>
-                      <Button onClick={() => navigate('/courses')}>
-                        강의 둘러보기
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="space-y-4 mb-6">
-                        {enrollments.map((enrollment) => (
-                        <Card key={enrollment.id} className="cursor-pointer hover:shadow-md transition-shadow border-0 shadow-sm" onClick={() => handleCourseClick(enrollment.course.id)}>
-                          <CardContent className="p-3 md:p-4">
-                            <div className="flex gap-4 md:gap-6">
-                              <div className="relative flex-shrink-0">
-                                <img
-                                  src={enrollment.course.thumbnail_url || '/placeholder.svg'}
-                                  alt={enrollment.course.title}
-                                  className="w-24 h-18 md:w-40 md:h-28 object-contain rounded-lg"
-                                />
-                              </div>
-                              
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between mb-1 md:mb-2">
-                                  <h3 className="font-semibold text-xs md:text-base line-clamp-2 leading-tight">
-                                    {enrollment.course.title}
-                                  </h3>
-                                  <ArrowRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground flex-shrink-0 ml-2" />
-                                </div>
-                                
-                                <p className="text-xs md:text-sm text-muted-foreground mb-2 md:mb-3">
-                                  강사: {enrollment.course.instructor?.full_name}
-                                </p>
-                                
-                                <div className="space-y-1 md:space-y-2">
-                                  <div className="flex justify-between text-xs md:text-sm">
-                                    <span className="text-muted-foreground">학습 진도</span>
-                                    <span className="font-medium">{Math.round(enrollment.progress)}%</span>
-                                  </div>
-                                  <Progress value={enrollment.progress} className="h-1.5 md:h-2" />
-                                </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
                 </div>
-                
-                {/* Pagination Controls */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-2 mt-6">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      이전
-                    </Button>
-                    
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <Button
-                          key={page}
-                          variant={page === currentPage ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setCurrentPage(page)}
-                          className="w-8 h-8"
-                        >
-                          {page}
+
+                {enrollments.length === 0 ? (
+                  <Card>
+                    <CardContent className="p-8 md:p-12">
+                      <div className="text-center">
+                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                          <BookOpen className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2">첫 번째 강의를 시작해보세요</h3>
+                        <p className="text-muted-foreground mb-6">다양한 강의를 통해 새로운 지식을 습득해보세요</p>
+                        <Button onClick={() => navigate('/courses')}>
+                          강의 둘러보기
+                          <ArrowRight className="h-4 w-4 ml-2" />
                         </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <>
+                    {/* 필터 및 정렬 옵션 */}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80">
+                          학습중
+                        </Badge>
+                        <Badge variant="outline" className="cursor-pointer hover:bg-accent">
+                          완료
+                        </Badge>
+                        <Badge variant="outline" className="cursor-pointer hover:bg-accent">
+                          수강평 작성 가능
+                        </Badge>
+                        <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
+                          만료 제한
+                        </Badge>
+                      </div>
+                      <select className="px-3 py-1.5 text-sm border rounded-md bg-background">
+                        <option value="latest">최근 학습순</option>
+                        <option value="progress">진도순</option>
+                        <option value="title">제목순</option>
+                      </select>
+                    </div>
+
+                    {/* 강의 카드 그리드 */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                      {enrollments.map((enrollment) => (
+                        <Card key={enrollment.id} className="group cursor-pointer hover:shadow-lg transition-all duration-200 overflow-hidden">
+                          <div className="relative" onClick={() => handleCourseClick(enrollment.course.id)}>
+                            <div className="aspect-video w-full bg-muted">
+                              <img
+                                src={enrollment.course.thumbnail_url || '/placeholder.svg'}
+                                alt={enrollment.course.title}
+                                className="w-full h-full object-cover"
+                              />
+                              {/* 재생 버튼 오버레이 */}
+                              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                <div className="w-12 h-12 md:w-16 md:h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                                  <Play className="h-6 w-6 md:h-8 md:w-8 text-primary ml-1" fill="currentColor" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <CardContent className="p-4">
+                            <div className="space-y-3">
+                              <h3 className="font-semibold text-sm md:text-base line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+                                {enrollment.course.title}
+                              </h3>
+                              
+                              {/* 진도율 표시 */}
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center text-xs md:text-sm">
+                                  <span className="text-muted-foreground">
+                                    {Math.round(enrollment.progress) === 100 ? '완료' : '진행중'}
+                                  </span>
+                                  <span className="font-medium text-primary">
+                                    {Math.round(enrollment.progress)}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-muted rounded-full h-2">
+                                  <div 
+                                    className="h-2 bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-300"
+                                    style={{ width: `${enrollment.progress}%` }}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="text-xs text-muted-foreground">
+                                강사: {enrollment.course.instructor?.full_name}
+                              </div>
+
+                              {/* 액션 버튼들 */}
+                              <div className="flex items-center justify-between pt-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs h-8"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // TODO: 수강평 작성 기능
+                                  }}
+                                >
+                                  <Star className="h-3 w-3 mr-1" />
+                                  수강평 작성
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // TODO: 더보기 메뉴
+                                  }}
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
                       ))}
                     </div>
                     
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                    >
-                      다음
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
+                    {/* 페이지네이션 */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-2 mt-8">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          <span className="hidden sm:inline ml-1">이전</span>
+                        </Button>
+                        
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                            let page;
+                            if (totalPages <= 5) {
+                              page = i + 1;
+                            } else if (currentPage <= 3) {
+                              page = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              page = totalPages - 4 + i;
+                            } else {
+                              page = currentPage - 2 + i;
+                            }
+                            
+                            return (
+                              <Button
+                                key={page}
+                                variant={page === currentPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(page)}
+                                className="w-8 h-8"
+                              >
+                                {page}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          disabled={currentPage === totalPages}
+                        >
+                          <span className="hidden sm:inline mr-1">다음</span>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </CardContent>
-        </Card>
+              </div>
       </div>
     </div>
   </div>
