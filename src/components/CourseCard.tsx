@@ -113,38 +113,34 @@ const CourseCard = ({
 
         {/* Tags */}
         <div className="flex flex-wrap gap-1.5">
-          {/* Random promotional tags */}
+          {/* Random promotional tags with different colors */}
           {(() => {
-            const promoTags = ["얼리버드", "신규", "인기", "30명한정"];
+            const promoTags = [
+              { text: "얼리버드", color: "bg-gradient-to-r from-orange-500 to-orange-600 text-white" },
+              { text: "신규", color: "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white" },
+              { text: "인기", color: "bg-gradient-to-r from-rose-500 to-rose-600 text-white" },
+              { text: "30명한정", color: "bg-gradient-to-r from-purple-500 to-purple-600 text-white" }
+            ];
             const randomCount = Math.floor(Math.random() * 3) + 1; // 1-3 tags
             const shuffled = [...promoTags].sort(() => 0.5 - Math.random());
             const selectedTags = shuffled.slice(0, randomCount);
             
             return selectedTags.map(tag => (
               <Badge 
-                key={tag}
-                className="bg-gradient-to-r from-primary/90 to-primary text-white font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0"
+                key={tag.text}
+                className={`${tag.color} font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0 shadow-sm`}
               >
-                {tag}
+                {tag.text}
               </Badge>
             ));
           })()}
           
           {isHot && (
-            <Badge className="bg-red-500 text-white font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0">
+            <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0 shadow-sm">
               BEST
             </Badge>
           )}
-          {isNew && (
-            <Badge className="bg-green-500 text-white font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0">
-              NEW
-            </Badge>
-          )}
-          {price === 0 && (
-            <Badge className="bg-blue-500 text-white font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0">
-              무료
-            </Badge>
-          )}
+          
           <Badge 
             variant="outline" 
             className={`text-[10px] px-1.5 py-0.5 rounded-sm border font-medium ${
