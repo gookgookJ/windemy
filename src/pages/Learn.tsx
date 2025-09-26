@@ -97,7 +97,10 @@ const Learn = () => {
     let initializationTimer: NodeJS.Timeout;
 
     const initializeSession = async () => {
-      // A. 트래커 생성 및 데이터 로드
+      // A. 강의 자료를 먼저 로드
+      await fetchCourseMaterials(currentSession.id);
+      
+      // B. 트래커 생성 및 데이터 로드
       const tracker = new VideoProgressTracker(
         currentSession.id,
         user.id,
@@ -112,7 +115,7 @@ const Learn = () => {
         [currentSession.id]: tracker.getWatchedPercentage()
       }));
 
-      // B. 플레이어 초기화
+      // C. 플레이어 초기화
       const initializePlayer = () => {
         // API 및 Iframe 준비 상태 확인 (렌더링 지연 대비)
         if (!window.Vimeo || !document.getElementById(`vimeo-player-${currentSession.id}`)) {
@@ -469,18 +472,20 @@ const Learn = () => {
     url.searchParams.set('session', session.id);
     window.history.pushState({}, '', url.toString());
     
-    // 새 세션의 자료 로드
-    await fetchCourseMaterials(session.id);
+    // 강의 자료는 useEffect에서 자동으로 로드됩니다
   };
 
   const fetchCourseMaterials = async (sessionId: string) => {
     try {
-      // 현재 세션의 section_id를 찾습니다
-      const currentSection = sections.find(section => 
-        section.sessions?.some((session: any) => session.id === sessionId)
-      );
-      
-      if (!currentSection) {
+      // DB에서 직접 세션의 section_id를 조회하여 안정성 확보
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('course_sessions')
+        .select('section_id')
+        .eq('id', sessionId)
+        .single();
+
+      if (sessionError || !sessionData?.section_id) {
+        console.error('Session not found or no section_id:', sessionError);
         setCourseMaterials([]);
         return;
       }
@@ -489,7 +494,7 @@ const Learn = () => {
       const { data, error } = await supabase
         .from('course_materials')
         .select('*')
-        .eq('section_id', currentSection.id)
+        .eq('section_id', sessionData.section_id)
         .order('order_index');
 
       if (error) throw error;
