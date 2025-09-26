@@ -32,7 +32,7 @@ const NotFound = React.lazy(() => import("./pages/NotFound"));
 
 // Lazy load user pages
 const FavoriteCourses = React.lazy(() => import("./pages/FavoriteCourses"));
-const ReviewManagement = React.lazy(() => import("./pages/ReviewManagement"));
+
 
 const FAQ = React.lazy(() => import("./pages/FAQ"));
 const ProfileSettings = React.lazy(() => import("./pages/ProfileSettings"));
@@ -104,7 +104,7 @@ const App = () => (
                 <Route path="/purchase-history" element={<PurchaseHistory />} />
                 <Route path="/my-page" element={<MyPage />} />
                 <Route path="/favorite-courses" element={<FavoriteCourses />} />
-                <Route path="/review-management" element={<ReviewManagement />} />
+                
                 
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/profile-settings" element={<ProfileSettings />} />

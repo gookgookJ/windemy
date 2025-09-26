@@ -44,11 +44,6 @@ const UserSidebar = () => {
       label: '관심 클래스',
       icon: Heart,
     },
-    {
-      path: '/review-management',
-      label: '후기 관리',
-      icon: FileText,
-    }
   ];
 
   const supportItems = [

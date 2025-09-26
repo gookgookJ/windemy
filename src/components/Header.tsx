@@ -76,7 +76,7 @@ const Header = () => {
     { name: "내 강의실", href: "/my-page", icon: BookOpen },
     { name: "구매 내역", href: "/purchase-history", icon: CreditCard },
     { name: "관심 클래스", href: "/favorite-courses", icon: Heart },
-    { name: "후기 관리", href: "/review-management", icon: FileText },
+    
     { name: "1:1 문의", href: "https://windemy.channel.io/home", icon: Clock, external: true },
     { name: "회원정보관리", href: "/profile-settings", icon: User },
   ];
@@ -85,7 +85,7 @@ const Header = () => {
   const isMyPageRoute = location.pathname.startsWith('/my-page') || 
                        location.pathname.startsWith('/purchase-history') ||
                        location.pathname.startsWith('/favorite-courses') ||
-                       location.pathname.startsWith('/review-management') ||
+                       
                        location.pathname.startsWith('/profile-settings');
 
   const handleSignOut = async () => {
