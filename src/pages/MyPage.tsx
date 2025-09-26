@@ -379,7 +379,7 @@ const MyPage = () => {
                         </div>
                         <input
                           type="text"
-                          placeholder="강의 검색"
+                          placeholder="강의·강사 검색"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           className="w-full pl-10 pr-10 py-2.5 border border-border rounded-lg bg-background/80 backdrop-blur-sm 
