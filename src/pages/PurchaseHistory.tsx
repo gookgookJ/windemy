@@ -251,8 +251,7 @@ const PurchaseHistory = () => {
                 </p>
               </div>
 
-
-          {/* 주문 목록 */}
+              {/* 주문 목록 */}
           {orders.length === 0 ? (
             <Card className="border border-border shadow-sm">
               <CardContent className="p-16 text-center">
