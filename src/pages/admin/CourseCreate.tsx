@@ -47,6 +47,14 @@ const CourseCreate = () => {
     tag?: string;
   }
 
+  interface CourseDetailImage {
+    id?: string;
+    image_url: string;
+    image_name: string;
+    section_title: string;
+    order_index: number;
+  }
+
   const [currentStep, setCurrentStep] = useState(1);
   const [categories, setCategories] = useState<Category[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -62,9 +70,9 @@ const CourseCreate = () => {
     requirements: [''] as string[],
     sections: [] as CourseSection[],
     course_options: [] as CourseOption[],
+    detail_images: [] as CourseDetailImage[],
     thumbnail_url: '',
     thumbnail_path: '',
-    detail_image_path: '',
     is_published: false,
     homepage_section_id: '',
     is_new: false,
@@ -180,7 +188,6 @@ const CourseCreate = () => {
         requirements: course.requirements?.filter(item => item.trim()) || [],
         thumbnail_url: course.thumbnail_url,
         thumbnail_path: course.thumbnail_path,
-        detail_image_path: course.detail_image_path,
         is_published: course.is_published,
         is_new: course.is_new,
         is_hot: course.is_hot
@@ -249,6 +256,23 @@ const CourseCreate = () => {
           .insert(optionsData);
 
         if (optionsError) throw optionsError;
+      }
+
+      // 상세 페이지 이미지 저장
+      if (course.detail_images.length > 0) {
+        const detailImagesData = course.detail_images.map((image, index) => ({
+          course_id: courseResult.id,
+          image_url: image.image_url,
+          image_name: image.image_name,
+          section_title: image.section_title,
+          order_index: index
+        }));
+
+        const { error: detailImagesError } = await supabase
+          .from('course_detail_images')
+          .insert(detailImagesData);
+
+        if (detailImagesError) throw detailImagesError;
       }
 
       // 홈페이지 섹션에 강의 추가 (공개된 강의이고 섹션이 선택된 경우)
@@ -491,6 +515,52 @@ const CourseCreate = () => {
     items.splice(result.destination.index, 0, reorderedItem);
 
     setCourse(prev => ({ ...prev, sections: items }));
+  };
+
+  // 상세 이미지 관리 함수들
+  const addDetailImage = (imageUrl: string, imageName: string) => {
+    const newImage: CourseDetailImage = {
+      image_url: imageUrl,
+      image_name: imageName,
+      section_title: '',
+      order_index: course.detail_images.length
+    };
+    setCourse(prev => ({
+      ...prev,
+      detail_images: [...prev.detail_images, newImage]
+    }));
+  };
+
+  const updateDetailImage = (index: number, field: keyof CourseDetailImage, value: any) => {
+    setCourse(prev => ({
+      ...prev,
+      detail_images: prev.detail_images.map((image, i) => 
+        i === index ? { ...image, [field]: value } : image
+      )
+    }));
+  };
+
+  const removeDetailImage = (index: number) => {
+    setCourse(prev => ({
+      ...prev,
+      detail_images: prev.detail_images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleDetailImageDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+
+    const items = Array.from(course.detail_images);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    // 순서 인덱스 업데이트
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      order_index: index
+    }));
+
+    setCourse(prev => ({ ...prev, detail_images: updatedItems }));
   };
 
   // 단계 검증
@@ -987,13 +1057,13 @@ const CourseCreate = () => {
               <CardHeader>
                 <CardTitle>미디어 업로드</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  강의 썸네일과 상세 이미지를 업로드하세요.
+                  강의 썸네일과 상세 페이지 이미지를 업로드하세요.
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
                   <FileUpload
-                    bucket="course-assets"
+                    bucket="course-thumbnails"
                     path="thumbnails"
                     accept="image/*"
                     maxSize={5}
@@ -1007,17 +1077,101 @@ const CourseCreate = () => {
                 </div>
 
                 <div>
-                  <FileUpload
-                    bucket="course-assets"
-                    path="detail-images"
-                    accept="image/*"
-                    maxSize={5}
-                    onUpload={(url, fileName) => {
-                      setCourse(prev => ({ ...prev, detail_image_path: fileName }));
-                    }}
-                    label="상세 이미지"
-                    description="강의 상세 이미지를 업로드하세요"
-                  />
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <Label className="text-base font-medium">상세 페이지 이미지</Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        강의 상세 페이지에 표시될 이미지들을 업로드하고 순서를 조정하세요.
+                      </p>
+                    </div>
+                    <FileUpload
+                      bucket="course-detail-images"
+                      path="detail-images"
+                      accept="image/*"
+                      maxSize={10}
+                      onUpload={(url, fileName) => {
+                        addDetailImage(url, fileName);
+                      }}
+                      label="이미지 추가"
+                      description=""
+                    />
+                  </div>
+
+                  {course.detail_images.length > 0 && (
+                    <DragDropContext onDragEnd={handleDetailImageDragEnd}>
+                      <Droppable droppableId="detail-images">
+                        {(provided) => (
+                          <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
+                            {course.detail_images.map((image, index) => (
+                              <Draggable key={index} draggableId={`image-${index}`} index={index}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    className={cn(
+                                      "border rounded-lg p-4 bg-card transition-all",
+                                      snapshot.isDragging && "shadow-lg rotate-1"
+                                    )}
+                                  >
+                                    <div className="flex items-start gap-4">
+                                      <div 
+                                        {...provided.dragHandleProps}
+                                        className="flex items-center justify-center w-8 h-8 bg-muted rounded cursor-grab active:cursor-grabbing shrink-0 mt-2"
+                                      >
+                                        <span className="text-sm font-medium">{index + 1}</span>
+                                      </div>
+                                      
+                                      <div className="w-20 h-20 rounded overflow-hidden border shrink-0">
+                                        <img 
+                                          src={image.image_url} 
+                                          alt={image.image_name}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </div>
+                                      
+                                      <div className="flex-1 space-y-2">
+                                        <div>
+                                          <Label className="text-sm">섹션 제목 (선택사항)</Label>
+                                          <Input
+                                            value={image.section_title}
+                                            onChange={(e) => updateDetailImage(index, 'section_title', e.target.value)}
+                                            placeholder="이 이미지의 섹션 제목을 입력하세요"
+                                            className="mt-1"
+                                          />
+                                        </div>
+                                        <div className="text-sm text-muted-foreground">
+                                          파일명: {image.image_name}
+                                        </div>
+                                      </div>
+                                      
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => removeDetailImage(index)}
+                                        className="text-destructive hover:text-destructive shrink-0"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
+                  )}
+
+                  {course.detail_images.length === 0 && (
+                    <div className="text-center py-8 border-2 border-dashed border-muted-foreground/20 rounded-lg bg-muted/10">
+                      <FileImage className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+                      <p className="text-sm text-muted-foreground">
+                        상단의 "이미지 추가" 버튼을 눌러 상세 페이지 이미지를 업로드하세요
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
