@@ -103,6 +103,9 @@ const ReviewModal = ({ courseId, courseTitle, trigger, existingReview, onReviewS
 
       if (result.error) throw result.error;
 
+      // Update course rating after review submission
+      await updateCourseRating(courseId);
+
       toast({
         title: "후기 " + (existingReview ? "수정" : "작성") + " 완료",
         description: `후기를 성공적으로 ${existingReview ? "수정" : "등록"}했습니다.`,
@@ -120,6 +123,34 @@ const ReviewModal = ({ courseId, courseTitle, trigger, existingReview, onReviewS
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const updateCourseRating = async (courseId: string) => {
+    try {
+      // Get all reviews for this course
+      const { data: reviews, error: reviewsError } = await supabase
+        .from('course_reviews')
+        .select('rating')
+        .eq('course_id', courseId);
+
+      if (reviewsError) throw reviewsError;
+
+      if (reviews && reviews.length > 0) {
+        // Calculate average rating
+        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+        const averageRating = totalRating / reviews.length;
+
+        // Update course rating
+        const { error: updateError } = await supabase
+          .from('courses')
+          .update({ rating: averageRating })
+          .eq('id', courseId);
+
+        if (updateError) throw updateError;
+      }
+    } catch (error) {
+      console.error('Error updating course rating:', error);
     }
   };
 
