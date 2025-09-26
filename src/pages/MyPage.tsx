@@ -372,16 +372,30 @@ const MyPage = () => {
                 ) : (
                   <>
                     {/* 검색 필터 */}
-                    <div className="mb-6">
-                      <div className="relative">
+                    <div className="mb-6 flex justify-center">
+                      <div className="relative max-w-md w-full">
+                        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
+                          <BookOpen className="h-4 w-4 text-muted-foreground" />
+                        </div>
                         <input
                           type="text"
-                          placeholder="강의명 또는 강사명으로 검색..."
+                          placeholder="강의명, 강사명 검색"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full px-4 py-2 pr-10 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          className="w-full pl-10 pr-4 py-3 border border-border rounded-full bg-background/50 backdrop-blur-sm 
+                                   placeholder:text-muted-foreground/70 text-sm
+                                   focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 
+                                   transition-all duration-200 hover:bg-background/80"
                         />
-                        <BookOpen className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        {searchQuery && (
+                          <button
+                            onClick={() => setSearchQuery('')}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <span className="sr-only">검색어 지우기</span>
+                            ✕
+                          </button>
+                        )}
                       </div>
                     </div>
 
