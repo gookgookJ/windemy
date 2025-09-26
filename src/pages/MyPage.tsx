@@ -24,7 +24,6 @@ interface EnrollmentWithCourse {
     id: string;
     title: string;
     thumbnail_url: string;
-    duration_hours: number;
     instructor: {
       full_name: string;
     };
@@ -120,7 +119,6 @@ const MyPage = () => {
             id,
             title,
             thumbnail_url,
-            duration_hours,
             instructor:profiles(full_name)
           )
         `)
@@ -132,10 +130,10 @@ const MyPage = () => {
 
       // Get session data and calculate real progress for each enrollment
       const enrichedData = await Promise.all((data || []).map(async (enrollment) => {
-        // Get all sessions for the course with their durations
+        // Get all sessions for the course
         const { data: sessions } = await supabase
           .from('course_sessions')
-          .select('id, duration_minutes')
+          .select('id')
           .eq('course_id', enrollment.course.id);
 
         if (!sessions || sessions.length === 0) {
@@ -150,38 +148,22 @@ const MyPage = () => {
         // Get user's progress for these sessions
         const { data: sessionProgress } = await supabase
           .from('session_progress')
-          .select('session_id, watched_duration_seconds')
+          .select('session_id, watched_duration_seconds, completed')
           .eq('user_id', user.id)
           .in('session_id', sessions.map(s => s.id));
 
-        // Calculate total duration in seconds
-        const totalDurationSeconds = sessions.reduce((total, session) => 
-          total + (session.duration_minutes || 0) * 60, 0);
+        // Calculate completed sessions based on completed flag
+        const completedSessions = sessionProgress?.filter(p => p.completed) || [];
 
-        // Calculate total watched duration
-        const totalWatchedSeconds = sessionProgress?.reduce((total, progress) => 
-          total + (progress.watched_duration_seconds || 0), 0) || 0;
-
-        // Calculate completed sessions (80% or more watched)
-        const completedSessions = sessions.filter(session => {
-          const progress = sessionProgress?.find(p => p.session_id === session.id);
-          if (!progress || !session.duration_minutes) return false;
-          
-          const sessionDurationSeconds = session.duration_minutes * 60;
-          const watchedPercentage = progress.watched_duration_seconds / sessionDurationSeconds;
-          return watchedPercentage >= 0.8; // 80% completion threshold
-        }).length;
-
-        // Calculate real progress percentage
-        const realProgress = totalDurationSeconds > 0 
-          ? (totalWatchedSeconds / totalDurationSeconds) * 100 
-          : 0;
+        // Calculate real progress as percentage of completed sessions
+        const realProgress = sessions.length > 0 ? 
+          (completedSessions.length / sessions.length) * 100 : 0;
 
         return {
           ...enrollment,
           total_sessions: sessions.length,
-          completed_sessions: completedSessions,
-          real_progress: Math.min(realProgress, 100) // Cap at 100%
+          completed_sessions: completedSessions.length,
+          real_progress: Math.round(realProgress)
         };
       }));
 

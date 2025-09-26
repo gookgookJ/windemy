@@ -154,11 +154,11 @@ export const AdminCourseEdit = () => {
       const transformedData: Course = {
         id: data.id,
         title: data.title || '',
-        subtitle: data.short_description || data.title || '',
-        description: data.description || '',
+        subtitle: data.title || '', // Use title as subtitle since short_description removed
+        description: data.title || '', // Use title as description since description removed
         price: data.price || 0,
         level: data.level || 'beginner',
-        duration_hours: data.duration_hours || 0,
+        duration_hours: 0, // Default since duration_hours removed
         what_you_learn: data.what_you_will_learn || [],
         
         curriculum: transformedCurriculum,
@@ -176,7 +176,7 @@ export const AdminCourseEdit = () => {
         is_published: data.is_published || false,
         course_type: (data as any).course_type || 'VOD',
         meta_title: data.title || '',
-        meta_description: data.description || '',
+        meta_description: data.title || '', // Use title since description removed
         meta_keywords: ''
       };
       

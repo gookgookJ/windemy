@@ -17,12 +17,10 @@ interface Course {
   price: number;
   rating?: number;
   total_students?: number;
-  duration_hours?: number;
   level?: string;
   category?: string;
   is_hot?: boolean;
   is_new?: boolean;
-  short_description?: string;
 }
 
 interface HomepageSection {

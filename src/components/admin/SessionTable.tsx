@@ -10,11 +10,8 @@ import { useState } from 'react';
 interface CourseSession {
   id: string;
   title: string;
-  description?: string;
   video_url?: string;
-  duration_minutes?: number;
   is_free: boolean;
-  is_preview: boolean;
   course: {
     title: string;
     id: string;

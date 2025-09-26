@@ -99,7 +99,7 @@ export const ProgressMonitoring = () => {
           completed,
           watched_duration_seconds,
           created_at,
-          session:course_sessions(course_id, duration_minutes)
+          session:course_sessions(course_id)
         `);
 
       if (sessionError) throw sessionError;
@@ -208,8 +208,7 @@ export const ProgressMonitoring = () => {
         .from('course_sessions')
         .select(`
           id,
-          title,
-          duration_minutes
+          title
         `)
         .eq('course_id', courseId)
         .order('order_index');
@@ -250,8 +249,8 @@ export const ProgressMonitoring = () => {
         const sessionSeekEvents = seekData?.filter(s => s.session_id === session.id) || [];
 
         const totalWatchTime = sessionWatchSegments.reduce((sum, w) => sum + (w.duration || 0), 0);
-        const totalDuration = (session.duration_minutes || 0) * 60; // 초 단위
-        const completionPercentage = totalDuration > 0 ? Math.min((totalWatchTime / totalDuration) * 100, 100) : 0;
+        const totalDuration = 300; // Default 5 minutes since duration_minutes removed
+        const completionPercentage = totalWatchTime > 0 ? Math.min((totalWatchTime / totalDuration) * 100, 100) : 0;
 
         // 의심스러운 행동 탐지
         const suspiciousJumps = sessionSeekEvents.filter(se => Math.abs(se.jump_amount) > 30).length;

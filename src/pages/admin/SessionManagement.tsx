@@ -19,12 +19,9 @@ import { getVimeoVideoInfo, isValidVimeoUrl } from '@/utils/vimeoUtils';
 interface CourseSession {
   id: string;
   title: string;
-  description?: string;
   video_url?: string;
-  duration_minutes?: number;
   order_index: number;
   is_free: boolean;
-  is_preview: boolean;
   course: {
     title: string;
     id: string;
@@ -248,7 +245,7 @@ export const SessionManagement = () => {
     const matchesType = typeFilter === 'all' || 
                        (typeFilter === 'free' && session.is_free) ||
                        (typeFilter === 'premium' && !session.is_free) ||
-                       (typeFilter === 'preview' && session.is_preview);
+                       (typeFilter === 'preview' && false); // is_preview removed, so always false
     return matchesSearch && matchesCourse && matchesType;
   });
 

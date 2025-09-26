@@ -16,9 +16,7 @@ import Header from '@/components/Header';
 interface CourseSession {
   id: string;
   title: string;
-  description: string;
   video_url: string;
-  duration_minutes: number;
   order_index: number;
   is_free: boolean;
   section_id?: string;
@@ -104,7 +102,7 @@ const Learn = () => {
       const tracker = new VideoProgressTracker(
         currentSession.id,
         user.id,
-        currentSession.duration_minutes * 60
+        300 // Default 5 minutes since duration_minutes is removed
       );
       await tracker.initialize(); // 기존 데이터 로드 대기
       trackerRef.current = tracker;

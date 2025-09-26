@@ -29,7 +29,6 @@ interface HomepageSection {
 interface Course {
   id: string;
   title: string;
-  short_description: string;
   category_id: string;
   thumbnail_url?: string;
   thumbnail_path?: string;
@@ -66,7 +65,7 @@ export const useHomepageData = () => {
           
           supabase
             .from('courses')
-            .select('id, title, short_description, category_id, thumbnail_url, thumbnail_path, price, level, is_published')
+            .select('id, title, category_id, thumbnail_url, thumbnail_path, price, level, is_published')
             .eq('is_published', true)
             .order('total_students', { ascending: false })
             .limit(6)
