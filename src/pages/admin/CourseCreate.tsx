@@ -495,8 +495,7 @@ const CourseCreate = () => {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="w-5 h-5" />
+                <CardTitle>
                   기본 정보
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -574,34 +573,6 @@ const CourseCreate = () => {
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="price">기본 가격 (원)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    value={course.price}
-                    onChange={(e) => setCourse(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
-                    placeholder="0"
-                    className="mt-2"
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={course.is_new}
-                      onCheckedChange={(checked) => setCourse(prev => ({ ...prev, is_new: checked }))}
-                    />
-                    <Label>신규 강의</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={course.is_hot}
-                      onCheckedChange={(checked) => setCourse(prev => ({ ...prev, is_hot: checked }))}
-                    />
-                    <Label>인기 강의</Label>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -613,8 +584,7 @@ const CourseCreate = () => {
             {/* 이 강의에서 배우는 것들 */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="w-5 h-5" />
+                <CardTitle>
                   이 강의에서 배우는 것들
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -653,13 +623,9 @@ const CourseCreate = () => {
             {/* 커리큘럼 구성 */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Video className="w-5 h-5" />
+                <CardTitle>
                   커리큘럼 구성
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  강의를 체계적으로 구성해보세요. 섹션별로 나누어 학습자가 단계적으로 학습할 수 있도록 도와줍니다.
-                </p>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
@@ -753,10 +719,10 @@ const CourseCreate = () => {
                                             <Trash2 className="w-4 h-4" />
                                           </Button>
                                         </div>
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                          <Video className="w-4 h-4" />
-                                          <span>{section.sessions.length}개의 강의 영상</span>
-                                        </div>
+                                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                           <Video className="w-4 h-4" />
+                                           <span>{section.sessions.length}개의 세션</span>
+                                         </div>
                                       </div>
                                     </div>
 
@@ -765,16 +731,16 @@ const CourseCreate = () => {
                                       {section.sessions.length === 0 ? (
                                         <div className="text-center py-8 border-2 border-dashed border-muted-foreground/20 rounded-lg bg-muted/10">
                                           <Video className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
-                                          <p className="text-sm text-muted-foreground mb-4">
-                                            이 섹션에 강의 영상을 추가해보세요
-                                          </p>
-                                          <Button 
-                                            onClick={() => addSession(sectionIndex)} 
-                                            variant="outline"
-                                          >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            첫 번째 강의 추가
-                                          </Button>
+                                           <p className="text-sm text-muted-foreground mb-4">
+                                             이 섹션에 세션 내용을 추가해보세요
+                                           </p>
+                                           <Button 
+                                             onClick={() => addSession(sectionIndex)} 
+                                             variant="outline"
+                                           >
+                                             <Plus className="w-4 h-4 mr-2" />
+                                             첫 번째 세션 추가
+                                           </Button>
                                         </div>
                                       ) : (
                                         <div className="space-y-2">
@@ -787,7 +753,7 @@ const CourseCreate = () => {
                                                 <Input
                                                   value={session.title}
                                                   onChange={(e) => updateSession(sectionIndex, sessionIndex, 'title', e.target.value)}
-                                                  placeholder={`강의 ${sessionIndex + 1} 제목 (예: 기본 개념 설명하기)`}
+                                                  placeholder={`세션 ${sessionIndex + 1} 제목 (예: 기본 개념 설명하기)`}
                                                   className="border-0 bg-transparent px-0 focus-visible:ring-0 text-base"
                                                 />
                                               </div>
@@ -797,21 +763,21 @@ const CourseCreate = () => {
                                                   size="sm"
                                                   onClick={() => removeSession(sectionIndex, sessionIndex)}
                                                   className="text-destructive hover:text-destructive"
-                                                  title="강의 삭제"
+                                                  title="세션 삭제"
                                                 >
                                                   <Trash2 className="w-3 h-3" />
                                                 </Button>
                                               </div>
                                             </div>
                                           ))}
-                                          <Button 
-                                            onClick={() => addSession(sectionIndex)} 
-                                            variant="outline" 
-                                            className="w-full border-dashed hover:border-solid"
-                                          >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            강의 추가하기
-                                          </Button>
+                                           <Button 
+                                             onClick={() => addSession(sectionIndex)} 
+                                             variant="outline" 
+                                             className="w-full border-dashed hover:border-solid"
+                                           >
+                                             <Plus className="w-4 h-4 mr-2" />
+                                             세션 추가하기
+                                           </Button>
                                         </div>
                                       )}
                                     </div>
@@ -844,12 +810,11 @@ const CourseCreate = () => {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5" />
+                <CardTitle>
                   판매 옵션 설정
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  상세페이지의 고정 결제창 '강의 구성' 및 '포함 혜택' 영역에 표시될 내용입니다.
+                  학습자에게 제공할 수강 옵션을 설정하세요. 다양한 가격대와 혜택으로 구성할 수 있습니다.
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -881,34 +846,34 @@ const CourseCreate = () => {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label>정가 (원)</Label>
+                          <Label>판매 가격 (원)</Label>
                           <Input
                             type="number"
                             value={option.price}
                             onChange={(e) => updateCourseOption(optionIndex, 'price', parseInt(e.target.value) || 0)}
-                            placeholder="정가를 입력하세요"
+                            placeholder="실제 판매 가격을 입력하세요"
                           />
                         </div>
                         <div>
-                          <Label>원가 (원) - 선택사항</Label>
+                          <Label>정가 (원) <span className="text-xs text-muted-foreground">- 할인율 표시용</span></Label>
                           <Input
                             type="number"
                             value={option.original_price || ''}
                             onChange={(e) => updateCourseOption(optionIndex, 'original_price', e.target.value ? parseInt(e.target.value) : undefined)}
-                            placeholder="할인 표시용 원가"
+                            placeholder="할인 전 가격 (선택사항)"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <Label>포함 혜택 <span className="text-xs text-muted-foreground">(상세페이지 '포함 혜택' 섹션에 표시)</span></Label>
+                        <Label>포함 혜택 <span className="text-xs text-muted-foreground">이 옵션에 포함되는 혜택들을 작성하세요</span></Label>
                         <div className="space-y-2">
                           {option.benefits.map((benefit, benefitIndex) => (
                             <div key={benefitIndex} className="flex gap-2">
                               <Input
                                 value={benefit}
                                 onChange={(e) => updateBenefit(optionIndex, benefitIndex, e.target.value)}
-                                placeholder="포함 혜택을 입력하세요 (예: 평생 수강권, 1:1 피드백)"
+                                placeholder="예: 평생 무제한 수강, PDF 자료 제공, 1:1 질문답변"
                               />
                               <Button
                                 variant="outline"
@@ -1032,7 +997,7 @@ const CourseCreate = () => {
                   <ul className="space-y-1 text-sm text-muted-foreground">
                     <li>• 제목: {course.title}</li>
                     <li>• 섹션: {course.sections.length}개</li>
-                    <li>• 총 강의: {course.sections.reduce((acc, section) => acc + section.sessions.length, 0)}개</li>
+                    <li>• 총 세션: {course.sections.reduce((acc, section) => acc + section.sessions.length, 0)}개</li>
                     <li>• 판매 옵션: {course.course_options.length}개</li>
                     <li>• 공개 여부: {course.is_published ? '즉시 공개' : '비공개'}</li>
                   </ul>
@@ -1060,7 +1025,7 @@ const CourseCreate = () => {
     <AdminLayout>
       <div className="min-h-screen bg-background">
         <div className="border-b bg-card">
-          <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold">새 강의 만들기</h1>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -1094,7 +1059,7 @@ const CourseCreate = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="container mx-auto px-6 py-8">
         {renderStepContent()}
         
         {/* 하단 네비게이션 */}
