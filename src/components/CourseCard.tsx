@@ -112,31 +112,48 @@ const CourseCard = ({
         </div>
 
         {/* Tags */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
+          {/* Random promotional tags */}
+          {(() => {
+            const promoTags = ["얼리버드", "신규", "인기", "30명한정"];
+            const randomCount = Math.floor(Math.random() * 3) + 1; // 1-3 tags
+            const shuffled = [...promoTags].sort(() => 0.5 - Math.random());
+            const selectedTags = shuffled.slice(0, randomCount);
+            
+            return selectedTags.map(tag => (
+              <Badge 
+                key={tag}
+                className="bg-gradient-to-r from-primary/90 to-primary text-white font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0"
+              >
+                {tag}
+              </Badge>
+            ));
+          })()}
+          
           {isHot && (
-            <Badge className="bg-red-500 text-white font-medium text-xs px-2 py-1">
+            <Badge className="bg-red-500 text-white font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0">
               BEST
             </Badge>
           )}
           {isNew && (
-            <Badge className="bg-green-500 text-white font-medium text-xs px-2 py-1">
+            <Badge className="bg-green-500 text-white font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0">
               NEW
             </Badge>
           )}
           {price === 0 && (
-            <Badge className="bg-blue-500 text-white font-medium text-xs px-2 py-1">
+            <Badge className="bg-blue-500 text-white font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0">
               무료
             </Badge>
           )}
           <Badge 
             variant="outline" 
-            className={`text-xs px-2 py-1 ${
-              level === "beginner" ? "border-green-500 text-green-600" :
-              level === "intermediate" ? "border-yellow-500 text-yellow-600" :
-              "border-red-500 text-red-600"
+            className={`text-[10px] px-1.5 py-0.5 rounded-sm border font-medium ${
+              level === "beginner" ? "border-green-500/60 text-green-600 bg-green-50" :
+              level === "intermediate" ? "border-yellow-500/60 text-yellow-600 bg-yellow-50" :
+              "border-red-500/60 text-red-600 bg-red-50"
             }`}
           >
-            {level === "beginner" ? "초급" : level === "intermediate" ? "중급" : "고급"}
+            {level === "beginner" ? "Lv1" : level === "intermediate" ? "Lv2" : "Lv3"}
           </Badge>
         </div>
       </CardContent>
