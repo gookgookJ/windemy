@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 interface Course {
   id: string;
   title: string;
-  short_description?: string;
   category_id?: string;
   thumbnail_url?: string;
   thumbnail_path?: string;
@@ -48,7 +47,7 @@ export const useSearch = () => {
       const { data, error } = await supabase
         .from('courses')
         .select(`
-          id, title, short_description, category_id, thumbnail_url, thumbnail_path, price, level, is_published,
+          id, title, category_id, thumbnail_url, thumbnail_path, price, level, is_published,
           profiles:instructor_id(full_name),
           categories:category_id(name)
         `)
@@ -60,13 +59,11 @@ export const useSearch = () => {
       const results = (data || [])
         .map((course: any) => {
           const titleMatch = course.title.toLowerCase().includes(query.toLowerCase());
-          const descMatch = course.short_description?.toLowerCase().includes(query.toLowerCase()) || false;
           const instructorMatch = course.profiles?.full_name?.toLowerCase().includes(query.toLowerCase()) || false;
           
           let relevance = 0;
           if (titleMatch) relevance += 15;
           if (instructorMatch) relevance += 12;
-          if (descMatch) relevance += 5;
           
           // Exact matches get higher scores
           if (course.title.toLowerCase() === query.toLowerCase()) relevance += 20;

@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { AdminLayout } from "@/layouts/AdminLayout";
 
 const CourseCreate = () => {
   interface Category {
@@ -1056,13 +1057,14 @@ const CourseCreate = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b bg-card">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">새 강의 만들기</h1>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>단계 {currentStep} / 5</span>
+    <AdminLayout>
+      <div className="min-h-screen bg-background">
+        <div className="border-b bg-card">
+          <div className="max-w-4xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold">새 강의 만들기</h1>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>단계 {currentStep} / 5</span>
             </div>
           </div>
           
@@ -1118,6 +1120,7 @@ const CourseCreate = () => {
         </div>
       </div>
     </div>
+    </AdminLayout>
   );
 };
 
