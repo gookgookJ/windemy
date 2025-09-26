@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BookOpen, Play, Calendar, ArrowRight, ChevronLeft, ChevronRight, Star, MessageSquare, MoreHorizontal } from 'lucide-react';
+import { BookOpen, Play, Calendar, ArrowRight, ChevronLeft, ChevronRight, Star, MessageSquare } from 'lucide-react';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
+import ReviewModal from '@/components/ReviewModal';
 
 interface EnrollmentWithCourse {
   id: string;
@@ -36,6 +37,7 @@ const MyPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [userReviews, setUserReviews] = useState<Record<string, any>>({});
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   
@@ -184,10 +186,44 @@ const MyPage = () => {
       }));
 
       setEnrollments(enrichedData);
+      
+      // 사용자 후기 정보 조회
+      if (user && enrichedData.length > 0) {
+        fetchUserReviews(enrichedData.map(e => e.course.id));
+      }
     } catch (error) {
       console.error('Error fetching enrollments:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUserReviews = async (courseIds: string[]) => {
+    if (!user || courseIds.length === 0) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('course_reviews')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('course_id', courseIds);
+
+      if (error) throw error;
+
+      const reviewsMap: Record<string, any> = {};
+      data?.forEach(review => {
+        reviewsMap[review.course_id] = review;
+      });
+      setUserReviews(reviewsMap);
+    } catch (error) {
+      console.error('Error fetching user reviews:', error);
+    }
+  };
+
+  const handleReviewSubmitted = () => {
+    // 후기 작성/수정 후 데이터 새로고침
+    if (user && enrollments.length > 0) {
+      fetchUserReviews(enrollments.map(e => e.course.id));
     }
   };
 
@@ -402,31 +438,24 @@ const MyPage = () => {
                                 강사: {enrollment.course.instructor?.full_name}
                               </div>
 
-                              {/* 액션 버튼들 */}
-                              <div className="flex items-center justify-between pt-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-xs h-8"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    // TODO: 수강평 작성 기능
-                                  }}
-                                >
-                                  <Star className="h-3 w-3 mr-1" />
-                                  수강평 작성
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    // TODO: 더보기 메뉴
-                                  }}
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
+                              {/* 액션 버튼 */}
+                              <div className="flex justify-center pt-2">
+                                <ReviewModal
+                                  courseId={enrollment.course.id}
+                                  courseTitle={enrollment.course.title}
+                                  existingReview={userReviews[enrollment.course.id] || null}
+                                  onReviewSubmitted={handleReviewSubmitted}
+                                  trigger={
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-xs h-8"
+                                    >
+                                      <Star className="h-3 w-3 mr-1" />
+                                      {userReviews[enrollment.course.id] ? '후기 수정' : '수강 후기 작성'}
+                                    </Button>
+                                  }
+                                />
                               </div>
                             </div>
                           </CardContent>
