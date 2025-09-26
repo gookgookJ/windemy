@@ -322,7 +322,7 @@ const MyPage = () => {
                         안녕하세요, {profile?.full_name || '학습자'}님 👋
                       </h1>
                       <p className="text-sm md:text-base text-muted-foreground mb-2">
-                        오늘도 새로운 것을 배워보세요
+                        오늘도 새로운 것을 배워, 매출 향상에 기여해보세요!
                       </p>
                       <div className="flex items-center gap-1 md:gap-2">
                         <Badge variant="outline" className="bg-background/50 backdrop-blur-sm border-primary/20 text-xs">
