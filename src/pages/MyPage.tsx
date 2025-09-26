@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BookOpen, Play, Calendar, ArrowRight, TrendingUp, Clock, Award, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, Play, Calendar, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
 
@@ -31,12 +31,6 @@ const MyPage = () => {
   const [enrollments, setEnrollments] = useState<EnrollmentWithCourse[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [stats, setStats] = useState({
-    totalCourses: 0,
-    completedCourses: 0,
-    inProgressCourses: 0,
-    totalHours: 0
-  });
   const [loading, setLoading] = useState(true);
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -131,45 +125,6 @@ const MyPage = () => {
       if (error) throw error;
 
       setEnrollments(data || []);
-      
-      // Calculate comprehensive stats
-      const { data: allEnrollments } = await supabase
-        .from('enrollments')
-        .select(`
-          progress,
-          completed_at,
-          course:courses(duration_hours)
-        `)
-        .eq('user_id', user.id);
-
-      // Get actual watched time from session progress
-      const { data: sessionProgress } = await supabase
-        .from('session_progress')
-        .select('watched_duration_seconds')
-        .eq('user_id', user.id);
-      
-      const totalCourses = allEnrollments?.length || 0;
-      const completedCourses = allEnrollments?.filter(e => e.completed_at || e.progress >= 100).length || 0;
-      
-      // 진행 중: 실제로 학습이 시작된 강의 (progress > 5% 이상)
-      const inProgressCourses = allEnrollments?.filter(e => 
-        !e.completed_at && 
-        e.progress >= 5 && 
-        e.progress < 100
-      ).length || 0;
-      
-      // 실제 학습시간 계산 (초 단위를 시간으로 변환)
-      const totalWatchedSeconds = sessionProgress?.reduce((sum, sp) => 
-        sum + (sp.watched_duration_seconds || 0), 0
-      ) || 0;
-      const totalHours = Math.round(totalWatchedSeconds / 3600 * 10) / 10; // 소수점 1자리
-      
-      setStats({
-        totalCourses,
-        completedCourses,
-        inProgressCourses,
-        totalHours
-      });
     } catch (error) {
       console.error('Error fetching enrollments:', error);
     } finally {
@@ -286,64 +241,6 @@ const MyPage = () => {
                 </CardContent>
               </Card>
 
-              {/* 학습 통계 */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-50 rounded-lg">
-                        <BookOpen className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">전체 강의</p>
-                        <p className="text-2xl font-bold">{stats.totalCourses}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-green-50 rounded-lg">
-                        <Award className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">완료</p>
-                        <p className="text-2xl font-bold">{stats.completedCourses}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-orange-50 rounded-lg">
-                        <TrendingUp className="h-5 w-5 text-orange-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">진행 중</p>
-                        <p className="text-2xl font-bold">{stats.inProgressCourses}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-purple-50 rounded-lg">
-                        <Clock className="h-5 w-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">학습시간</p>
-                        <p className="text-2xl font-bold">{stats.totalHours}h</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
 
               {/* 수강 중인 강의 */}
               <Card>
