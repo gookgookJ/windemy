@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Upload, FileImage, BookOpen, Video, DollarSign, FileText, Users, Settings } from 'lucide-react';
+import { Plus, Trash2, Upload, FileImage, BookOpen, Video, DollarSign, FileText, Users, Settings, GripVertical } from 'lucide-react';
 import { FileUpload } from "@/components/ui/file-upload";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -1098,7 +1098,7 @@ const CourseCreate = () => {
                           setCourse(prev => ({ ...prev, thumbnail_url: url, thumbnail_path: fileName }));
                         }}
                         currentFile={course.thumbnail_url}
-                        label="썸네일 이미지 업로드"
+                        label=""
                         description="강의 목록에 표시될 썸네일 이미지를 업로드하세요 (최대 5MB)"
                       />
                     )}
@@ -1117,7 +1117,6 @@ const CourseCreate = () => {
 
                   <div className="border-2 border-dashed border-border rounded-lg p-6 mb-4">
                     <div className="text-center">
-                      <FileImage className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
                       <FileUpload
                         bucket="course-detail-images"
                         path="detail-images"
@@ -1126,8 +1125,8 @@ const CourseCreate = () => {
                         onUpload={(url, fileName) => {
                           addDetailImage(url, fileName);
                         }}
-                        label="상세 페이지 이미지 추가"
-                        description="이미지를 선택하거나 드래그해서 업로드하세요 (최대 10MB)"
+                        label=""
+                        description="상세페이지 이미지를 선택하거나 드래그해서 업로드하세요 (최대 10MB)"
                       />
                     </div>
                   </div>
@@ -1164,12 +1163,8 @@ const CourseCreate = () => {
                                           className="flex flex-col items-center justify-center w-12 h-12 bg-muted hover:bg-muted/80 rounded cursor-grab active:cursor-grabbing shrink-0 mt-2 transition-colors group"
                                           title="드래그해서 순서 변경"
                                         >
-                                          <div className="flex items-center gap-0.5 mb-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-                                            <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-                                            <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-                                          </div>
-                                          <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                                          <GripVertical className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                          <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors mt-0.5">
                                             {index + 1}
                                           </span>
                                         </div>
