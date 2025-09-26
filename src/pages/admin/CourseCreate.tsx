@@ -1,202 +1,261 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { AdminLayout } from '@/layouts/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { FileUpload } from '@/components/ui/file-upload';
-import { MultiImageUpload } from '@/components/ui/multi-image-upload';
-import { useToast } from '@/hooks/use-toast';
-import { Save, Plus, Trash2, ChevronLeft, ChevronRight, FileText, Video, Link, BookOpen, Settings, DollarSign, Users, Calendar } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Trash2, Upload, FileImage, BookOpen, Video, DollarSign, FileText, Users, Settings } from 'lucide-react';
+import { FileUpload } from "@/components/ui/file-upload";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
-interface DetailImage {
-  id: string;
-  image_url: string;
-  image_name: string;
-  section_title: string;
-  order_index: number;
-}
+const CourseCreate = () => {
+  interface Category {
+    id: string;
+    name: string;
+  }
 
-interface CourseSession {
-  id?: string;
-  title: string;
-  order_index: number;
-}
+  interface Instructor {
+    id: string;
+    full_name: string;
+    email: string;
+  }
 
-interface CourseSection {
-  id?: string;
-  title: string;
-  sessions: CourseSession[];
-}
+  interface CourseSession {
+    title: string;
+    order_index: number;
+    is_free?: boolean;
+    video_url?: string;
+  }
 
-interface CourseOption {
-  id?: string;
-  name: string;
-  price: number;
-  original_price?: number;
-  benefits: string[];
-}
+  interface CourseSection {
+    title: string;
+    sessions: CourseSession[];
+  }
 
-interface Course {
-  title: string;
-  thumbnail_url: string;
-  detail_images: DetailImage[];
-  course_type: 'VOD' | '오프라인' | '1:1 컨설팅' | '챌린지·스터디';
-  price: number;
-  level: string;
-  category_id: string;
-  what_you_will_learn: string[];
-  sections: CourseSection[];
-  course_options: CourseOption[];
-  is_published: boolean;
-  instructor_id?: string;
-  seo_title: string;
-  seo_description: string;
-  seo_keywords: string[];
-}
+  interface CourseOption {
+    name: string;
+    price: number;
+    original_price?: number;
+    benefits: string[];
+    tag?: string;
+  }
 
-const AdminCourseCreate = () => {
-  const [course, setCourse] = useState<Course>({
+  const [currentStep, setCurrentStep] = useState(1);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [course, setCourse] = useState({
     title: '',
-    thumbnail_url: '',
-    detail_images: [],
+    category_id: '',
+    instructor_id: '',
+    level: 'beginner',
     course_type: 'VOD',
     price: 0,
-    level: 'beginner',
-    category_id: '',
     what_you_will_learn: [''],
-    sections: [],
-    course_options: [
-      {
-        name: '기본 패키지',
-        price: 0,
-        benefits: ['강의 평생 수강권', '모든 강의 자료 제공']
-      }
-    ],
+    requirements: [''] as string[],
+    sections: [] as CourseSection[],
+    course_options: [] as CourseOption[],
+    thumbnail_url: '',
+    thumbnail_path: '',
+    detail_image_path: '',
+    video_preview_url: '',
     is_published: false,
-    seo_title: '',
-    seo_description: '',
-    seo_keywords: []
+    is_new: false,
+    is_hot: false
   });
 
-  const [categories, setCategories] = useState<any[]>([]);
-  const [instructors, setInstructors] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [priceInput, setPriceInput] = useState<string>('');
-
-  const steps = [
-    { id: 1, name: '기본 정보', icon: BookOpen },
-    { id: 2, name: '커리큘럼', icon: FileText },
-    { id: 3, name: '판매 설정', icon: DollarSign },
-    { id: 4, name: '운영 설정', icon: Settings },
-    { id: 5, name: '확인 및 생성', icon: Save }
-  ];
-
+  // 초기 데이터 로드
   useEffect(() => {
     fetchCategories();
     fetchInstructors();
-    
-    // 자동 저장 로직
-    const interval = setInterval(() => {
-      if (course.title) {
-        autoSave();
-      }
-    }, 30000); // 30초마다 자동 저장
-
-    // 저장된 초안 불러오기
-    const saved = localStorage.getItem('draft_course');
-    if (saved) {
-      try {
-        setCourse(JSON.parse(saved));
-      } catch (error) {
-        console.error('Error loading draft:', error);
-      }
-    }
-
-    return () => clearInterval(interval);
+    loadDraft();
   }, []);
+
+  // 자동저장
+  useEffect(() => {
+    if (course.title) {
+      autoSave();
+    }
+  }, [course]);
 
   const fetchCategories = async () => {
     try {
       const { data, error } = await supabase
         .from('categories')
-        .select('*');
+        .select('id, name')
+        .order('name');
       
       if (error) throw error;
       setCategories(data || []);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
+    } catch (error: any) {
+      toast({
+        title: "오류",
+        description: "카테고리를 불러오는데 실패했습니다.",
+        variant: "destructive"
+      });
     }
   };
 
   const fetchInstructors = async () => {
     try {
-      // Source of truth: instructors table
-      const { data: instructorsRows, error: insErr } = await supabase
+      const { data, error } = await supabase
         .from('instructors')
         .select('id, full_name, email')
         .order('full_name');
-
-      if (insErr) throw insErr;
-
-      const emails = (instructorsRows || []).map((i: any) => i.email).filter(Boolean);
-
-      // Fetch existing profiles for these emails
-      const { data: profiles, error: profErr } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .in('email', emails);
-
-      if (profErr) throw profErr;
-
-      const profileByEmail = new Map<string, string>(
-        (profiles || []).map((p: any) => [p.email, p.id])
-      );
-
-      // Ensure missing profiles exist
-      const missing = (instructorsRows || []).filter((i: any) => !profileByEmail.get(i.email));
-      if (missing.length > 0) {
-        await Promise.all(
-          missing.map(async (m: any) => {
-            try {
-              const { data, error } = await supabase.functions.invoke('manage-instructor', {
-                body: { email: m.email, full_name: m.full_name, role: 'instructor' },
-              });
-              const newId = (data as any)?.userId || (data as any)?.user_id || (data as any)?.id;
-              if (!error && newId) profileByEmail.set(m.email, newId);
-            } catch (e) {
-              console.warn('Failed to ensure profile for instructor', m.email, e);
-            }
-          })
-        );
-      }
-
-      const finalList = (instructorsRows || [])
-        .map((i: any) => ({ id: profileByEmail.get(i.email) || '', full_name: i.full_name, email: i.email }))
-        .filter((i: any) => i.id);
-
-      setInstructors(finalList);
-    } catch (error) {
-      console.error('Error fetching instructors:', error);
+      
+      if (error) throw error;
+      setInstructors(data || []);
+    } catch (error: any) {
+      toast({
+        title: "오류",
+        description: "강사 목록을 불러오는데 실패했습니다.",
+        variant: "destructive"
+      });
     }
   };
 
-  const handleInstructorChange = async (val: string) => {
+  const loadDraft = () => {
+    const draft = localStorage.getItem('draft_course');
+    if (draft) {
+      try {
+        const parsedDraft = JSON.parse(draft);
+        setCourse(prevCourse => ({ ...prevCourse, ...parsedDraft }));
+      } catch (error) {
+        console.error('Failed to load draft:', error);
+      }
+    }
+  };
+
+  const clearDraft = () => {
+    localStorage.removeItem('draft_course');
+  };
+
+  const handleSubmit = async () => {
     try {
-      if (val.startsWith('create:')) {
+      setIsLoading(true);
+      
+      const courseData = {
+        title: course.title,
+        category_id: course.category_id,
+        instructor_id: course.instructor_id,
+        level: course.level,
+        course_type: course.course_type,
+        price: course.price,
+        what_you_will_learn: course.what_you_will_learn.filter(item => item.trim()),
+        requirements: course.requirements?.filter(item => item.trim()) || [],
+        thumbnail_url: course.thumbnail_url,
+        thumbnail_path: course.thumbnail_path,
+        detail_image_path: course.detail_image_path,
+        video_preview_url: course.video_preview_url,
+        is_published: course.is_published,
+        is_new: course.is_new,
+        is_hot: course.is_hot
+      };
+
+      const { data: courseResult, error: courseError } = await supabase
+        .from('courses')
+        .insert(courseData)
+        .select()
+        .single();
+
+      if (courseError) throw courseError;
+
+      // 섹션 저장
+      if (course.sections.length > 0) {
+        const sectionsData = course.sections.map((section, index) => ({
+          course_id: courseResult.id,
+          title: section.title,
+          order_index: index
+        }));
+
+        const { data: sectionsResult, error: sectionsError } = await supabase
+          .from('course_sections')
+          .insert(sectionsData)
+          .select();
+
+        if (sectionsError) throw sectionsError;
+
+        // 세션 저장
+        const allSessions: any[] = [];
+        course.sections.forEach((section, sectionIndex) => {
+          section.sessions.forEach((session, sessionIndex) => {
+            allSessions.push({
+              course_id: courseResult.id,
+              section_id: sectionsResult[sectionIndex].id,
+              title: session.title,
+              order_index: sessionIndex,
+              is_free: session.is_free || false,
+              video_url: session.video_url
+            });
+          });
+        });
+
+        if (allSessions.length > 0) {
+          const { error: sessionsError } = await supabase
+            .from('course_sessions')
+            .insert(allSessions);
+
+          if (sessionsError) throw sessionsError;
+        }
+      }
+
+      // 코스 옵션 저장
+      if (course.course_options.length > 0) {
+        const optionsData = course.course_options.map(option => ({
+          course_id: courseResult.id,
+          name: option.name,
+          price: option.price,
+          original_price: option.original_price,
+          benefits: option.benefits.filter(benefit => benefit.trim()),
+          tag: option.tag
+        }));
+
+        const { error: optionsError } = await supabase
+          .from('course_options')
+          .insert(optionsData);
+
+        if (optionsError) throw optionsError;
+      }
+
+      toast({
+        title: "성공",
+        description: "강의가 성공적으로 생성되었습니다."
+      });
+
+      clearDraft();
+      
+      // 관리자 페이지로 리다이렉트
+      window.location.href = '/admin/courses';
+
+    } catch (error: any) {
+      console.error('Failed to create course:', error);
+      toast({
+        title: "오류",
+        description: error.message || "강의 생성에 실패했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveDraft = () => {
+    autoSave();
+    toast({
+      title: "임시저장 완료",
+      description: "강의가 임시저장되었습니다."
+    });
+  };
+
+  const handleInstructorSelect = async (val: string) => {
+    try {
+      if (val.startsWith('email:')) {
         const email = val.slice(7);
         const target = (instructors as any[]).find((i: any) => i.email === email);
         const full_name = target?.full_name || email;
@@ -382,6 +441,16 @@ const AdminCourseCreate = () => {
     }));
   };
 
+  // 드래그앤드롭 핸들러
+  const handleSectionDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+
+    const items = Array.from(course.sections);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setCourse(prev => ({ ...prev, sections: items }));
+  };
 
   // 단계 검증
   const validateStep = (step: number): boolean => {
@@ -403,16 +472,13 @@ const AdminCourseCreate = () => {
     }
   };
 
+  const canProceed = (step: number) => {
+    return validateStep(step);
+  };
+
   const nextStep = () => {
-    if (validateStep(currentStep)) {
-      setCompletedSteps(prev => [...new Set([...prev, currentStep])]);
+    if (canProceed(currentStep)) {
       setCurrentStep(prev => Math.min(prev + 1, 5));
-    } else {
-      toast({
-        title: "필수 정보 누락",
-        description: "필수 항목을 모두 입력해주세요.",
-        variant: "destructive"
-      });
     }
   };
 
@@ -420,273 +486,121 @@ const AdminCourseCreate = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  // 강의 저장
-  const saveCourse = async (isDraft = false) => {
-    setLoading(true);
-    try {
-      // 강의 기본 정보 저장
-      const courseData = {
-        title: course.title,
-        thumbnail_path: course.thumbnail_url, // Use thumbnail_path instead of thumbnail_url
-        price: course.price,
-        level: course.level,
-        category_id: course.category_id,
-        what_you_will_learn: course.what_you_will_learn.filter(item => item.trim()),
-        course_type: course.course_type,
-        
-        is_published: !isDraft && course.is_published,
-        instructor_id: course.instructor_id || null // profiles.id only; null if not selected
-      };
-
-      const { data: savedCourse, error: courseError } = await supabase
-        .from('courses')
-        .insert(courseData)
-        .select()
-        .single();
-
-      if (courseError) throw courseError;
-
-      // 섹션과 세션 저장
-      if (course.sections.length > 0) {
-        for (let sectionIndex = 0; sectionIndex < course.sections.length; sectionIndex++) {
-          const section = course.sections[sectionIndex];
-          
-          // 섹션 저장
-          const { data: sectionData, error: sectionError } = await supabase
-            .from('course_sections')
-            .insert({
-              course_id: savedCourse.id,
-              title: section.title,
-              order_index: sectionIndex
-            })
-            .select()
-            .single();
-
-          if (sectionError) throw sectionError;
-
-          // 해당 섹션의 세션들 저장
-          if (section.sessions.length > 0) {
-            const sessionsToInsert = section.sessions.map((session, sessionIndex) => ({
-              course_id: savedCourse.id,
-              section_id: sectionData.id,
-              title: session.title,
-              order_index: sessionIndex,
-              is_free: false
-            }));
-
-            const { error: sessionsError } = await supabase
-              .from('course_sessions')
-              .insert(sessionsToInsert);
-
-            if (sessionsError) throw sessionsError;
-          }
-        }
-      }
-
-      // 코스 옵션 저장
-      if (course.course_options.length > 0) {
-        const optionsToInsert = course.course_options
-          .filter(option => option.name.trim() && option.price >= 0)
-          .map(option => ({
-            course_id: savedCourse.id,
-            name: option.name,
-            price: option.price,
-            original_price: option.original_price,
-            benefits: option.benefits.filter(benefit => benefit.trim())
-          }));
-
-        if (optionsToInsert.length > 0) {
-          const { error: optionsError } = await supabase
-            .from('course_options')
-            .insert(optionsToInsert);
-
-          if (optionsError) throw optionsError;
-        }
-      }
-
-      // 상세 이미지 저장
-      if (course.detail_images && course.detail_images.length > 0) {
-        const imagesToInsert = course.detail_images.map(img => ({
-          course_id: savedCourse.id,
-          image_url: img.image_url,
-          image_name: img.image_name,
-          order_index: img.order_index ?? 0,
-          section_title: img.section_title || null
-        }));
-
-        const { error: imagesError } = await supabase
-          .from('course_detail_images')
-          .insert(imagesToInsert);
-
-        if (imagesError) throw imagesError;
-      }
-
-      // 로컬스토리지 비우기
-      localStorage.removeItem('draft_course');
-
-      toast({
-        title: "성공",
-        description: `강의가 ${isDraft ? '임시저장' : '생성'}되었습니다.`
-      });
-
-      navigate('/admin/courses');
-
-    } catch (error) {
-      console.error('Error saving course:', error);
-      toast({
-        title: "오류",
-        description: "강의 저장에 실패했습니다.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
+  // 단계별 렌더링
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
           <div className="space-y-6">
-            {/* 기본 정보 */}
             <Card>
               <CardHeader>
-                <CardTitle>기본 정보</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5" />
+                  기본 정보
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  강의의 기본 정보를 입력해주세요.
+                </p>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div>
-                  <Label htmlFor="title">강의 제목 <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="title">강의 제목 *</Label>
                   <Input
                     id="title"
                     value={course.title}
                     onChange={(e) => setCourse(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="강의 제목을 입력하세요"
+                    placeholder="예: React 기초부터 실전까지"
+                    className="mt-2"
                   />
                 </div>
-                
+
                 <div>
-                  <Label htmlFor="course_type">강의 타입</Label>
-                  <Select value={course.course_type} onValueChange={(value: 'VOD' | '오프라인' | '1:1 컨설팅' | '챌린지·스터디') => setCourse(prev => ({ ...prev, course_type: value }))}>
-                    <SelectTrigger>
-                      <SelectValue />
+                  <Label htmlFor="category">카테고리 *</Label>
+                  <Select value={course.category_id} onValueChange={(value) => setCourse(prev => ({ ...prev, category_id: value }))}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="카테고리를 선택하세요" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="VOD">VOD</SelectItem>
-                      <SelectItem value="오프라인">오프라인</SelectItem>
-                      <SelectItem value="1:1 컨설팅">1:1 컨설팅</SelectItem>
-                      <SelectItem value="챌린지·스터디">챌린지·스터디</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="level">난이도</Label>
-                    <Select value={course.level} onValueChange={(value) => setCourse(prev => ({ ...prev, level: value }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="beginner">초급</SelectItem>
-                        <SelectItem value="intermediate">중급</SelectItem>
-                        <SelectItem value="advanced">고급</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="category">카테고리 <span className="text-red-500">*</span></Label>
-                    <Select value={course.category_id} onValueChange={(value) => setCourse(prev => ({ ...prev, category_id: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="카테고리 선택" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div>
+                  <Label htmlFor="instructor">강사 선택 *</Label>
+                  <Select value={course.instructor_id} onValueChange={handleInstructorSelect}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="강사를 선택하세요" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {instructors.map((instructor) => (
+                        <SelectItem key={instructor.id} value={instructor.id}>
+                          {instructor.full_name} ({instructor.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div>
-                    <Label htmlFor="instructor">강사 관리</Label>
-                    <div className="flex gap-2">
-                      <Select
-                        value={course.instructor_id || undefined}
-                        onValueChange={(value) => setCourse(prev => ({ ...prev, instructor_id: value }))}
-                      >
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="강사를 선택하세요" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {instructors.map((instructor: any) => (
-                            <SelectItem key={instructor.id} value={instructor.id}>
-                              {instructor.full_name} ({instructor.email})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => navigate('/admin/instructors')}
-                        className="whitespace-nowrap"
-                      >
-                        강사 관리
-                      </Button>
-                    </div>
-                    {course.instructor_id && (
-                      <div className="flex gap-2 mt-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/admin/instructor-profile/${course.instructor_id}`)}
-                        >
-                          강사 수정
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => setCourse(prev => ({ ...prev, instructor_id: '' }))}
-                        >
-                          선택 해제
-                        </Button>
-                      </div>
-                    )}
+                <div>
+                  <Label htmlFor="level">난이도</Label>
+                  <Select value={course.level} onValueChange={(value) => setCourse(prev => ({ ...prev, level: value }))}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="beginner">초급</SelectItem>
+                      <SelectItem value="intermediate">중급</SelectItem>
+                      <SelectItem value="advanced">고급</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="course_type">강의 타입</Label>
+                  <Select value={course.course_type} onValueChange={(value) => setCourse(prev => ({ ...prev, course_type: value }))}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="VOD">VOD (녹화 강의)</SelectItem>
+                      <SelectItem value="LIVE">LIVE (실시간 강의)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="price">기본 가격 (원)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    value={course.price}
+                    onChange={(e) => setCourse(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
+                    placeholder="0"
+                    className="mt-2"
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={course.is_new}
+                      onCheckedChange={(checked) => setCourse(prev => ({ ...prev, is_new: checked }))}
+                    />
+                    <Label>신규 강의</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={course.is_hot}
+                      onCheckedChange={(checked) => setCourse(prev => ({ ...prev, is_hot: checked }))}
+                    />
+                    <Label>인기 강의</Label>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* 미디어 */}
-            <Card>
-              <CardHeader>
-                <CardTitle>미디어</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FileUpload
-                  bucket="course-thumbnails"
-                  accept="image/*"
-                  maxSize={5}
-                  onUpload={(url) => setCourse(prev => ({ ...prev, thumbnail_url: url }))}
-                  currentFile={course.thumbnail_url}
-                  label="썸네일 이미지"
-                  description="강의 목록에서 보여질 썸네일 이미지를 업로드하세요"
-                />
-
-                <MultiImageUpload
-                  bucket="course-detail-images"
-                  images={course.detail_images}
-                  onImagesChange={(images) => setCourse(prev => ({ ...prev, detail_images: images }))}
-                  accept="image/*,image/gif"
-                  maxSize={10}
-                />
-
               </CardContent>
             </Card>
           </div>
@@ -698,49 +612,52 @@ const AdminCourseCreate = () => {
             {/* 이 강의에서 배우는 것들 */}
             <Card>
               <CardHeader>
-                <CardTitle>이 강의에서 배우는 것들</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5" />
+                  이 강의에서 배우는 것들
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  학습자가 이 강의를 통해 얻을 수 있는 것들을 작성해주세요.
+                </p>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <Label>배울 내용</Label>
-                  <div className="space-y-2">
-                    {course.what_you_will_learn.map((item, index) => (
-                      <div key={index} className="flex gap-2">
-                        <Input
-                          value={item}
-                          onChange={(e) => updateListItem('what_you_will_learn', index, e.target.value)}
-                          placeholder="학습자가 배울 내용을 입력하세요"
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeListItem('what_you_will_learn', index)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addListItem('what_you_will_learn')}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      항목 추가
-                    </Button>
-                  </div>
+              <CardContent>
+                <div className="space-y-3">
+                  {course.what_you_will_learn.map((item, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={item}
+                        onChange={(e) => updateListItem('what_you_will_learn', index, e.target.value)}
+                        placeholder="예: React의 기본 개념과 컴포넌트 작성법을 익힐 수 있습니다"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeListItem('what_you_will_learn', index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    variant="outline"
+                    onClick={() => addListItem('what_you_will_learn')}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    항목 추가
+                  </Button>
                 </div>
               </CardContent>
             </Card>
 
+            {/* 커리큘럼 구성 */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
+                  <Video className="w-5 h-5" />
                   커리큘럼 구성
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  강의를 체계적으로 구성해보세요. 챕터별로 나누어 학습자가 단계적으로 학습할 수 있도록 도와줍니다.
+                  강의를 체계적으로 구성해보세요. 섹션별로 나누어 학습자가 단계적으로 학습할 수 있도록 도와줍니다.
                 </p>
               </CardHeader>
               <CardContent>
@@ -751,15 +668,10 @@ const AdminCourseCreate = () => {
                         <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
                           <BookOpen className="w-8 h-8 text-primary" />
                         </div>
-                        <h3 className="text-xl font-semibold mb-2">강의 챕터를 만들어보세요</h3>
-                        <p className="text-muted-foreground mb-6 leading-relaxed">
-                          예시: "1챕터: 기초 개념" → "2챕터: 실습하기" → "3챕터: 응용편"<br/>
-                          각 챕터에는 여러개의 강의 영상을 추가할 수 있습니다.
-                        </p>
                         <div className="flex flex-col gap-3">
                           <Button onClick={addSection} size="lg" className="hover-scale">
                             <Plus className="w-5 h-5 mr-2" />
-                            첫 번째 챕터 만들기
+                            섹션 만들기
                           </Button>
                           <Button 
                             onClick={() => {
@@ -793,189 +705,132 @@ const AdminCourseCreate = () => {
                             size="lg"
                           >
                             <FileText className="w-5 h-5 mr-2" />
-                            3챕터 템플릿으로 시작하기
+                            템플릿으로 시작
                           </Button>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-8">
-                      {course.sections.map((section, sectionIndex) => (
-                        <div key={sectionIndex} className="relative bg-card border border-border rounded-xl p-6">
-                          {/* 챕터 헤더 */}
-                          <div className="flex items-start gap-4 mb-6">
-                            <div className="flex items-center justify-center w-12 h-12 bg-primary text-primary-foreground rounded-xl text-lg font-bold shrink-0">
-                              {sectionIndex + 1}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
-                                <h3 className="text-lg font-semibold text-foreground">챕터 {sectionIndex + 1}</h3>
-                                <div className="flex items-center gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled={sectionIndex === 0}
-                                    onClick={() => {
-                                      const newSections = [...course.sections];
-                                      [newSections[sectionIndex], newSections[sectionIndex - 1]] = 
-                                      [newSections[sectionIndex - 1], newSections[sectionIndex]];
-                                      setCourse(prev => ({ ...prev, sections: newSections }));
-                                    }}
-                                    title="위로 이동"
+                    <DragDropContext onDragEnd={handleSectionDragEnd}>
+                      <Droppable droppableId="sections">
+                        {(provided) => (
+                          <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
+                            {course.sections.map((section, sectionIndex) => (
+                              <Draggable key={sectionIndex} draggableId={`section-${sectionIndex}`} index={sectionIndex}>
+                                {(provided, snapshot) => (
+                                  <div 
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    className={cn(
+                                      "relative bg-card border border-border rounded-xl p-6 transition-all",
+                                      snapshot.isDragging && "shadow-lg rotate-1"
+                                    )}
                                   >
-                                    ↑
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled={sectionIndex === course.sections.length - 1}
-                                    onClick={() => {
-                                      const newSections = [...course.sections];
-                                      [newSections[sectionIndex], newSections[sectionIndex + 1]] = 
-                                      [newSections[sectionIndex + 1], newSections[sectionIndex]];
-                                      setCourse(prev => ({ ...prev, sections: newSections }));
-                                    }}
-                                    title="아래로 이동"
-                                  >
-                                    ↓
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeSection(sectionIndex)}
-                                    className="text-destructive hover:text-destructive"
-                                    title="챕터 삭제"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                              <Input
-                                value={section.title}
-                                onChange={(e) => updateSection(sectionIndex, 'title', e.target.value)}
-                                placeholder="챕터 제목을 입력하세요 (예: 1챕터: 기초 개념 이해하기)"
-                                className="text-base font-medium mb-4"
-                              />
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Video className="w-4 h-4" />
-                                <span>{section.sessions.length}개의 강의 영상</span>
-                              </div>
-                            </div>
-                          </div>
+                                    {/* 섹션 헤더 */}
+                                    <div className="flex items-start gap-4 mb-6">
+                                      <div 
+                                        {...provided.dragHandleProps}
+                                        className="flex items-center justify-center w-12 h-12 bg-primary text-primary-foreground rounded-xl text-lg font-bold shrink-0 cursor-grab active:cursor-grabbing hover:bg-primary/80 transition-colors"
+                                      >
+                                        {sectionIndex + 1}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-3 mb-2">
+                                          <Input
+                                            value={section.title}
+                                            onChange={(e) => updateSection(sectionIndex, 'title', e.target.value)}
+                                            placeholder="섹션명 입력"
+                                            className="text-base font-medium border-0 bg-transparent px-0 focus-visible:ring-0 focus-visible:border-primary/50"
+                                          />
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => removeSection(sectionIndex)}
+                                            className="text-destructive hover:text-destructive shrink-0"
+                                            title="섹션 삭제"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </Button>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                          <Video className="w-4 h-4" />
+                                          <span>{section.sessions.length}개의 강의 영상</span>
+                                        </div>
+                                      </div>
+                                    </div>
 
-                          {/* 강의 목록 */}
-                          <div className="space-y-3">
-                            {section.sessions.length === 0 ? (
-                              <div className="text-center py-8 border-2 border-dashed border-muted-foreground/20 rounded-lg bg-muted/10">
-                                <Video className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
-                                <p className="text-sm text-muted-foreground mb-4">
-                                  이 챕터에 강의 영상을 추가해보세요
-                                </p>
-                                <Button 
-                                  onClick={() => addSession(sectionIndex)} 
-                                  variant="outline"
-                                >
-                                  <Plus className="w-4 h-4 mr-2" />
-                                  첫 번째 강의 추가
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="space-y-2">
-                                {section.sessions.map((session, sessionIndex) => (
-                                  <div key={sessionIndex} className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg group hover:bg-muted/50 transition-colors">
-                                    <div className="flex items-center justify-center w-8 h-8 bg-muted-foreground/10 text-muted-foreground rounded-full text-sm font-medium shrink-0">
-                                      {sessionIndex + 1}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <Input
-                                        value={session.title}
-                                        onChange={(e) => updateSession(sectionIndex, sessionIndex, 'title', e.target.value)}
-                                        placeholder={`강의 ${sessionIndex + 1} 제목 (예: 기본 개념 설명하기)`}
-                                        className="border-0 bg-transparent px-0 focus-visible:ring-0 text-base"
-                                      />
-                                    </div>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        disabled={sessionIndex === 0}
-                                        onClick={() => {
-                                          const newSessions = [...section.sessions];
-                                          [newSessions[sessionIndex], newSessions[sessionIndex - 1]] = 
-                                          [newSessions[sessionIndex - 1], newSessions[sessionIndex]];
-                                          updateSection(sectionIndex, 'sessions', newSessions);
-                                        }}
-                                        title="위로 이동"
-                                      >
-                                        ↑
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        disabled={sessionIndex === section.sessions.length - 1}
-                                        onClick={() => {
-                                          const newSessions = [...section.sessions];
-                                          [newSessions[sessionIndex], newSessions[sessionIndex + 1]] = 
-                                          [newSessions[sessionIndex + 1], newSessions[sessionIndex]];
-                                          updateSection(sectionIndex, 'sessions', newSessions);
-                                        }}
-                                        title="아래로 이동"
-                                      >
-                                        ↓
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => removeSession(sectionIndex, sessionIndex)}
-                                        className="text-destructive hover:text-destructive"
-                                        title="강의 삭제"
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </Button>
+                                    {/* 강의 목록 */}
+                                    <div className="space-y-3">
+                                      {section.sessions.length === 0 ? (
+                                        <div className="text-center py-8 border-2 border-dashed border-muted-foreground/20 rounded-lg bg-muted/10">
+                                          <Video className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
+                                          <p className="text-sm text-muted-foreground mb-4">
+                                            이 섹션에 강의 영상을 추가해보세요
+                                          </p>
+                                          <Button 
+                                            onClick={() => addSession(sectionIndex)} 
+                                            variant="outline"
+                                          >
+                                            <Plus className="w-4 h-4 mr-2" />
+                                            첫 번째 강의 추가
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <div className="space-y-2">
+                                          {section.sessions.map((session, sessionIndex) => (
+                                            <div key={sessionIndex} className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg group hover:bg-muted/50 transition-colors">
+                                              <div className="flex items-center justify-center w-8 h-8 bg-muted-foreground/10 text-muted-foreground rounded-full text-sm font-medium shrink-0">
+                                                {sessionIndex + 1}
+                                              </div>
+                                              <div className="flex-1 min-w-0">
+                                                <Input
+                                                  value={session.title}
+                                                  onChange={(e) => updateSession(sectionIndex, sessionIndex, 'title', e.target.value)}
+                                                  placeholder={`강의 ${sessionIndex + 1} 제목 (예: 기본 개념 설명하기)`}
+                                                  className="border-0 bg-transparent px-0 focus-visible:ring-0 text-base"
+                                                />
+                                              </div>
+                                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={() => removeSession(sectionIndex, sessionIndex)}
+                                                  className="text-destructive hover:text-destructive"
+                                                  title="강의 삭제"
+                                                >
+                                                  <Trash2 className="w-3 h-3" />
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          ))}
+                                          <Button 
+                                            onClick={() => addSession(sectionIndex)} 
+                                            variant="outline" 
+                                            className="w-full border-dashed hover:border-solid"
+                                          >
+                                            <Plus className="w-4 h-4 mr-2" />
+                                            강의 추가하기
+                                          </Button>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
-                                ))}
-                                <Button 
-                                  onClick={() => addSession(sectionIndex)} 
-                                  variant="outline" 
-                                  className="w-full border-dashed hover:border-solid"
-                                >
-                                  <Plus className="w-4 h-4 mr-2" />
-                                  강의 추가하기
-                                </Button>
-                              </div>
-                            )}
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                            
+                            {/* 새 섹션 추가 */}
+                            <div className="text-center">
+                              <Button onClick={addSection} variant="outline" size="lg" className="hover-scale">
+                                <Plus className="w-5 h-5 mr-2" />
+                                새 섹션 추가하기
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                      
-                      {/* 새 챕터 추가 */}
-                      <div className="text-center">
-                        <Button onClick={addSection} variant="outline" size="lg" className="hover-scale">
-                          <Plus className="w-5 h-5 mr-2" />
-                          새 챕터 추가하기
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 도움말 */}
-                  {course.sections.length > 0 && (
-                    <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5">
-                          💡
-                        </div>
-                        <div className="text-sm">
-                          <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">커리큘럼 작성 팁</p>
-                          <ul className="text-blue-700 dark:text-blue-300 space-y-1">
-                            <li>• 챕터 제목에는 학습 목표를 명확히 표현해주세요</li>
-                            <li>• 각 강의는 10-20분 정도의 길이가 집중력에 좋습니다</li>
-                            <li>• 이론 → 실습 → 정리 순서로 구성하면 효과적입니다</li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
                   )}
                 </div>
               </CardContent>
@@ -1109,38 +964,50 @@ const AdminCourseCreate = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>SEO 설정</CardTitle>
+                <CardTitle>미디어 업로드</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  강의 썸네일과 상세 이미지를 업로드하세요.
+                </p>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div>
-                  <Label htmlFor="seo_title">SEO 제목</Label>
-                  <Input
-                    id="seo_title"
-                    value={course.seo_title}
-                    onChange={(e) => setCourse(prev => ({ ...prev, seo_title: e.target.value }))}
-                    placeholder="검색 엔진에 표시될 제목"
+                  <Label>썸네일 이미지</Label>
+                  <FileUpload
+                    bucket="course-assets"
+                    path="thumbnails"
+                    accept="image/*"
+                    maxSize={5}
+                    onUpload={(url, fileName) => {
+                      setCourse(prev => ({ ...prev, thumbnail_url: url, thumbnail_path: fileName }));
+                    }}
+                    currentFile={course.thumbnail_url}
+                    label="썸네일 이미지"
+                    description="강의 썸네일 이미지를 업로드하세요"
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="seo_description">SEO 설명</Label>
-                  <Textarea
-                    id="seo_description"
-                    value={course.seo_description}
-                    onChange={(e) => setCourse(prev => ({ ...prev, seo_description: e.target.value }))}
-                    placeholder="검색 엔진에 표시될 설명"
-                    rows={3}
+                  <Label>상세 이미지</Label>
+                  <FileUpload
+                    bucket="course-assets"
+                    path="detail-images"
+                    accept="image/*"
+                    maxSize={5}
+                    onUpload={(url, fileName) => {
+                      setCourse(prev => ({ ...prev, detail_image_path: fileName }));
+                    }}
+                    label="상세 이미지"
+                    description="강의 상세 이미지를 업로드하세요"
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="seo_keywords">SEO 키워드 (쉼표로 구분)</Label>
+                  <Label>미리보기 영상 URL (선택사항)</Label>
                   <Input
-                    id="seo_keywords"
-                    value={course.seo_keywords.join(', ')}
-                    onChange={(e) => setCourse(prev => ({ 
-                      ...prev, 
-                      seo_keywords: e.target.value.split(',').map(k => k.trim()).filter(k => k) 
-                    }))}
-                    placeholder="강의, 온라인교육, 프로그래밍"
+                    value={course.video_preview_url}
+                    onChange={(e) => setCourse(prev => ({ ...prev, video_preview_url: e.target.value }))}
+                    placeholder="예: https://vimeo.com/123456789"
+                    className="mt-2"
                   />
                 </div>
               </CardContent>
@@ -1153,48 +1020,33 @@ const AdminCourseCreate = () => {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>강의 정보 확인</CardTitle>
+                <CardTitle>강의 생성 완료</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  입력하신 정보를 확인하고 강의를 생성하세요.
+                </p>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-semibold">기본 정보</h4>
-                    <p className="text-sm text-muted-foreground">제목: {course.title}</p>
-                    <p className="text-sm text-muted-foreground">카테고리: {categories.find(c => c.id === course.category_id)?.name}</p>
-                    <p className="text-sm text-muted-foreground">난이도: {course.level}</p>
-                  </div>
-                <div>
-                  <h4 className="font-semibold">가격 정보</h4>
-                  <p className="text-sm text-muted-foreground">정가: {course.price.toLocaleString()}원</p>
-                </div>
+              <CardContent className="space-y-6">
+                <div className="bg-muted p-4 rounded-lg">
+                  <h4 className="font-medium mb-2">강의 정보 요약</h4>
+                  <ul className="space-y-1 text-sm text-muted-foreground">
+                    <li>• 제목: {course.title}</li>
+                    <li>• 섹션: {course.sections.length}개</li>
+                    <li>• 총 강의: {course.sections.reduce((acc, section) => acc + section.sessions.length, 0)}개</li>
+                    <li>• 판매 옵션: {course.course_options.length}개</li>
+                    <li>• 공개 여부: {course.is_published ? '즉시 공개' : '비공개'}</li>
+                  </ul>
                 </div>
                 
-                <div>
-                  <h4 className="font-semibold">커리큘럼</h4>
-                  <p className="text-sm text-muted-foreground">총 {course.sections.length}개 섹션, {course.sections.reduce((total, section) => total + section.sessions.length, 0)}개 강의</p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold">판매 옵션</h4>
-                  <p className="text-sm text-muted-foreground">총 {course.course_options.length}개 옵션</p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold">공개 상태</h4>
-                  <Badge variant={course.is_published ? "default" : "secondary"}>
-                    {course.is_published ? "즉시 공개" : "비공개"}
-                  </Badge>
+                <div className="flex gap-4">
+                  <Button onClick={handleSaveDraft} variant="outline" className="flex-1">
+                    임시저장
+                  </Button>
+                  <Button onClick={handleSubmit} disabled={isLoading} className="flex-1">
+                    {isLoading ? '생성 중...' : '강의 생성'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-
-            <Button 
-              onClick={() => saveCourse(false)} 
-              disabled={loading || !course.title}
-              className="w-full"
-            >
-              {loading ? "저장 중..." : "강의 생성"}
-            </Button>
           </div>
         );
 
@@ -1204,92 +1056,69 @@ const AdminCourseCreate = () => {
   };
 
   return (
-    <AdminLayout>
-      <div className="p-6">
-        {/* 헤더 */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">새 강의 생성</h1>
-            <p className="text-muted-foreground">
-              단계별로 강의를 생성하고 관리하세요. 자동 저장 기능으로 작업 내용이 보호됩니다.
-            </p>
-          </div>
-          <Button onClick={() => saveCourse(true)} variant="outline" size="sm" disabled={loading}>
-            <Save className="w-4 h-4 mr-2" />
-            임시 저장
-          </Button>
-        </div>
-
-        {/* 진행 상태 */}
-        <div className="mb-8">
+    <div className="min-h-screen bg-background">
+      <div className="border-b bg-card">
+        <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              const isCompleted = completedSteps.includes(step.id);
-              const isCurrent = currentStep === step.id;
-              const isAccessible = step.id <= currentStep || isCompleted;
-
-              return (
-                <div key={step.id} className="flex flex-col items-center">
-                  <button
-                    onClick={() => isAccessible && setCurrentStep(step.id)}
-                    disabled={!isAccessible}
-                    className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-colors ${
-                      isCompleted
-                        ? 'bg-primary text-primary-foreground'
-                        : isCurrent
-                        ? 'bg-primary/10 text-primary border-2 border-primary'
-                        : isAccessible
-                        ? 'bg-muted text-muted-foreground hover:bg-muted/80'
-                        : 'bg-muted/50 text-muted-foreground/50 cursor-not-allowed'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </button>
-                  <span className={`text-xs text-center ${
-                    isCurrent ? 'text-primary font-medium' : 'text-muted-foreground'
-                  }`}>
-                    {step.name}
-                  </span>
+            <h1 className="text-2xl font-bold">새 강의 만들기</h1>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>단계 {currentStep} / 5</span>
+            </div>
+          </div>
+          
+          {/* 진행 단계 표시 */}
+          <div className="mt-6">
+            <div className="flex items-center justify-between">
+              {[1, 2, 3, 4, 5].map((step) => (
+                <div key={step} className="flex items-center">
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
+                    step <= currentStep 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    {step}
+                  </div>
+                  {step < 5 && (
+                    <div className={cn(
+                      "w-16 h-1 mx-2 transition-colors",
+                      step < currentStep ? "bg-primary" : "bg-muted"
+                    )} />
+                  )}
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* 콘텐츠 */}
-        <div className="mb-8">
-          {renderStepContent()}
-        </div>
-
-        {/* 네비게이션 */}
-        <div className="flex justify-between">
-          <Button
-            onClick={prevStep}
-            variant="outline"
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        {renderStepContent()}
+        
+        {/* 하단 네비게이션 */}
+        <div className="flex justify-between mt-8 pt-6 border-t">
+          <Button 
+            variant="outline" 
+            onClick={prevStep} 
             disabled={currentStep === 1}
           >
-            <ChevronLeft className="w-4 h-4 mr-2" />
             이전
           </Button>
           
-          {currentStep < 5 ? (
-            <Button onClick={nextStep}>
-              다음
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
-          ) : (
-            <Button 
-              onClick={() => saveCourse(false)} 
-              disabled={loading}
-            >
-              강의 생성
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {currentStep < 5 && (
+              <Button 
+                onClick={nextStep} 
+                disabled={!canProceed(currentStep)}
+              >
+                다음
+              </Button>
+            )}
+          </div>
         </div>
       </div>
-    </AdminLayout>
+    </div>
   );
 };
 
-export default AdminCourseCreate;
+export default CourseCreate;
