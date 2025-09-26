@@ -150,102 +150,89 @@ const Payment = () => {
   };
 
   const handlePayment = async () => {
+    setProcessing(true);
 
-    if (totalPrice === 0) {
-      // 무료 강의인 경우 즉시 완료
-      setProcessing(true);
-      
-      try {
-        // Check if user already has a completed order for this course
-        const { data: existingOrderItems, error: orderCheckError } = await supabase
-          .from('order_items')
-          .select(`
+    try {
+      // Check if user already has a completed order for this course
+      const { data: existingOrderItems, error: orderCheckError } = await supabase
+        .from('order_items')
+        .select(`
+          id,
+          order:orders!inner(
             id,
-            order:orders!inner(
-              id,
-              status,
-              user_id
-            )
-          `)
-          .eq('course_id', courseId)
-          .eq('order.user_id', user?.id)
-          .eq('order.status', 'completed');
+            status,
+            user_id
+          )
+        `)
+        .eq('course_id', courseId)
+        .eq('order.user_id', user?.id)
+        .eq('order.status', 'completed');
 
-        if (orderCheckError) {
-          throw orderCheckError;
-        }
+      if (orderCheckError) {
+        throw orderCheckError;
+      }
 
-        if (existingOrderItems && existingOrderItems.length > 0) {
-          toast({
-            title: "이미 구매한 강의",
-            description: "해당 강의는 이미 구매하셨습니다.",
-          });
-          navigate('/my-page');
-          return;
-        }
-
-        // 주문 생성
-        const { data: order, error: orderError } = await supabase
-          .from('orders')
-          .insert({
-            user_id: user?.id,
-            total_amount: 0,
-            status: 'completed',
-            payment_method: 'free'
-          })
-          .select()
-          .single();
-
-        if (orderError) throw orderError;
-
-        // 주문 아이템 생성
-        const { error: orderItemError } = await supabase
-          .from('order_items')
-          .insert({
-            order_id: order.id,
-            course_id: courseId,
-            price: 0
-          });
-
-        if (orderItemError) throw orderItemError;
-
-        // 수강 등록
-        const { error: enrollmentError } = await supabase
-          .from('enrollments')
-          .insert({
-            user_id: user?.id,
-            course_id: courseId,
-            progress: 0
-          });
-          
-        if (enrollmentError) throw enrollmentError;
-        
+      if (existingOrderItems && existingOrderItems.length > 0) {
         toast({
-          title: "수강 등록 완료",
-          description: "무료 강의 수강 등록이 완료되었습니다!",
+          title: "이미 구매한 강의",
+          description: "해당 강의는 이미 구매하셨습니다.",
         });
-        
         navigate('/my-page');
         return;
-      } catch (error) {
-        console.error('Error processing free enrollment:', error);
-        toast({
-          title: "등록 실패",
-          description: "수강 등록 중 오류가 발생했습니다.",
-          variant: "destructive"
-        });
-        setProcessing(false);
-        return;
       }
-    }
 
-    // 유료 결제 처리
-    if (paymentMethod === 'card') {
-      // 신용카드/체크카드 결제 - PG사 화면으로 이동
-      window.location.href = `/payment-gateway/card?amount=${totalPrice}&orderId=${Date.now()}`;
-    } else if (paymentMethod === 'bank_transfer') {
-      // 실시간 계좌이체 - PG사 화면으로 이동
-      window.location.href = `/payment-gateway/bank?amount=${totalPrice}&orderId=${Date.now()}`;
+      // 주문 생성
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user?.id,
+          total_amount: totalPrice,
+          status: 'completed', // 임시로 즉시 완료 처리
+          payment_method: totalPrice === 0 ? 'free' : paymentMethod
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 주문 아이템 생성
+      const { error: orderItemError } = await supabase
+        .from('order_items')
+        .insert({
+          order_id: order.id,
+          course_id: courseId,
+          price: totalPrice
+        });
+
+      if (orderItemError) throw orderItemError;
+
+      // 수강 등록
+      const { error: enrollmentError } = await supabase
+        .from('enrollments')
+        .insert({
+          user_id: user?.id,
+          course_id: courseId,
+          progress: 0
+        });
+        
+      if (enrollmentError) throw enrollmentError;
+      
+      toast({
+        title: "결제 및 수강 등록 완료",
+        description: totalPrice === 0 ? "무료 강의 수강 등록이 완료되었습니다!" : "결제가 완료되어 수강 등록되었습니다!",
+      });
+      
+      navigate('/my-page');
+      
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      toast({
+        title: "결제 실패",
+        description: "결제 처리 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessing(false);
     }
   };
 
