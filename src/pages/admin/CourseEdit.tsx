@@ -728,7 +728,7 @@ const AdminCourseEdit = () => {
                         <SelectValue placeholder="강의 타입을 선택하세요" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="VOD">VOD (온디맨드)</SelectItem>
+                        <SelectItem value="VOD">VOD</SelectItem>
                         <SelectItem value="오프라인">오프라인</SelectItem>
                         <SelectItem value="1:1 컨설팅">1:1 컨설팅</SelectItem>
                         <SelectItem value="챌린지·스터디">챌린지·스터디</SelectItem>
