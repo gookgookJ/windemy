@@ -92,11 +92,6 @@ export const SessionTable = ({
                     <div className="font-medium text-base max-w-[250px] truncate" title={session.title}>
                       {session.title}
                     </div>
-                    {session.description && (
-                      <div className="text-sm text-muted-foreground max-w-[250px] truncate">
-                        {session.description}
-                      </div>
-                    )}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -111,20 +106,16 @@ export const SessionTable = ({
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1 flex-wrap">
-                    {session.is_free && (
+                    {session.is_free ? (
                       <Badge variant="secondary" className="text-xs">무료</Badge>
-                    )}
-                    {session.is_preview && (
-                      <Badge variant="outline" className="text-xs">미리보기</Badge>
-                    )}
-                    {!session.is_free && !session.is_preview && (
+                    ) : (
                       <Badge variant="default" className="text-xs">프리미엄</Badge>
                     )}
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="text-sm">
-                    {formatDuration(session.duration_minutes || 0)}
+                    미설정
                   </div>
                 </TableCell>
                 <TableCell>
