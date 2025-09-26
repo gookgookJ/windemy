@@ -286,51 +286,57 @@ const PurchaseHistory = () => {
             </div>
             
             {/* 메인 콘텐츠 */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3 space-y-6">
               {/* 헤더 */}
-              <div className="mb-6 md:mb-8">
-                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2">구매 내역</h1>
-                <p className="text-sm md:text-base text-muted-foreground">구매하신 강의들을 확인해보세요.</p>
+              <div className="space-y-2">
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">구매 내역</h1>
+                <p className="text-muted-foreground leading-relaxed">
+                  구매하신 강의들을 확인하고 영수증을 다운로드하세요.
+                </p>
               </div>
 
           {/* 필터 */}
           <Card className="mb-4 md:mb-6">
-            <CardContent className="p-3 md:p-4">
-              <div className="space-y-3 md:space-y-0 md:flex md:flex-wrap md:gap-4 md:items-center">
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4" />
-                  <span className="text-sm font-medium">필터:</span>
+            <CardContent className="p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">필터</span>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-3 md:flex md:gap-4">
-                  <div className="flex flex-col gap-1 md:flex-row md:items-center md:gap-2">
-                    <span className="text-xs md:text-sm font-medium md:font-normal">상태</span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full sm:w-auto">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
+                    <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                      상태
+                    </label>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-full md:w-32">
-                        <SelectValue />
+                      <SelectTrigger className="w-full sm:w-36 h-9 bg-background border-border hover:bg-accent/50 transition-colors">
+                        <SelectValue placeholder="상태 선택" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">전체</SelectItem>
-                        <SelectItem value="completed">결제완료</SelectItem>
-                        <SelectItem value="pending">결제대기</SelectItem>
-                        <SelectItem value="cancelled">취소됨</SelectItem>
-                        <SelectItem value="refunded">환불됨</SelectItem>
+                      <SelectContent className="z-50 bg-popover border-border shadow-lg">
+                        <SelectItem value="all" className="text-sm">전체</SelectItem>
+                        <SelectItem value="completed" className="text-sm">결제완료</SelectItem>
+                        <SelectItem value="pending" className="text-sm">결제대기</SelectItem>
+                        <SelectItem value="cancelled" className="text-sm">취소됨</SelectItem>
+                        <SelectItem value="refunded" className="text-sm">환불됨</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="flex flex-col gap-1 md:flex-row md:items-center md:gap-2">
-                    <span className="text-xs md:text-sm font-medium md:font-normal">기간</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
+                    <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                      기간
+                    </label>
                     <Select value={timeFilter} onValueChange={setTimeFilter}>
-                      <SelectTrigger className="w-full md:w-32">
-                        <SelectValue />
+                      <SelectTrigger className="w-full sm:w-36 h-9 bg-background border-border hover:bg-accent/50 transition-colors">
+                        <SelectValue placeholder="기간 선택" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">전체</SelectItem>
-                        <SelectItem value="1month">1개월</SelectItem>
-                        <SelectItem value="3months">3개월</SelectItem>
-                        <SelectItem value="6months">6개월</SelectItem>
-                        <SelectItem value="1year">1년</SelectItem>
+                      <SelectContent className="z-50 bg-popover border-border shadow-lg">
+                        <SelectItem value="all" className="text-sm">전체</SelectItem>
+                        <SelectItem value="1month" className="text-sm">최근 1개월</SelectItem>
+                        <SelectItem value="3months" className="text-sm">최근 3개월</SelectItem>
+                        <SelectItem value="6months" className="text-sm">최근 6개월</SelectItem>
+                        <SelectItem value="1year" className="text-sm">최근 1년</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -354,36 +360,38 @@ const PurchaseHistory = () => {
           ) : (
             <div className="space-y-4">
               {filteredOrders.map((order) => (
-                <Card key={order.id}>
-                  <CardHeader className="pb-3 md:pb-4">
-                    <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-start">
-                      <div className="space-y-2 flex-1">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                <Card key={order.id} className="overflow-hidden">
+                  <CardHeader className="pb-4 md:pb-5">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-start">
+                      <div className="space-y-3 flex-1 min-w-0">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                           {getStatusBadge(order.status)}
-                          <span className="text-xs sm:text-sm text-muted-foreground">
+                          <span className="text-xs sm:text-sm text-muted-foreground font-mono">
                             주문번호: {order.id.slice(0, 8)}...
                           </span>
                         </div>
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="break-all">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 flex-shrink-0" />
+                            <span className="break-words">
                               {new Date(order.created_at).toLocaleDateString('ko-KR', {
                                 year: 'numeric',
-                                month: 'long',
+                                month: 'short',
                                 day: 'numeric',
                                 hour: '2-digit',
                                 minute: '2-digit'
                               })}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <CreditCard className="h-3 w-3 sm:h-4 sm:w-4" />
-                            {getPaymentMethodText(order.payment_method)}
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="h-4 w-4 flex-shrink-0" />
+                            <span className="whitespace-nowrap">
+                              {getPaymentMethodText(order.payment_method)}
+                            </span>
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right lg:text-right flex-shrink-0">
                         <div className="text-xl sm:text-2xl font-bold text-primary">
                           {order.total_amount.toLocaleString()}원
                         </div>
@@ -391,13 +399,15 @@ const PurchaseHistory = () => {
                     </div>
                   </CardHeader>
                   
-                  <CardContent>
-                    <div className="space-y-4">
+                  <CardContent className="pt-0">
+                    <div className="space-y-3">
                       {order.order_items.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium line-clamp-2 text-sm sm:text-base">{item.course?.title || '강의'}</h4>
-                            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                        <div key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-muted/40 rounded-lg border border-border/50">
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <h4 className="font-medium line-clamp-2 text-sm md:text-base leading-tight">
+                              {item.course?.title || '강의'}
+                            </h4>
+                            <p className="text-sm text-muted-foreground font-medium">
                               {item.price.toLocaleString()}원
                             </p>
                           </div>
@@ -405,10 +415,10 @@ const PurchaseHistory = () => {
                             size="sm"
                             variant="outline"
                             onClick={() => downloadReceipt(order)}
-                            className="ml-3 flex-shrink-0"
+                            className="flex-shrink-0 h-9 px-3 hover:bg-primary/10 transition-colors"
                           >
-                            <FileText className="h-4 w-4 mr-1" />
-                            <span className="text-xs sm:text-sm">영수증</span>
+                            <FileText className="h-4 w-4 mr-2" />
+                            <span className="text-sm font-medium">영수증</span>
                           </Button>
                         </div>
                       ))}
