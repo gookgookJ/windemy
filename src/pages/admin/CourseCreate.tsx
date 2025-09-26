@@ -54,7 +54,7 @@ interface Course {
   description: string;
   thumbnail_url: string;
   detail_images: DetailImage[];
-  course_type: 'vod' | 'offline' | 'hybrid';
+  course_type: 'VOD' | '오프라인' | '1:1 컨설팅' | '챌린지·스터디';
   price: number;
   duration_hours: number;
   level: string;
@@ -76,7 +76,7 @@ const AdminCourseCreate = () => {
     description: '',
     thumbnail_url: '',
     detail_images: [],
-    course_type: 'vod',
+    course_type: 'VOD',
     price: 0,
     duration_hours: 0,
     level: 'beginner',
@@ -445,6 +445,7 @@ const AdminCourseCreate = () => {
         level: course.level,
         category_id: course.category_id,
         what_you_will_learn: course.what_you_will_learn.filter(item => item.trim()),
+        course_type: course.course_type,
         
         is_published: !isDraft && course.is_published,
         instructor_id: course.instructor_id || null // profiles.id only; null if not selected
@@ -603,14 +604,15 @@ const AdminCourseCreate = () => {
 
                 <div>
                   <Label htmlFor="course_type">강의 타입</Label>
-                  <Select value={course.course_type} onValueChange={(value: 'vod' | 'offline' | 'hybrid') => setCourse(prev => ({ ...prev, course_type: value }))}>
+                  <Select value={course.course_type} onValueChange={(value: 'VOD' | '오프라인' | '1:1 컨설팅' | '챌린지·스터디') => setCourse(prev => ({ ...prev, course_type: value }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="vod">VOD (온라인 강의)</SelectItem>
-                      <SelectItem value="offline">오프라인 강의</SelectItem>
-                      <SelectItem value="hybrid">혼합형 (온라인 + 오프라인)</SelectItem>
+                      <SelectItem value="VOD">VOD</SelectItem>
+                      <SelectItem value="오프라인">오프라인</SelectItem>
+                      <SelectItem value="1:1 컨설팅">1:1 컨설팅</SelectItem>
+                      <SelectItem value="챌린지·스터디">챌린지·스터디</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -68,6 +68,7 @@ interface Course {
   category_id: string;
   instructor_id: string; // Add instructor_id field
   is_published: boolean;
+  course_type: 'VOD' | '오프라인' | '1:1 컨설팅' | '챌린지·스터디';
   meta_title?: string;
   meta_description?: string;
   meta_keywords?: string;
@@ -173,6 +174,7 @@ export const AdminCourseEdit = () => {
         category_id: data.category_id || '',
         instructor_id: data.instructor_id || '',
         is_published: data.is_published || false,
+        course_type: (data as any).course_type || 'VOD',
         meta_title: data.title || '',
         meta_description: data.description || '',
         meta_keywords: ''
@@ -302,6 +304,7 @@ export const AdminCourseEdit = () => {
           instructor_id: course.instructor_id || null,
           is_published: course.is_published,
           thumbnail_path: course.thumbnail_url || null,
+          course_type: course.course_type,
         })
         .eq('id', id);
 
@@ -715,6 +718,21 @@ export const AdminCourseEdit = () => {
                         {category.name}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="course_type">강의 타입</Label>
+                <Select value={course.course_type} onValueChange={(value: 'VOD' | '오프라인' | '1:1 컨설팅' | '챌린지·스터디') => setCourse({ ...course, course_type: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="강의 타입 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="VOD">VOD</SelectItem>
+                    <SelectItem value="오프라인">오프라인</SelectItem>
+                    <SelectItem value="1:1 컨설팅">1:1 컨설팅</SelectItem>
+                    <SelectItem value="챌린지·스터디">챌린지·스터디</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

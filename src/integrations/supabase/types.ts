@@ -567,6 +567,7 @@ export type Database = {
       courses: {
         Row: {
           category_id: string | null
+          course_type: string
           created_at: string | null
           description: string | null
           detail_image_path: string | null
@@ -591,6 +592,7 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          course_type?: string
           created_at?: string | null
           description?: string | null
           detail_image_path?: string | null
@@ -615,6 +617,7 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          course_type?: string
           created_at?: string | null
           description?: string | null
           detail_image_path?: string | null
