@@ -83,22 +83,30 @@ const CourseCatalog = () => {
 
       if (!allCourses) allCourses = [];
 
-      const coursesWithStats = allCourses.map(course => ({
-        id: course.id,
-        title: course.title,
-        instructor: course.profiles?.full_name || 'Unknown',
-        thumbnail: course.thumbnail_path || course.thumbnail_url || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png',
-        price: course.price,
-        originalPrice: null, // You can add this to course_options if needed
-        rating: course.rating || 0,
-        reviewCount: course.course_reviews?.length || 0,
-        duration: `${course.duration_hours}시간`,
-        studentCount: course.total_students,
-        level: course.level as "beginner" | "intermediate" | "advanced",
-        category: course.categories?.name || '기타',
-        isHot: course.is_hot || course.total_students > 1000,
-        isNew: course.is_new || new Date(course.created_at).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000, // 30일 이내
-      }));
+      const coursesWithStats = allCourses.map(course => {
+        // Calculate average rating from reviews
+        const reviews = course.course_reviews || [];
+        const averageRating = reviews.length > 0 
+          ? reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / reviews.length 
+          : 0;
+
+        return {
+          id: course.id,
+          title: course.title,
+          instructor: course.profiles?.full_name || 'Unknown',
+          thumbnail: course.thumbnail_path || course.thumbnail_url || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png',
+          price: course.price,
+          originalPrice: null, // You can add this to course_options if needed
+          rating: averageRating,
+          reviewCount: reviews.length,
+          duration: `${course.duration_hours}시간`,
+          studentCount: course.total_students,
+          level: course.level as "beginner" | "intermediate" | "advanced",
+          category: course.categories?.name || '기타',
+          isHot: course.is_hot || course.total_students > 1000,
+          isNew: course.is_new || new Date(course.created_at).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000, // 30일 이내
+        };
+      });
 
       setCourses(coursesWithStats);
     } catch (error) {
