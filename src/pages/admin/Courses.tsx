@@ -18,7 +18,6 @@ interface Course {
   price: number;
   is_published: boolean;
   total_students: number;
-  duration_hours: number;
   level: string;
   created_at: string;
   instructor: {
@@ -49,7 +48,6 @@ export const AdminCourses = () => {
           price,
           is_published,
           total_students,
-          duration_hours,
           level,
           created_at,
           instructor:profiles(full_name, email)
