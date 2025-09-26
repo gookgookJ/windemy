@@ -102,9 +102,9 @@ const CourseDetail = () => {
   const [courseReviews, setCourseReviews] = useState<CourseReview[]>([]);
   const [groupedSections, setGroupedSections] = useState<SectionUI[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAlreadyEnrolledModal, setShowAlreadyEnrolledModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [instructorInfo, setInstructorInfo] = useState<InstructorInfo | null>(null);
+  const [isEnrolled, setIsEnrolled] = useState(false);
 
   // Hooks
   const navigate = useNavigate();
@@ -119,6 +119,12 @@ const CourseDetail = () => {
       fetchCourseData();
     }
   }, [courseId]);
+
+  useEffect(() => {
+    if (courseId && user) {
+      checkEnrollmentStatus();
+    }
+  }, [courseId, user]);
 
   // Scroll to top functionality and header visibility tracking
   const [headerVisible, setHeaderVisible] = useState(true);
@@ -289,20 +295,9 @@ const CourseDetail = () => {
 
   // --- Event Handlers ---
 
-  const handlePurchase = async () => {
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
+  const checkEnrollmentStatus = async () => {
+    if (!courseId || !user) return;
 
-    if (!courseId) return;
-
-    if (!selectedOption) {
-      toast({ title: "강의 옵션 선택", description: "구매할 강의 옵션을 선택해주세요.", variant: "destructive" });
-      return;
-    }
-
-    // Check enrollment status
     try {
       const { data: existingEnrollment, error } = await supabase
         .from('enrollments')
@@ -311,16 +306,30 @@ const CourseDetail = () => {
         .eq('course_id', courseId)
         .maybeSingle();
 
-      // PGRST116 means no rows found (not enrolled), which is acceptable here
       if (error && error.code !== 'PGRST116') throw error;
-
-      if (existingEnrollment) {
-        setShowAlreadyEnrolledModal(true);
-        return;
-      }
+      setIsEnrolled(!!existingEnrollment);
     } catch (error) {
       console.error('Error checking enrollment:', error);
-      toast({ title: "확인 실패", description: "수강 등록 상태 확인 중 오류가 발생했습니다.", variant: "destructive" });
+      setIsEnrolled(false);
+    }
+  };
+
+  const handlePurchase = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    if (!courseId) return;
+
+    // If already enrolled, go to learning page
+    if (isEnrolled) {
+      navigate(`/learn/${courseId}`);
+      return;
+    }
+
+    if (!selectedOption) {
+      toast({ title: "강의 옵션 선택", description: "구매할 강의 옵션을 선택해주세요.", variant: "destructive" });
       return;
     }
 
@@ -758,7 +767,7 @@ const CourseDetail = () => {
                     className="w-full bg-primary hover:bg-primary/90"
                     onClick={handlePurchase}
                     >
-                    강의 구매하기
+                    {isEnrolled ? "이어서 학습하기" : "강의 구매하기"}
                     </Button>
                 </div>
                 </div>
@@ -781,47 +790,13 @@ const CourseDetail = () => {
               className="bg-primary hover:bg-primary/90 px-8"
               onClick={handlePurchase}
             >
-              강의 구매하기
+              {isEnrolled ? "이어서 학습하기" : "강의 구매하기"}
             </Button>
           </div>
         </div>
 
 
         {/* Modals */}
-        <AlertDialog open={showAlreadyEnrolledModal} onOpenChange={setShowAlreadyEnrolledModal}>
-          <AlertDialogContent className="max-w-md">
-            <AlertDialogHeader>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <AlertDialogTitle className="text-left">이미 구매한 강의입니다</AlertDialogTitle>
-                </div>
-              </div>
-              <AlertDialogDescription className="text-left">
-                해당 강의는 이미 구매하여 수강 중인 강의입니다.
-                내 강의실에서 수강을 계속 진행하세요.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowAlreadyEnrolledModal(false)}
-                className="w-full sm:w-auto"
-              >
-                닫기
-              </Button>
-              <AlertDialogAction
-                onClick={() => navigate('/my-page')}
-                className="w-full sm:w-auto bg-primary hover:bg-primary/90"
-              >
-                내 강의실로 이동
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
         <AuthModal
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
