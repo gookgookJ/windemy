@@ -65,16 +65,19 @@ const CourseCreate = () => {
     thumbnail_url: '',
     thumbnail_path: '',
     detail_image_path: '',
-    video_preview_url: '',
     is_published: false,
+    homepage_section_id: '',
     is_new: false,
     is_hot: false
   });
+
+  const [homepageSections, setHomepageSections] = useState<{id: string, title: string}[]>([]);
 
   // 초기 데이터 로드
   useEffect(() => {
     fetchCategories();
     fetchInstructors();
+    fetchHomepageSections();
     loadDraft();
   }, []);
 
@@ -121,6 +124,25 @@ const CourseCreate = () => {
     }
   };
 
+  const fetchHomepageSections = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('homepage_sections')
+        .select('id, title')
+        .eq('is_active', true)
+        .order('order_index');
+      
+      if (error) throw error;
+      setHomepageSections(data || []);
+    } catch (error: any) {
+      toast({
+        title: "오류",
+        description: "홈페이지 섹션을 불러오는데 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const loadDraft = () => {
     const draft = localStorage.getItem('draft_course');
     if (draft) {
@@ -153,7 +175,6 @@ const CourseCreate = () => {
         thumbnail_url: course.thumbnail_url,
         thumbnail_path: course.thumbnail_path,
         detail_image_path: course.detail_image_path,
-        video_preview_url: course.video_preview_url,
         is_published: course.is_published,
         is_new: course.is_new,
         is_hot: course.is_hot
@@ -222,6 +243,19 @@ const CourseCreate = () => {
           .insert(optionsData);
 
         if (optionsError) throw optionsError;
+      }
+
+      // 홈페이지 섹션에 강의 추가 (공개된 강의이고 섹션이 선택된 경우)
+      if (course.is_published && course.homepage_section_id) {
+        const { error: sectionCourseError } = await supabase
+          .from('homepage_section_courses')
+          .insert({
+            section_id: course.homepage_section_id,
+            course_id: courseResult.id,
+            order_index: 0
+          });
+
+        if (sectionCourseError) throw sectionCourseError;
       }
 
       toast({
@@ -567,8 +601,10 @@ const CourseCreate = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="VOD">VOD (녹화 강의)</SelectItem>
-                      <SelectItem value="LIVE">LIVE (실시간 강의)</SelectItem>
+                      <SelectItem value="VOD">VOD</SelectItem>
+                      <SelectItem value="오프라인">오프라인</SelectItem>
+                      <SelectItem value="1:1 컨설팅">1:1 컨설팅</SelectItem>
+                      <SelectItem value="챌린지·스터디">챌린지·스터디</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -813,9 +849,6 @@ const CourseCreate = () => {
                 <CardTitle>
                   판매 옵션 설정
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  학습자에게 제공할 수강 옵션을 설정하세요. 다양한 가격대와 혜택으로 구성할 수 있습니다.
-                </p>
               </CardHeader>
               <CardContent className="space-y-6">
                 {course.course_options.map((option, optionIndex) => (
@@ -855,12 +888,12 @@ const CourseCreate = () => {
                           />
                         </div>
                         <div>
-                          <Label>정가 (원) <span className="text-xs text-muted-foreground">- 할인율 표시용</span></Label>
+                          <Label>정가 (원)</Label>
                           <Input
                             type="number"
                             value={option.original_price || ''}
                             onChange={(e) => updateCourseOption(optionIndex, 'original_price', e.target.value ? parseInt(e.target.value) : undefined)}
-                            placeholder="할인 전 가격 (선택사항)"
+                            placeholder="할인 전 가격"
                           />
                         </div>
                       </div>
@@ -912,9 +945,25 @@ const CourseCreate = () => {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>공개 설정</CardTitle>
+                <CardTitle>메인 페이지 섹션 설정</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div>
+                  <Label>홈페이지 섹션 선택</Label>
+                  <Select value={course.homepage_section_id} onValueChange={(value) => setCourse(prev => ({ ...prev, homepage_section_id: value }))}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="메인 페이지에 표시할 섹션을 선택하세요" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {homepageSections.map((section) => (
+                        <SelectItem key={section.id} value={section.id}>
+                          {section.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
                 <div className="flex items-center space-x-2">
                   <Switch
                     checked={course.is_published}
@@ -923,7 +972,7 @@ const CourseCreate = () => {
                   <Label>즉시 공개</Label>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  체크하면 강의가 즉시 공개됩니다. 체크하지 않으면 비공개 상태로 저장됩니다.
+                  섹션을 선택하고 즉시 공개를 체크하면 해당 섹션과 메인 페이지에 강의가 표시됩니다.
                 </p>
               </CardContent>
             </Card>
@@ -937,7 +986,6 @@ const CourseCreate = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <Label>썸네일 이미지</Label>
                   <FileUpload
                     bucket="course-assets"
                     path="thumbnails"
@@ -953,7 +1001,6 @@ const CourseCreate = () => {
                 </div>
 
                 <div>
-                  <Label>상세 이미지</Label>
                   <FileUpload
                     bucket="course-assets"
                     path="detail-images"
@@ -964,16 +1011,6 @@ const CourseCreate = () => {
                     }}
                     label="상세 이미지"
                     description="강의 상세 이미지를 업로드하세요"
-                  />
-                </div>
-
-                <div>
-                  <Label>미리보기 영상 URL (선택사항)</Label>
-                  <Input
-                    value={course.video_preview_url}
-                    onChange={(e) => setCourse(prev => ({ ...prev, video_preview_url: e.target.value }))}
-                    placeholder="예: https://vimeo.com/123456789"
-                    className="mt-2"
                   />
                 </div>
               </CardContent>
