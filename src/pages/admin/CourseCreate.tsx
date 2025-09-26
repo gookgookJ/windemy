@@ -389,7 +389,9 @@ const AdminCourseCreate = () => {
       case 1:
         return !!(course.title && course.category_id);
       case 2:
-        return course.sections.length > 0 && course.sections.every(s => s.title && s.sessions.length > 0);
+        return course.what_you_will_learn.some(item => item.trim()) && 
+               course.sections.length > 0 && 
+               course.sections.every(s => s.title && s.sessions.length > 0);
       case 3:
         return course.course_options.length > 0 && course.course_options.every(o => o.name && o.price >= 0);
       case 4:
@@ -687,11 +689,16 @@ const AdminCourseCreate = () => {
 
               </CardContent>
             </Card>
+          </div>
+        );
 
-            {/* 학습 목표 및 요구사항 */}
+      case 2:
+        return (
+          <div className="space-y-6">
+            {/* 이 강의에서 배우는 것들 */}
             <Card>
               <CardHeader>
-                <CardTitle>학습 목표 및 요구사항</CardTitle>
+                <CardTitle>이 강의에서 배우는 것들</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
@@ -723,15 +730,9 @@ const AdminCourseCreate = () => {
                     </Button>
                   </div>
                 </div>
-
               </CardContent>
             </Card>
-          </div>
-        );
 
-      case 2:
-        return (
-          <div className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
