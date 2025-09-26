@@ -5,8 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, CreditCard, Package, Filter, FileText } from 'lucide-react';
+import { Calendar, CreditCard, Package, FileText, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
@@ -36,10 +35,7 @@ interface Order {
 
 const PurchaseHistory = () => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [timeFilter, setTimeFilter] = useState<string>('all');
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -51,10 +47,6 @@ const PurchaseHistory = () => {
     }
     fetchOrders();
   }, [user, navigate]);
-
-  useEffect(() => {
-    applyFilters();
-  }, [orders, statusFilter, timeFilter]);
 
   const fetchOrders = async () => {
     if (!user) return;
@@ -133,42 +125,6 @@ const PurchaseHistory = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const applyFilters = () => {
-    let filtered = [...orders];
-
-    // 상태 필터
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(order => order.status === statusFilter);
-    }
-
-    // 기간 필터
-    if (timeFilter !== 'all') {
-      const now = new Date();
-      const filterDate = new Date();
-      
-      switch (timeFilter) {
-        case '1month':
-          filterDate.setMonth(now.getMonth() - 1);
-          break;
-        case '3months':
-          filterDate.setMonth(now.getMonth() - 3);
-          break;
-        case '6months':
-          filterDate.setMonth(now.getMonth() - 6);
-          break;
-        case '1year':
-          filterDate.setFullYear(now.getFullYear() - 1);
-          break;
-      }
-      
-      if (timeFilter !== 'all') {
-        filtered = filtered.filter(order => new Date(order.created_at) >= filterDate);
-      }
-    }
-
-    setFilteredOrders(filtered);
   };
 
   const getStatusBadge = (status: string) => {
@@ -295,85 +251,39 @@ const PurchaseHistory = () => {
                 </p>
               </div>
 
-          {/* 필터 */}
-          <Card className="mb-4 md:mb-6">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Filter className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">필터</span>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full sm:w-auto">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
-                    <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-                      상태
-                    </label>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-full sm:w-36 h-9 bg-background border-border hover:bg-accent/50 transition-colors">
-                        <SelectValue placeholder="상태 선택" />
-                      </SelectTrigger>
-                      <SelectContent className="z-50 bg-popover border-border shadow-lg">
-                        <SelectItem value="all" className="text-sm">전체</SelectItem>
-                        <SelectItem value="completed" className="text-sm">결제완료</SelectItem>
-                        <SelectItem value="pending" className="text-sm">결제대기</SelectItem>
-                        <SelectItem value="cancelled" className="text-sm">취소됨</SelectItem>
-                        <SelectItem value="refunded" className="text-sm">환불됨</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
-                    <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-                      기간
-                    </label>
-                    <Select value={timeFilter} onValueChange={setTimeFilter}>
-                      <SelectTrigger className="w-full sm:w-36 h-9 bg-background border-border hover:bg-accent/50 transition-colors">
-                        <SelectValue placeholder="기간 선택" />
-                      </SelectTrigger>
-                      <SelectContent className="z-50 bg-popover border-border shadow-lg">
-                        <SelectItem value="all" className="text-sm">전체</SelectItem>
-                        <SelectItem value="1month" className="text-sm">최근 1개월</SelectItem>
-                        <SelectItem value="3months" className="text-sm">최근 3개월</SelectItem>
-                        <SelectItem value="6months" className="text-sm">최근 6개월</SelectItem>
-                        <SelectItem value="1year" className="text-sm">최근 1년</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* 주문 목록 */}
-          {filteredOrders.length === 0 ? (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">구매 내역이 없습니다</h3>
-                <p className="text-muted-foreground mb-4">아직 구매하신 강의가 없어요.</p>
-                <Button onClick={() => navigate('/courses')}>
+          {orders.length === 0 ? (
+            <Card className="border border-border shadow-sm">
+              <CardContent className="p-16 text-center">
+                <Package className="h-20 w-20 text-muted-foreground mx-auto mb-6" />
+                <h3 className="text-xl font-semibold mb-3 text-foreground">구매 내역이 없습니다</h3>
+                <p className="text-muted-foreground mb-6">아직 구매하신 강의가 없어요.</p>
+                <Button 
+                  onClick={() => navigate('/courses')}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
                   강의 둘러보기
                 </Button>
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
-              {filteredOrders.map((order) => (
-                <Card key={order.id} className="overflow-hidden">
-                  <CardHeader className="pb-4 md:pb-5">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-start">
-                      <div className="space-y-3 flex-1 min-w-0">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <div className="grid gap-4 md:gap-6">
+              {orders.map((order) => (
+                <Card key={order.id} className="border border-border shadow-sm hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-4">
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                      <div className="space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                           {getStatusBadge(order.status)}
-                          <span className="text-xs sm:text-sm text-muted-foreground font-mono">
+                          <span className="text-xs text-muted-foreground font-mono">
                             주문번호: {order.id.slice(0, 8)}...
                           </span>
                         </div>
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6 text-sm text-muted-foreground">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 flex-shrink-0" />
-                            <span className="break-words">
+                            <Calendar className="h-4 w-4" />
+                            <span>
                               {new Date(order.created_at).toLocaleDateString('ko-KR', {
                                 year: 'numeric',
                                 month: 'short',
@@ -384,15 +294,13 @@ const PurchaseHistory = () => {
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <CreditCard className="h-4 w-4 flex-shrink-0" />
-                            <span className="whitespace-nowrap">
-                              {getPaymentMethodText(order.payment_method)}
-                            </span>
+                            <CreditCard className="h-4 w-4" />
+                            <span>{getPaymentMethodText(order.payment_method)}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="text-left sm:text-right lg:text-right flex-shrink-0">
-                        <div className="text-xl sm:text-2xl font-bold text-primary">
+                      <div className="text-left lg:text-right">
+                        <div className="text-2xl font-bold text-primary">
                           {order.total_amount.toLocaleString()}원
                         </div>
                       </div>
@@ -400,34 +308,49 @@ const PurchaseHistory = () => {
                   </CardHeader>
                   
                   <CardContent className="pt-0">
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {order.order_items.map((item) => (
-                        <div key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-muted/40 rounded-lg border border-border/50">
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <h4 className="font-medium line-clamp-2 text-sm md:text-base leading-tight">
-                              {item.course?.title || '강의'}
-                            </h4>
-                            <p className="text-sm text-muted-foreground font-medium">
-                              {item.price.toLocaleString()}원
-                            </p>
+                        <div 
+                          key={item.id} 
+                          className="flex flex-col gap-4 p-4 bg-accent/30 rounded-lg border border-border/50"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                            <div className="flex-1 space-y-2">
+                              <h4 className="font-semibold text-base leading-tight text-foreground line-clamp-2">
+                                {item.course?.title || '강의'}
+                              </h4>
+                              <p className="text-sm font-medium text-primary">
+                                {item.price.toLocaleString()}원
+                              </p>
+                            </div>
+                            <div className="flex gap-2 flex-shrink-0">
+                              <Button
+                                size="sm"
+                                onClick={() => navigate(`/learn/${item.course_id}`)}
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground h-9 px-4"
+                              >
+                                <BookOpen className="h-4 w-4 mr-2" />
+                                수강하기
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => downloadReceipt(order)}
+                                className="h-9 px-4 border-border hover:bg-accent"
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                영수증
+                              </Button>
+                            </div>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => downloadReceipt(order)}
-                            className="flex-shrink-0 h-9 px-3 hover:bg-primary/10 transition-colors"
-                          >
-                            <FileText className="h-4 w-4 mr-2" />
-                            <span className="text-sm font-medium">영수증</span>
-                          </Button>
                         </div>
                       ))}
                     </div>
                   </CardContent>
                 </Card>
               ))}
-              </div>
-            )}
+            </div>
+          )}
             </div>
           </div>
         </div>
