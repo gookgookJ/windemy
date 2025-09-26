@@ -745,74 +745,237 @@ const AdminCourseCreate = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {course.sections.map((section, sectionIndex) => (
-                    <Card key={sectionIndex} className="border-2">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <Label className="text-sm font-medium">섹션 제목</Label>
-                            <Input
-                              value={section.title}
-                              onChange={(e) => updateSection(sectionIndex, 'title', e.target.value)}
-                              placeholder="섹션 제목을 입력하세요 (예: 기초편, 심화편)"
-                              className="mt-1"
-                            />
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeSection(sectionIndex)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          {section.sessions.map((session, sessionIndex) => (
-                            <div key={sessionIndex} className="p-4 border rounded-lg bg-muted/30">
-                              <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <h5 className="font-medium text-sm">강의 #{sessionIndex + 1}</h5>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => removeSession(sectionIndex, sessionIndex)}
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </Button>
-                                </div>
-
-                                <div>
-                                  <Label className="text-sm">강의 제목</Label>
-                                  <Input
-                                    value={session.title}
-                                    onChange={(e) => updateSession(sectionIndex, sessionIndex, 'title', e.target.value)}
-                                    placeholder="강의 제목을 입력하세요"
-                                  />
-                                </div>
-                              </div>
+                  {course.sections.length === 0 ? (
+                    <div className="text-center py-12 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+                      <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                      <h3 className="text-lg font-medium mb-2">커리큘럼을 구성해보세요</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        섹션을 추가하고 각 섹션에 강의를 추가하여 체계적인 커리큘럼을 만들어보세요.
+                      </p>
+                      <Button onClick={addSection} className="hover-scale">
+                        <Plus className="w-4 h-4 mr-2" />
+                        첫 번째 섹션 만들기
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {course.sections.map((section, sectionIndex) => (
+                        <div key={sectionIndex} className="relative">
+                          {/* 섹션 헤더 */}
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="flex items-center justify-center w-8 h-8 bg-primary text-primary-foreground rounded-full text-sm font-medium">
+                              {sectionIndex + 1}
                             </div>
-                          ))}
-                          
+                            <div className="flex-1">
+                              <Input
+                                value={section.title}
+                                onChange={(e) => updateSection(sectionIndex, 'title', e.target.value)}
+                                placeholder={`섹션 ${sectionIndex + 1} 제목 (예: 기초편, 심화편)`}
+                                className="text-lg font-medium border-0 border-b-2 border-border bg-transparent px-0 focus-visible:ring-0 focus-visible:border-primary"
+                              />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {/* 섹션 순서 변경 */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={sectionIndex === 0}
+                                onClick={() => {
+                                  const newSections = [...course.sections];
+                                  [newSections[sectionIndex], newSections[sectionIndex - 1]] = 
+                                  [newSections[sectionIndex - 1], newSections[sectionIndex]];
+                                  setCourse(prev => ({ ...prev, sections: newSections }));
+                                }}
+                              >
+                                ↑
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={sectionIndex === course.sections.length - 1}
+                                onClick={() => {
+                                  const newSections = [...course.sections];
+                                  [newSections[sectionIndex], newSections[sectionIndex + 1]] = 
+                                  [newSections[sectionIndex + 1], newSections[sectionIndex]];
+                                  setCourse(prev => ({ ...prev, sections: newSections }));
+                                }}
+                              >
+                                ↓
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeSection(sectionIndex)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* 섹션 내용 */}
+                          <div className="ml-11 space-y-3">
+                            {/* 강의 목록 */}
+                            {section.sessions.length === 0 ? (
+                              <div className="text-center py-8 border border-dashed border-muted-foreground/25 rounded-lg bg-muted/10">
+                                <Video className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  이 섹션에 강의를 추가해보세요
+                                </p>
+                                <Button 
+                                  onClick={() => addSession(sectionIndex)} 
+                                  variant="outline" 
+                                  size="sm"
+                                >
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  강의 추가
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                {section.sessions.map((session, sessionIndex) => (
+                                  <div key={sessionIndex} className="group flex items-center gap-3 p-3 border rounded-lg bg-card hover:bg-muted/30 transition-colors">
+                                    <div className="flex items-center justify-center w-6 h-6 bg-muted text-muted-foreground rounded text-xs font-medium">
+                                      {sessionIndex + 1}
+                                    </div>
+                                    <div className="flex-1">
+                                      <Input
+                                        value={session.title}
+                                        onChange={(e) => updateSession(sectionIndex, sessionIndex, 'title', e.target.value)}
+                                        placeholder={`강의 ${sessionIndex + 1} 제목`}
+                                        className="border-0 bg-transparent px-0 focus-visible:ring-0"
+                                      />
+                                    </div>
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      {/* 세션 순서 변경 */}
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        disabled={sessionIndex === 0}
+                                        onClick={() => {
+                                          const newSessions = [...section.sessions];
+                                          [newSessions[sessionIndex], newSessions[sessionIndex - 1]] = 
+                                          [newSessions[sessionIndex - 1], newSessions[sessionIndex]];
+                                          updateSection(sectionIndex, 'sessions', newSessions);
+                                        }}
+                                      >
+                                        ↑
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        disabled={sessionIndex === section.sessions.length - 1}
+                                        onClick={() => {
+                                          const newSessions = [...section.sessions];
+                                          [newSessions[sessionIndex], newSessions[sessionIndex + 1]] = 
+                                          [newSessions[sessionIndex + 1], newSessions[sessionIndex]];
+                                          updateSection(sectionIndex, 'sessions', newSessions);
+                                        }}
+                                      >
+                                        ↓
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => removeSession(sectionIndex, sessionIndex)}
+                                        className="text-destructive hover:text-destructive"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                                <Button 
+                                  onClick={() => addSession(sectionIndex)} 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="w-full border-dashed"
+                                >
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  강의 추가
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* 새 섹션 추가 */}
+                      <div className="text-center pt-4 border-t border-dashed border-muted-foreground/25">
+                        <Button onClick={addSection} variant="outline" className="hover-scale">
+                          <Plus className="w-4 h-4 mr-2" />
+                          새 섹션 추가
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 빠른 추가 도구 */}
+                  {course.sections.length > 0 && (
+                    <Card className="bg-muted/30">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Settings className="w-4 h-4" />
+                          빠른 도구
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex flex-wrap gap-2">
                           <Button 
-                            onClick={() => addSession(sectionIndex)} 
+                            onClick={() => {
+                              // 템플릿 섹션 추가
+                              const templateSection: CourseSection = {
+                                title: `Part ${course.sections.length + 1}`,
+                                sessions: [
+                                  { title: '개념 설명', order_index: 0 },
+                                  { title: '실습 예제', order_index: 1 },
+                                  { title: '과제 및 정리', order_index: 2 }
+                                ]
+                              };
+                              setCourse(prev => ({
+                                ...prev,
+                                sections: [...prev.sections, templateSection]
+                              }));
+                            }}
                             variant="outline" 
                             size="sm"
-                            className="w-full"
                           >
-                            <Plus className="w-4 h-4 mr-2" />
-                            강의 추가
+                            템플릿 섹션 추가
+                          </Button>
+                          <Button 
+                            onClick={() => {
+                              // 마지막 섹션에 3개 강의 한번에 추가
+                              if (course.sections.length > 0) {
+                                const lastSectionIndex = course.sections.length - 1;
+                                const currentSessionCount = course.sections[lastSectionIndex].sessions.length;
+                                const newSessions = [
+                                  { title: '', order_index: currentSessionCount },
+                                  { title: '', order_index: currentSessionCount + 1 },
+                                  { title: '', order_index: currentSessionCount + 2 }
+                                ];
+                                setCourse(prev => ({
+                                  ...prev,
+                                  sections: prev.sections.map((section, i) => 
+                                    i === lastSectionIndex 
+                                      ? { ...section, sessions: [...section.sessions, ...newSessions] }
+                                      : section
+                                  )
+                                }));
+                              }
+                            }}
+                            variant="outline" 
+                            size="sm"
+                            disabled={course.sections.length === 0}
+                          >
+                            강의 3개 추가
                           </Button>
                         </div>
+                        <p className="text-xs text-muted-foreground">
+                          💡 팁: 섹션과 강의에 마우스를 올리면 순서 변경 버튼이 나타납니다
+                        </p>
                       </CardContent>
                     </Card>
-                  ))}
-                  
-                  <Button onClick={addSection} className="w-full">
-                    <Plus className="w-4 h-4 mr-2" />
-                    새 섹션 추가
-                  </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
