@@ -511,11 +511,8 @@ export type Database = {
         Row: {
           course_id: string | null
           created_at: string | null
-          description: string | null
-          duration_minutes: number | null
           id: string
           is_free: boolean | null
-          is_preview: boolean | null
           order_index: number
           section_id: string | null
           title: string
@@ -524,11 +521,8 @@ export type Database = {
         Insert: {
           course_id?: string | null
           created_at?: string | null
-          description?: string | null
-          duration_minutes?: number | null
           id?: string
           is_free?: boolean | null
-          is_preview?: boolean | null
           order_index: number
           section_id?: string | null
           title: string
@@ -537,11 +531,8 @@ export type Database = {
         Update: {
           course_id?: string | null
           created_at?: string | null
-          description?: string | null
-          duration_minutes?: number | null
           id?: string
           is_free?: boolean | null
-          is_preview?: boolean | null
           order_index?: number
           section_id?: string | null
           title?: string
@@ -569,9 +560,7 @@ export type Database = {
           category_id: string | null
           course_type: string
           created_at: string | null
-          description: string | null
           detail_image_path: string | null
-          duration_hours: number | null
           id: string
           instructor_id: string | null
           is_hot: boolean | null
@@ -581,7 +570,6 @@ export type Database = {
           price: number
           rating: number | null
           requirements: string[] | null
-          short_description: string | null
           thumbnail_path: string | null
           thumbnail_url: string | null
           title: string
@@ -594,9 +582,7 @@ export type Database = {
           category_id?: string | null
           course_type?: string
           created_at?: string | null
-          description?: string | null
           detail_image_path?: string | null
-          duration_hours?: number | null
           id?: string
           instructor_id?: string | null
           is_hot?: boolean | null
@@ -606,7 +592,6 @@ export type Database = {
           price?: number
           rating?: number | null
           requirements?: string[] | null
-          short_description?: string | null
           thumbnail_path?: string | null
           thumbnail_url?: string | null
           title: string
@@ -619,9 +604,7 @@ export type Database = {
           category_id?: string | null
           course_type?: string
           created_at?: string | null
-          description?: string | null
           detail_image_path?: string | null
-          duration_hours?: number | null
           id?: string
           instructor_id?: string | null
           is_hot?: boolean | null
@@ -631,7 +614,6 @@ export type Database = {
           price?: number
           rating?: number | null
           requirements?: string[] | null
-          short_description?: string | null
           thumbnail_path?: string | null
           thumbnail_url?: string | null
           title?: string

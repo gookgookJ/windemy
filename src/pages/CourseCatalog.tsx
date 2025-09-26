@@ -99,7 +99,7 @@ const CourseCatalog = () => {
           originalPrice: null, // You can add this to course_options if needed
           rating: averageRating,
           reviewCount: reviews.length,
-          duration: `${course.duration_hours}시간`,
+          duration: "시간 미정",
           studentCount: course.total_students,
           level: course.level as "beginner" | "intermediate" | "advanced",
           category: course.categories?.name || '기타',

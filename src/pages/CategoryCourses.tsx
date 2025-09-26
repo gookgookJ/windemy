@@ -111,13 +111,13 @@ const CategoryCourses = () => {
         originalPrice: null,
         rating: course.rating || 0,
         reviewCount: course.course_reviews?.length || 0,
-        duration: `${course.duration_hours}시간`,
+        duration: "시간 미정",
         studentCount: course.total_students,
         level: course.level as "beginner" | "intermediate" | "advanced",
         category: course.categories?.name || '기타',
         isHot: course.is_hot || course.total_students > 100,
         isNew: course.is_new || new Date(course.created_at).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000,
-        description: course.short_description || course.description || ""
+        description: course.title || ""
       }));
 
       setCourses(coursesWithStats);

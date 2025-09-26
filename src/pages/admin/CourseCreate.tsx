@@ -28,10 +28,7 @@ interface DetailImage {
 interface CourseSession {
   id?: string;
   title: string;
-  description: string;
   order_index: number;
-  duration_minutes: number;
-  is_preview: boolean;
 }
 
 interface CourseSection {
@@ -50,13 +47,10 @@ interface CourseOption {
 
 interface Course {
   title: string;
-  short_description: string;
-  description: string;
   thumbnail_url: string;
   detail_images: DetailImage[];
   course_type: 'VOD' | '오프라인' | '1:1 컨설팅' | '챌린지·스터디';
   price: number;
-  duration_hours: number;
   level: string;
   category_id: string;
   what_you_will_learn: string[];
@@ -72,13 +66,10 @@ interface Course {
 const AdminCourseCreate = () => {
   const [course, setCourse] = useState<Course>({
     title: '',
-    short_description: '',
-    description: '',
     thumbnail_url: '',
     detail_images: [],
     course_type: 'VOD',
     price: 0,
-    duration_hours: 0,
     level: 'beginner',
     category_id: '',
     what_you_will_learn: [''],
@@ -285,10 +276,7 @@ const AdminCourseCreate = () => {
   const addSession = (sectionIndex: number) => {
     const newSession: CourseSession = {
       title: '',
-      description: '',
-      order_index: course.sections[sectionIndex].sessions.length,
-      duration_minutes: 0,
-      is_preview: false
+      order_index: course.sections[sectionIndex].sessions.length
     };
     setCourse(prev => ({
       ...prev,
@@ -399,7 +387,7 @@ const AdminCourseCreate = () => {
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        return !!(course.title && course.description && course.category_id);
+        return !!(course.title && course.category_id);
       case 2:
         return course.sections.length > 0 && course.sections.every(s => s.title && s.sessions.length > 0);
       case 3:
@@ -437,11 +425,8 @@ const AdminCourseCreate = () => {
       // 강의 기본 정보 저장
       const courseData = {
         title: course.title,
-        short_description: course.short_description,
-        description: course.description,
         thumbnail_path: course.thumbnail_url, // Use thumbnail_path instead of thumbnail_url
         price: course.price,
-        duration_hours: course.duration_hours,
         level: course.level,
         category_id: course.category_id,
         what_you_will_learn: course.what_you_will_learn.filter(item => item.trim()),
@@ -483,10 +468,7 @@ const AdminCourseCreate = () => {
               course_id: savedCourse.id,
               section_id: sectionData.id,
               title: session.title,
-              description: session.description,
               order_index: sessionIndex,
-              duration_minutes: session.duration_minutes,
-              is_preview: session.is_preview,
               is_free: false
             }));
 
@@ -581,27 +563,6 @@ const AdminCourseCreate = () => {
                   />
                 </div>
                 
-                <div>
-                  <Label htmlFor="short_description">짧은 설명</Label>
-                  <Input
-                    id="short_description"
-                    value={course.short_description}
-                    onChange={(e) => setCourse(prev => ({ ...prev, short_description: e.target.value }))}
-                    placeholder="한 줄 요약"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="description">상세 설명 <span className="text-red-500">*</span></Label>
-                  <Textarea
-                    id="description"
-                    value={course.description}
-                    onChange={(e) => setCourse(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="강의 상세 설명을 입력하세요"
-                    rows={6}
-                  />
-                </div>
-
                 <div>
                   <Label htmlFor="course_type">강의 타입</Label>
                   <Select value={course.course_type} onValueChange={(value: 'VOD' | '오프라인' | '1:1 컨설팅' | '챌린지·스터디') => setCourse(prev => ({ ...prev, course_type: value }))}>
@@ -829,35 +790,6 @@ const AdminCourseCreate = () => {
                                     placeholder="강의 제목을 입력하세요"
                                   />
                                 </div>
-
-                                <div>
-                                  <Label className="text-sm">강의 설명</Label>
-                                  <Textarea
-                                    value={session.description}
-                                    onChange={(e) => updateSession(sectionIndex, sessionIndex, 'description', e.target.value)}
-                                    placeholder="강의에서 다룰 내용을 간단히 설명해주세요"
-                                    rows={2}
-                                  />
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div>
-                                    <Label className="text-sm">예상 학습 시간 (분)</Label>
-                                    <Input
-                                      type="number"
-                                      value={session.duration_minutes}
-                                      onChange={(e) => updateSession(sectionIndex, sessionIndex, 'duration_minutes', parseInt(e.target.value) || 0)}
-                                      placeholder="30"
-                                    />
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <Switch
-                                      checked={session.is_preview}
-                                      onCheckedChange={(checked) => updateSession(sectionIndex, sessionIndex, 'is_preview', checked)}
-                                    />
-                                    <Label className="text-sm">미리보기 허용</Label>
-                                  </div>
-                                </div>
                               </div>
                             </div>
                           ))}
@@ -984,24 +916,6 @@ const AdminCourseCreate = () => {
                   <Plus className="w-4 h-4 mr-2" />
                   새 판매 옵션 추가
                 </Button>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>기본 정보</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="duration_hours">총 강의 시간 (시간)</Label>
-                      <Input
-                        id="duration_hours"
-                        type="number"
-                        value={course.duration_hours}
-                        onChange={(e) => setCourse(prev => ({ ...prev, duration_hours: parseInt(e.target.value) || 0 }))}
-                        placeholder="0"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
               </CardContent>
             </Card>
           </div>
@@ -1084,11 +998,10 @@ const AdminCourseCreate = () => {
                     <p className="text-sm text-muted-foreground">카테고리: {categories.find(c => c.id === course.category_id)?.name}</p>
                     <p className="text-sm text-muted-foreground">난이도: {course.level}</p>
                   </div>
-                  <div>
-                    <h4 className="font-semibold">가격 정보</h4>
-                    <p className="text-sm text-muted-foreground">정가: {course.price.toLocaleString()}원</p>
-                    <p className="text-sm text-muted-foreground">총 강의 시간: {course.duration_hours}시간</p>
-                  </div>
+                <div>
+                  <h4 className="font-semibold">가격 정보</h4>
+                  <p className="text-sm text-muted-foreground">정가: {course.price.toLocaleString()}원</p>
+                </div>
                 </div>
                 
                 <div>
@@ -1110,23 +1023,13 @@ const AdminCourseCreate = () => {
               </CardContent>
             </Card>
 
-            <div className="flex gap-4">
-              <Button 
-                onClick={() => saveCourse(true)} 
-                variant="outline" 
-                disabled={loading}
-                className="flex-1"
-              >
-                임시 저장
-              </Button>
-              <Button 
-                onClick={() => saveCourse(false)} 
-                disabled={loading || !course.title}
-                className="flex-1"
-              >
-                {loading ? "저장 중..." : "강의 생성"}
-              </Button>
-            </div>
+            <Button 
+              onClick={() => saveCourse(false)} 
+              disabled={loading || !course.title}
+              className="w-full"
+            >
+              {loading ? "저장 중..." : "강의 생성"}
+            </Button>
           </div>
         );
 
@@ -1139,11 +1042,17 @@ const AdminCourseCreate = () => {
     <AdminLayout>
       <div className="p-6">
         {/* 헤더 */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">새 강의 생성</h1>
-          <p className="text-muted-foreground">
-            단계별로 강의를 생성하고 관리하세요. 자동 저장 기능으로 작업 내용이 보호됩니다.
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">새 강의 생성</h1>
+            <p className="text-muted-foreground">
+              단계별로 강의를 생성하고 관리하세요. 자동 저장 기능으로 작업 내용이 보호됩니다.
+            </p>
+          </div>
+          <Button onClick={() => saveCourse(true)} variant="outline" size="sm" disabled={loading}>
+            <Save className="w-4 h-4 mr-2" />
+            임시 저장
+          </Button>
         </div>
 
         {/* 진행 상태 */}
@@ -1205,21 +1114,12 @@ const AdminCourseCreate = () => {
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
-            <div className="space-x-2">
-              <Button 
-                onClick={() => saveCourse(true)} 
-                variant="outline"
-                disabled={loading}
-              >
-                임시 저장
-              </Button>
-              <Button 
-                onClick={() => saveCourse(false)} 
-                disabled={loading}
-              >
-                강의 생성
-              </Button>
-            </div>
+            <Button 
+              onClick={() => saveCourse(false)} 
+              disabled={loading}
+            >
+              강의 생성
+            </Button>
           )}
         </div>
       </div>
