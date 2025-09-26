@@ -170,12 +170,14 @@ const FavoriteCourses = () => {
                     <Card key={favorite.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleCourseClick(favorite.course.id)}>
                       <CardContent className="p-4 md:p-6">
                         <div className="flex flex-col gap-4 sm:flex-row sm:gap-4 md:gap-6">
-                          <div className="relative flex-shrink-0 w-full sm:w-auto">
-                            <img
-                              src={favorite.course.thumbnail_url || '/placeholder.svg'}
-                              alt={favorite.course.title}
-                              className="w-full h-48 object-cover rounded-lg sm:w-32 sm:h-20"
-                            />
+                          <div className="relative flex-shrink-0 w-full sm:w-48 md:w-56">
+                            <div className="aspect-video w-full">
+                              <img
+                                src={favorite.course.thumbnail_url || '/placeholder.svg'}
+                                alt={favorite.course.title}
+                                className="w-full h-full object-cover rounded-lg"
+                              />
+                            </div>
                           </div>
                           
                           <div className="flex-1 min-w-0">

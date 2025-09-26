@@ -394,12 +394,7 @@ const PurchaseHistory = () => {
                   <CardContent>
                     <div className="space-y-4">
                       {order.order_items.map((item) => (
-                        <div key={item.id} className="flex flex-col gap-3 p-3 bg-muted/30 rounded-lg sm:flex-row sm:items-center sm:gap-4">
-                          <img
-                            src={item.course?.thumbnail_url || '/placeholder.svg'}
-                            alt={item.course?.title || '강의'}
-                            className="w-full h-32 object-cover rounded sm:w-16 sm:h-12 sm:flex-shrink-0"
-                          />
+                        <div key={item.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium line-clamp-2 text-sm sm:text-base">{item.course?.title || '강의'}</h4>
                             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
@@ -410,7 +405,7 @@ const PurchaseHistory = () => {
                             size="sm"
                             variant="outline"
                             onClick={() => downloadReceipt(order)}
-                            className="w-full sm:w-auto"
+                            className="ml-3 flex-shrink-0"
                           >
                             <FileText className="h-4 w-4 mr-1" />
                             <span className="text-xs sm:text-sm">영수증</span>
