@@ -132,23 +132,24 @@ const FavoriteCourses = () => {
             
             <div className="lg:col-span-3 space-y-8">
               {/* Header */}
-              <div className="mb-8">
-                <div className="flex items-center gap-4 mb-4">
+              <div className="mb-6 md:mb-8">
+                <div className="flex items-center gap-2 md:gap-4 mb-3 md:mb-4">
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={() => navigate('/my-page')}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-1 md:gap-2 text-xs md:text-sm"
                   >
-                    <ArrowLeft className="h-4 w-4" />
-                    내 강의실로 돌아가기
+                    <ArrowLeft className="h-3 w-3 md:h-4 md:w-4" />
+                    <span className="hidden sm:inline">내 강의실로 돌아가기</span>
+                    <span className="sm:hidden">돌아가기</span>
                   </Button>
                 </div>
-                <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-                  <Heart className="h-8 w-8 text-red-500" />
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 flex items-center gap-2">
+                  <Heart className="h-6 w-6 md:h-8 md:w-8 text-red-500" />
                   관심 강의
                 </h1>
-                <p className="text-muted-foreground">마음에 든 강의들을 모아서 확인하세요.</p>
+                <p className="text-sm md:text-base text-muted-foreground">마음에 든 강의들을 모아서 확인하세요.</p>
               </div>
 
               {/* Favorites List */}
@@ -167,40 +168,40 @@ const FavoriteCourses = () => {
                 <div className="space-y-4">
                   {favorites.map((favorite) => (
                     <Card key={favorite.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleCourseClick(favorite.course.id)}>
-                      <CardContent className="p-6">
-                        <div className="flex gap-6">
-                          <div className="relative flex-shrink-0">
+                      <CardContent className="p-4 md:p-6">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:gap-4 md:gap-6">
+                          <div className="relative flex-shrink-0 w-full sm:w-auto">
                             <img
                               src={favorite.course.thumbnail_url || '/placeholder.svg'}
                               alt={favorite.course.title}
-                              className="w-32 h-20 object-cover rounded-lg"
+                              className="w-full h-48 object-cover rounded-lg sm:w-32 sm:h-20"
                             />
                           </div>
                           
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between mb-2">
-                              <h3 className="font-bold text-lg line-clamp-2">
+                            <div className="flex items-start justify-between mb-2 gap-2">
+                              <h3 className="font-bold text-base sm:text-lg line-clamp-2 flex-1">
                                 {favorite.course.title}
                               </h3>
-                              <Heart className="h-5 w-5 text-red-500 fill-red-500 flex-shrink-0 ml-2" />
+                              <Heart className="h-5 w-5 text-red-500 fill-red-500 flex-shrink-0" />
                             </div>
                             
-                            <p className="text-muted-foreground mb-2">
+                            <p className="text-sm md:text-base text-muted-foreground mb-3">
                               강사: {favorite.course.instructor?.full_name}
                             </p>
                             
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                <div className="text-xl font-bold text-primary">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="flex items-center gap-3 md:gap-4">
+                                <div className="text-lg sm:text-xl font-bold text-primary">
                                   {favorite.course.price === 0 ? '무료' : `${favorite.course.price.toLocaleString()}원`}
                                 </div>
                                 {favorite.course.rating > 0 && (
-                                  <div className="text-sm text-muted-foreground">
+                                  <div className="text-xs sm:text-sm text-muted-foreground">
                                     ⭐ {favorite.course.rating.toFixed(1)}
                                   </div>
                                 )}
                               </div>
-                              <div className="text-sm text-muted-foreground">
+                              <div className="text-xs sm:text-sm text-muted-foreground">
                                 관심 등록: {new Date(favorite.created_at).toLocaleDateString()}
                               </div>
                             </div>
