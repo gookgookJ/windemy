@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, CreditCard, Package, FileText, BookOpen } from 'lucide-react';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
@@ -36,6 +37,8 @@ interface Order {
 const PurchaseHistory = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -47,6 +50,16 @@ const PurchaseHistory = () => {
     }
     fetchOrders();
   }, [user, navigate]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentOrders = orders.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const fetchOrders = async () => {
     if (!user) return;
@@ -252,104 +265,166 @@ const PurchaseHistory = () => {
               </div>
 
               {/* 주문 목록 */}
-          {orders.length === 0 ? (
-            <Card className="border border-border shadow-sm">
-              <CardContent className="p-16 text-center">
-                <Package className="h-20 w-20 text-muted-foreground mx-auto mb-6" />
-                <h3 className="text-xl font-semibold mb-3 text-foreground">구매 내역이 없습니다</h3>
-                <p className="text-muted-foreground mb-6">아직 구매하신 강의가 없어요.</p>
-                <Button 
-                  onClick={() => navigate('/courses')}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                  강의 둘러보기
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4 md:gap-6">
-              {orders.map((order) => (
-                <Card key={order.id} className="border border-border shadow-sm hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-4">
-                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                      <div className="space-y-3">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                          {getStatusBadge(order.status)}
-                          <span className="text-xs text-muted-foreground font-mono">
-                            주문번호: {order.id.slice(0, 8)}...
-                          </span>
-                        </div>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            <span>
-                              {new Date(order.created_at).toLocaleDateString('ko-KR', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="h-4 w-4" />
-                            <span>{getPaymentMethodText(order.payment_method)}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-left lg:text-right">
-                        <div className="text-2xl font-bold text-primary">
-                          {order.total_amount.toLocaleString()}원
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="pt-0">
-                    <div className="space-y-4">
-                      {order.order_items.map((item) => (
-                        <div 
-                          key={item.id} 
-                          className="flex flex-col gap-4 p-4 bg-accent/30 rounded-lg border border-border/50"
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                            <div className="flex-1 space-y-2">
-                              <h4 className="font-semibold text-base leading-tight text-foreground line-clamp-2">
-                                {item.course?.title || '강의'}
-                              </h4>
-                              <p className="text-sm font-medium text-primary">
-                                {item.price.toLocaleString()}원
-                              </p>
-                            </div>
-                            <div className="flex gap-2 flex-shrink-0">
-                              <Button
-                                size="sm"
-                                onClick={() => navigate(`/learn/${item.course_id}`)}
-                                className="bg-primary hover:bg-primary/90 text-primary-foreground h-9 px-4"
-                              >
-                                <BookOpen className="h-4 w-4 mr-2" />
-                                수강하기
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => downloadReceipt(order)}
-                                className="h-9 px-4 border-border hover:bg-accent"
-                              >
-                                <FileText className="h-4 w-4 mr-2" />
-                                영수증
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+              {orders.length === 0 ? (
+                <Card className="border border-border shadow-sm">
+                  <CardContent className="p-8 md:p-16 text-center">
+                    <Package className="h-16 md:h-20 w-16 md:w-20 text-muted-foreground mx-auto mb-4 md:mb-6" />
+                    <h3 className="text-lg md:text-xl font-semibold mb-2 md:mb-3 text-foreground">구매 내역이 없습니다</h3>
+                    <p className="text-muted-foreground mb-4 md:mb-6">아직 구매하신 강의가 없어요.</p>
+                    <Button 
+                      onClick={() => navigate('/courses')}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                    >
+                      강의 둘러보기
+                    </Button>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          )}
+              ) : (
+                <div className="space-y-6">
+                  {/* 페이지 정보 */}
+                  <div className="flex justify-between items-center text-sm text-muted-foreground">
+                    <span>총 {orders.length}개의 구매 내역</span>
+                    <span>{currentPage} / {totalPages} 페이지</span>
+                  </div>
+
+                  {/* 주문 카드들 */}
+                  <div className="space-y-4">
+                    {currentOrders.map((order) => (
+                      <Card key={order.id} className="border border-border shadow-sm hover:shadow-md transition-shadow">
+                        <CardHeader className="p-4 md:p-6 pb-2 md:pb-4">
+                          <div className="flex flex-col gap-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                {getStatusBadge(order.status)}
+                                <span className="text-xs text-muted-foreground font-mono">
+                                  #{order.id.slice(0, 8)}
+                                </span>
+                              </div>
+                              <div className="text-lg md:text-xl font-bold text-primary">
+                                {order.total_amount.toLocaleString()}원
+                              </div>
+                            </div>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span>
+                                  {new Date(order.created_at).toLocaleDateString('ko-KR', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <CreditCard className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span>{getPaymentMethodText(order.payment_method)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        
+                        <CardContent className="p-4 md:p-6 pt-0">
+                          <div className="space-y-3">
+                            {order.order_items.map((item) => (
+                              <div 
+                                key={item.id} 
+                                className="p-3 md:p-4 bg-accent/30 rounded-lg border border-border/50"
+                              >
+                                <div className="flex flex-col gap-3">
+                                  <div className="space-y-1">
+                                    <h4 className="font-semibold text-sm md:text-base leading-tight text-foreground line-clamp-2">
+                                      {item.course?.title || '강의'}
+                                    </h4>
+                                    <p className="text-xs md:text-sm font-medium text-primary">
+                                      {item.price.toLocaleString()}원
+                                    </p>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row gap-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => navigate(`/learn/${item.course_id}`)}
+                                      className="bg-primary hover:bg-primary/90 text-primary-foreground h-8 text-xs font-medium flex-1 sm:flex-none"
+                                    >
+                                      <BookOpen className="h-3 w-3 mr-1" />
+                                      수강하기
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => downloadReceipt(order)}
+                                      className="h-8 text-xs font-medium border-border hover:bg-accent flex-1 sm:flex-none"
+                                    >
+                                      <FileText className="h-3 w-3 mr-1" />
+                                      영수증
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* 페이지네이션 */}
+                  {totalPages > 1 && (
+                    <div className="flex justify-center mt-6">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious 
+                              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                              className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                          </PaginationItem>
+                          
+                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNumber;
+                            if (totalPages <= 5) {
+                              pageNumber = i + 1;
+                            } else if (currentPage <= 3) {
+                              pageNumber = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNumber = totalPages - 4 + i;
+                            } else {
+                              pageNumber = currentPage - 2 + i;
+                            }
+                            
+                            return (
+                              <PaginationItem key={pageNumber}>
+                                <PaginationLink
+                                  onClick={() => handlePageChange(pageNumber)}
+                                  isActive={currentPage === pageNumber}
+                                  className="cursor-pointer"
+                                >
+                                  {pageNumber}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          })}
+                          
+                          {totalPages > 5 && currentPage < totalPages - 2 && (
+                            <>
+                              <PaginationItem>
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            </>
+                          )}
+                          
+                          <PaginationItem>
+                            <PaginationNext 
+                              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
