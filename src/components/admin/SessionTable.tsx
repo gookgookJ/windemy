@@ -97,12 +97,12 @@ export const SessionTable = ({
                 </TableCell>
                 <TableCell className="py-1.5 px-3">
                   {session.video_url ? (
-                    <Badge variant="default" className="text-xs bg-green-500 text-white border-green-500 px-2 py-0.5">
+                    <Badge variant="default" className="text-xs bg-green-500 text-white border-green-500 px-2 py-0.5 pointer-events-none">
                       <Play className="h-3 w-3 mr-1" />
                       영상 있음
                     </Badge>
                   ) : (
-                    <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600 border-gray-300 px-2 py-0.5">
+                    <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600 border-gray-300 px-2 py-0.5 pointer-events-none">
                       <Pause className="h-3 w-3 mr-1" />
                       영상 없음
                     </Badge>
