@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Search, Upload, File, Eye, ChevronDown, ChevronRight, FolderOpen, X } from 'lucide-react';
 import { MaterialUploadModal } from '@/components/admin/MaterialUploadModal';
 import { MaterialViewModal } from '@/components/admin/MaterialViewModal';
+import { BulkUploadModal } from '@/components/admin/BulkUploadModal';
 
 interface CourseSection {
   id: string;
@@ -49,6 +50,7 @@ export const SectionManagement = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingSection, setViewingSection] = useState<CourseSection | null>(null);
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   
   const { toast } = useToast();
 
@@ -181,6 +183,13 @@ export const SectionManagement = () => {
               강의별 섹션 자료 업로드 및 관리
             </p>
           </div>
+          <Button 
+            onClick={() => setIsBulkUploadOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            일괄 업로드
+          </Button>
         </div>
 
         {/* 검색 및 필터 */}
@@ -264,9 +273,8 @@ export const SectionManagement = () => {
                           {openGroups.has(courseGroup.course_id) ? (
                             <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           ) : (
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           )}
-                          <FolderOpen className="h-5 w-5 text-primary" />
                           <div>
                             <h3 className="text-lg font-semibold">{courseGroup.course_title}</h3>
                             <p className="text-sm text-muted-foreground">
@@ -297,14 +305,20 @@ export const SectionManagement = () => {
                           {courseGroup.sections.map((section) => (
                             <TableRow key={section.id} className="transition-colors">
                               <TableCell className="pl-4">
-                                <div className="space-y-1">
-                                  <div className="font-medium">
-                                    {section.title}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    순서: {section.order_index} • 세션: {section.sessions?.length || 0}개
-                                  </div>
-                                </div>
+                                 <div className="space-y-1">
+                                   <div className="font-medium">
+                                     {section.title}
+                                   </div>
+                                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                     <span>순서: {section.order_index}</span>
+                                     <span>•</span>
+                                     <span>세션: {section.sessions?.length || 0}개</span>
+                                     <span>•</span>
+                                     <Badge variant="outline" className="text-xs">
+                                       자료 {section.materials?.length || 0}개
+                                     </Badge>
+                                   </div>
+                                 </div>
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-2">
@@ -393,6 +407,14 @@ export const SectionManagement = () => {
           }}
           materials={viewingSection?.materials || []}
           sectionTitle={viewingSection?.title || ''}
+        />
+
+        {/* 일괄 업로드 모달 */}
+        <BulkUploadModal
+          isOpen={isBulkUploadOpen}
+          onClose={() => setIsBulkUploadOpen(false)}
+          onUpdate={fetchSections}
+          sections={sections}
         />
       </div>
     </AdminLayout>
