@@ -203,6 +203,17 @@ const CourseCreate = () => {
     try {
       setIsLoading(true);
       
+      // 필수 필드 검증
+      if (!course.instructor_id) {
+        toast({
+          title: "오류",
+          description: "강사를 선택해주세요.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
       const courseData = {
         title: course.title,
         category_id: course.category_id,
@@ -766,7 +777,7 @@ const CourseCreate = () => {
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        return !!(course.title && course.category_id);
+        return !!(course.title && course.category_id && course.instructor_id);
       case 2:
         return course.what_you_will_learn.some(item => item.trim()) && 
                course.sections.length > 0 && 
