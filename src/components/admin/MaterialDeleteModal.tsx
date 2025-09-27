@@ -157,15 +157,17 @@ export const MaterialDeleteModal = ({ isOpen, onClose, onUpdate, materials, sect
                 {materials.map((material) => (
                   <div 
                     key={material.id} 
-                    className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${
+                    className={`flex items-center gap-3 p-3 border rounded-lg transition-colors cursor-pointer ${
                       selectedMaterials.has(material.id) 
                         ? 'bg-red-50 border-red-200' 
                         : 'border-muted hover:bg-muted/30'
                     }`}
+                    onClick={() => handleSelectMaterial(material.id, !selectedMaterials.has(material.id))}
                   >
                     <Checkbox
                       checked={selectedMaterials.has(material.id)}
                       onCheckedChange={(checked) => handleSelectMaterial(material.id, checked as boolean)}
+                      onClick={(e) => e.stopPropagation()}
                       disabled={isDeleting}
                     />
                     
