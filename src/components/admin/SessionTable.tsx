@@ -1,11 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Eye, Edit, MoreHorizontal, Play, Pause, Trash2, Upload, ChevronLeft, ChevronRight, File } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Eye, Upload, Play, Pause, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
+import { VimeoPreviewModal } from './VimeoPreviewModal';
 
 interface CourseSession {
   id: string;
@@ -41,9 +40,10 @@ export const SessionTable = ({
   onEdit,
   onDelete
 }: SessionTableProps) => {
-  const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewSession, setPreviewSession] = useState<CourseSession | null>(null);
 
   const handleDeleteClick = (sessionId: string, sessionTitle: string) => {
     setSessionToDelete({ id: sessionId, title: sessionTitle });
@@ -74,41 +74,31 @@ export const SessionTable = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[25%]">강의명</TableHead>
-              <TableHead className="w-[25%]">세션명</TableHead>
-              <TableHead className="w-[15%]">상태</TableHead>
-              <TableHead className="w-[35%] text-right">영상 업로드</TableHead>
+              <TableHead className="w-[40%]">세션명</TableHead>
+              <TableHead className="w-[20%]">상태</TableHead>
+              <TableHead className="w-[40%] text-right">영상 업로드</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sessions.map((session) => (
               <TableRow key={session.id} className="hover:bg-muted/30 transition-colors">
                 <TableCell>
-                  <div className="space-y-1">
-                    <div className="font-medium text-base max-w-[250px] truncate" title={session.course?.title}>
-                      {session.course?.title}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="font-medium text-sm max-w-[250px] truncate" title={session.title}>
+                  <div className="font-medium text-sm" title={session.title}>
                     {session.title}
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-col gap-1">
-                    {session.video_url ? (
-                      <Badge variant="default" className="text-xs bg-green-500 w-fit">
-                        <Play className="h-3 w-3 mr-1" />
-                        영상 있음
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" className="text-xs w-fit">
-                        <Pause className="h-3 w-3 mr-1" />
-                        영상 없음
-                      </Badge>
-                    )}
-                  </div>
+                  {session.video_url ? (
+                    <Badge variant="default" className="text-xs bg-green-500 hover:bg-green-600">
+                      <Play className="h-3 w-3 mr-1" />
+                      영상 있음
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-xs">
+                      <Pause className="h-3 w-3 mr-1" />
+                      영상 없음
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
@@ -116,32 +106,35 @@ export const SessionTable = ({
                       variant="outline" 
                       size="sm" 
                       onClick={() => onEdit(session)}
-                      className="h-8 px-3"
+                      className="h-8 px-3 text-blue-600 border-blue-200 hover:bg-blue-50"
                     >
                       <Upload className="h-3 w-3 mr-1" />
-                      영상 업로드
+                      업로드
                     </Button>
                     {session.video_url && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleDeleteClick(session.id, session.title)}
-                        className="h-8 px-3 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        영상 삭제
-                      </Button>
-                    )}
-                    {session.video_url && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => navigate(`/learn/${session.course?.id}?session=${session.id}`)}
-                        className="h-8 px-3 hover-scale"
-                      >
-                        <Eye className="h-3 w-3 mr-1" />
-                        미리보기
-                      </Button>
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleDeleteClick(session.id, session.title)}
+                          className="h-8 px-3 text-red-600 border-red-200 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          삭제
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => {
+                            setPreviewSession(session);
+                            setPreviewModalOpen(true);
+                          }}
+                          className="h-8 px-3 text-green-600 border-green-200 hover:bg-green-50"
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          미리보기
+                        </Button>
+                      </>
                     )}
                   </div>
                 </TableCell>
@@ -209,6 +202,17 @@ export const SessionTable = ({
           </div>
         </div>
         )}
+
+      {/* Preview Modal */}
+      <VimeoPreviewModal
+        isOpen={previewModalOpen}
+        onClose={() => {
+          setPreviewModalOpen(false);
+          setPreviewSession(null);
+        }}
+        videoUrl={previewSession?.video_url || ''}
+        sessionTitle={previewSession?.title || ''}
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

@@ -355,24 +355,28 @@ export const SessionManagement = () => {
         {/* Grouped Sessions */}
         <div className="space-y-4">
           {groupedSessions().map((group) => (
-            <Card key={group.courseId} className="animate-fade-in">
+            <Card key={group.courseId} className="animate-fade-in border-l-4 border-l-primary/20">
               <Collapsible defaultOpen>
                 <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors">
+                  <CardHeader className="cursor-pointer hover:bg-muted/30 transition-all duration-200 rounded-t-lg">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:rotate-90" />
+                      <div className="flex items-center gap-4">
+                        <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
                         <div>
-                          <CardTitle className="text-lg">{group.courseTitle}</CardTitle>
-                          <div className="flex gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">
+                          <CardTitle className="text-xl font-semibold">{group.courseTitle}</CardTitle>
+                          <div className="flex gap-3 mt-2">
+                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                               총 {group.totalSessions}개 세션
                             </Badge>
                             <Badge 
                               variant={group.sessionsWithVideo === group.totalSessions ? "default" : "secondary"} 
-                              className="text-xs"
+                              className={`text-xs ${
+                                group.sessionsWithVideo === group.totalSessions 
+                                ? "bg-green-100 text-green-700 border-green-200" 
+                                : "bg-orange-50 text-orange-700 border-orange-200"
+                              }`}
                             >
-                              영상 {group.sessionsWithVideo}개
+                              영상 {group.sessionsWithVideo}/{group.totalSessions}개
                             </Badge>
                           </div>
                         </div>
@@ -384,7 +388,7 @@ export const SessionManagement = () => {
                           e.stopPropagation();
                           handleBulkUpload(group);
                         }}
-                        className="hover-scale"
+                        className="hover-scale bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700"
                       >
                         <Upload className="h-4 w-4 mr-2" />
                         일괄 업로드
@@ -393,7 +397,7 @@ export const SessionManagement = () => {
                   </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <CardContent className="p-0">
+                  <CardContent className="p-0 border-t border-muted/30">
                     <SessionTable
                       sessions={group.sessions}
                       currentPage={1}
@@ -430,52 +434,54 @@ export const SessionManagement = () => {
 
         {/* Bulk Upload Modal */}
         <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
+          <DialogContent className="max-w-5xl max-h-[85vh] overflow-hidden">
+            <DialogHeader className="pb-4 border-b">
+              <DialogTitle className="text-xl font-semibold">
                 {bulkUploadCourse?.courseTitle} - 일괄 영상 업로드
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                각 세션에 Vimeo 영상 URL을 입력하세요. 빈 칸으로 두면 기존 영상이 유지됩니다.
-              </p>
+            <div className="space-y-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  💡 각 세션에 Vimeo 영상 URL을 입력하세요. 빈 칸으로 두면 기존 영상이 유지됩니다.
+                </p>
+              </div>
               
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
                 {bulkUploadSessions.map((session, index) => (
-                  <div key={session.id} className="grid grid-cols-5 gap-3 items-center p-3 border rounded-lg">
+                  <div key={session.id} className="grid grid-cols-6 gap-4 items-center p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="col-span-2">
-                      <Label className="text-sm font-medium">{session.title}</Label>
+                      <Label className="text-sm font-medium text-gray-700 line-clamp-2">{session.title}</Label>
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-3">
                       <Input
                         placeholder="https://vimeo.com/123456789"
                         value={session.video_url}
                         onChange={(e) => handleBulkVideoUrlChange(session.id, e.target.value)}
                         disabled={bulkUploadLoading}
-                        className="text-sm"
+                        className="text-sm border-gray-300 focus:border-blue-500 focus:ring-blue-200"
                       />
                     </div>
                     <div className="flex justify-center">
                       {videoInfoLoading === session.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
                       ) : session.video_url && isValidVimeoUrl(session.video_url) ? (
-                        <Badge variant="default" className="text-xs">유효</Badge>
+                        <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-300">유효</Badge>
                       ) : session.video_url ? (
-                        <Badge variant="destructive" className="text-xs">오류</Badge>
+                        <Badge variant="destructive" className="text-xs bg-red-100 text-red-700 border-red-300">오류</Badge>
                       ) : (
-                        <Badge variant="secondary" className="text-xs">미입력</Badge>
+                        <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600 border-gray-300">미입력</Badge>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="flex gap-2 pt-4 border-t">
+              <div className="flex gap-3 pt-4 border-t">
                 <Button 
                   onClick={handleBulkUploadSubmit} 
                   disabled={bulkUploadLoading}
-                  className="flex-1"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                 >
                   {bulkUploadLoading ? (
                     <>
@@ -493,7 +499,7 @@ export const SessionManagement = () => {
                   variant="outline" 
                   onClick={() => setIsBulkUploadOpen(false)}
                   disabled={bulkUploadLoading}
-                  className="flex-1"
+                  className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
                   취소
                 </Button>
