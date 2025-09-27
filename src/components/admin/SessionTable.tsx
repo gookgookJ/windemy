@@ -88,23 +88,11 @@ export const SessionTable = ({
                     <div className="font-medium text-base max-w-[250px] truncate" title={session.course?.title}>
                       {session.course?.title}
                     </div>
-                    {session.section && (
-                      <div className="text-xs text-muted-foreground">
-                        섹션: {session.section.title}
-                      </div>
-                    )}
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="font-medium text-sm max-w-[250px] truncate" title={session.title}>
                     {session.title}
-                  </div>
-                  <div className="flex gap-1 flex-wrap mt-1">
-                    {session.is_free ? (
-                      <Badge variant="secondary" className="text-xs">무료</Badge>
-                    ) : (
-                      <Badge variant="default" className="text-xs">프리미엄</Badge>
-                    )}
                   </div>
                 </TableCell>
                 <TableCell>

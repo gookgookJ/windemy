@@ -30,8 +30,7 @@ interface SessionEditModalProps {
 export const SessionEditModal = ({ session, isOpen, onClose, onUpdate }: SessionEditModalProps) => {
   const [editData, setEditData] = useState({
     title: '',
-    video_url: '',
-    is_free: false
+    video_url: ''
   });
   const [loadingVideoInfo, setLoadingVideoInfo] = useState(false);
   const { toast } = useToast();
@@ -40,8 +39,7 @@ export const SessionEditModal = ({ session, isOpen, onClose, onUpdate }: Session
     if (session) {
       setEditData({
         title: session.title,
-        video_url: session.video_url || '',
-        is_free: session.is_free
+        video_url: session.video_url || ''
       });
     }
   }, [session]);
@@ -91,8 +89,7 @@ export const SessionEditModal = ({ session, isOpen, onClose, onUpdate }: Session
         .from('course_sessions')
         .update({
           title: editData.title,
-          video_url: editData.video_url,
-          is_free: editData.is_free
+          video_url: editData.video_url
         })
         .eq('id', session.id);
 
@@ -150,16 +147,6 @@ export const SessionEditModal = ({ session, isOpen, onClose, onUpdate }: Session
                 영상 정보를 가져오는 중...
               </p>
             )}
-          </div>
-          <div>
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={editData.is_free}
-                onChange={(e) => setEditData({ ...editData, is_free: e.target.checked })}
-              />
-              <span>무료 세션</span>
-            </label>
           </div>
           <div className="flex gap-2 pt-4">
             <Button onClick={handleUpdate} className="flex-1">
