@@ -30,7 +30,6 @@ interface SessionTableProps {
   onPageChange: (page: number) => void;
   onEdit: (session: CourseSession) => void;
   onDelete: (sessionId: string, sessionTitle: string) => void;
-  onMaterialManage?: (session: CourseSession) => void;
 }
 
 export const SessionTable = ({
@@ -40,8 +39,7 @@ export const SessionTable = ({
   itemsPerPage,
   onPageChange,
   onEdit,
-  onDelete,
-  onMaterialManage
+  onDelete
 }: SessionTableProps) => {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -76,12 +74,10 @@ export const SessionTable = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[30%]">세션명</TableHead>
-              <TableHead className="w-[20%]">강의</TableHead>
-              <TableHead className="w-[12%]">타입</TableHead>
-              <TableHead className="w-[10%]">재생시간</TableHead>
-              <TableHead className="w-[12%]">상태</TableHead>
-              <TableHead className="w-[16%] text-right">작업</TableHead>
+              <TableHead className="w-[25%]">강의명</TableHead>
+              <TableHead className="w-[25%]">세션명</TableHead>
+              <TableHead className="w-[15%]">상태</TableHead>
+              <TableHead className="w-[35%] text-right">영상 업로드</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -89,33 +85,26 @@ export const SessionTable = ({
               <TableRow key={session.id} className="hover:bg-muted/30 transition-colors">
                 <TableCell>
                   <div className="space-y-1">
-                    <div className="font-medium text-base max-w-[250px] truncate" title={session.title}>
-                      {session.title}
+                    <div className="font-medium text-base max-w-[250px] truncate" title={session.course?.title}>
+                      {session.course?.title}
                     </div>
+                    {session.section && (
+                      <div className="text-xs text-muted-foreground">
+                        섹션: {session.section.title}
+                      </div>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm">
-                    {session.course?.title}
+                  <div className="font-medium text-sm max-w-[250px] truncate" title={session.title}>
+                    {session.title}
                   </div>
-                  {session.section && (
-                    <div className="text-xs text-muted-foreground">
-                      섹션: {session.section.title}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-1 flex-wrap">
+                  <div className="flex gap-1 flex-wrap mt-1">
                     {session.is_free ? (
                       <Badge variant="secondary" className="text-xs">무료</Badge>
                     ) : (
                       <Badge variant="default" className="text-xs">프리미엄</Badge>
                     )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm">
-                    미설정
                   </div>
                 </TableCell>
                 <TableCell>
@@ -135,15 +124,24 @@ export const SessionTable = ({
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
-                    {onMaterialManage && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => onEdit(session)}
+                      className="h-8 px-3"
+                    >
+                      <Upload className="h-3 w-3 mr-1" />
+                      영상 업로드
+                    </Button>
+                    {session.video_url && (
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={() => onMaterialManage(session)}
-                        className="h-8 px-3"
+                        onClick={() => handleDeleteClick(session.id, session.title)}
+                        className="h-8 px-3 text-destructive hover:text-destructive"
                       >
-                        <Upload className="h-3 w-3 mr-1" />
-                        자료
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        영상 삭제
                       </Button>
                     )}
                     {session.video_url && (
@@ -154,32 +152,9 @@ export const SessionTable = ({
                         className="h-8 px-3 hover-scale"
                       >
                         <Eye className="h-3 w-3 mr-1" />
-                        재생
+                        미리보기
                       </Button>
                     )}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover-scale">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem 
-                          onClick={() => onEdit(session)}
-                          className="cursor-pointer"
-                        >
-                          <Edit className="mr-2 h-4 w-4" />
-                          편집
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleDeleteClick(session.id, session.title)}
-                          className="text-destructive focus:text-destructive cursor-pointer"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          삭제
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
                 </TableCell>
               </TableRow>
@@ -255,11 +230,11 @@ export const SessionTable = ({
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
           <AlertDialogHeader>
-            <AlertDialogTitle>세션 삭제 확인</AlertDialogTitle>
+            <AlertDialogTitle>영상 삭제 확인</AlertDialogTitle>
             <AlertDialogDescription>
-              정말로 "{sessionToDelete?.title}" 세션을 삭제하시겠습니까?
+              정말로 "{sessionToDelete?.title}" 세션의 영상을 삭제하시겠습니까?
               <br />
-              이 작업은 되돌릴 수 없습니다.
+              세션은 유지되며 영상만 제거됩니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
