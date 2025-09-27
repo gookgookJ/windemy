@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Upload, MoreHorizontal, File, Edit, Trash2, Plus, X, Eye } from 'lucide-react';
+import { Search, Upload, File, Eye, ChevronDown, ChevronRight, FolderOpen, X } from 'lucide-react';
 import { MaterialUploadModal } from '@/components/admin/MaterialUploadModal';
 import { MaterialViewModal } from '@/components/admin/MaterialViewModal';
 
@@ -31,15 +31,24 @@ interface CourseSection {
   materials?: any[];
 }
 
+interface GroupedCourse {
+  course_id: string;
+  course_title: string;
+  sections: CourseSection[];
+  total_sections: number;
+  sections_with_materials: number;
+}
+
 export const SectionManagement = () => {
   const [sections, setSections] = useState<CourseSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCourse, setSelectedCourse] = useState<string>('all');
+  const [courseFilter, setCourseFilter] = useState<string>('all');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadingSection, setUploadingSection] = useState<CourseSection | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingSection, setViewingSection] = useState<CourseSection | null>(null);
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   
   const { toast } = useToast();
 
@@ -85,44 +94,58 @@ export const SectionManagement = () => {
     setIsViewModalOpen(true);
   };
 
-  const removeAttachment = async (section: CourseSection) => {
-    try {
-      const { error } = await supabase
-        .from('course_sections')
-        .update({
-          attachment_url: null,
-          attachment_name: null
-        })
-        .eq('id', section.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "성공",
-        description: "첨부파일이 삭제되었습니다."
-      });
-
-      fetchSections();
-    } catch (error) {
-      console.error('Error removing attachment:', error);
-      toast({
-        title: "오류",
-        description: "파일 삭제에 실패했습니다.",
-        variant: "destructive"
-      });
+  const toggleGroup = (courseId: string) => {
+    const newOpenGroups = new Set(openGroups);
+    if (newOpenGroups.has(courseId)) {
+      newOpenGroups.delete(courseId);
+    } else {
+      newOpenGroups.add(courseId);
     }
+    setOpenGroups(newOpenGroups);
   };
 
-  // 검색 및 필터링
+  // 검색 및 필터링 로직
   const filteredSections = sections.filter(section => {
     const matchesSearch = searchTerm === '' || 
-      section.title.toLowerCase().includes(searchTerm.toLowerCase());
+      section.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      section.course?.title.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCourse = selectedCourse === 'all' || 
-      section.course?.id === selectedCourse;
+    const matchesCourse = courseFilter === 'all' || 
+      section.course?.id === courseFilter;
     
     return matchesSearch && matchesCourse;
   });
+
+  // 강의별 그룹화
+  const groupedSections = (): GroupedCourse[] => {
+    const courseMap = new Map<string, GroupedCourse>();
+    
+    filteredSections.forEach(section => {
+      if (!section.course) return;
+      
+      const courseId = section.course.id;
+      if (!courseMap.has(courseId)) {
+        courseMap.set(courseId, {
+          course_id: courseId,
+          course_title: section.course.title,
+          sections: [],
+          total_sections: 0,
+          sections_with_materials: 0
+        });
+      }
+      
+      const group = courseMap.get(courseId)!;
+      group.sections.push(section);
+      group.total_sections++;
+      if (section.materials && section.materials.length > 0) {
+        group.sections_with_materials++;
+      }
+    });
+
+    return Array.from(courseMap.values()).sort((a, b) => 
+      a.course_title.localeCompare(b.course_title)
+    );
+  };
 
   // 고유한 강의 목록 추출
   const uniqueCourses = Array.from(
@@ -132,7 +155,7 @@ export const SectionManagement = () => {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedCourse('all');
+    setCourseFilter('all');
   };
 
   if (loading) {
@@ -141,7 +164,7 @@ export const SectionManagement = () => {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p>섹션 데이터를 불러오는 중...</p>
+            <p>자료 데이터를 불러오는 중...</p>
           </div>
         </div>
       </AdminLayout>
@@ -153,9 +176,9 @@ export const SectionManagement = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">섹션 관리</h1>
+            <h1 className="text-3xl font-bold">자료 관리</h1>
             <p className="text-muted-foreground mt-2">
-              강의 섹션별 자료 업로드 및 관리
+              강의별 섹션 자료 업로드 및 관리
             </p>
           </div>
         </div>
@@ -167,7 +190,7 @@ export const SectionManagement = () => {
               <div className="relative flex-1 min-w-[280px]">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  placeholder="섹션명으로 검색..."
+                  placeholder="강의명, 섹션명으로 검색..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -175,7 +198,7 @@ export const SectionManagement = () => {
               </div>
               
               <div className="min-w-[200px]">
-                <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+                <Select value={courseFilter} onValueChange={setCourseFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="강의 선택" />
                   </SelectTrigger>
@@ -190,7 +213,7 @@ export const SectionManagement = () => {
                 </Select>
               </div>
 
-              {(searchTerm || selectedCourse !== 'all') && (
+              {(searchTerm || courseFilter !== 'all') && (
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -203,17 +226,17 @@ export const SectionManagement = () => {
               )}
             </div>
             
-            {(searchTerm || selectedCourse !== 'all') && (
+            {(searchTerm || courseFilter !== 'all') && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                 <span>활성 필터:</span>
                 {searchTerm && (
                   <Badge variant="secondary" className="text-xs">
-                    섹션명: "{searchTerm}"
+                    검색어: "{searchTerm}"
                   </Badge>
                 )}
-                {selectedCourse !== 'all' && (
+                {courseFilter !== 'all' && (
                   <Badge variant="secondary" className="text-xs">
-                    강의: "{uniqueCourses.find(c => c.id === selectedCourse)?.title}"
+                    강의: "{uniqueCourses.find(c => c.id === courseFilter)?.title}"
                   </Badge>
                 )}
               </div>
@@ -221,119 +244,132 @@ export const SectionManagement = () => {
           </CardHeader>
         </Card>
 
-        {/* 섹션 테이블 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>섹션 목록 ({filteredSections.length}개)</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[25%]">섹션명</TableHead>
-                    <TableHead className="w-[20%]">강의</TableHead>
-                    <TableHead className="w-[15%]">세션 개수</TableHead>
-                    <TableHead className="w-[20%]">첨부자료</TableHead>
-                    <TableHead className="w-[20%] text-right">작업</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredSections.map((section) => (
-                    <TableRow key={section.id} className="hover:bg-muted/30 transition-colors">
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="font-medium text-base">
-                            {section.title}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            순서: {section.order_index}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {section.course?.title}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {section.sessions?.length || 0}개
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {section.materials && section.materials.length > 0 ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewMaterials(section)}
-                              className="h-auto p-2 hover:bg-muted/50"
-                            >
-                              <div className="flex items-center gap-2">
-                                <File className="h-4 w-4 text-green-600" />
-                                <span className="text-sm font-medium text-green-600">
-                                  {section.materials.length}개 자료 업로드
-                                </span>
-                                <Eye className="h-3 w-3 text-muted-foreground" />
-                              </div>
-                            </Button>
+        {/* 강의별 자료 관리 */}
+        {loading ? (
+          <div className="flex items-center justify-center min-h-[200px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {groupedSections().map((courseGroup) => (
+              <Card key={courseGroup.course_id} className="overflow-hidden">
+                <Collapsible
+                  open={openGroups.has(courseGroup.course_id)}
+                  onOpenChange={() => toggleGroup(courseGroup.course_id)}
+                >
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="cursor-pointer transition-colors px-4 py-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {openGroups.has(courseGroup.course_id) ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           ) : (
-                            <span className="text-sm text-muted-foreground">자료 없음</span>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           )}
+                          <FolderOpen className="h-5 w-5 text-primary" />
+                          <div>
+                            <h3 className="text-lg font-semibold">{courseGroup.course_title}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              총 {courseGroup.total_sections}개 섹션 • 자료 업로드: {courseGroup.sections_with_materials}개
+                            </p>
+                          </div>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => handleUpload(section)}
-                            className="h-8 px-3"
-                          >
-                            <Upload className="h-3 w-3 mr-1" />
-                            자료 관리
-                          </Button>
-                          
-                          {section.attachment_url && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem 
-                                  onClick={() => removeAttachment(section)}
-                                  className="text-destructive focus:text-destructive cursor-pointer"
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="pointer-events-none">
+                            {courseGroup.sections_with_materials}/{courseGroup.total_sections} 자료
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent>
+                    <CardContent className="p-0 border-t">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[30%] pl-4">섹션명</TableHead>
+                            <TableHead className="w-[25%]">첨부 자료</TableHead>
+                            <TableHead className="w-[45%] text-right pr-4">자료 관리</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {courseGroup.sections.map((section) => (
+                            <TableRow key={section.id} className="transition-colors">
+                              <TableCell className="pl-4">
+                                <div className="space-y-1">
+                                  <div className="font-medium">
+                                    {section.title}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    순서: {section.order_index} • 세션: {section.sessions?.length || 0}개
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  {section.materials && section.materials.length > 0 ? (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleViewMaterials(section)}
+                                      className="h-auto p-2 text-left justify-start"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <File className="h-4 w-4 text-green-600" />
+                                        <span className="text-sm font-medium text-green-600">
+                                          {section.materials.length}개 자료
+                                        </span>
+                                        <Eye className="h-3 w-3 text-muted-foreground" />
+                                      </div>
+                                    </Button>
+                                  ) : (
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                      <File className="h-4 w-4" />
+                                      <span className="text-sm">자료 없음</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right pr-4">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => handleUpload(section)}
+                                  className="h-8 px-3"
                                 >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  자료 삭제
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                                  <Upload className="h-3 w-3 mr-1" />
+                                  자료 관리
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+            ))}
 
-              {filteredSections.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-muted-foreground mb-4">
-                    <File className="h-12 w-12 mx-auto mb-4" />
-                    <p className="text-lg font-medium">섹션이 없습니다</p>
-                    <p className="text-sm">먼저 강의를 생성하고 섹션을 추가해주세요</p>
+            {groupedSections().length === 0 && (
+              <Card>
+                <CardContent className="py-12">
+                  <div className="text-center">
+                    <FolderOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-medium mb-2">자료 관리할 강의가 없습니다</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {searchTerm || courseFilter !== 'all' 
+                        ? '검색 조건에 맞는 강의를 찾을 수 없습니다.' 
+                        : '먼저 강의를 생성하고 섹션을 추가해주세요.'
+                      }
+                    </p>
                   </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* 업로드 모달 */}
         <MaterialUploadModal
