@@ -51,25 +51,25 @@ const menuItems = [
     group: 'main'
   },
   {
-    title: '강의 관리',
-    url: '/admin/courses',
-    icon: BookOpen,
-    group: 'content'
-  },
-  {
     title: '강의 생성',
     url: '/admin/course-create',
     icon: PlusCircle,
     group: 'content'
   },
   {
-    title: '세션 관리',
+    title: '강의 관리',
+    url: '/admin/courses',
+    icon: BookOpen,
+    group: 'content'
+  },
+  {
+    title: '강의 영상 관리',
     url: '/admin/sessions',
     icon: Calendar,
     group: 'content'
   },
   {
-    title: '섹션 자료 관리',
+    title: '강의 자료 관리',
     url: '/admin/section-management',
     icon: FileText,
     group: 'content'
