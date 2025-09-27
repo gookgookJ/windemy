@@ -1384,7 +1384,7 @@ const CourseCreate = () => {
           </div>
           
           {/* 진행 단계 표시 */}
-          <div className="mt-2">
+          <div className="hidden">
             <div className="flex items-center justify-between">
               {[1, 2, 3, 4, 5].map((step) => (
                 <div key={step} className="flex items-center">
