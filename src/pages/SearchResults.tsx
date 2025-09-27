@@ -21,8 +21,6 @@ interface Course {
   duration_hours?: number;
   level?: string;
   category?: string;
-  is_hot?: boolean;
-  is_new?: boolean;
   created_at?: string;
 }
 
@@ -310,16 +308,7 @@ const SearchResults = () => {
 
                       {/* Tags */}
                       <div className="absolute top-3 left-3 flex gap-1">
-                        {course.is_hot && (
-                          <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                            HOT
-                          </span>
-                        )}
-                        {course.is_new && (
-                          <span className="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                            NEW
-                          </span>
-                        )}
+                        {/* Badge functionality removed */}
                       </div>
                     </div>
                     

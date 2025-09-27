@@ -298,6 +298,33 @@ export type Database = {
           },
         ]
       }
+      course_drafts: {
+        Row: {
+          created_at: string
+          created_by: string
+          data: Json
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          data: Json
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          data?: Json
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       course_favorites: {
         Row: {
           course_id: string
@@ -563,8 +590,6 @@ export type Database = {
           detail_image_path: string | null
           id: string
           instructor_id: string | null
-          is_hot: boolean | null
-          is_new: boolean | null
           is_published: boolean | null
           level: string | null
           price: number
@@ -585,8 +610,6 @@ export type Database = {
           detail_image_path?: string | null
           id?: string
           instructor_id?: string | null
-          is_hot?: boolean | null
-          is_new?: boolean | null
           is_published?: boolean | null
           level?: string | null
           price?: number
@@ -607,8 +630,6 @@ export type Database = {
           detail_image_path?: string | null
           id?: string
           instructor_id?: string | null
-          is_hot?: boolean | null
-          is_new?: boolean | null
           is_published?: boolean | null
           level?: string | null
           price?: number

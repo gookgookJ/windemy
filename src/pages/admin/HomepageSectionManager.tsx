@@ -20,8 +20,6 @@ interface Course {
   price: number;
   rating?: number;
   total_students?: number;
-  is_hot?: boolean;
-  is_new?: boolean;
 }
 
 interface HomepageSection {
@@ -689,8 +687,6 @@ const HomepageSectionManager = () => {
                               <p className="text-xs text-gray-600">{course.course.instructor_name}</p>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs font-bold">{course.course.price.toLocaleString()}원</span>
-                                {course.course.is_hot && <Badge variant="destructive" className="text-xs">HOT</Badge>}
-                                {course.course.is_new && <Badge variant="secondary" className="text-xs">NEW</Badge>}
                               </div>
                             </div>
                             <Button
@@ -747,8 +743,6 @@ const HomepageSectionManager = () => {
                         <p className="text-xs text-gray-600">{course.instructor_name}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs font-bold">{course.price.toLocaleString()}원</span>
-                          {course.is_hot && <Badge variant="destructive" className="text-xs">HOT</Badge>}
-                          {course.is_new && <Badge variant="secondary" className="text-xs">NEW</Badge>}
                         </div>
                       </div>
                       <Button

@@ -19,8 +19,6 @@ interface Course {
   total_students?: number;
   level?: string;
   category?: string;
-  is_hot?: boolean;
-  is_new?: boolean;
 }
 
 interface HomepageSection {
@@ -133,7 +131,6 @@ const FeaturedCourses = memo(() => {
               categories:category_id(name)
             `)
             .eq('is_published', true)
-            .or('is_hot.eq.true,is_new.eq.true')
             .order('created_at', { ascending: false })
             .limit(section.display_limit);
 
@@ -339,16 +336,7 @@ const FeaturedCourses = memo(() => {
 
           {/* Tags */}
           <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex gap-1">
-            {course.is_hot && (
-              <span className="bg-red-500 text-white text-xs font-semibold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
-                HOT
-              </span>
-            )}
-            {course.is_new && (
-              <span className="bg-green-500 text-white text-xs font-semibold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
-                NEW
-              </span>
-            )}
+            {/* Badge functionality removed */}
           </div>
         </div>
         

@@ -115,8 +115,8 @@ const CategoryCourses = () => {
         studentCount: course.total_students,
         level: course.level as "beginner" | "intermediate" | "advanced",
         category: course.categories?.name || '기타',
-        isHot: course.is_hot || course.total_students > 100,
-        isNew: course.is_new || new Date(course.created_at).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000,
+        isHot: course.total_students > 100,
+        isNew: new Date(course.created_at).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000,
         description: course.title || ""
       }));
 
