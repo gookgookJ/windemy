@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Search, Upload, File, Eye, ChevronRight, Filter, FolderOpen, Trash2 } from 'lucide-react';
 import { MaterialUploadModal } from '@/components/admin/MaterialUploadModal';
 import { MaterialViewModal } from '@/components/admin/MaterialViewModal';
+import { MaterialDeleteModal } from '@/components/admin/MaterialDeleteModal';
 
 interface CourseSection {
   id: string;
@@ -51,6 +52,8 @@ export const SectionManagement = () => {
   const [uploadingSection, setUploadingSection] = useState<CourseSection | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingSection, setViewingSection] = useState<CourseSection | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingSection, setDeletingSection] = useState<CourseSection | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -110,39 +113,9 @@ export const SectionManagement = () => {
     setIsViewModalOpen(true);
   };
 
-  const handleDeleteMaterials = async (section: CourseSection) => {
-    if (!section.materials || section.materials.length === 0) return;
-    
-    const confirmed = window.confirm(
-      `"${section.title}" 섹션의 모든 자료를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`
-    );
-    
-    if (!confirmed) return;
-
-    try {
-      // Delete all materials for this section
-      const { error } = await supabase
-        .from('course_materials')
-        .delete()
-        .eq('section_id', section.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "삭제 완료",
-        description: `${section.materials.length}개의 자료가 삭제되었습니다.`
-      });
-
-      // Refresh data
-      fetchSections();
-    } catch (error) {
-      console.error('Error deleting materials:', error);
-      toast({
-        title: "오류",
-        description: "자료 삭제 중 오류가 발생했습니다.",
-        variant: "destructive"
-      });
-    }
+  const handleDeleteMaterials = (section: CourseSection) => {
+    setDeletingSection(section);
+    setIsDeleteModalOpen(true);
   };
 
   // Filtering logic
@@ -335,7 +308,7 @@ export const SectionManagement = () => {
                                         className="h-6 px-2 text-xs text-green-600 border-green-200 hover:bg-green-50"
                                       >
                                         <Eye className="h-3 w-3 mr-1" />
-                                        미리보기
+                                        자료 미리보기
                                       </Button>
                                     </>
                                   )}
@@ -389,6 +362,18 @@ export const SectionManagement = () => {
           }}
           materials={viewingSection?.materials || []}
           sectionTitle={viewingSection?.title || ''}
+        />
+
+        {/* Delete Modal */}
+        <MaterialDeleteModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setDeletingSection(null);
+          }}
+          onUpdate={fetchSections}
+          materials={deletingSection?.materials || []}
+          sectionTitle={deletingSection?.title || ''}
         />
       </div>
     </AdminLayout>
