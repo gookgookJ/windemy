@@ -1638,7 +1638,7 @@ const CourseCreate = () => {
                     disabled={isLoading} 
                     className="flex-1 h-12 text-base hover-scale"
                   >
-                    {isLoading ? '생성 중...' : '즉시 강의 생성'}
+                    {isLoading ? '생성 중...' : '강의 생성'}
                   </Button>
                   
                   <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
