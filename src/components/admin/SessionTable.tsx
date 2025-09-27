@@ -74,30 +74,28 @@ export const SessionTable = ({
   const endIndex = Math.min(startIndex + itemsPerPage, sessions.length);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/20">
-              <TableHead className="w-[40%] py-2 text-xs font-medium text-muted-foreground">세션명</TableHead>
-              <TableHead className="w-[20%] py-2 text-xs font-medium text-muted-foreground">상태</TableHead>
-              <TableHead className="w-[40%] py-2 text-xs font-medium text-muted-foreground text-right">영상 업로드</TableHead>
+              <TableHead className="w-[40%] py-1.5 text-xs font-medium text-muted-foreground">세션명</TableHead>
+              <TableHead className="w-[20%] py-1.5 text-xs font-medium text-muted-foreground">상태</TableHead>
+              <TableHead className="w-[40%] py-1.5 text-xs font-medium text-muted-foreground text-right">영상 업로드</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sessions.map((session, index) => (
               <TableRow 
                 key={session.id} 
-                className={`hover:bg-muted/20 transition-colors border-b border-muted/30 ${
-                  index % 2 === 0 ? 'bg-white' : 'bg-muted/5'
-                }`}
+                className="border-b border-muted/30"
               >
-                <TableCell className="py-2 px-3">
+                <TableCell className="py-1.5 px-3">
                   <div className="font-medium text-sm truncate" title={session.title}>
                     {session.title}
                   </div>
                 </TableCell>
-                <TableCell className="py-2 px-3">
+                <TableCell className="py-1.5 px-3">
                   {session.video_url ? (
                     <Badge variant="default" className="text-xs bg-green-500 text-white border-green-500 px-2 py-0.5">
                       <Play className="h-3 w-3 mr-1" />
@@ -110,13 +108,13 @@ export const SessionTable = ({
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell className="py-2 px-3 text-right">
+                <TableCell className="py-1.5 px-3 text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onClick={() => onEdit(session)}
-                      className="h-7 px-2 text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
+                      className="h-6 px-2 text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
                     >
                       <Upload className="h-3 w-3 mr-1" />
                       업로드
@@ -127,7 +125,7 @@ export const SessionTable = ({
                           variant="outline" 
                           size="sm" 
                           onClick={() => handleDeleteClick(session.id, session.title)}
-                          className="h-7 px-2 text-xs text-red-600 border-red-200 hover:bg-red-50"
+                          className="h-6 px-2 text-xs text-red-600 border-red-200 hover:bg-red-50"
                         >
                           <Trash2 className="h-3 w-3 mr-1" />
                           삭제
@@ -136,7 +134,7 @@ export const SessionTable = ({
                           variant="outline" 
                           size="sm" 
                           onClick={() => handlePreviewClick(session)}
-                          className="h-7 px-2 text-xs text-green-600 border-green-200 hover:bg-green-50"
+                          className="h-6 px-2 text-xs text-green-600 border-green-200 hover:bg-green-50"
                         >
                           <Eye className="h-3 w-3 mr-1" />
                           미리보기

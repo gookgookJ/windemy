@@ -358,7 +358,7 @@ export const SessionManagement = () => {
             <Card key={group.courseId} className="animate-fade-in border-l-4 border-l-primary/20 shadow-sm">
               <Collapsible defaultOpen={false}>
                 <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-muted/30 transition-all duration-200 rounded-t-lg py-4">
+                  <CardHeader className="group cursor-pointer transition-all duration-200 rounded-t-lg py-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
