@@ -48,7 +48,7 @@ const AdminCourseEdit = () => {
     price: number;
     original_price?: number;
     benefits: string[];
-    tag?: string;
+    
   }
 
   interface CourseDetailImage {
@@ -70,15 +70,13 @@ const AdminCourseEdit = () => {
     course_type: 'VOD',
     price: 0,
     what_you_will_learn: [''],
-    requirements: [''] as string[],
+    
     sections: [] as CourseSection[],
     course_options: [] as CourseOption[],
     detail_images: [] as CourseDetailImage[],
     thumbnail_url: '',
     thumbnail_path: '',
-    is_published: false,
-    is_new: false,
-    is_hot: false
+    is_published: false
   });
 
   // 초기 데이터 로드
@@ -126,8 +124,7 @@ const AdminCourseEdit = () => {
         name: option.name,
         price: option.price,
         original_price: option.original_price,
-        benefits: option.benefits || [],
-        tag: option.tag || ''
+        benefits: option.benefits || []
       }));
 
       // Transform detail images data
@@ -149,15 +146,13 @@ const AdminCourseEdit = () => {
         course_type: data.course_type || 'VOD',
         price: data.price || 0,
         what_you_will_learn: data.what_you_will_learn || [''],
-        requirements: data.requirements || [''],
+        
         sections: transformedSections,
         course_options: transformedOptions,
         detail_images: transformedImages,
         thumbnail_url: data.thumbnail_url || '',
         thumbnail_path: data.thumbnail_path || '',
-        is_published: data.is_published || false,
-        is_new: data.is_new || false,
-        is_hot: data.is_hot || false
+        is_published: data.is_published || false
       });
     } catch (error) {
       console.error('Error fetching course:', error);
@@ -219,12 +214,9 @@ const AdminCourseEdit = () => {
         course_type: course.course_type,
         price: course.price,
         what_you_will_learn: course.what_you_will_learn.filter(item => item.trim()),
-        requirements: course.requirements?.filter(item => item.trim()) || [],
         thumbnail_url: course.thumbnail_url,
         thumbnail_path: course.thumbnail_path,
-        is_published: course.is_published,
-        is_new: course.is_new,
-        is_hot: course.is_hot
+        is_published: course.is_published
       };
 
       const { error: courseError } = await supabase
@@ -302,8 +294,7 @@ const AdminCourseEdit = () => {
           name: option.name,
           price: option.price,
           original_price: option.original_price,
-          benefits: option.benefits.filter(benefit => benefit.trim()),
-          tag: option.tag
+          benefits: option.benefits.filter(benefit => benefit.trim())
         }));
 
         const { error: optionsError } = await supabase
@@ -381,21 +372,21 @@ const AdminCourseEdit = () => {
   };
 
   // 리스트 관리 함수들
-  const addListItem = (field: 'what_you_will_learn' | 'requirements') => {
+  const addListItem = (field: 'what_you_will_learn') => {
     setCourse(prev => ({
       ...prev,
       [field]: [...prev[field], '']
     }));
   };
 
-  const updateListItem = (field: 'what_you_will_learn' | 'requirements', index: number, value: string) => {
+  const updateListItem = (field: 'what_you_will_learn', index: number, value: string) => {
     setCourse(prev => ({
       ...prev,
       [field]: prev[field].map((item, i) => i === index ? value : item)
     }));
   };
 
-  const removeListItem = (field: 'what_you_will_learn' | 'requirements', index: number) => {
+  const removeListItem = (field: 'what_you_will_learn', index: number) => {
     setCourse(prev => ({
       ...prev,
       [field]: prev[field].filter((_, i) => i !== index)
@@ -746,24 +737,6 @@ const AdminCourseEdit = () => {
                   <Label htmlFor="published">강의 공개</Label>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="is_new"
-                      checked={course.is_new}
-                      onCheckedChange={(checked) => setCourse(prev => ({ ...prev, is_new: checked }))}
-                    />
-                    <Label htmlFor="is_new">신규 강의</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="is_hot"
-                      checked={course.is_hot}
-                      onCheckedChange={(checked) => setCourse(prev => ({ ...prev, is_hot: checked }))}
-                    />
-                    <Label htmlFor="is_hot">인기 강의</Label>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -805,40 +778,6 @@ const AdminCourseEdit = () => {
               </CardContent>
             </Card>
 
-            {/* Requirements */}
-            <Card>
-              <CardHeader>
-                <CardTitle>수강 요구사항</CardTitle>
-                <CardDescription>이 강의를 수강하기 위해 필요한 사전 지식이나 준비물을 입력해주세요.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {course.requirements.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input
-                      value={item}
-                      onChange={(e) => updateListItem('requirements', index, e.target.value)}
-                      placeholder="요구사항을 입력하세요"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeListItem('requirements', index)}
-                      disabled={course.requirements.length <= 1}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  variant="outline"
-                  onClick={() => addListItem('requirements')}
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  항목 추가
-                </Button>
-              </CardContent>
-            </Card>
 
             {/* Curriculum */}
             <Card>
@@ -936,12 +875,6 @@ const AdminCourseEdit = () => {
                         onChange={(e) => updateCourseOption(optionIndex, 'name', e.target.value)}
                         placeholder="옵션 이름 (예: 기본, 프리미엄)"
                         className="flex-1"
-                      />
-                      <Input
-                        value={option.tag || ''}
-                        onChange={(e) => updateCourseOption(optionIndex, 'tag', e.target.value)}
-                        placeholder="태그 (선택사항)"
-                        className="w-32"
                       />
                       <Button
                         variant="outline"
