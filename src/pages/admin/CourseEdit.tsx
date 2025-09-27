@@ -186,13 +186,15 @@ const AdminCourseEdit = () => {
 
   const fetchInstructors = async () => {
     try {
+      // 프로필 테이블에서 'instructor' 역할 사용자 목록을 사용 (courses.instructor_id는 profiles.id를 참조)
       const { data, error } = await supabase
-        .from('instructors')
+        .from('profiles')
         .select('id, full_name, email')
+        .eq('role', 'instructor')
         .order('full_name');
       
       if (error) throw error;
-      setInstructors(data || []);
+      setInstructors((data || []) as any);
     } catch (error: any) {
       toast({
         title: "오류",
@@ -205,6 +207,17 @@ const AdminCourseEdit = () => {
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
+      
+      // 필수 필드 검증
+      if (!course.instructor_id) {
+        toast({
+          title: "오류",
+          description: "강사를 선택해주세요.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
       
       const courseData = {
         title: course.title,
