@@ -58,6 +58,11 @@ export const SessionTable = ({
     setSessionToDelete(null);
   };
 
+  const handlePreviewClick = (session: CourseSession) => {
+    setPreviewSession(session);
+    setPreviewModalOpen(true);
+  };
+
   const formatDuration = (minutes: number) => {
     if (!minutes) return '미설정';
     const hours = Math.floor(minutes / 60);
@@ -125,10 +130,7 @@ export const SessionTable = ({
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          onClick={() => {
-                            setPreviewSession(session);
-                            setPreviewModalOpen(true);
-                          }}
+                          onClick={() => handlePreviewClick(session)}
                           className="h-8 px-3 text-green-600 border-green-200 hover:bg-green-50"
                         >
                           <Eye className="h-3 w-3 mr-1" />
