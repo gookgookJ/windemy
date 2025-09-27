@@ -329,13 +329,19 @@ const CourseCreate = () => {
   // 임시저장 관리 함수들
   const fetchSavedDrafts = async () => {
     try {
-      const { data, error } = await supabase
+      const result = await (supabase as any)
         .from('course_drafts')
         .select('id, name, created_at')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      setSavedDrafts(data || []);
+      if (result.error) {
+        console.error('Supabase error:', result.error);
+        return;
+      }
+      
+      if (result.data && Array.isArray(result.data)) {
+        setSavedDrafts(result.data as {id: string, name: string, created_at: string}[]);
+      }
     } catch (error: any) {
       console.error('Failed to fetch saved drafts:', error);
     }
@@ -352,7 +358,7 @@ const CourseCreate = () => {
     }
 
     try {
-      const { error } = await supabase
+      const result = await (supabase as any)
         .from('course_drafts')
         .insert({
           name: draftName.trim(),
@@ -360,7 +366,7 @@ const CourseCreate = () => {
           created_by: (await supabase.auth.getUser()).data.user?.id
         });
 
-      if (error) throw error;
+      if (result.error) throw result.error;
 
       toast({
         title: "성공",
@@ -382,15 +388,15 @@ const CourseCreate = () => {
 
   const handleLoadDraft = async (draftId: string) => {
     try {
-      const { data, error } = await supabase
+      const result = await (supabase as any)
         .from('course_drafts')
         .select('data')
         .eq('id', draftId)
         .single();
 
-      if (error) throw error;
+      if (result.error) throw result.error;
 
-      setCourse(data.data);
+      setCourse(result.data.data);
       setCurrentStep(1);
       setIsDraftModalOpen(false);
       
@@ -410,12 +416,12 @@ const CourseCreate = () => {
 
   const handleDeleteDraft = async (draftId: string) => {
     try {
-      const { error } = await supabase
+      const result = await (supabase as any)
         .from('course_drafts')
         .delete()
         .eq('id', draftId);
 
-      if (error) throw error;
+      if (result.error) throw result.error;
 
       toast({
         title: "성공",
@@ -1386,9 +1392,116 @@ const CourseCreate = () => {
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold">새 강의 만들기</h1>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>단계 {currentStep} / 5</span>
-            </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" onClick={handleSaveDraft} className="flex items-center gap-2">
+                    <Save className="w-4 h-4" />
+                    임시저장
+                  </Button>
+                  
+                  <Dialog open={isDraftModalOpen} onOpenChange={setIsDraftModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="flex items-center gap-2" onClick={fetchSavedDrafts}>
+                        <FolderOpen className="w-4 h-4" />
+                        임시저장본 관리
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>임시저장본 관리</DialogTitle>
+                        <DialogDescription>
+                          저장된 임시저장본을 불러오거나 새로운 임시저장본을 만들 수 있습니다.
+                        </DialogDescription>
+                      </DialogHeader>
+                      
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-medium">저장된 임시저장본</h4>
+                          <Dialog open={isNameDraftModalOpen} onOpenChange={setIsNameDraftModalOpen}>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                                <Plus className="w-4 h-4" />
+                                새 임시저장본 만들기
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>새 임시저장본 만들기</DialogTitle>
+                                <DialogDescription>
+                                  현재 입력된 내용을 임시저장본으로 저장합니다.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="draft-name">임시저장본 이름</Label>
+                                  <Input
+                                    id="draft-name"
+                                    value={draftName}
+                                    onChange={(e) => setDraftName(e.target.value)}
+                                    placeholder="예: React 기초 강의 초안"
+                                  />
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="outline" onClick={() => setIsNameDraftModalOpen(false)}>
+                                    취소
+                                  </Button>
+                                  <Button onClick={handleSaveNamedDraft}>
+                                    저장
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                        
+                        {savedDrafts.length > 0 ? (
+                          <div className="border rounded-lg">
+                            {savedDrafts.map((draft, index) => (
+                              <div key={draft.id} className={cn(
+                                "flex items-center justify-between p-4",
+                                index !== savedDrafts.length - 1 && "border-b"
+                              )}>
+                                <div>
+                                  <div className="font-medium">{draft.name}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {new Date(draft.created_at).toLocaleString('ko-KR')}
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => handleLoadDraft(draft.id)}
+                                  >
+                                    불러오기
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => handleDeleteDraft(draft.id)}
+                                    className="text-destructive hover:text-destructive"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <p>저장된 임시저장본이 없습니다.</p>
+                            <p className="text-sm mt-1">위의 버튼을 클릭해서 새 임시저장본을 만들어보세요.</p>
+                          </div>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>단계 {currentStep} / 5</span>
+                </div>
+              </div>
           </div>
           
           {/* 진행 단계 표시 */}
