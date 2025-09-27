@@ -804,7 +804,7 @@ const CourseCreate = () => {
                     id="title"
                     value={course.title}
                     onChange={(e) => setCourse(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="예: React 기초부터 실전까지"
+                    placeholder="예: 해외구매대행 완전정복"
                     className="h-11"
                   />
                 </div>
@@ -895,7 +895,7 @@ const CourseCreate = () => {
                       <Input
                         value={item}
                         onChange={(e) => updateListItem('what_you_will_learn', index, e.target.value)}
-                        placeholder="예: React의 기본 개념과 컴포넌트 작성법을 익힐 수 있습니다"
+                        placeholder="예: 해외구매대행에 대한 A to Z를 학습할 수 있습니다."
                         className="h-11"
                       />
                       <Button
@@ -1741,7 +1741,7 @@ const CourseCreate = () => {
                             id="draft-name"
                             value={draftName}
                             onChange={(e) => setDraftName(e.target.value)}
-                            placeholder="예: React 기초 강의 초안"
+                            placeholder="예: 해외구매대행 완전정복"
                             className="h-11"
                           />
                         </div>
