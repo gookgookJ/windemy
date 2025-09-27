@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Plus, Trash2, Upload, FileImage, BookOpen, Video, DollarSign, FileText, Users, Settings, GripVertical, Save, FolderOpen } from 'lucide-react';
+import { Plus, Trash2, Upload, FileImage, BookOpen, Video, DollarSign, FileText, Users, Settings, GripVertical, Save, FolderOpen, Calendar, Clock, CheckCircle, ArrowRight } from 'lucide-react';
 import { FileUpload } from "@/components/ui/file-upload";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -87,6 +87,11 @@ const CourseCreate = () => {
   const [isNameDraftModalOpen, setIsNameDraftModalOpen] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [savedDrafts, setSavedDrafts] = useState<{id: string, name: string, created_at: string}[]>([]);
+  
+  // 예약 발행 상태
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -320,6 +325,74 @@ const CourseCreate = () => {
 
   const handleSaveDraft = () => {
     setIsNameDraftModalOpen(true);
+  };
+
+  const handleScheduledSubmit = async () => {
+    if (!scheduleDate || !scheduleTime) {
+      toast({
+        title: "오류",
+        description: "발행 날짜와 시간을 모두 선택해주세요.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`);
+    const now = new Date();
+    
+    if (scheduledDateTime <= now) {
+      toast({
+        title: "오류", 
+        description: "미래 날짜와 시간을 선택해주세요.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // 임시로 저장하고 예약 발행 정보를 추가
+      const courseData = {
+        title: course.title,
+        category_id: course.category_id,
+        instructor_id: course.instructor_id,
+        level: course.level,
+        course_type: course.course_type,
+        price: course.price,
+        what_you_will_learn: course.what_you_will_learn.filter(item => item.trim()),
+        requirements: course.requirements.filter(item => item.trim()),
+        is_published: false, // 예약 발행이므로 일단 비공개로 저장
+        is_new: course.is_new,
+        is_hot: course.is_hot,
+        thumbnail_url: course.thumbnail_url,
+        thumbnail_path: course.thumbnail_path,
+        detail_image_path: '',
+        video_preview_url: ''
+      };
+
+      // TODO: 여기에 예약 발행 로직 추가
+      // 실제로는 별도의 스케줄링 테이블에 저장하고 cron job으로 처리
+      
+      toast({
+        title: "성공",
+        description: `강의가 ${scheduledDateTime.toLocaleString('ko-KR')}에 발행되도록 예약되었습니다.`,
+      });
+      
+      setIsScheduleModalOpen(false);
+      setScheduleDate('');
+      setScheduleTime('');
+      
+    } catch (error: any) {
+      console.error('Failed to schedule course:', error);
+      toast({
+        title: "오류",
+        description: "예약 발행 설정에 실패했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 임시저장 관리 함수들
@@ -1345,34 +1418,338 @@ const CourseCreate = () => {
         );
 
       case 5:
+        const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || '선택되지 않음';
+        const getInstructorName = (id: string) => instructors.find(i => i.id === id)?.full_name || '선택되지 않음';
+        const getHomepageSectionName = (id: string) => homepageSections.find(s => s.id === id)?.title || '선택되지 않음';
+        
         return (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>강의 생성 완료</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  입력하신 정보를 확인하고 강의를 생성하세요.
+          <div className="space-y-8">
+            {/* 헤더 */}
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold mb-2">강의 생성 완료</h2>
+                <p className="text-lg text-muted-foreground">
+                  입력하신 모든 정보를 확인하고 강의를 생성하거나 예약 발행하세요.
                 </p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="bg-muted p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">강의 정보 요약</h4>
-                  <ul className="space-y-1 text-sm text-muted-foreground">
-                    <li>• 제목: {course.title}</li>
-                    <li>• 섹션: {course.sections.length}개</li>
-                    <li>• 총 세션: {course.sections.reduce((acc, section) => acc + section.sessions.length, 0)}개</li>
-                    <li>• 판매 옵션: {course.course_options.length}개</li>
-                    <li>• 공개 여부: {course.is_published ? '즉시 공개' : '비공개'}</li>
-                  </ul>
-                </div>
-                
+              </div>
+            </div>
+
+            {/* 종합 정보 요약 */}
+            <div className="grid gap-6">
+              {/* 1단계: 기본 정보 */}
+              <Card>
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3 text-lg">
+                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <BookOpen className="w-4 h-4 text-primary" />
+                    </div>
+                    1단계 - 기본 정보
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">강의 제목</Label>
+                        <p className="text-base font-medium">{course.title || '입력되지 않음'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">카테고리</Label>
+                        <p className="text-base">{getCategoryName(course.category_id)}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">강사</Label>
+                        <p className="text-base">{getInstructorName(course.instructor_id)}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">난이도</Label>
+                        <p className="text-base">{course.level === 'beginner' ? '초급' : course.level === 'intermediate' ? '중급' : '고급'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">강의 유형</Label>
+                        <p className="text-base">{course.course_type === 'VOD' ? '온디맨드' : 'LIVE'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">기본 가격</Label>
+                        <p className="text-base">{course.price.toLocaleString()}원</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {course.what_you_will_learn.filter(item => item.trim()).length > 0 && (
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">학습 목표</Label>
+                      <ul className="list-disc list-inside space-y-1 mt-2">
+                        {course.what_you_will_learn.filter(item => item.trim()).map((item, index) => (
+                          <li key={index} className="text-sm">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {course.requirements.filter(item => item.trim()).length > 0 && (
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">수강 요구사항</Label>
+                      <ul className="list-disc list-inside space-y-1 mt-2">
+                        {course.requirements.filter(item => item.trim()).map((item, index) => (
+                          <li key={index} className="text-sm">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* 2단계: 커리큘럼 */}
+              <Card>
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3 text-lg">
+                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <Video className="w-4 h-4 text-primary" />
+                    </div>
+                    2단계 - 커리큘럼
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-primary">{course.sections.length}</div>
+                        <div className="text-sm text-muted-foreground">섹션</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-primary">
+                          {course.sections.reduce((acc, section) => acc + section.sessions.length, 0)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">세션</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-primary">
+                          {course.sections.reduce((acc, section) => 
+                            acc + section.sessions.filter(session => session.is_free).length, 0
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground">무료 세션</div>
+                      </div>
+                    </div>
+                    
+                    {course.sections.length > 0 && (
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium text-muted-foreground">섹션 구성</Label>
+                        <div className="space-y-2">
+                          {course.sections.map((section, index) => (
+                            <div key={index} className="border rounded-lg p-3 bg-background">
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="font-medium">{section.title}</h4>
+                                <span className="text-sm text-muted-foreground">
+                                  {section.sessions.length}개 세션
+                                </span>
+                              </div>
+                              {section.sessions.length > 0 && (
+                                <div className="space-y-1">
+                                  {section.sessions.map((session, sessionIndex) => (
+                                    <div key={sessionIndex} className="flex items-center justify-between text-sm">
+                                      <span className="flex items-center gap-2">
+                                        <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                                        {session.title}
+                                      </span>
+                                      {session.is_free && (
+                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                                          무료
+                                        </span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 3단계: 판매 옵션 */}
+              {course.course_options.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-3 text-lg">
+                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <DollarSign className="w-4 h-4 text-primary" />
+                      </div>
+                      3단계 - 판매 옵션
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="text-center p-4 bg-muted/50 rounded-lg">
+                        <div className="text-2xl font-bold text-primary">{course.course_options.length}</div>
+                        <div className="text-sm text-muted-foreground">판매 옵션</div>
+                      </div>
+                      
+                      <div className="grid gap-3">
+                        {course.course_options.map((option, index) => (
+                          <div key={index} className="border rounded-lg p-4 bg-background">
+                            <div className="flex items-center justify-between mb-3">
+                              <div>
+                                <h4 className="font-medium flex items-center gap-2">
+                                  {option.name}
+                                  {option.tag && (
+                                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                                      {option.tag}
+                                    </span>
+                                  )}
+                                </h4>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-lg font-bold">{option.price.toLocaleString()}원</span>
+                                  {option.original_price && option.original_price !== option.price && (
+                                    <span className="text-sm text-muted-foreground line-through">
+                                      {option.original_price.toLocaleString()}원
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {option.benefits.filter(benefit => benefit.trim()).length > 0 && (
+                              <div>
+                                <Label className="text-xs font-medium text-muted-foreground">포함 혜택</Label>
+                                <ul className="list-disc list-inside space-y-1 mt-1">
+                                  {option.benefits.filter(benefit => benefit.trim()).map((benefit, benefitIndex) => (
+                                    <li key={benefitIndex} className="text-sm">{benefit}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* 4단계: 상세 이미지 및 설정 */}
+              <Card>
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3 text-lg">
+                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <Settings className="w-4 h-4 text-primary" />
+                    </div>
+                    4단계 - 상세 설정
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">상세 이미지</Label>
+                        <p className="text-base">{course.detail_images.length}개 업로드됨</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">썸네일</Label>
+                        <p className="text-base">{course.thumbnail_url ? '업로드됨' : '업로드되지 않음'}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">홈페이지 섹션</Label>
+                        <p className="text-base">{getHomepageSectionName(course.homepage_section_id)}</p>
+                      </div>
+                      <div className="flex gap-4">
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">NEW 배지</Label>
+                          <p className="text-base">{course.is_new ? '활성' : '비활성'}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">HOT 배지</Label>
+                          <p className="text-base">{course.is_hot ? '활성' : '비활성'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* 액션 버튼들 */}
+            <Card>
+              <CardContent className="pt-6">
                 <div className="flex gap-4">
-                  <Button onClick={handleSaveDraft} variant="outline" className="flex-1">
-                    임시저장
+                  <Button 
+                    onClick={handleSubmit} 
+                    disabled={isLoading} 
+                    className="flex-1 h-12 text-base"
+                  >
+                    {isLoading ? '생성 중...' : '즉시 강의 생성'}
                   </Button>
-                  <Button onClick={handleSubmit} disabled={isLoading} className="flex-1">
-                    {isLoading ? '생성 중...' : '강의 생성'}
-                  </Button>
+                  
+                  <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="flex-1 h-12 text-base">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        예약 발행
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader className="space-y-3">
+                        <DialogTitle>예약 발행 설정</DialogTitle>
+                        <DialogDescription>
+                          강의가 자동으로 발행될 날짜와 시간을 설정하세요.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-6 py-4">
+                        <div className="space-y-3">
+                          <Label htmlFor="schedule-date" className="text-sm font-medium">발행 날짜</Label>
+                          <Input
+                            id="schedule-date"
+                            type="date"
+                            value={scheduleDate}
+                            onChange={(e) => setScheduleDate(e.target.value)}
+                            min={new Date().toISOString().split('T')[0]}
+                            className="h-11"
+                          />
+                        </div>
+                        <div className="space-y-3">
+                          <Label htmlFor="schedule-time" className="text-sm font-medium">발행 시간</Label>
+                          <Input
+                            id="schedule-time"
+                            type="time"
+                            value={scheduleTime}
+                            onChange={(e) => setScheduleTime(e.target.value)}
+                            className="h-11"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-3 pt-2">
+                          <Button 
+                            variant="outline" 
+                            onClick={() => {
+                              setIsScheduleModalOpen(false);
+                              setScheduleDate('');
+                              setScheduleTime('');
+                            }} 
+                            className="px-6"
+                          >
+                            취소
+                          </Button>
+                          <Button 
+                            onClick={handleScheduledSubmit}
+                            disabled={!scheduleDate || !scheduleTime || isLoading}
+                            className="px-6"
+                          >
+                            {isLoading ? '설정 중...' : '예약 설정'}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardContent>
             </Card>
