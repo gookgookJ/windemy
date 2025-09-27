@@ -619,7 +619,7 @@ const CourseCreate = () => {
                     id="title"
                     value={course.title}
                     onChange={(e) => setCourse(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="예: React 기초부터 실전까지"
+                    placeholder="예: 해외구매대행 완전정복"
                     className="mt-2"
                   />
                 </div>
@@ -710,7 +710,7 @@ const CourseCreate = () => {
                       <Input
                         value={item}
                         onChange={(e) => updateListItem('what_you_will_learn', index, e.target.value)}
-                        placeholder="예: React의 기본 개념과 컴포넌트 작성법을 익힐 수 있습니다"
+                        placeholder="예: 해외구매대행 사이트 이용 방법을 마스터할 수 있습니다"
                       />
                       <Button
                         variant="outline"
@@ -1247,9 +1247,6 @@ const CourseCreate = () => {
                 </div>
                 
                 <div className="flex gap-4">
-                  <Button onClick={handleSaveDraft} variant="outline" className="flex-1">
-                    임시저장
-                  </Button>
                   <Button onClick={handleSubmit} disabled={isLoading} className="flex-1">
                     {isLoading ? '생성 중...' : '강의 생성'}
                   </Button>
@@ -1270,9 +1267,46 @@ const CourseCreate = () => {
         <div className="border-b bg-card">
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold">새 강의 만들기</h1>
+              <div className="flex items-center gap-4">
+                <h1 className="text-2xl font-bold">새 강의 만들기</h1>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    onClick={handleSaveDraft} 
+                    variant="outline" 
+                    size="sm"
+                    className="hover:bg-primary/10"
+                  >
+                    임시저장
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      const draft = localStorage.getItem('draft_course');
+                      if (draft) {
+                        const parsedDraft = JSON.parse(draft);
+                        setCourse(parsedDraft);
+                        toast({
+                          title: "임시저장본 불러오기",
+                          description: "저장된 임시저장본을 불러왔습니다."
+                        });
+                      } else {
+                        toast({
+                          title: "임시저장본 없음",
+                          description: "저장된 임시저장본이 없습니다.",
+                          variant: "destructive"
+                        });
+                      }
+                    }}
+                    variant="outline" 
+                    size="sm"
+                    className="hover:bg-secondary"
+                  >
+                    임시저장본 불러오기
+                  </Button>
+                </div>
+              </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>단계 {currentStep} / 5</span>
+              </div>
             </div>
           </div>
           
@@ -1327,7 +1361,6 @@ const CourseCreate = () => {
           </div>
         </div>
       </div>
-    </div>
     </AdminLayout>
   );
 };
