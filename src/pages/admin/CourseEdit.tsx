@@ -910,7 +910,7 @@ const AdminCourseEdit = () => {
 
                     <div className="space-y-2">
                       <Label>포함된 혜택</Label>
-                      {option.benefits.map((benefit, benefitIndex) => (
+                      {(option.benefits || []).map((benefit, benefitIndex) => (
                         <div key={benefitIndex} className="flex items-center gap-2">
                           <Input
                             value={benefit}
