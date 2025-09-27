@@ -315,51 +315,80 @@ const CourseCreate = () => {
       // 홈페이지 섹션에 강의 추가 (공개된 강의이고 섹션이 선택된 경우)
       if (course.is_published && course.homepage_section_id) {
         try {
-          // 선택한 섹션이 드래프트인지 확인하고, 드래프트가 아니면 드래프트 섹션을 찾아서 사용
+          // 선택한 섹션 정보 가져오기
           const { data: selectedSection } = await supabase
             .from('homepage_sections')
             .select('*')
             .eq('id', course.homepage_section_id)
             .maybeSingle();
 
+          if (!selectedSection) {
+            console.warn('Selected section not found');
+            return;
+          }
+
+          let publishedSectionId = course.homepage_section_id;
           let draftSectionId = course.homepage_section_id;
 
-          if (selectedSection && selectedSection.is_draft === false) {
-            // 동일한 section_type의 드래프트 섹션 찾기
+          // 선택한 섹션이 드래프트면 발행 섹션 찾기/생성, 발행 섹션이면 드래프트 섹션 찾기/생성
+          if (selectedSection.is_draft === true) {
+            // 드래프트 섹션이 선택됨 -> 발행 섹션 찾기
+            const { data: publishedSection } = await supabase
+              .from('homepage_sections')
+              .select('id')
+              .eq('section_type', selectedSection.section_type)
+              .eq('is_draft', false)
+              .maybeSingle();
+
+            if (publishedSection?.id) {
+              publishedSectionId = publishedSection.id;
+            }
+          } else {
+            // 발행 섹션이 선택됨 -> 드래프트 섹션 찾기/생성
             const { data: draftSection } = await supabase
               .from('homepage_sections')
               .select('id')
-              .eq('section_type', (selectedSection as any).section_type)
+              .eq('section_type', selectedSection.section_type)
               .eq('is_draft', true)
               .maybeSingle();
 
             if (draftSection?.id) {
-              draftSectionId = draftSection.id as string;
+              draftSectionId = draftSection.id;
             } else {
-              // 드래프트가 없으면 최소 필드로 생성
+              // 드래프트 섹션 생성
               const { data: newDraft } = await supabase
                 .from('homepage_sections')
                 .insert({
-                  title: (selectedSection as any).title,
-                  subtitle: (selectedSection as any).subtitle,
-                  icon_type: (selectedSection as any).icon_type,
-                  icon_value: (selectedSection as any).icon_value,
-                  section_type: (selectedSection as any).section_type,
+                  title: selectedSection.title,
+                  subtitle: selectedSection.subtitle,
+                  icon_type: selectedSection.icon_type,
+                  icon_value: selectedSection.icon_value,
+                  section_type: selectedSection.section_type,
                   filter_type: 'manual',
                   filter_value: null,
-                  display_limit: (selectedSection as any).display_limit ?? 15,
-                  order_index: (selectedSection as any).order_index ?? 0,
-                  is_active: (selectedSection as any).is_active ?? true,
+                  display_limit: selectedSection.display_limit ?? 15,
+                  order_index: selectedSection.order_index ?? 0,
+                  is_active: selectedSection.is_active ?? true,
                   is_draft: true
                 })
                 .select('id')
                 .single();
-              if (newDraft?.id) draftSectionId = newDraft.id as string;
+              if (newDraft?.id) draftSectionId = newDraft.id;
             }
           }
 
-          // 드래프트 섹션에 최상단으로 추가 (트리거로 기존 항목 밀림)
-          const { error: sectionCourseDraftError } = await supabase
+          // 발행 섹션에 추가 (메인페이지 노출용, is_draft: false)
+          const { error: publishedError } = await supabase
+            .from('homepage_section_courses')
+            .insert({
+              section_id: publishedSectionId,
+              course_id: courseResult.id,
+              order_index: 0,
+              is_draft: false
+            });
+
+          // 드래프트 섹션에 추가 (관리자 편집용, is_draft: true)
+          const { error: draftError } = await supabase
             .from('homepage_section_courses')
             .insert({
               section_id: draftSectionId,
@@ -367,9 +396,12 @@ const CourseCreate = () => {
               order_index: 0,
               is_draft: true
             });
-          if (sectionCourseDraftError) throw sectionCourseDraftError;
+
+          if (publishedError) console.warn('Failed to add to published section:', publishedError);
+          if (draftError) console.warn('Failed to add to draft section:', draftError);
+
         } catch (e) {
-          console.warn('Failed to add course to homepage draft section:', e);
+          console.warn('Failed to add course to homepage sections:', e);
         }
       }
 
