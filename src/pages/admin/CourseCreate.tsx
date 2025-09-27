@@ -14,9 +14,6 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { AdminLayout } from "@/layouts/AdminLayout";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { useAuth } from "@/hooks/useAuth";
-
 
 const CourseCreate = () => {
   interface Category {
@@ -62,7 +59,7 @@ const CourseCreate = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const defaultCourse = {
+  const [course, setCourse] = useState({
     title: '',
     category_id: '',
     instructor_id: '',
@@ -80,101 +77,15 @@ const CourseCreate = () => {
     homepage_section_id: '',
     is_new: false,
     is_hot: false
-  };
-  const [course, setCourse] = useState(defaultCourse);
-
-  const { user, isAdmin } = useAuth();
-  const [homepageSections, setHomepageSections] = useState<{id: string, title: string}[]>([]);
-  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
-  const [isManageDialogOpen, setIsManageDialogOpen] = useState(false);
-  const [draftName, setDraftName] = useState('');
-  const [drafts, setDrafts] = useState<{id: string; name: string; updated_at: string; created_by: string}[]>([]);
-
-  const mergeWithDefaults = (data: any) => ({
-    ...defaultCourse,
-    ...data,
-    what_you_will_learn: data?.what_you_will_learn ?? [''],
-    requirements: data?.requirements ?? [''],
-    sections: data?.sections ?? [],
-    course_options: data?.course_options ?? [],
-    detail_images: data?.detail_images ?? [],
   });
 
-  const fetchDrafts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('course_drafts')
-        .select('id, name, updated_at, created_by')
-        .order('updated_at', { ascending: false });
-      if (error) throw error;
-      setDrafts(data || []);
-    } catch (e: any) {
-      console.error('Failed to fetch drafts:', e);
-    }
-  };
-
-  const handleOpenSaveDialog = () => {
-    setDraftName(course.title || '새 임시저장본');
-    setIsSaveDialogOpen(true);
-  };
-
-  const saveDraftToServer = async () => {
-    if (!user?.id) {
-      toast({ title: '오류', description: '로그인이 필요합니다.', variant: 'destructive' });
-      return;
-    }
-    const name = draftName.trim();
-    if (!name) {
-      toast({ title: '이름 필요', description: '임시저장본 이름을 입력해주세요.', variant: 'destructive' });
-      return;
-    }
-    const { error } = await supabase
-      .from('course_drafts')
-      .upsert({ name, data: course, created_by: user.id } as any, { onConflict: 'created_by,name' });
-    if (error) {
-      toast({ title: '오류', description: '임시저장에 실패했습니다.', variant: 'destructive' });
-    } else {
-      toast({ title: '임시저장 완료', description: `"${name}" 이름으로 저장되었습니다.` });
-      setIsSaveDialogOpen(false);
-      fetchDrafts();
-    }
-  };
-
-  const loadDraftById = async (id: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('course_drafts')
-        .select('data')
-        .eq('id', id)
-        .single();
-      if (error) throw error;
-      const draftData = (data as any)?.data ?? {};
-      setCourse(mergeWithDefaults(draftData));
-      setCurrentStep(1); // Reset to first step when loading draft
-      toast({ title: '불러오기 완료', description: '임시저장본을 불러왔습니다.' });
-      setIsManageDialogOpen(false);
-    } catch (e: any) {
-      toast({ title: '오류', description: '임시저장본 불러오기에 실패했습니다.', variant: 'destructive' });
-    }
-  };
-
-  const deleteDraft = async (id: string) => {
-    try {
-      const { error } = await supabase.from('course_drafts').delete().eq('id', id);
-      if (error) throw error;
-      setDrafts(prev => prev.filter(d => d.id !== id));
-      toast({ title: '삭제 완료', description: '임시저장본이 삭제되었습니다.' });
-    } catch (e: any) {
-      toast({ title: '오류', description: '삭제에 실패했습니다.', variant: 'destructive' });
-    }
-  };
+  const [homepageSections, setHomepageSections] = useState<{id: string, title: string}[]>([]);
 
   // 초기 데이터 로드
   useEffect(() => {
     fetchCategories();
     fetchInstructors();
     fetchHomepageSections();
-    fetchDrafts();
     loadDraft();
   }, []);
 
@@ -708,7 +619,7 @@ const CourseCreate = () => {
                     id="title"
                     value={course.title}
                     onChange={(e) => setCourse(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="예: 해외구매대행 완전정복"
+                    placeholder="예: React 기초부터 실전까지"
                     className="mt-2"
                   />
                 </div>
@@ -799,7 +710,7 @@ const CourseCreate = () => {
                       <Input
                         value={item}
                         onChange={(e) => updateListItem('what_you_will_learn', index, e.target.value)}
-                        placeholder="예: 해외구매대행 사이트 이용 방법을 마스터할 수 있습니다"
+                        placeholder="예: React의 기본 개념과 컴포넌트 작성법을 익힐 수 있습니다"
                       />
                       <Button
                         variant="outline"
@@ -1336,6 +1247,9 @@ const CourseCreate = () => {
                 </div>
                 
                 <div className="flex gap-4">
+                  <Button onClick={handleSaveDraft} variant="outline" className="flex-1">
+                    임시저장
+                  </Button>
                   <Button onClick={handleSubmit} disabled={isLoading} className="flex-1">
                     {isLoading ? '생성 중...' : '강의 생성'}
                   </Button>
@@ -1356,35 +1270,14 @@ const CourseCreate = () => {
         <div className="border-b bg-card">
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <h1 className="text-2xl font-bold">새 강의 만들기</h1>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    onClick={handleOpenSaveDialog} 
-                    variant="outline" 
-                    size="sm"
-                    className="hover:bg-primary/10"
-                  >
-                    임시저장
-                  </Button>
-                  <Button 
-                    onClick={() => { fetchDrafts(); setIsManageDialogOpen(true); }}
-                    variant="outline" 
-                    size="sm"
-                    className="hover:bg-secondary"
-                  >
-                    임시저장본 관리
-                  </Button>
-                </div>
-              </div>
+              <h1 className="text-2xl font-bold">새 강의 만들기</h1>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>단계 {currentStep} / 5</span>
-              </div>
             </div>
           </div>
           
           {/* 진행 단계 표시 */}
-          <div className="hidden">
+          <div className="mt-6">
             <div className="flex items-center justify-between">
               {[1, 2, 3, 4, 5].map((step) => (
                 <div key={step} className="flex items-center">
@@ -1408,58 +1301,6 @@ const CourseCreate = () => {
           </div>
         </div>
       </div>
-
-      {/* Draft dialogs */}
-      <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>임시저장</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Label htmlFor="draftName">임시저장본 이름</Label>
-            <Input
-              id="draftName"
-              value={draftName}
-              onChange={(e) => setDraftName(e.target.value)}
-              placeholder="예: 2025-10-월간-해외구매대행"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)}>취소</Button>
-            <Button onClick={saveDraftToServer}>저장</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isManageDialogOpen} onOpenChange={setIsManageDialogOpen}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle>임시저장본 관리</DialogTitle>
-          </DialogHeader>
-          <div className="flex items-center justify-between mb-3">
-            <Button variant="outline" size="sm" onClick={fetchDrafts}>새로고침</Button>
-            <Button size="sm" onClick={handleOpenSaveDialog}>새 임시저장</Button>
-          </div>
-          <div className="space-y-2 max-h-80 overflow-y-auto">
-            {drafts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">임시저장본이 없습니다.</p>
-            ) : (
-              drafts.map((d) => (
-                <div key={d.id} className="flex items-center justify-between border rounded-md p-2">
-                  <div>
-                    <div className="font-medium">{d.name}</div>
-                    <div className="text-xs text-muted-foreground">업데이트: {new Date(d.updated_at).toLocaleString()}</div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => loadDraftById(d.id)}>불러오기</Button>
-                    <Button size="sm" variant="destructive" onClick={() => deleteDraft(d.id)}>삭제</Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <div className="container mx-auto px-6 py-8">
         {renderStepContent()}
@@ -1486,6 +1327,7 @@ const CourseCreate = () => {
           </div>
         </div>
       </div>
+    </div>
     </AdminLayout>
   );
 };

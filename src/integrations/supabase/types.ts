@@ -298,33 +298,6 @@ export type Database = {
           },
         ]
       }
-      course_drafts: {
-        Row: {
-          created_at: string
-          created_by: string
-          data: Json
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          data: Json
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          data?: Json
-          id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       course_favorites: {
         Row: {
           course_id: string
