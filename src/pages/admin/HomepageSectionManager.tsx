@@ -87,8 +87,48 @@ const HomepageSectionManager = () => {
     if (config) {
       fetchSectionData();
       fetchAvailableCourses();
+
+      // 실시간 업데이트 구독
+      const channel = supabase
+        .channel('homepage-section-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'homepage_section_courses'
+          },
+          (payload) => {
+            // 현재 섹션과 관련된 변경사항만 처리
+            const newSectionId = (payload.new as any)?.section_id;
+            const oldSectionId = (payload.old as any)?.section_id;
+            
+            if (section?.id && (newSectionId === section.id || oldSectionId === section.id)) {
+              // 데이터 새로고침
+              setTimeout(() => {
+                fetchSectionData();
+              }, 500);
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'courses'
+          },
+          () => {
+            fetchAvailableCourses(); // 사용 가능한 강의 목록 새로고침
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
-  }, [sectionType]);
+  }, [sectionType, section?.id]);
 
   const fetchSectionData = async () => {
     try {

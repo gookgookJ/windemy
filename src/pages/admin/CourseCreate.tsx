@@ -314,6 +314,7 @@ const CourseCreate = () => {
 
       // 홈페이지 섹션에 강의 추가 (공개된 강의이고 섹션이 선택된 경우)
       if (course.is_published && course.homepage_section_id) {
+        // 새 강의를 최상단(order_index: 0)에 추가하고 기존 강의들은 자동으로 뒤로 밀림
         const { error: sectionCourseError } = await supabase
           .from('homepage_section_courses')
           .insert({
