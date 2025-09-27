@@ -33,9 +33,10 @@ interface BulkUploadModalProps {
   onClose: () => void;
   onUpdate: () => void;
   sections: CourseSection[];
+  courseTitle: string;
 }
 
-export const BulkUploadModal = ({ isOpen, onClose, onUpdate, sections }: BulkUploadModalProps) => {
+export const BulkUploadModal = ({ isOpen, onClose, onUpdate, sections, courseTitle }: BulkUploadModalProps) => {
   const [files, setFiles] = useState<BulkUploadFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -202,7 +203,7 @@ export const BulkUploadModal = ({ isOpen, onClose, onUpdate, sections }: BulkUpl
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            자료 일괄 업로드
+            {courseTitle} - 자료 일괄 업로드
           </DialogTitle>
         </DialogHeader>
 

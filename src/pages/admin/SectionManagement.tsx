@@ -6,10 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Upload, File, Eye, ChevronDown, ChevronRight, FolderOpen, X } from 'lucide-react';
+import { Search, Upload, File, Eye, ChevronRight, Filter, FolderOpen } from 'lucide-react';
 import { MaterialUploadModal } from '@/components/admin/MaterialUploadModal';
 import { MaterialViewModal } from '@/components/admin/MaterialViewModal';
 import { BulkUploadModal } from '@/components/admin/BulkUploadModal';
@@ -33,29 +32,32 @@ interface CourseSection {
 }
 
 interface GroupedCourse {
-  course_id: string;
-  course_title: string;
+  courseId: string;
+  courseTitle: string;
   sections: CourseSection[];
-  total_sections: number;
-  sections_with_materials: number;
+  totalSections: number;
+  sectionsWithMaterials: number;
 }
 
 export const SectionManagement = () => {
   const [sections, setSections] = useState<CourseSection[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
+  
+  // Modal states
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadingSection, setUploadingSection] = useState<CourseSection | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingSection, setViewingSection] = useState<CourseSection | null>(null);
-  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
-  
+  const [bulkUploadCourse, setBulkUploadCourse] = useState<GroupedCourse | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchSections();
+    fetchCourses();
   }, []);
 
   const fetchSections = async () => {
@@ -72,7 +74,6 @@ export const SectionManagement = () => {
         .order('order_index', { ascending: true });
 
       if (error) throw error;
-      console.log('Admin sections data:', data);
       setSections(data || []);
     } catch (error) {
       console.error('Error fetching sections:', error);
@@ -86,6 +87,21 @@ export const SectionManagement = () => {
     }
   };
 
+  const fetchCourses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('id, title')
+        .eq('is_published', true)
+        .order('title');
+
+      if (error) throw error;
+      setCourses(data || []);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  };
+
   const handleUpload = (section: CourseSection) => {
     setUploadingSection(section);
     setIsUploadModalOpen(true);
@@ -96,17 +112,12 @@ export const SectionManagement = () => {
     setIsViewModalOpen(true);
   };
 
-  const toggleGroup = (courseId: string) => {
-    const newOpenGroups = new Set(openGroups);
-    if (newOpenGroups.has(courseId)) {
-      newOpenGroups.delete(courseId);
-    } else {
-      newOpenGroups.add(courseId);
-    }
-    setOpenGroups(newOpenGroups);
+  const handleBulkUpload = (group: GroupedCourse) => {
+    setBulkUploadCourse(group);
+    setIsBulkUploadOpen(true);
   };
 
-  // 검색 및 필터링 로직
+  // Filtering logic
   const filteredSections = sections.filter(section => {
     const matchesSearch = searchTerm === '' || 
       section.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -118,55 +129,42 @@ export const SectionManagement = () => {
     return matchesSearch && matchesCourse;
   });
 
-  // 강의별 그룹화
+  // Group sections by course
   const groupedSections = (): GroupedCourse[] => {
-    const courseMap = new Map<string, GroupedCourse>();
-    
-    filteredSections.forEach(section => {
-      if (!section.course) return;
+    const grouped = filteredSections.reduce((acc, section) => {
+      const courseId = section.course?.id;
+      const courseTitle = section.course?.title;
       
-      const courseId = section.course.id;
-      if (!courseMap.has(courseId)) {
-        courseMap.set(courseId, {
-          course_id: courseId,
-          course_title: section.course.title,
+      if (!courseId || !courseTitle) return acc;
+      
+      if (!acc[courseId]) {
+        acc[courseId] = {
+          courseId,
+          courseTitle,
           sections: [],
-          total_sections: 0,
-          sections_with_materials: 0
-        });
+          totalSections: 0,
+          sectionsWithMaterials: 0
+        };
       }
       
-      const group = courseMap.get(courseId)!;
-      group.sections.push(section);
-      group.total_sections++;
+      acc[courseId].sections.push(section);
+      acc[courseId].totalSections++;
       if (section.materials && section.materials.length > 0) {
-        group.sections_with_materials++;
+        acc[courseId].sectionsWithMaterials++;
       }
-    });
+      
+      return acc;
+    }, {} as Record<string, GroupedCourse>);
 
-    return Array.from(courseMap.values()).sort((a, b) => 
-      a.course_title.localeCompare(b.course_title)
-    );
-  };
-
-  // 고유한 강의 목록 추출
-  const uniqueCourses = Array.from(
-    new Map(sections.map(section => [section.course?.id, section.course]))
-      .values()
-  ).filter(course => course);
-
-  const clearFilters = () => {
-    setSearchTerm('');
-    setCourseFilter('all');
+    return Object.values(grouped).sort((a, b) => a.courseTitle.localeCompare(b.courseTitle));
   };
 
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center justify-center h-96">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p>자료 데이터를 불러오는 중...</p>
+            <div className="text-lg">로딩 중...</div>
           </div>
         </div>
       </AdminLayout>
@@ -176,216 +174,162 @@ export const SectionManagement = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        {/* Header */}
+        <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">자료 관리</h1>
-            <p className="text-muted-foreground mt-2">
-              강의별 섹션 자료 업로드 및 관리
+            <h1 className="text-3xl font-bold text-foreground mb-2">강의 자료 관리</h1>
+            <p className="text-muted-foreground">
+              강의 자료를 업로드하고 관리하세요 ({filteredSections.length}개)
             </p>
           </div>
-          <Button 
-            onClick={() => setIsBulkUploadOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Upload className="h-4 w-4" />
-            일괄 업로드
-          </Button>
         </div>
 
-        {/* 검색 및 필터 */}
+        {/* Filters */}
         <Card>
-          <CardHeader>
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="relative flex-1 min-w-[280px]">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  placeholder="강의명, 섹션명으로 검색..."
+                  placeholder="섹션명 또는 강의명으로 검색..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
-              
-              <div className="min-w-[200px]">
-                <Select value={courseFilter} onValueChange={setCourseFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="강의 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">전체 강의</SelectItem>
-                    {uniqueCourses.map((course) => (
-                      <SelectItem key={course.id} value={course.id}>
-                        {course.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {(searchTerm || courseFilter !== 'all') && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={clearFilters}
-                  className="flex items-center gap-2"
-                >
-                  <X className="h-4 w-4" />
-                  필터 초기화
-                </Button>
-              )}
+              <Select value={courseFilter} onValueChange={setCourseFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="강의 필터" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">모든 강의</SelectItem>
+                  {courses.map((course) => (
+                    <SelectItem key={course.id} value={course.id}>
+                      {course.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            
-            {(searchTerm || courseFilter !== 'all') && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-                <span>활성 필터:</span>
-                {searchTerm && (
-                  <Badge variant="secondary" className="text-xs">
-                    검색어: "{searchTerm}"
-                  </Badge>
-                )}
-                {courseFilter !== 'all' && (
-                  <Badge variant="secondary" className="text-xs">
-                    강의: "{uniqueCourses.find(c => c.id === courseFilter)?.title}"
-                  </Badge>
-                )}
-              </div>
-            )}
-          </CardHeader>
+          </CardContent>
         </Card>
 
-        {/* 강의별 자료 관리 */}
-        {loading ? (
-          <div className="flex items-center justify-center min-h-[200px]">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {groupedSections().map((courseGroup) => (
-              <Card key={courseGroup.course_id} className="overflow-hidden">
-                <Collapsible
-                  open={openGroups.has(courseGroup.course_id)}
-                  onOpenChange={() => toggleGroup(courseGroup.course_id)}
-                >
-                  <CollapsibleTrigger asChild>
-                    <CardHeader className="cursor-pointer transition-colors px-4 py-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {openGroups.has(courseGroup.course_id) ? (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <div>
-                            <h3 className="text-lg font-semibold">{courseGroup.course_title}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              총 {courseGroup.total_sections}개 섹션 • 자료 업로드: {courseGroup.sections_with_materials}개
-                            </p>
+        {/* Grouped Sections */}
+        <div className="space-y-3">
+          {groupedSections().map((group) => (
+            <Card key={group.courseId} className="animate-fade-in border-l-4 border-l-primary/20 shadow-sm">
+              <Collapsible defaultOpen={false}>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="group cursor-pointer transition-all duration-200 rounded-t-lg py-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                        <div>
+                          <CardTitle className="text-lg font-semibold leading-tight">{group.courseTitle}</CardTitle>
+                          <div className="flex gap-2 mt-1.5">
+                            <Badge variant="outline" className="text-xs py-0.5 px-2 bg-blue-50 text-blue-700 border-blue-200 pointer-events-none">
+                              총 {group.totalSections}개
+                            </Badge>
+                            <Badge 
+                              className={`text-xs py-0.5 px-2 pointer-events-none border ${
+                                group.sectionsWithMaterials === group.totalSections 
+                                ? "bg-green-50 text-green-700 border-green-200" 
+                                : "bg-orange-50 text-orange-700 border-orange-200"
+                              }`}
+                            >
+                              자료 {group.sectionsWithMaterials}/{group.totalSections}
+                            </Badge>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="pointer-events-none">
-                            {courseGroup.sections_with_materials}/{courseGroup.total_sections} 자료
-                          </Badge>
-                        </div>
                       </div>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  
-                  <CollapsibleContent>
-                    <CardContent className="p-0 border-t">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[30%] pl-4">섹션명</TableHead>
-                            <TableHead className="w-[25%]">첨부 자료</TableHead>
-                            <TableHead className="w-[45%] text-right pr-4">자료 관리</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {courseGroup.sections.map((section) => (
-                            <TableRow key={section.id} className="transition-colors">
-                              <TableCell className="pl-4">
-                                 <div className="space-y-1">
-                                   <div className="font-medium">
-                                     {section.title}
-                                   </div>
-                                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                     <span>순서: {section.order_index}</span>
-                                     <span>•</span>
-                                     <span>세션: {section.sessions?.length || 0}개</span>
-                                     <span>•</span>
-                                     <Badge variant="outline" className="text-xs">
-                                       자료 {section.materials?.length || 0}개
-                                     </Badge>
-                                   </div>
-                                 </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  {section.materials && section.materials.length > 0 ? (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleViewMaterials(section)}
-                                      className="h-auto p-2 text-left justify-start"
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <File className="h-4 w-4 text-green-600" />
-                                        <span className="text-sm font-medium text-green-600">
-                                          {section.materials.length}개 자료
-                                        </span>
-                                        <Eye className="h-3 w-3 text-muted-foreground" />
-                                      </div>
-                                    </Button>
-                                  ) : (
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                      <File className="h-4 w-4" />
-                                      <span className="text-sm">자료 없음</span>
-                                    </div>
-                                  )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleBulkUpload(group);
+                        }}
+                        className="hover-scale bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 px-3 py-1.5"
+                      >
+                        <Upload className="h-4 w-4 mr-1.5" />
+                        일괄 업로드
+                      </Button>
+                    </div>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="p-0 pt-0 border-t border-muted/30">
+                    <div className="divide-y divide-muted/30">
+                      {group.sections.map((section) => (
+                        <div key={section.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-sm">{section.title}</h4>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs text-muted-foreground">순서: {section.order_index}</span>
+                                  <span className="text-xs text-muted-foreground">•</span>
+                                  <span className="text-xs text-muted-foreground">세션: {section.sessions?.length || 0}개</span>
+                                  <span className="text-xs text-muted-foreground">•</span>
+                                  <Badge variant="outline" className="text-xs">
+                                    자료 {section.materials?.length || 0}개
+                                  </Badge>
                                 </div>
-                              </TableCell>
-                              <TableCell className="text-right pr-4">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  onClick={() => handleUpload(section)}
-                                  className="h-8 px-3"
-                                >
-                                  <Upload className="h-3 w-3 mr-1" />
-                                  자료 관리
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-            ))}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {section.materials && section.materials.length > 0 ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewMaterials(section)}
+                                className="text-xs h-8 px-3"
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                자료 보기
+                              </Button>
+                            ) : (
+                              <div className="text-xs text-muted-foreground px-3">자료 없음</div>
+                            )}
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleUpload(section)}
+                              className="text-xs h-8 px-3"
+                            >
+                              <Upload className="h-3 w-3 mr-1" />
+                              자료 관리
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
+          ))}
+          {groupedSections().length === 0 && (
+            <Card className="shadow-sm">
+              <CardContent className="p-8 text-center">
+                <FolderOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-medium mb-2">자료 관리할 강의가 없습니다</h3>
+                <p className="text-sm text-muted-foreground">
+                  {searchTerm || courseFilter !== 'all' 
+                    ? '검색 조건에 맞는 강의를 찾을 수 없습니다.' 
+                    : '먼저 강의를 생성하고 섹션을 추가해주세요.'
+                  }
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
-            {groupedSections().length === 0 && (
-              <Card>
-                <CardContent className="py-12">
-                  <div className="text-center">
-                    <FolderOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="text-lg font-medium mb-2">자료 관리할 강의가 없습니다</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {searchTerm || courseFilter !== 'all' 
-                        ? '검색 조건에 맞는 강의를 찾을 수 없습니다.' 
-                        : '먼저 강의를 생성하고 섹션을 추가해주세요.'
-                      }
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* 업로드 모달 */}
+        {/* Upload Modal */}
         <MaterialUploadModal
           isOpen={isUploadModalOpen}
           onClose={() => {
@@ -398,7 +342,7 @@ export const SectionManagement = () => {
           existingMaterials={uploadingSection?.materials || []}
         />
 
-        {/* 자료 보기 모달 */}
+        {/* View Modal */}
         <MaterialViewModal
           isOpen={isViewModalOpen}
           onClose={() => {
@@ -409,12 +353,16 @@ export const SectionManagement = () => {
           sectionTitle={viewingSection?.title || ''}
         />
 
-        {/* 일괄 업로드 모달 */}
+        {/* Bulk Upload Modal */}
         <BulkUploadModal
           isOpen={isBulkUploadOpen}
-          onClose={() => setIsBulkUploadOpen(false)}
+          onClose={() => {
+            setIsBulkUploadOpen(false);
+            setBulkUploadCourse(null);
+          }}
           onUpdate={fetchSections}
-          sections={sections}
+          sections={bulkUploadCourse?.sections || []}
+          courseTitle={bulkUploadCourse?.courseTitle || ''}
         />
       </div>
     </AdminLayout>
