@@ -353,30 +353,30 @@ export const SessionManagement = () => {
         </Card>
 
         {/* Grouped Sessions */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {groupedSessions().map((group) => (
-            <Card key={group.courseId} className="animate-fade-in border-l-4 border-l-primary/20">
-              <Collapsible defaultOpen>
+            <Card key={group.courseId} className="animate-fade-in border-l-4 border-l-primary/20 shadow-sm">
+              <Collapsible defaultOpen={false}>
                 <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-muted/30 transition-all duration-200 rounded-t-lg">
+                  <CardHeader className="cursor-pointer hover:bg-muted/30 transition-all duration-200 rounded-t-lg py-4">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                      <div className="flex items-center gap-3">
+                        <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
                         <div>
-                          <CardTitle className="text-xl font-semibold">{group.courseTitle}</CardTitle>
-                          <div className="flex gap-3 mt-2">
-                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                              총 {group.totalSessions}개 세션
+                          <CardTitle className="text-lg font-semibold leading-tight">{group.courseTitle}</CardTitle>
+                          <div className="flex gap-2 mt-1.5">
+                            <Badge variant="outline" className="text-xs py-0.5 px-2 bg-blue-50 text-blue-700 border-blue-200">
+                              총 {group.totalSessions}개
                             </Badge>
                             <Badge 
                               variant={group.sessionsWithVideo === group.totalSessions ? "default" : "secondary"} 
-                              className={`text-xs ${
+                              className={`text-xs py-0.5 px-2 ${
                                 group.sessionsWithVideo === group.totalSessions 
                                 ? "bg-green-100 text-green-700 border-green-200" 
                                 : "bg-orange-50 text-orange-700 border-orange-200"
                               }`}
                             >
-                              영상 {group.sessionsWithVideo}/{group.totalSessions}개
+                              영상 {group.sessionsWithVideo}/{group.totalSessions}
                             </Badge>
                           </div>
                         </div>
@@ -388,16 +388,16 @@ export const SessionManagement = () => {
                           e.stopPropagation();
                           handleBulkUpload(group);
                         }}
-                        className="hover-scale bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700"
+                        className="hover-scale bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 px-3 py-1.5"
                       >
-                        <Upload className="h-4 w-4 mr-2" />
+                        <Upload className="h-4 w-4 mr-1.5" />
                         일괄 업로드
                       </Button>
                     </div>
                   </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <CardContent className="p-0 border-t border-muted/30">
+                  <CardContent className="p-0 pt-0 border-t border-muted/30">
                     <SessionTable
                       sessions={group.sessions}
                       currentPage={1}
@@ -413,8 +413,8 @@ export const SessionManagement = () => {
             </Card>
           ))}
           {groupedSessions().length === 0 && (
-            <Card>
-              <CardContent className="p-12 text-center">
+            <Card className="shadow-sm">
+              <CardContent className="p-8 text-center">
                 <p className="text-muted-foreground">검색 결과가 없습니다.</p>
               </CardContent>
             </Card>
