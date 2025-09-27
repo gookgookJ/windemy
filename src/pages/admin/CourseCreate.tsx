@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Upload, FileImage, BookOpen, Video, DollarSign, FileText, Users, Settings, GripVertical } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Plus, Trash2, Upload, FileImage, BookOpen, Video, DollarSign, FileText, Users, Settings, GripVertical, Save, FolderOpen } from 'lucide-react';
 import { FileUpload } from "@/components/ui/file-upload";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -80,6 +81,12 @@ const CourseCreate = () => {
   });
 
   const [homepageSections, setHomepageSections] = useState<{id: string, title: string}[]>([]);
+  
+  // 임시저장 관리 상태
+  const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
+  const [isNameDraftModalOpen, setIsNameDraftModalOpen] = useState(false);
+  const [draftName, setDraftName] = useState('');
+  const [savedDrafts, setSavedDrafts] = useState<{id: string, name: string, created_at: string}[]>([]);
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -87,6 +94,7 @@ const CourseCreate = () => {
     fetchInstructors();
     fetchHomepageSections();
     loadDraft();
+    fetchSavedDrafts();
   }, []);
 
   // 자동저장
@@ -316,6 +324,113 @@ const CourseCreate = () => {
       title: "임시저장 완료",
       description: "강의가 임시저장되었습니다."
     });
+  };
+
+  // 임시저장 관리 함수들
+  const fetchSavedDrafts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('course_drafts')
+        .select('id, name, created_at')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setSavedDrafts(data || []);
+    } catch (error: any) {
+      console.error('Failed to fetch saved drafts:', error);
+    }
+  };
+
+  const handleSaveNamedDraft = async () => {
+    if (!draftName.trim()) {
+      toast({
+        title: "오류",
+        description: "임시저장본 이름을 입력해주세요.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('course_drafts')
+        .insert({
+          name: draftName.trim(),
+          data: course,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "성공",
+        description: "임시저장본이 저장되었습니다."
+      });
+
+      setDraftName('');
+      setIsNameDraftModalOpen(false);
+      await fetchSavedDrafts();
+    } catch (error: any) {
+      console.error('Failed to save named draft:', error);
+      toast({
+        title: "오류",
+        description: "임시저장본 저장에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLoadDraft = async (draftId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('course_drafts')
+        .select('data')
+        .eq('id', draftId)
+        .single();
+
+      if (error) throw error;
+
+      setCourse(data.data);
+      setCurrentStep(1);
+      setIsDraftModalOpen(false);
+      
+      toast({
+        title: "성공",
+        description: "임시저장본이 불러와졌습니다."
+      });
+    } catch (error: any) {
+      console.error('Failed to load draft:', error);
+      toast({
+        title: "오류",
+        description: "임시저장본 불러오기에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteDraft = async (draftId: string) => {
+    try {
+      const { error } = await supabase
+        .from('course_drafts')
+        .delete()
+        .eq('id', draftId);
+
+      if (error) throw error;
+
+      toast({
+        title: "성공",
+        description: "임시저장본이 삭제되었습니다."
+      });
+
+      await fetchSavedDrafts();
+    } catch (error: any) {
+      console.error('Failed to delete draft:', error);
+      toast({
+        title: "오류",
+        description: "임시저장본 삭제에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleInstructorSelect = async (val: string) => {
