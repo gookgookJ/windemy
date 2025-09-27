@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Plus, Trash2, Upload, FileImage, BookOpen, Video, DollarSign, FileText, Users, Settings, GripVertical, Save, FolderOpen, Calendar, Clock, CheckCircle, ArrowRight } from 'lucide-react';
 import { FileUpload } from "@/components/ui/file-upload";
@@ -1422,144 +1423,172 @@ const CourseCreate = () => {
         const getInstructorName = (id: string) => instructors.find(i => i.id === id)?.full_name || '선택되지 않음';
         const getHomepageSectionName = (id: string) => homepageSections.find(s => s.id === id)?.title || '선택되지 않음';
         
+        const totalSessions = course.sections.reduce((acc, section) => acc + section.sessions.length, 0);
+        const freeSessions = course.sections.reduce((acc, section) => 
+          acc + section.sessions.filter(session => session.is_free).length, 0
+        );
+        
         return (
           <div className="space-y-8">
             {/* 헤더 */}
             <div className="text-center space-y-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto animate-scale-in">
                 <CheckCircle className="w-8 h-8 text-primary" />
               </div>
               <div>
                 <h2 className="text-3xl font-bold mb-2">강의 생성 완료</h2>
                 <p className="text-lg text-muted-foreground">
-                  입력하신 모든 정보를 확인하고 강의를 생성하거나 예약 발행하세요.
+                  모든 정보가 입력되었습니다. 강의를 생성하거나 예약 발행하세요.
                 </p>
               </div>
             </div>
 
-            {/* 종합 정보 요약 */}
-            <div className="grid gap-6">
-              {/* 1단계: 기본 정보 */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-3 text-lg">
-                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <BookOpen className="w-4 h-4 text-primary" />
+            {/* 핵심 정보 대시보드 */}
+            <Card className="animate-fade-in">
+              <CardHeader className="pb-6">
+                <CardTitle className="text-xl flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 text-primary" />
+                  </div>
+                  {course.title || '제목 없음'}
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  {getCategoryName(course.category_id)} • {getInstructorName(course.instructor_id)}
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/30 rounded-xl">
+                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center mx-auto mb-3">
+                      <Video className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
-                    1단계 - 기본 정보
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-3">
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">강의 제목</Label>
-                        <p className="text-base font-medium">{course.title || '입력되지 않음'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">카테고리</Label>
-                        <p className="text-base">{getCategoryName(course.category_id)}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">강사</Label>
-                        <p className="text-base">{getInstructorName(course.instructor_id)}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">난이도</Label>
-                        <p className="text-base">{course.level === 'beginner' ? '초급' : course.level === 'intermediate' ? '중급' : '고급'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">강의 유형</Label>
-                        <p className="text-base">{course.course_type === 'VOD' ? '온디맨드' : 'LIVE'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">기본 가격</Label>
-                        <p className="text-base">{course.price.toLocaleString()}원</p>
-                      </div>
-                    </div>
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{course.sections.length}</div>
+                    <div className="text-sm text-blue-600/70 dark:text-blue-400/70">섹션</div>
                   </div>
                   
-                  {course.what_you_will_learn.filter(item => item.trim()).length > 0 && (
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">학습 목표</Label>
-                      <ul className="list-disc list-inside space-y-1 mt-2">
-                        {course.what_you_will_learn.filter(item => item.trim()).map((item, index) => (
-                          <li key={index} className="text-sm">{item}</li>
-                        ))}
-                      </ul>
+                  <div className="text-center p-4 bg-green-50 dark:bg-green-950/30 rounded-xl">
+                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center mx-auto mb-3">
+                      <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
                     </div>
-                  )}
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{totalSessions}</div>
+                    <div className="text-sm text-green-600/70 dark:text-green-400/70">총 세션</div>
+                  </div>
                   
-                  {course.requirements.filter(item => item.trim()).length > 0 && (
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">수강 요구사항</Label>
-                      <ul className="list-disc list-inside space-y-1 mt-2">
-                        {course.requirements.filter(item => item.trim()).map((item, index) => (
-                          <li key={index} className="text-sm">{item}</li>
-                        ))}
-                      </ul>
+                  <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/30 rounded-xl">
+                    <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center mx-auto mb-3">
+                      <DollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{course.course_options.length}</div>
+                    <div className="text-sm text-purple-600/70 dark:text-purple-400/70">판매 옵션</div>
+                  </div>
+                  
+                  <div className="text-center p-4 bg-orange-50 dark:bg-orange-950/30 rounded-xl">
+                    <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center mx-auto mb-3">
+                      <FileImage className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{course.detail_images.length}</div>
+                    <div className="text-sm text-orange-600/70 dark:text-orange-400/70">상세 이미지</div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 flex justify-center gap-8 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span>무료 세션: {freeSessions}개</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <span>기본 가격: {course.price.toLocaleString()}원</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                    <span>{course.level === 'beginner' ? '초급' : course.level === 'intermediate' ? '중급' : '고급'} 레벨</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              {/* 2단계: 커리큘럼 */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-3 text-lg">
-                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <Video className="w-4 h-4 text-primary" />
-                    </div>
-                    2단계 - 커리큘럼
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-primary">{course.sections.length}</div>
-                        <div className="text-sm text-muted-foreground">섹션</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-primary">
-                          {course.sections.reduce((acc, section) => acc + section.sessions.length, 0)}
+            {/* 상세 정보 아코디언 */}
+            <Card className="animate-fade-in">
+              <CardHeader>
+                <CardTitle className="text-lg">상세 정보</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  각 섹션을 클릭하여 자세한 내용을 확인하세요.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <Accordion type="multiple" className="w-full">
+                  {/* 기본 정보 */}
+                  <AccordionItem value="basic-info">
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                          <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <div className="text-sm text-muted-foreground">세션</div>
+                        <span>기본 정보 및 학습 목표</span>
                       </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-primary">
-                          {course.sections.reduce((acc, section) => 
-                            acc + section.sessions.filter(session => session.is_free).length, 0
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4">
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                          {course.what_you_will_learn.filter(item => item.trim()).length > 0 && (
+                            <div>
+                              <Label className="text-sm font-medium text-muted-foreground">학습 목표</Label>
+                              <ul className="list-disc list-inside space-y-1 mt-2 text-sm">
+                                {course.what_you_will_learn.filter(item => item.trim()).map((item, index) => (
+                                  <li key={index}>{item}</li>
+                                ))}
+                              </ul>
+                            </div>
                           )}
                         </div>
-                        <div className="text-sm text-muted-foreground">무료 세션</div>
+                        <div className="space-y-4">
+                          {course.requirements.filter(item => item.trim()).length > 0 && (
+                            <div>
+                              <Label className="text-sm font-medium text-muted-foreground">수강 요구사항</Label>
+                              <ul className="list-disc list-inside space-y-1 mt-2 text-sm">
+                                {course.requirements.filter(item => item.trim()).map((item, index) => (
+                                  <li key={index}>{item}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    
-                    {course.sections.length > 0 && (
-                      <div className="space-y-3">
-                        <Label className="text-sm font-medium text-muted-foreground">섹션 구성</Label>
-                        <div className="space-y-2">
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  {/* 커리큘럼 */}
+                  <AccordionItem value="curriculum">
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
+                          <Video className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        <span>커리큘럼 구성 ({course.sections.length}개 섹션, {totalSessions}개 세션)</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4">
+                      {course.sections.length > 0 ? (
+                        <div className="space-y-3">
                           {course.sections.map((section, index) => (
-                            <div key={index} className="border rounded-lg p-3 bg-background">
-                              <div className="flex items-center justify-between mb-2">
+                            <div key={index} className="border rounded-lg p-4 bg-muted/30">
+                              <div className="flex items-center justify-between mb-3">
                                 <h4 className="font-medium">{section.title}</h4>
-                                <span className="text-sm text-muted-foreground">
+                                <span className="text-sm text-muted-foreground bg-background px-2 py-1 rounded">
                                   {section.sessions.length}개 세션
                                 </span>
                               </div>
                               {section.sessions.length > 0 && (
-                                <div className="space-y-1">
+                                <div className="grid gap-2">
                                   {section.sessions.map((session, sessionIndex) => (
-                                    <div key={sessionIndex} className="flex items-center justify-between text-sm">
+                                    <div key={sessionIndex} className="flex items-center justify-between text-sm p-2 bg-background rounded">
                                       <span className="flex items-center gap-2">
                                         <ArrowRight className="w-3 h-3 text-muted-foreground" />
                                         {session.title}
                                       </span>
                                       {session.is_free && (
-                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                                        <span className="text-xs bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 px-2 py-1 rounded">
                                           무료
                                         </span>
                                       )}
@@ -1570,135 +1599,130 @@ const CourseCreate = () => {
                             </div>
                           ))}
                         </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                      ) : (
+                        <p className="text-muted-foreground text-center py-4">등록된 섹션이 없습니다.</p>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
 
-              {/* 3단계: 판매 옵션 */}
-              {course.course_options.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-3 text-lg">
-                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <DollarSign className="w-4 h-4 text-primary" />
-                      </div>
-                      3단계 - 판매 옵션
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <div className="text-2xl font-bold text-primary">{course.course_options.length}</div>
-                        <div className="text-sm text-muted-foreground">판매 옵션</div>
-                      </div>
-                      
-                      <div className="grid gap-3">
-                        {course.course_options.map((option, index) => (
-                          <div key={index} className="border rounded-lg p-4 bg-background">
-                            <div className="flex items-center justify-between mb-3">
-                              <div>
-                                <h4 className="font-medium flex items-center gap-2">
-                                  {option.name}
-                                  {option.tag && (
-                                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                                      {option.tag}
-                                    </span>
-                                  )}
-                                </h4>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-lg font-bold">{option.price.toLocaleString()}원</span>
-                                  {option.original_price && option.original_price !== option.price && (
-                                    <span className="text-sm text-muted-foreground line-through">
-                                      {option.original_price.toLocaleString()}원
-                                    </span>
-                                  )}
+                  {/* 판매 옵션 */}
+                  {course.course_options.length > 0 && (
+                    <AccordionItem value="pricing">
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center">
+                            <DollarSign className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <span>판매 옵션 ({course.course_options.length}개)</span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="pt-4">
+                        <div className="grid gap-4">
+                          {course.course_options.map((option, index) => (
+                            <div key={index} className="border rounded-lg p-4 bg-muted/30">
+                              <div className="flex items-center justify-between mb-3">
+                                <div>
+                                  <h4 className="font-medium flex items-center gap-2">
+                                    {option.name}
+                                    {option.tag && (
+                                      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                                        {option.tag}
+                                      </span>
+                                    )}
+                                  </h4>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-lg font-bold">{option.price.toLocaleString()}원</span>
+                                    {option.original_price && option.original_price !== option.price && (
+                                      <span className="text-sm text-muted-foreground line-through">
+                                        {option.original_price.toLocaleString()}원
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
+                              
+                              {option.benefits.filter(benefit => benefit.trim()).length > 0 && (
+                                <div>
+                                  <Label className="text-xs font-medium text-muted-foreground">포함 혜택</Label>
+                                  <ul className="list-disc list-inside space-y-1 mt-2 text-sm">
+                                    {option.benefits.filter(benefit => benefit.trim()).map((benefit, benefitIndex) => (
+                                      <li key={benefitIndex}>{benefit}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
                             </div>
-                            
-                            {option.benefits.filter(benefit => benefit.trim()).length > 0 && (
-                              <div>
-                                <Label className="text-xs font-medium text-muted-foreground">포함 혜택</Label>
-                                <ul className="list-disc list-inside space-y-1 mt-1">
-                                  {option.benefits.filter(benefit => benefit.trim()).map((benefit, benefitIndex) => (
-                                    <li key={benefitIndex} className="text-sm">{benefit}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
 
-              {/* 4단계: 상세 이미지 및 설정 */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-3 text-lg">
-                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <Settings className="w-4 h-4 text-primary" />
-                    </div>
-                    4단계 - 상세 설정
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-3">
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">상세 이미지</Label>
-                        <p className="text-base">{course.detail_images.length}개 업로드됨</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">썸네일</Label>
-                        <p className="text-base">{course.thumbnail_url ? '업로드됨' : '업로드되지 않음'}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">홈페이지 섹션</Label>
-                        <p className="text-base">{getHomepageSectionName(course.homepage_section_id)}</p>
-                      </div>
-                      <div className="flex gap-4">
-                        <div>
-                          <Label className="text-sm font-medium text-muted-foreground">NEW 배지</Label>
-                          <p className="text-base">{course.is_new ? '활성' : '비활성'}</p>
+                  {/* 추가 설정 */}
+                  <AccordionItem value="settings">
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center">
+                          <Settings className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                         </div>
-                        <div>
-                          <Label className="text-sm font-medium text-muted-foreground">HOT 배지</Label>
-                          <p className="text-base">{course.is_hot ? '활성' : '비활성'}</p>
+                        <span>추가 설정 및 이미지</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4">
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                          <div>
+                            <Label className="text-sm font-medium text-muted-foreground">홈페이지 섹션</Label>
+                            <p className="text-sm">{getHomepageSectionName(course.homepage_section_id)}</p>
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-muted-foreground">썸네일 이미지</Label>
+                            <p className="text-sm">{course.thumbnail_url ? '업로드됨' : '업로드되지 않음'}</p>
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="flex gap-6">
+                            <div>
+                              <Label className="text-sm font-medium text-muted-foreground">NEW 배지</Label>
+                              <p className="text-sm">{course.is_new ? '✅ 활성' : '❌ 비활성'}</p>
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium text-muted-foreground">HOT 배지</Label>
+                              <p className="text-sm">{course.is_hot ? '✅ 활성' : '❌ 비활성'}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-muted-foreground">강의 유형</Label>
+                            <p className="text-sm">{course.course_type === 'VOD' ? '온디맨드 (VOD)' : 'LIVE 강의'}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </CardContent>
+            </Card>
 
             {/* 액션 버튼들 */}
-            <Card>
+            <Card className="animate-fade-in">
               <CardContent className="pt-6">
                 <div className="flex gap-4">
                   <Button 
                     onClick={handleSubmit} 
                     disabled={isLoading} 
-                    className="flex-1 h-12 text-base"
+                    className="flex-1 h-12 text-base hover-scale"
                   >
                     {isLoading ? '생성 중...' : '즉시 강의 생성'}
                   </Button>
                   
                   <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" className="flex-1 h-12 text-base">
+                      <Button variant="outline" className="flex-1 h-12 text-base hover-scale">
                         <Calendar className="w-4 h-4 mr-2" />
                         예약 발행
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-md">
+                    <DialogContent className="max-w-md animate-scale-in">
                       <DialogHeader className="space-y-3">
                         <DialogTitle>예약 발행 설정</DialogTitle>
                         <DialogDescription>
