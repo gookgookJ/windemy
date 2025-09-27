@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Upload, File, Eye, ChevronRight, Filter, FolderOpen } from 'lucide-react';
 import { MaterialUploadModal } from '@/components/admin/MaterialUploadModal';
 import { MaterialViewModal } from '@/components/admin/MaterialViewModal';
-import { BulkUploadModal } from '@/components/admin/BulkUploadModal';
 
 interface CourseSection {
   id: string;
@@ -51,8 +51,6 @@ export const SectionManagement = () => {
   const [uploadingSection, setUploadingSection] = useState<CourseSection | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingSection, setViewingSection] = useState<CourseSection | null>(null);
-  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
-  const [bulkUploadCourse, setBulkUploadCourse] = useState<GroupedCourse | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -110,11 +108,6 @@ export const SectionManagement = () => {
   const handleViewMaterials = (section: CourseSection) => {
     setViewingSection(section);
     setIsViewModalOpen(true);
-  };
-
-  const handleBulkUpload = (group: GroupedCourse) => {
-    setBulkUploadCourse(group);
-    setIsBulkUploadOpen(true);
   };
 
   // Filtering logic
@@ -243,70 +236,72 @@ export const SectionManagement = () => {
                           </div>
                         </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleBulkUpload(group);
-                        }}
-                        className="hover-scale bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 px-3 py-1.5"
-                      >
-                        <Upload className="h-4 w-4 mr-1.5" />
-                        일괄 업로드
-                      </Button>
                     </div>
                   </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <CardContent className="p-0 pt-0 border-t border-muted/30">
-                    <div className="divide-y divide-muted/30">
-                      {group.sections.map((section) => (
-                        <div key={section.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3">
-                              <div className="flex-1">
-                                <h4 className="font-medium text-sm">{section.title}</h4>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-xs text-muted-foreground">순서: {section.order_index}</span>
-                                  <span className="text-xs text-muted-foreground">•</span>
-                                  <span className="text-xs text-muted-foreground">세션: {section.sessions?.length || 0}개</span>
-                                  <span className="text-xs text-muted-foreground">•</span>
-                                  <Badge variant="outline" className="text-xs">
-                                    자료 {section.materials?.length || 0}개
-                                  </Badge>
+                    <div className="border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/20">
+                            <TableHead className="w-[40%] py-1.5 text-xs font-medium text-muted-foreground">섹션명</TableHead>
+                            <TableHead className="w-[20%] py-1.5 text-xs font-medium text-muted-foreground">상태</TableHead>
+                            <TableHead className="w-[40%] py-1.5 text-xs font-medium text-muted-foreground text-right">자료 관리</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {group.sections.map((section) => (
+                            <TableRow key={section.id} className="border-b border-muted/30">
+                              <TableCell className="py-1.5 px-3">
+                                <div className="font-medium text-sm truncate" title={section.title}>
+                                  {section.title}
                                 </div>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            {section.materials && section.materials.length > 0 ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleViewMaterials(section)}
-                                className="text-xs h-8 px-3"
-                              >
-                                <Eye className="h-3 w-3 mr-1" />
-                                자료 보기
-                              </Button>
-                            ) : (
-                              <div className="text-xs text-muted-foreground px-3">자료 없음</div>
-                            )}
-                            
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => handleUpload(section)}
-                              className="text-xs h-8 px-3"
-                            >
-                              <Upload className="h-3 w-3 mr-1" />
-                              자료 관리
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+                                <div className="text-xs text-muted-foreground mt-0.5">
+                                  순서: {section.order_index} • 세션: {section.sessions?.length || 0}개
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-1.5 px-3">
+                                {section.materials && section.materials.length > 0 ? (
+                                  <Badge variant="default" className="text-xs bg-green-500 text-white border-green-500 px-2 py-0.5 pointer-events-none">
+                                    <File className="h-3 w-3 mr-1" />
+                                    자료 {section.materials.length}개
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600 border-gray-300 px-2 py-0.5 pointer-events-none">
+                                    <File className="h-3 w-3 mr-1" />
+                                    자료 없음
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="py-1.5 px-3 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => handleUpload(section)}
+                                    className="h-6 px-2 text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
+                                  >
+                                    <Upload className="h-3 w-3 mr-1" />
+                                    업로드
+                                  </Button>
+                                  {section.materials && section.materials.length > 0 && (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      onClick={() => handleViewMaterials(section)}
+                                      className="h-6 px-2 text-xs text-green-600 border-green-200 hover:bg-green-50"
+                                    >
+                                      <Eye className="h-3 w-3 mr-1" />
+                                      보기
+                                    </Button>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
                   </CardContent>
                 </CollapsibleContent>
@@ -351,18 +346,6 @@ export const SectionManagement = () => {
           }}
           materials={viewingSection?.materials || []}
           sectionTitle={viewingSection?.title || ''}
-        />
-
-        {/* Bulk Upload Modal */}
-        <BulkUploadModal
-          isOpen={isBulkUploadOpen}
-          onClose={() => {
-            setIsBulkUploadOpen(false);
-            setBulkUploadCourse(null);
-          }}
-          onUpdate={fetchSections}
-          sections={bulkUploadCourse?.sections || []}
-          courseTitle={bulkUploadCourse?.courseTitle || ''}
         />
       </div>
     </AdminLayout>
