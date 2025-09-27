@@ -719,9 +719,9 @@ const CourseCreate = () => {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <Card>
-              <CardHeader>
+              <CardHeader className="space-y-3">
                 <CardTitle>
                   기본 정보
                 </CardTitle>
@@ -729,22 +729,22 @@ const CourseCreate = () => {
                   강의의 기본 정보를 입력해주세요.
                 </p>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <Label htmlFor="title">강의 제목 *</Label>
+              <CardContent className="space-y-8">
+                <div className="space-y-3">
+                  <Label htmlFor="title" className="text-sm font-medium">강의 제목 *</Label>
                   <Input
                     id="title"
                     value={course.title}
                     onChange={(e) => setCourse(prev => ({ ...prev, title: e.target.value }))}
                     placeholder="예: React 기초부터 실전까지"
-                    className="mt-2"
+                    className="h-11"
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="category">카테고리 *</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="category" className="text-sm font-medium">카테고리 *</Label>
                   <Select value={course.category_id} onValueChange={(value) => setCourse(prev => ({ ...prev, category_id: value }))}>
-                    <SelectTrigger className="mt-2">
+                    <SelectTrigger className="h-11">
                       <SelectValue placeholder="카테고리를 선택하세요" />
                     </SelectTrigger>
                     <SelectContent>
@@ -757,10 +757,10 @@ const CourseCreate = () => {
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="instructor">강사 선택 *</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="instructor" className="text-sm font-medium">강사 선택 *</Label>
                   <Select value={course.instructor_id} onValueChange={handleInstructorSelect}>
-                    <SelectTrigger className="mt-2">
+                    <SelectTrigger className="h-11">
                       <SelectValue placeholder="강사를 선택하세요" />
                     </SelectTrigger>
                     <SelectContent>
@@ -773,10 +773,10 @@ const CourseCreate = () => {
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="level">난이도</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="level" className="text-sm font-medium">난이도</Label>
                   <Select value={course.level} onValueChange={(value) => setCourse(prev => ({ ...prev, level: value }))}>
-                    <SelectTrigger className="mt-2">
+                    <SelectTrigger className="h-11">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -787,10 +787,10 @@ const CourseCreate = () => {
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="course_type">강의 타입</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="course_type" className="text-sm font-medium">강의 타입</Label>
                   <Select value={course.course_type} onValueChange={(value) => setCourse(prev => ({ ...prev, course_type: value }))}>
-                    <SelectTrigger className="mt-2">
+                    <SelectTrigger className="h-11">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -823,16 +823,18 @@ const CourseCreate = () => {
               <CardContent>
                 <div className="space-y-3">
                   {course.what_you_will_learn.map((item, index) => (
-                    <div key={index} className="flex gap-2">
+                    <div key={index} className="flex gap-3">
                       <Input
                         value={item}
                         onChange={(e) => updateListItem('what_you_will_learn', index, e.target.value)}
                         placeholder="예: React의 기본 개념과 컴포넌트 작성법을 익힐 수 있습니다"
+                        className="h-11"
                       />
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => removeListItem('what_you_will_learn', index)}
+                        className="h-11 px-3"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -841,6 +843,7 @@ const CourseCreate = () => {
                   <Button
                     variant="outline"
                     onClick={() => addListItem('what_you_will_learn')}
+                    className="h-11"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     항목 추가
@@ -851,15 +854,15 @@ const CourseCreate = () => {
 
             {/* 커리큘럼 구성 */}
             <Card>
-              <CardHeader>
+              <CardHeader className="space-y-3">
                 <CardTitle>
                   커리큘럼 구성
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
+                <div className="space-y-8">
                   {course.sections.length === 0 ? (
-                    <div className="text-center py-16 border-2 border-dashed border-primary/20 rounded-xl bg-primary/5">
+                    <div className="text-center py-20 border-2 border-dashed border-primary/20 rounded-xl bg-primary/5">
                       <div className="max-w-md mx-auto">
                         <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
                           <BookOpen className="w-8 h-8 text-primary" />
@@ -1397,28 +1400,29 @@ const CourseCreate = () => {
                         임시저장
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader className="space-y-3">
                         <DialogTitle>임시저장하기</DialogTitle>
                         <DialogDescription>
                           현재 입력된 내용을 임시저장본으로 저장합니다.
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="draft-name">임시저장본 이름</Label>
+                      <div className="space-y-6 py-4">
+                        <div className="space-y-3">
+                          <Label htmlFor="draft-name" className="text-sm font-medium">임시저장본 이름</Label>
                           <Input
                             id="draft-name"
                             value={draftName}
                             onChange={(e) => setDraftName(e.target.value)}
                             placeholder="예: React 기초 강의 초안"
+                            className="h-11"
                           />
                         </div>
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => setIsNameDraftModalOpen(false)}>
+                        <div className="flex justify-end gap-3 pt-2">
+                          <Button variant="outline" onClick={() => setIsNameDraftModalOpen(false)} className="px-6">
                             취소
                           </Button>
-                          <Button onClick={handleSaveNamedDraft}>
+                          <Button onClick={handleSaveNamedDraft} className="px-6">
                             저장
                           </Button>
                         </div>
@@ -1433,9 +1437,9 @@ const CourseCreate = () => {
                         임시저장본 관리
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
+                    <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+                      <DialogHeader className="space-y-3 pb-4">
+                        <DialogTitle className="flex items-center gap-3 text-lg">
                           <FolderOpen className="w-5 h-5" />
                           임시저장본 관리
                         </DialogTitle>
@@ -1444,19 +1448,19 @@ const CourseCreate = () => {
                         </DialogDescription>
                       </DialogHeader>
                       
-                      <div className="flex-1 overflow-auto">
+                      <div className="flex-1 overflow-auto px-1">
                         {savedDrafts.length > 0 ? (
-                          <div className="grid gap-3">
+                          <div className="grid gap-4">
                             {savedDrafts.map((draft) => (
-                              <div key={draft.id} className="group border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                              <div key={draft.id} className="group border rounded-xl p-5 hover:bg-muted/50 transition-all duration-200 hover:shadow-sm">
                                 <div className="flex items-start justify-between">
                                   <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-3 mb-2">
-                                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                                        <FileText className="w-5 h-5 text-primary" />
+                                    <div className="flex items-center gap-4 mb-3">
+                                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                                        <FileText className="w-6 h-6 text-primary" />
                                       </div>
                                       <div className="min-w-0 flex-1">
-                                        <h4 className="font-medium text-base truncate">
+                                        <h4 className="font-semibold text-base truncate mb-1">
                                           {draft.name}
                                         </h4>
                                         <p className="text-sm text-muted-foreground">
@@ -1472,12 +1476,12 @@ const CourseCreate = () => {
                                     </div>
                                   </div>
                                   
-                                  <div className="flex gap-2 ml-4">
+                                  <div className="flex gap-3 ml-6">
                                     <Button 
                                       variant="outline" 
                                       size="sm"
                                       onClick={() => handleLoadDraft(draft.id)}
-                                      className="whitespace-nowrap"
+                                      className="whitespace-nowrap px-4 h-9"
                                     >
                                       불러오기
                                     </Button>
@@ -1485,7 +1489,7 @@ const CourseCreate = () => {
                                       variant="outline" 
                                       size="sm"
                                       onClick={() => handleDeleteDraft(draft.id)}
-                                      className="text-destructive hover:text-destructive whitespace-nowrap"
+                                      className="text-destructive hover:text-destructive whitespace-nowrap px-4 h-9"
                                     >
                                       삭제
                                     </Button>
@@ -1495,13 +1499,14 @@ const CourseCreate = () => {
                             ))}
                           </div>
                         ) : (
-                          <div className="text-center py-12">
-                            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                              <FolderOpen className="w-8 h-8 text-muted-foreground" />
+                          <div className="text-center py-16">
+                            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
+                              <FolderOpen className="w-10 h-10 text-muted-foreground" />
                             </div>
-                            <h3 className="text-lg font-medium mb-2">저장된 임시저장본이 없습니다</h3>
-                            <p className="text-muted-foreground mb-4">
-                              좌측 상단의 "임시저장" 버튼을 클릭해서 현재 작업을 저장해보세요.
+                            <h3 className="text-xl font-semibold mb-3">저장된 임시저장본이 없습니다</h3>
+                            <p className="text-muted-foreground text-base leading-relaxed">
+                              좌측 상단의 "임시저장" 버튼을 클릭해서<br />
+                              현재 작업을 저장해보세요.
                             </p>
                           </div>
                         )}
@@ -1546,20 +1551,22 @@ const CourseCreate = () => {
         {renderStepContent()}
         
         {/* 하단 네비게이션 */}
-        <div className="flex justify-between mt-8 pt-6 border-t">
+        <div className="flex justify-between mt-12 pt-8 border-t">
           <Button 
             variant="outline" 
             onClick={prevStep} 
             disabled={currentStep === 1}
+            className="h-11 px-6"
           >
             이전
           </Button>
           
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             {currentStep < 5 && (
               <Button 
                 onClick={nextStep} 
                 disabled={!canProceed(currentStep)}
+                className="h-11 px-6"
               >
                 다음
               </Button>
