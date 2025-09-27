@@ -314,16 +314,63 @@ const CourseCreate = () => {
 
       // 홈페이지 섹션에 강의 추가 (공개된 강의이고 섹션이 선택된 경우)
       if (course.is_published && course.homepage_section_id) {
-        // 새 강의를 최상단(order_index: 0)에 추가하고 기존 강의들은 자동으로 뒤로 밀림
-        const { error: sectionCourseError } = await supabase
-          .from('homepage_section_courses')
-          .insert({
-            section_id: course.homepage_section_id,
-            course_id: courseResult.id,
-            order_index: 0
-          });
+        try {
+          // 선택한 섹션이 드래프트인지 확인하고, 드래프트가 아니면 드래프트 섹션을 찾아서 사용
+          const { data: selectedSection } = await supabase
+            .from('homepage_sections')
+            .select('*')
+            .eq('id', course.homepage_section_id)
+            .maybeSingle();
 
-        if (sectionCourseError) throw sectionCourseError;
+          let draftSectionId = course.homepage_section_id;
+
+          if (selectedSection && selectedSection.is_draft === false) {
+            // 동일한 section_type의 드래프트 섹션 찾기
+            const { data: draftSection } = await supabase
+              .from('homepage_sections')
+              .select('id')
+              .eq('section_type', (selectedSection as any).section_type)
+              .eq('is_draft', true)
+              .maybeSingle();
+
+            if (draftSection?.id) {
+              draftSectionId = draftSection.id as string;
+            } else {
+              // 드래프트가 없으면 최소 필드로 생성
+              const { data: newDraft } = await supabase
+                .from('homepage_sections')
+                .insert({
+                  title: (selectedSection as any).title,
+                  subtitle: (selectedSection as any).subtitle,
+                  icon_type: (selectedSection as any).icon_type,
+                  icon_value: (selectedSection as any).icon_value,
+                  section_type: (selectedSection as any).section_type,
+                  filter_type: 'manual',
+                  filter_value: null,
+                  display_limit: (selectedSection as any).display_limit ?? 15,
+                  order_index: (selectedSection as any).order_index ?? 0,
+                  is_active: (selectedSection as any).is_active ?? true,
+                  is_draft: true
+                })
+                .select('id')
+                .single();
+              if (newDraft?.id) draftSectionId = newDraft.id as string;
+            }
+          }
+
+          // 드래프트 섹션에 최상단으로 추가 (트리거로 기존 항목 밀림)
+          const { error: sectionCourseDraftError } = await supabase
+            .from('homepage_section_courses')
+            .insert({
+              section_id: draftSectionId,
+              course_id: courseResult.id,
+              order_index: 0,
+              is_draft: true
+            });
+          if (sectionCourseDraftError) throw sectionCourseDraftError;
+        } catch (e) {
+          console.warn('Failed to add course to homepage draft section:', e);
+        }
       }
 
       toast({
