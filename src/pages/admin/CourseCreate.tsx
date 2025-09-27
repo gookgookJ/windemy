@@ -319,11 +319,7 @@ const CourseCreate = () => {
   };
 
   const handleSaveDraft = () => {
-    autoSave();
-    toast({
-      title: "임시저장 완료",
-      description: "강의가 임시저장되었습니다."
-    });
+    setIsNameDraftModalOpen(true);
   };
 
   // 임시저장 관리 함수들
@@ -1394,10 +1390,41 @@ const CourseCreate = () => {
               <h1 className="text-2xl font-bold">새 강의 만들기</h1>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" onClick={handleSaveDraft} className="flex items-center gap-2">
-                    <Save className="w-4 h-4" />
-                    임시저장
-                  </Button>
+                  <Dialog open={isNameDraftModalOpen} onOpenChange={setIsNameDraftModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" onClick={handleSaveDraft} className="flex items-center gap-2">
+                        <Save className="w-4 h-4" />
+                        임시저장
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>임시저장하기</DialogTitle>
+                        <DialogDescription>
+                          현재 입력된 내용을 임시저장본으로 저장합니다.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="draft-name">임시저장본 이름</Label>
+                          <Input
+                            id="draft-name"
+                            value={draftName}
+                            onChange={(e) => setDraftName(e.target.value)}
+                            placeholder="예: React 기초 강의 초안"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => setIsNameDraftModalOpen(false)}>
+                            취소
+                          </Button>
+                          <Button onClick={handleSaveNamedDraft}>
+                            저장
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   
                   <Dialog open={isDraftModalOpen} onOpenChange={setIsDraftModalOpen}>
                     <DialogTrigger asChild>
@@ -1406,91 +1433,76 @@ const CourseCreate = () => {
                         임시저장본 관리
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
                       <DialogHeader>
-                        <DialogTitle>임시저장본 관리</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                          <FolderOpen className="w-5 h-5" />
+                          임시저장본 관리
+                        </DialogTitle>
                         <DialogDescription>
-                          저장된 임시저장본을 불러오거나 새로운 임시저장본을 만들 수 있습니다.
+                          저장된 임시저장본을 불러오거나 삭제할 수 있습니다.
                         </DialogDescription>
                       </DialogHeader>
                       
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <h4 className="font-medium">저장된 임시저장본</h4>
-                          <Dialog open={isNameDraftModalOpen} onOpenChange={setIsNameDraftModalOpen}>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                                <Plus className="w-4 h-4" />
-                                새 임시저장본 만들기
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>새 임시저장본 만들기</DialogTitle>
-                                <DialogDescription>
-                                  현재 입력된 내용을 임시저장본으로 저장합니다.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div>
-                                  <Label htmlFor="draft-name">임시저장본 이름</Label>
-                                  <Input
-                                    id="draft-name"
-                                    value={draftName}
-                                    onChange={(e) => setDraftName(e.target.value)}
-                                    placeholder="예: React 기초 강의 초안"
-                                  />
-                                </div>
-                                <div className="flex justify-end gap-2">
-                                  <Button variant="outline" onClick={() => setIsNameDraftModalOpen(false)}>
-                                    취소
-                                  </Button>
-                                  <Button onClick={handleSaveNamedDraft}>
-                                    저장
-                                  </Button>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                        
+                      <div className="flex-1 overflow-auto">
                         {savedDrafts.length > 0 ? (
-                          <div className="border rounded-lg">
-                            {savedDrafts.map((draft, index) => (
-                              <div key={draft.id} className={cn(
-                                "flex items-center justify-between p-4",
-                                index !== savedDrafts.length - 1 && "border-b"
-                              )}>
-                                <div>
-                                  <div className="font-medium">{draft.name}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {new Date(draft.created_at).toLocaleString('ko-KR')}
+                          <div className="grid gap-3">
+                            {savedDrafts.map((draft) => (
+                              <div key={draft.id} className="group border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-3 mb-2">
+                                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                        <FileText className="w-5 h-5 text-primary" />
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <h4 className="font-medium text-base truncate">
+                                          {draft.name}
+                                        </h4>
+                                        <p className="text-sm text-muted-foreground">
+                                          {new Date(draft.created_at).toLocaleString('ko-KR', {
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                          })}
+                                        </p>
+                                      </div>
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => handleLoadDraft(draft.id)}
-                                  >
-                                    불러오기
-                                  </Button>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => handleDeleteDraft(draft.id)}
-                                    className="text-destructive hover:text-destructive"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
+                                  
+                                  <div className="flex gap-2 ml-4">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => handleLoadDraft(draft.id)}
+                                      className="whitespace-nowrap"
+                                    >
+                                      불러오기
+                                    </Button>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => handleDeleteDraft(draft.id)}
+                                      className="text-destructive hover:text-destructive whitespace-nowrap"
+                                    >
+                                      삭제
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <div className="text-center py-8 text-muted-foreground">
-                            <p>저장된 임시저장본이 없습니다.</p>
-                            <p className="text-sm mt-1">위의 버튼을 클릭해서 새 임시저장본을 만들어보세요.</p>
+                          <div className="text-center py-12">
+                            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                              <FolderOpen className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                            <h3 className="text-lg font-medium mb-2">저장된 임시저장본이 없습니다</h3>
+                            <p className="text-muted-foreground mb-4">
+                              좌측 상단의 "임시저장" 버튼을 클릭해서 현재 작업을 저장해보세요.
+                            </p>
                           </div>
                         )}
                       </div>
