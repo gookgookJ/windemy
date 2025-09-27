@@ -187,10 +187,6 @@ export const MaterialDeleteModal = ({ isOpen, onClose, onUpdate, materials, sect
                         )}
                       </div>
                     </div>
-
-                    <Badge variant="outline" className="text-xs">
-                      순서: {material.order_index}
-                    </Badge>
                   </div>
                 ))}
               </div>
