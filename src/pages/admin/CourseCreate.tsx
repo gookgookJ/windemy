@@ -130,7 +130,7 @@ const CourseCreate = () => {
     }
     const { error } = await supabase
       .from('course_drafts')
-      .upsert({ name, data: course, created_by: user.id }, { onConflict: 'created_by,name' });
+      .upsert({ name, data: course, created_by: user.id } as any, { onConflict: 'created_by,name' });
     if (error) {
       toast({ title: '오류', description: '임시저장에 실패했습니다.', variant: 'destructive' });
     } else {
@@ -150,6 +150,7 @@ const CourseCreate = () => {
       if (error) throw error;
       const draftData = (data as any)?.data ?? {};
       setCourse(mergeWithDefaults(draftData));
+      setCurrentStep(1); // Reset to first step when loading draft
       toast({ title: '불러오기 완료', description: '임시저장본을 불러왔습니다.' });
       setIsManageDialogOpen(false);
     } catch (e: any) {
