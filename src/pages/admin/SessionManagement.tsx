@@ -365,14 +365,13 @@ export const SessionManagement = () => {
                         <div>
                           <CardTitle className="text-lg font-semibold leading-tight">{group.courseTitle}</CardTitle>
                           <div className="flex gap-2 mt-1.5">
-                            <Badge variant="outline" className="text-xs py-0.5 px-2 bg-blue-50 text-blue-700 border-blue-200">
+                            <Badge variant="outline" className="text-xs py-0.5 px-2 bg-blue-50 text-blue-700 border-blue-200 pointer-events-none">
                               총 {group.totalSessions}개
                             </Badge>
                             <Badge 
-                              variant={group.sessionsWithVideo === group.totalSessions ? "default" : "secondary"} 
-                              className={`text-xs py-0.5 px-2 ${
+                              className={`text-xs py-0.5 px-2 pointer-events-none border ${
                                 group.sessionsWithVideo === group.totalSessions 
-                                ? "bg-green-100 text-green-700 border-green-200" 
+                                ? "bg-green-50 text-green-700 border-green-200" 
                                 : "bg-orange-50 text-orange-700 border-orange-200"
                               }`}
                             >
