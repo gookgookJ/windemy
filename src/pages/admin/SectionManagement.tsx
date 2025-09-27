@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Upload, File, Eye, ChevronRight, Filter, FolderOpen } from 'lucide-react';
+import { Search, Upload, File, Eye, ChevronRight, Filter, FolderOpen, Trash2 } from 'lucide-react';
 import { MaterialUploadModal } from '@/components/admin/MaterialUploadModal';
 import { MaterialViewModal } from '@/components/admin/MaterialViewModal';
 
@@ -108,6 +108,41 @@ export const SectionManagement = () => {
   const handleViewMaterials = (section: CourseSection) => {
     setViewingSection(section);
     setIsViewModalOpen(true);
+  };
+
+  const handleDeleteMaterials = async (section: CourseSection) => {
+    if (!section.materials || section.materials.length === 0) return;
+    
+    const confirmed = window.confirm(
+      `"${section.title}" 섹션의 모든 자료를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`
+    );
+    
+    if (!confirmed) return;
+
+    try {
+      // Delete all materials for this section
+      const { error } = await supabase
+        .from('course_materials')
+        .delete()
+        .eq('section_id', section.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "삭제 완료",
+        description: `${section.materials.length}개의 자료가 삭제되었습니다.`
+      });
+
+      // Refresh data
+      fetchSections();
+    } catch (error) {
+      console.error('Error deleting materials:', error);
+      toast({
+        title: "오류",
+        description: "자료 삭제 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Filtering logic
@@ -257,9 +292,6 @@ export const SectionManagement = () => {
                                 <div className="font-medium text-sm truncate" title={section.title}>
                                   {section.title}
                                 </div>
-                                <div className="text-xs text-muted-foreground mt-0.5">
-                                  순서: {section.order_index} • 세션: {section.sessions?.length || 0}개
-                                </div>
                               </TableCell>
                               <TableCell className="py-1.5 px-3">
                                 {section.materials && section.materials.length > 0 ? (
@@ -286,15 +318,26 @@ export const SectionManagement = () => {
                                     업로드
                                   </Button>
                                   {section.materials && section.materials.length > 0 && (
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
-                                      onClick={() => handleViewMaterials(section)}
-                                      className="h-6 px-2 text-xs text-green-600 border-green-200 hover:bg-green-50"
-                                    >
-                                      <Eye className="h-3 w-3 mr-1" />
-                                      보기
-                                    </Button>
+                                    <>
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => handleDeleteMaterials(section)}
+                                        className="h-6 px-2 text-xs text-red-600 border-red-200 hover:bg-red-50"
+                                      >
+                                        <Trash2 className="h-3 w-3 mr-1" />
+                                        삭제
+                                      </Button>
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => handleViewMaterials(section)}
+                                        className="h-6 px-2 text-xs text-green-600 border-green-200 hover:bg-green-50"
+                                      >
+                                        <Eye className="h-3 w-3 mr-1" />
+                                        미리보기
+                                      </Button>
+                                    </>
                                   )}
                                 </div>
                               </TableCell>
