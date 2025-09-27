@@ -61,7 +61,7 @@ const CourseCreate = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [course, setCourse] = useState({
+  const initialCourseState = {
     title: '',
     category_id: '',
     instructor_id: '',
@@ -77,7 +77,9 @@ const CourseCreate = () => {
     thumbnail_path: '',
     is_published: false,
     homepage_section_id: ''
-  });
+  };
+
+  const [course, setCourse] = useState(initialCourseState);
 
   const [homepageSections, setHomepageSections] = useState<{id: string, title: string}[]>([]);
   
@@ -92,6 +94,13 @@ const CourseCreate = () => {
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
 
+  // 새 강의 생성 시 초기화
+  const resetToInitialState = () => {
+    setCourse(initialCourseState);
+    setCurrentStep(1);
+    clearDraft();
+  };
+
   // 초기 데이터 로드
   useEffect(() => {
     fetchCategories();
@@ -99,6 +108,11 @@ const CourseCreate = () => {
     fetchHomepageSections();
     loadDraft();
     fetchSavedDrafts();
+    
+    // URL이 /admin/course-create 일 때만 초기화 (새 강의 생성)
+    if (window.location.pathname === '/admin/course-create') {
+      resetToInitialState();
+    }
   }, []);
 
   // 자동저장

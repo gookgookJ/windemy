@@ -199,7 +199,11 @@ export const AdminCourses = () => {
             <h1 className="text-3xl font-bold text-foreground mb-2">강의 관리</h1>
             <p className="text-muted-foreground">등록된 강의들을 관리하고 승인/거부하세요</p>
           </div>
-          <Button onClick={() => navigate('/admin/course-create')} className="hover-scale">
+          <Button onClick={() => {
+            // 새 강의 생성 시 localStorage 초기화
+            localStorage.removeItem('draft_course');
+            navigate('/admin/course-create');
+          }} className="hover-scale">
             <Plus className="h-4 w-4 mr-2" />
             새 강의 만들기
           </Button>
