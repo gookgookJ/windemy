@@ -14,6 +14,8 @@ interface UserStats {
   adminUsers: number;
   instructorUsers: number;
   studentUsers: number;
+  newUsersToday: number;
+  newUsersThisWeek: number;
   newUsersThisMonth: number;
 }
 
@@ -26,6 +28,8 @@ export const AdminUsers = () => {
     adminUsers: 0,
     instructorUsers: 0,
     studentUsers: 0,
+    newUsersToday: 0,
+    newUsersThisWeek: 0,
     newUsersThisMonth: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -42,75 +46,61 @@ export const AdminUsers = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [filters]);
-
-  useEffect(() => {
     fetchStats();
   }, []);
 
   const fetchUsers = async () => {
-    setLoading(true);
     try {
-      let query = supabase
-        .from('profiles')
-        .select(`
-          id,
-          full_name,
-          email,
-          role,
-          created_at,
-          phone,
-          avatar_url,
-          marketing_consent
-        `)
-        .order('created_at', { ascending: false });
+      // DB 연결 해제 - 임시 mock 데이터로 대체
+      setLoading(true);
+      
+      // 임시 딜레이로 로딩 상태 시뮬레이션
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock 사용자 데이터
+      const mockUsers = [
+        {
+          id: '1',
+          full_name: '김영희',
+          email: 'kim.younghee@example.com',
+          role: 'student',
+          created_at: '2024-01-15T10:30:00Z',
+          phone: '010-1234-5678',
+          avatar_url: null,
+          marketing_consent: true,
+          total_payment: 89000,
+          status: 'active',
+          last_login: '2024-03-20T14:22:00Z'
+        },
+        {
+          id: '2',
+          full_name: '이철수',
+          email: 'lee.chulsoo@example.com',
+          role: 'instructor',
+          created_at: '2023-11-08T09:15:00Z',
+          phone: '010-2345-6789',
+          avatar_url: null,
+          marketing_consent: false,
+          total_payment: 245000,
+          status: 'active',
+          last_login: '2024-03-19T16:45:00Z'
+        },
+        {
+          id: '3',
+          full_name: '박민지',
+          email: 'park.minji@example.com',
+          role: 'student',
+          created_at: '2024-02-20T11:00:00Z',
+          phone: '010-3456-7890',
+          avatar_url: null,
+          marketing_consent: true,
+          total_payment: 156000,
+          status: 'active',
+          last_login: '2024-03-18T09:30:00Z'
+        }
+      ];
 
-      // 필터 적용
-      if (filters.searchTerm) {
-        query = query.or(`full_name.ilike.%${filters.searchTerm}%,email.ilike.%${filters.searchTerm}%,phone.ilike.%${filters.searchTerm}%`);
-      }
-
-      if (filters.role !== 'all') {
-        query = query.eq('role', filters.role);
-      }
-
-      if (filters.startDate) {
-        query = query.gte('created_at', filters.startDate.toISOString());
-      }
-
-      if (filters.endDate) {
-        const endDate = new Date(filters.endDate);
-        endDate.setHours(23, 59, 59, 999);
-        query = query.lte('created_at', endDate.toISOString());
-      }
-
-      if (filters.marketingEmail !== 'all') {
-        query = query.eq('marketing_consent', filters.marketingEmail === 'true');
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      // 각 사용자의 결제 정보도 함께 가져오기
-      const usersWithPayments = await Promise.all((data || []).map(async (user) => {
-        const { data: orders } = await supabase
-          .from('orders')
-          .select('total_amount')
-          .eq('user_id', user.id)
-          .eq('status', 'completed');
-
-        const totalPayment = (orders || []).reduce((sum, order) => sum + order.total_amount, 0);
-
-        return {
-          ...user,
-          total_payment: totalPayment,
-          status: 'active', // TODO: 실제 상태 로직 구현
-          last_login: null, // TODO: 실제 로그인 기록 구현
-        };
-      }));
-
-      setUsers(usersWithPayments);
+      setUsers(mockUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -125,39 +115,23 @@ export const AdminUsers = () => {
 
   const fetchStats = async () => {
     try {
-      // 전체 사용자 수
-      const { count: totalUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
+      // DB 연결 해제 - 임시 mock 데이터로 대체
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Mock 통계 데이터
+      const mockStats = {
+        totalUsers: 847,
+        activeUsers: 692,
+        inactiveUsers: 155,
+        adminUsers: 3,
+        instructorUsers: 24,
+        studentUsers: 820,
+        newUsersToday: 12,
+        newUsersThisWeek: 84,
+        newUsersThisMonth: 84, // UserDashboard에서 요구하는 필드 추가
+      };
 
-      // 역할별 사용자 수
-      const { data: roleStats } = await supabase
-        .from('profiles')
-        .select('role')
-        .not('role', 'is', null);
-
-      const adminUsers = roleStats?.filter(u => u.role === 'admin').length || 0;
-      const instructorUsers = roleStats?.filter(u => u.role === 'instructor').length || 0;
-      const studentUsers = roleStats?.filter(u => u.role === 'student').length || 0;
-
-      // 신규 가입자 (이번 달)
-      const monthStart = new Date();
-      monthStart.setDate(1);
-      monthStart.setHours(0, 0, 0, 0);
-      const { count: newUsersThisMonth } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', monthStart.toISOString());
-
-      setStats({
-        totalUsers: totalUsers || 0,
-        activeUsers: totalUsers || 0, // TODO: 실제 활성 사용자 로직
-        inactiveUsers: 0, // TODO: 실제 비활성 사용자 로직
-        adminUsers,
-        instructorUsers,
-        studentUsers,
-        newUsersThisMonth: newUsersThisMonth || 0,
-      });
+      setStats(mockStats);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
@@ -165,10 +139,12 @@ export const AdminUsers = () => {
 
   const handleFiltersChange = (newFilters: UserFilterOptions) => {
     setFilters(newFilters);
+    setLoading(true);
+    fetchUsers();
   };
 
   const handleResetFilters = () => {
-    const defaultFilters: UserFilterOptions = {
+    const defaultFilters = {
       searchTerm: '',
       status: 'all',
       role: 'all',
@@ -176,6 +152,8 @@ export const AdminUsers = () => {
       marketingSms: 'all',
     };
     setFilters(defaultFilters);
+    setLoading(true);
+    fetchUsers();
   };
 
   const handleUserSelect = (userId: string) => {
@@ -185,13 +163,7 @@ export const AdminUsers = () => {
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: newRole })
-        .eq('id', userId);
-
-      if (error) throw error;
-
+      // DB 연결 해제 - 로컬 상태만 업데이트
       setUsers(users.map(user => 
         user.id === userId ? { ...user, role: newRole } : user
       ));
