@@ -144,11 +144,11 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                     {mockUserDetail.status === 'active' ? '정상' : '휴면'}
                   </Badge>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>{mockUserDetail.email}</span>
-                  <span>•</span>
-                  <span className="font-mono">{mockUserDetail.memberId}</span>
-                </div>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <span className="font-medium">{mockUserDetail.email}</span>
+                <span className="text-border">•</span>
+                <span className="font-mono bg-muted/50 px-2 py-0.5 rounded text-xs">{mockUserDetail.memberId}</span>
+              </div>
               </div>
             </div>
             
@@ -170,22 +170,22 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
 
         <div className="flex-1 overflow-hidden">
           <Tabs defaultValue="profile" className="w-full h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-4 mb-4">
-              <TabsTrigger value="profile" className="flex items-center gap-2">
+            <TabsList className="grid w-full grid-cols-4 mb-6 bg-muted/30">
+              <TabsTrigger value="profile" className="flex items-center gap-2 font-medium data-[state=active]:bg-background">
                 <User className="h-4 w-4" />
-                회원정보
+                회원 정보
               </TabsTrigger>
-              <TabsTrigger value="learning" className="flex items-center gap-2">
+              <TabsTrigger value="learning" className="flex items-center gap-2 font-medium data-[state=active]:bg-background">
                 <BookOpen className="h-4 w-4" />
-                수강내역
+                수강 내역
               </TabsTrigger>
-              <TabsTrigger value="payment" className="flex items-center gap-2">
+              <TabsTrigger value="payment" className="flex items-center gap-2 font-medium data-[state=active]:bg-background">
                 <CreditCard className="h-4 w-4" />
-                결제정보
+                결제 정보
               </TabsTrigger>
-              <TabsTrigger value="activity" className="flex items-center gap-2">
+              <TabsTrigger value="activity" className="flex items-center gap-2 font-medium data-[state=active]:bg-background">
                 <Activity className="h-4 w-4" />
-                활동로그
+                활동 로그
               </TabsTrigger>
             </TabsList>
 

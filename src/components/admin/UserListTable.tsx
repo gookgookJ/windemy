@@ -122,25 +122,25 @@ export const UserListTable = ({
   }
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="bg-muted/20">
+    <Card className="shadow-sm border-border/50">
+      <CardHeader className="bg-muted/10 border-b border-border/30">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg text-foreground">
+          <CardTitle className="text-lg font-semibold text-foreground">
             회원 목록 
-            <span className="ml-2 text-sm font-normal text-muted-foreground">
-              ({users.length}명)
+            <span className="ml-2 text-sm font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
+              총 {users.length}명
             </span>
           </CardTitle>
           
           {selectedUsers.length > 0 && (
             <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
+              <span className="text-sm font-medium text-primary bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20">
                 {selectedUsers.length}명 선택됨
               </span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="default" size="sm" className="h-9">
-                    일괄 처리
+                  <Button variant="default" size="sm" className="h-9 font-medium">
+                    일괄 작업
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
@@ -175,79 +175,87 @@ export const UserListTable = ({
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
-                <TableHead className="font-semibold">회원정보</TableHead>
+                <TableHead className="font-semibold text-muted-foreground">회원 정보</TableHead>
                 <TableHead 
-                  className="cursor-pointer font-semibold"
+                  className="cursor-pointer font-semibold text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => handleSort('joinDate')}
                 >
                   <div className="flex items-center gap-1">
                     가입일
-                    <ArrowUpDown className="h-4 w-4" />
+                    <ArrowUpDown className="h-3.5 w-3.5" />
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="cursor-pointer font-semibold"
+                  className="cursor-pointer font-semibold text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => handleSort('lastLogin')}
                 >
                   <div className="flex items-center gap-1">
-                    최근접속
-                    <ArrowUpDown className="h-4 w-4" />
+                    최근 접속
+                    <ArrowUpDown className="h-3.5 w-3.5" />
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="cursor-pointer text-right font-semibold"
+                  className="cursor-pointer text-right font-semibold text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => handleSort('totalPayment')}
                 >
                   <div className="flex items-center justify-end gap-1">
-                    총 결제금액
-                    <ArrowUpDown className="h-4 w-4" />
+                    결제 금액
+                    <ArrowUpDown className="h-3.5 w-3.5" />
                   </div>
                 </TableHead>
-                <TableHead className="font-semibold">상태</TableHead>
+                <TableHead className="font-semibold text-muted-foreground">상태</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedUsers.map((user) => (
-                <TableRow key={user.id} className="hover:bg-muted/30 border-b">
-                  <TableCell>
+                <TableRow key={user.id} className="hover:bg-muted/20 border-b border-border/30 transition-colors">
+                  <TableCell className="w-12">
                     <Checkbox
                       checked={selectedUsers.includes(user.id)}
                       onCheckedChange={(checked) => handleSelectUser(user.id, checked as boolean)}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
                   </TableCell>
                   <TableCell 
-                    className="cursor-pointer hover:bg-muted/50 p-4"
+                    className="cursor-pointer hover:bg-primary/5 p-4 rounded-md transition-colors"
                     onClick={() => onUserSelect(user.id)}
                   >
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-foreground">{user.name}</span>
-                        <span className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                        <span className="font-semibold text-foreground text-sm">{user.name}</span>
+                        <span className="text-xs font-mono text-muted-foreground bg-muted/70 px-2 py-0.5 rounded-md">
                           {user.memberId}
                         </span>
                       </div>
                       <div className="text-sm text-muted-foreground">{user.email}</div>
                       {user.phone && (
-                        <div className="text-xs text-muted-foreground">{user.phone}</div>
+                        <div className="text-xs text-muted-foreground font-mono">{user.phone}</div>
                       )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm">{formatDate(user.joinDate)}</div>
+                    <div className="text-sm font-medium">{formatDate(user.joinDate)}</div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm">
+                    <div className="text-sm font-medium">
                       {user.lastLogin ? formatDate(user.lastLogin) : 
-                        <span className="text-muted-foreground">-</span>
+                        <span className="text-muted-foreground italic">미접속</span>
                       }
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="font-medium">{formatCurrency(user.totalPayment)}</div>
+                    <div className="font-semibold text-foreground">{formatCurrency(user.totalPayment)}</div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={statusColors[user.status]} className="text-xs">
+                    <Badge 
+                      variant={statusColors[user.status]} 
+                      className={`text-xs font-medium ${
+                        user.status === 'active' 
+                          ? 'bg-success/10 text-success border-success/20' 
+                          : 'bg-muted text-muted-foreground border-border'
+                      }`}
+                    >
                       {statusLabels[user.status]}
                     </Badge>
                   </TableCell>

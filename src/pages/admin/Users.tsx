@@ -232,9 +232,9 @@ export const AdminUsers = () => {
     <AdminLayout>
       <div className="space-y-8 p-6">
         {/* 페이지 헤더 */}
-        <div className="border-b pb-4">
-          <h1 className="text-3xl font-bold text-foreground">회원 관리</h1>
-          <p className="text-muted-foreground mt-1">등록된 회원들을 조회하고 관리할 수 있습니다</p>
+        <div className="border-b border-border/30 pb-6">
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">회원 관리</h1>
+          <p className="text-muted-foreground mt-2 text-base">등록된 회원들을 조회하고 효율적으로 관리할 수 있습니다</p>
         </div>
 
         {/* 요약 대시보드 */}
