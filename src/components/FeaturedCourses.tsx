@@ -367,25 +367,30 @@ const FeaturedCourses = memo(() => {
               </span>
             )}
 
-            {/* Display promotional tags */}
-            {course.tags?.map(tag => {
+            {/* Display promotional tags in consistent order */}
+            {(() => {
+              const tagOrder = ["신규", "인기", "얼리버드", "30명한정"];
               const tagColors = {
                 "얼리버드": "bg-gradient-to-r from-orange-500 to-orange-600 text-white",
                 "신규": "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white", 
                 "인기": "bg-gradient-to-r from-rose-500 to-rose-600 text-white",
                 "30명한정": "bg-gradient-to-r from-purple-500 to-purple-600 text-white"
               };
-              const color = tagColors[tag as keyof typeof tagColors] || "bg-gradient-to-r from-blue-500 to-blue-600 text-white";
               
-              return (
-                <span 
-                  key={tag}
-                  className={`${color} text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-sm font-medium shadow-sm`}
-                >
-                  {tag}
-                </span>
-              );
-            })}
+              return tagOrder
+                .filter(tag => course.tags?.includes(tag))
+                .map(tag => {
+                  const color = tagColors[tag as keyof typeof tagColors];
+                  return (
+                    <span 
+                      key={tag}
+                      className={`${color} text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-sm font-medium shadow-sm`}
+                    >
+                      {tag}
+                    </span>
+                  );
+                });
+            })()}
           </div>
         </div>
       </Link>

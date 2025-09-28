@@ -127,25 +127,30 @@ const CourseCard = ({
             {level === "beginner" ? "Lv1" : level === "intermediate" ? "Lv2" : "Lv3"}
           </Badge>
 
-          {/* Display admin-set promotional tags */}
-          {tags.map(tag => {
+          {/* Display admin-set promotional tags in consistent order */}
+          {(() => {
+            const tagOrder = ["신규", "인기", "얼리버드", "30명한정"];
             const tagColors = {
               "얼리버드": "bg-gradient-to-r from-orange-500 to-orange-600 text-white",
               "신규": "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white", 
               "인기": "bg-gradient-to-r from-rose-500 to-rose-600 text-white",
               "30명한정": "bg-gradient-to-r from-purple-500 to-purple-600 text-white"
             };
-            const color = tagColors[tag as keyof typeof tagColors] || "bg-gradient-to-r from-blue-500 to-blue-600 text-white";
             
-            return (
-              <Badge 
-                key={tag}
-                className={`${color} font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0 shadow-sm`}
-              >
-                {tag}
-              </Badge>
-            );
-          })}
+            return tagOrder
+              .filter(tag => tags.includes(tag))
+              .map(tag => {
+                const color = tagColors[tag as keyof typeof tagColors];
+                return (
+                  <Badge 
+                    key={tag}
+                    className={`${color} font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0 shadow-sm`}
+                  >
+                    {tag}
+                  </Badge>
+                );
+              });
+          })()}
           
           {isHot && (
             <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0 shadow-sm">
