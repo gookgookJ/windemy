@@ -117,7 +117,8 @@ const CategoryCourses = () => {
         category: course.categories?.name || '기타',
         isHot: course.total_students > 100,
         isNew: new Date(course.created_at).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000,
-        description: course.title || ""
+        description: course.title || "",
+        tags: course.tags || []
       }));
 
       setCourses(coursesWithStats);

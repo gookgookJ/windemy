@@ -22,6 +22,7 @@ interface CourseCardProps {
   isHot?: boolean;
   isNew?: boolean;
   priority?: boolean; // Add priority prop for LCP optimization
+  tags?: string[]; // Add tags prop
 }
 
 const CourseCard = ({
@@ -40,6 +41,7 @@ const CourseCard = ({
   isHot,
   isNew,
   priority = false,
+  tags = [],
 }: CourseCardProps) => {
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
@@ -113,27 +115,25 @@ const CourseCard = ({
 
         {/* Tags */}
         <div className="flex flex-wrap gap-1.5">
-          {/* Random promotional tags with different colors */}
-          {(() => {
-            const promoTags = [
-              { text: "얼리버드", color: "bg-gradient-to-r from-orange-500 to-orange-600 text-white" },
-              { text: "신규", color: "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white" },
-              { text: "인기", color: "bg-gradient-to-r from-rose-500 to-rose-600 text-white" },
-              { text: "30명한정", color: "bg-gradient-to-r from-purple-500 to-purple-600 text-white" }
-            ];
-            const randomCount = Math.floor(Math.random() * 3) + 1; // 1-3 tags
-            const shuffled = [...promoTags].sort(() => 0.5 - Math.random());
-            const selectedTags = shuffled.slice(0, randomCount);
+          {/* Display admin-set promotional tags */}
+          {tags.map(tag => {
+            const tagColors = {
+              "얼리버드": "bg-gradient-to-r from-orange-500 to-orange-600 text-white",
+              "신규": "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white", 
+              "인기": "bg-gradient-to-r from-rose-500 to-rose-600 text-white",
+              "30명한정": "bg-gradient-to-r from-purple-500 to-purple-600 text-white"
+            };
+            const color = tagColors[tag as keyof typeof tagColors] || "bg-gradient-to-r from-blue-500 to-blue-600 text-white";
             
-            return selectedTags.map(tag => (
+            return (
               <Badge 
-                key={tag.text}
-                className={`${tag.color} font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0 shadow-sm`}
+                key={tag}
+                className={`${color} font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0 shadow-sm`}
               >
-                {tag.text}
+                {tag}
               </Badge>
-            ));
-          })()}
+            );
+          })}
           
           {isHot && (
             <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white font-medium text-[10px] px-1.5 py-0.5 rounded-sm border-0 shadow-sm">

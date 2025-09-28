@@ -76,7 +76,8 @@ const CourseCreate = () => {
     thumbnail_url: '',
     thumbnail_path: '',
     is_published: false,
-    homepage_section_id: ''
+    homepage_section_id: '',
+    tags: [] as string[]
   };
 
   const [course, setCourse] = useState(initialCourseState);
@@ -227,7 +228,8 @@ const CourseCreate = () => {
         requirements: course.requirements?.filter(item => item.trim()) || [],
         thumbnail_url: course.thumbnail_url,
         thumbnail_path: course.thumbnail_path,
-        is_published: course.is_published
+        is_published: course.is_published,
+        tags: course.tags || []
       };
 
       const { data: courseResult, error: courseError } = await supabase
@@ -975,6 +977,57 @@ const CourseCreate = () => {
                       <SelectItem value="챌린지·스터디">챌린지·스터디</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">프로모션 태그 (최대 3개)</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {['신규', '인기', '30명한정', '얼리버드'].map((tag) => {
+                      const isSelected = course.tags?.includes(tag) || false;
+                      const canSelect = !isSelected && (course.tags?.length || 0) < 3;
+                      
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              // 선택 해제
+                              setCourse(prev => ({
+                                ...prev,
+                                tags: prev.tags?.filter(t => t !== tag) || []
+                              }));
+                            } else if (canSelect) {
+                              // 선택 추가
+                              setCourse(prev => ({
+                                ...prev,
+                                tags: [...(prev.tags || []), tag]
+                              }));
+                            }
+                          }}
+                          disabled={!isSelected && !canSelect}
+                          className={cn(
+                            "px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                            isSelected 
+                              ? "bg-primary text-primary-foreground shadow-sm" 
+                              : canSelect
+                              ? "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground border border-border"
+                              : "bg-muted/50 text-muted-foreground/50 cursor-not-allowed",
+                          )}
+                        >
+                          {tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    선택된 태그: {course.tags?.length || 0}/3개
+                    {course.level && (
+                      <span className="ml-2 text-primary">
+                        + 난이도 태그 ({course.level === 'beginner' ? 'Lv1' : course.level === 'intermediate' ? 'Lv2' : 'Lv3'})
+                      </span>
+                    )}
+                  </p>
                 </div>
 
               </CardContent>

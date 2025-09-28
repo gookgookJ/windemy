@@ -19,6 +19,7 @@ interface Course {
   total_students?: number;
   level?: string;
   category?: string;
+  tags?: string[];
 }
 
 interface HomepageSection {
@@ -96,7 +97,8 @@ const FeaturedCourses = memo(() => {
               ...mc.courses,
               instructor_name: mc.courses?.profiles?.full_name || '운영진',
               category: mc.courses?.categories?.name || '기타',
-              thumbnail_url: mc.courses?.thumbnail_url || mc.courses?.thumbnail_path || '/placeholder.svg'
+              thumbnail_url: mc.courses?.thumbnail_url || mc.courses?.thumbnail_path || '/placeholder.svg',
+              tags: mc.courses?.tags || []
             }))
             .slice(0, section.display_limit);
 
@@ -118,7 +120,8 @@ const FeaturedCourses = memo(() => {
             ...course,
             instructor_name: course.profiles?.full_name || '운영진',
             category: course.categories?.name || '기타',
-            thumbnail_url: course.thumbnail_url || course.thumbnail_path || '/placeholder.svg'
+            thumbnail_url: course.thumbnail_url || course.thumbnail_path || '/placeholder.svg',
+            tags: course.tags || []
           }));
 
         } else if (section.filter_type === 'hot_new') {
@@ -138,7 +141,8 @@ const FeaturedCourses = memo(() => {
             ...course,
             instructor_name: course.profiles?.full_name || '운영진',
             category: course.categories?.name || '기타',
-            thumbnail_url: course.thumbnail_url || course.thumbnail_path || '/placeholder.svg'
+            thumbnail_url: course.thumbnail_url || course.thumbnail_path || '/placeholder.svg',
+            tags: course.tags || []
           }));
         }
 
@@ -335,8 +339,37 @@ const FeaturedCourses = memo(() => {
           </button>
 
           {/* Tags */}
-          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex gap-1">
-            {/* Badge functionality removed */}
+          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-wrap gap-1">
+            {/* Display promotional tags */}
+            {course.tags?.map(tag => {
+              const tagColors = {
+                "얼리버드": "bg-gradient-to-r from-orange-500 to-orange-600 text-white",
+                "신규": "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white", 
+                "인기": "bg-gradient-to-r from-rose-500 to-rose-600 text-white",
+                "30명한정": "bg-gradient-to-r from-purple-500 to-purple-600 text-white"
+              };
+              const color = tagColors[tag as keyof typeof tagColors] || "bg-gradient-to-r from-blue-500 to-blue-600 text-white";
+              
+              return (
+                <span 
+                  key={tag}
+                  className={`${color} text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-sm font-medium shadow-sm`}
+                >
+                  {tag}
+                </span>
+              );
+            })}
+            
+            {/* Level tag */}
+            {course.level && (
+              <span className={`text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-sm font-medium border ${
+                course.level === "beginner" ? "border-green-500/60 text-green-600 bg-green-50" :
+                course.level === "intermediate" ? "border-yellow-500/60 text-yellow-600 bg-yellow-50" :
+                "border-red-500/60 text-red-600 bg-red-50"
+              }`}>
+                {course.level === "beginner" ? "Lv1" : course.level === "intermediate" ? "Lv2" : "Lv3"}
+              </span>
+            )}
           </div>
         </div>
         

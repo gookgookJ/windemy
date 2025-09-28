@@ -595,6 +595,7 @@ export type Database = {
           price: number
           rating: number | null
           requirements: string[] | null
+          tags: string[] | null
           thumbnail_path: string | null
           thumbnail_url: string | null
           title: string
@@ -615,6 +616,7 @@ export type Database = {
           price?: number
           rating?: number | null
           requirements?: string[] | null
+          tags?: string[] | null
           thumbnail_path?: string | null
           thumbnail_url?: string | null
           title: string
@@ -635,6 +637,7 @@ export type Database = {
           price?: number
           rating?: number | null
           requirements?: string[] | null
+          tags?: string[] | null
           thumbnail_path?: string | null
           thumbnail_url?: string | null
           title?: string
