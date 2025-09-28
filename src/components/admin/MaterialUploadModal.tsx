@@ -282,15 +282,17 @@ export const MaterialUploadModal = ({
                     </div>
 
                     <div className="space-y-3">
-                      <div>
-                        <Label>제목 (선택사항)</Label>
-                        <Input
-                          value={material.title}
-                          onChange={(e) => updateNewMaterial(index, { title: e.target.value })}
-                          placeholder="제목을 입력하지 않으면 파일명이 사용됩니다"
-                          className="mt-1"
-                        />
-                      </div>
+                      {material.type === 'file' && (
+                        <div>
+                          <Label>제목 (선택사항)</Label>
+                          <Input
+                            value={material.title}
+                            onChange={(e) => updateNewMaterial(index, { title: e.target.value })}
+                            placeholder="제목을 입력하지 않으면 파일명이 사용됩니다"
+                            className="mt-1"
+                          />
+                        </div>
+                      )}
 
                     {material.type === 'file' ? (
                       <div>
@@ -341,7 +343,7 @@ export const MaterialUploadModal = ({
                     ) : (
                       <div className="space-y-3">
                         <div>
-                          <Label>링크 제목 (선택사항)</Label>
+                          <Label>링크 제목</Label>
                           <Input
                             value={material.title || ''}
                             onChange={(e) => updateNewMaterial(index, { title: e.target.value })}
