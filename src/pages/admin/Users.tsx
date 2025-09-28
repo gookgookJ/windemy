@@ -14,13 +14,11 @@ export const AdminUsers = () => {
   const [filters, setFilters] = useState<UserFilters>({
     searchTerm: '',
     status: 'all',
-    learningStatus: 'all',
     marketingEmail: 'all',
-    expirationFilter: 'all',
   });
   const { toast } = useToast();
 
-  // 이커머스 교육 플랫폼 최적화 Mock 데이터
+  // 단순화된 Mock 사용자 데이터
   const mockUsers: UserData[] = [
     {
       id: '1',
@@ -32,14 +30,7 @@ export const AdminUsers = () => {
       lastLogin: '2024-03-20T14:22:00Z',
       totalPayment: 340000,
       status: 'active',
-      marketingEmail: true,
-      currentCourses: 2,
-      completedCourses: 3,
-      totalLearningTime: 1240, // 분
-      averageProgress: 85,
-      expirationDate: '2024-12-31T23:59:59Z',
-      lastLearningDate: '2024-03-20T10:30:00Z',
-      certificatesEarned: 2
+      marketingEmail: true
     },
     {
       id: '2',
@@ -51,14 +42,7 @@ export const AdminUsers = () => {
       lastLogin: '2024-03-19T16:45:00Z',
       totalPayment: 180000,
       status: 'active',
-      marketingEmail: true,
-      currentCourses: 1,
-      completedCourses: 2,
-      totalLearningTime: 680,
-      averageProgress: 45,
-      expirationDate: '2024-04-15T23:59:59Z', // 곧 만료
-      lastLearningDate: '2024-03-18T14:20:00Z',
-      certificatesEarned: 1
+      marketingEmail: true
     },
     {
       id: '3',
@@ -70,14 +54,7 @@ export const AdminUsers = () => {
       lastLogin: '2024-03-18T09:30:00Z',
       totalPayment: 89000,
       status: 'active',
-      marketingEmail: false,
-      currentCourses: 1,
-      completedCourses: 0,
-      totalLearningTime: 120,
-      averageProgress: 15,
-      expirationDate: '2024-08-20T23:59:59Z',
-      lastLearningDate: '2024-03-15T18:45:00Z',
-      certificatesEarned: 0
+      marketingEmail: false
     },
     {
       id: '4',
@@ -89,14 +66,7 @@ export const AdminUsers = () => {
       lastLogin: '2024-02-15T14:20:00Z',
       totalPayment: 520000,
       status: 'dormant',
-      marketingEmail: true,
-      currentCourses: 0,
-      completedCourses: 4,
-      totalLearningTime: 2160,
-      averageProgress: 100,
-      expirationDate: '2024-02-12T23:59:59Z', // 만료됨
-      lastLearningDate: '2024-02-10T16:30:00Z',
-      certificatesEarned: 3
+      marketingEmail: true
     },
     {
       id: '5',
@@ -108,14 +78,7 @@ export const AdminUsers = () => {
       lastLogin: '2024-03-05T15:10:00Z',
       totalPayment: 65000,
       status: 'active',
-      marketingEmail: false,
-      currentCourses: 1,
-      completedCourses: 0,
-      totalLearningTime: 45,
-      averageProgress: 5,
-      expirationDate: '2024-06-01T23:59:59Z',
-      lastLearningDate: '2024-03-05T15:10:00Z',
-      certificatesEarned: 0
+      marketingEmail: false
     }
   ];
 
@@ -144,33 +107,6 @@ export const AdminUsers = () => {
 
     if (filters.status !== 'all') {
       filteredUsers = filteredUsers.filter(user => user.status === filters.status);
-    }
-
-    if (filters.learningStatus !== 'all') {
-      filteredUsers = filteredUsers.filter(user => {
-        switch (filters.learningStatus) {
-          case 'learning': return user.currentCourses > 0;
-          case 'completed': return user.completedCourses > 0;
-          case 'not_started': return user.currentCourses === 0 && user.completedCourses === 0;
-          default: return true;
-        }
-      });
-    }
-
-    if (filters.expirationFilter !== 'all') {
-      filteredUsers = filteredUsers.filter(user => {
-        if (!user.expirationDate) return filters.expirationFilter === 'all';
-        const expiry = new Date(user.expirationDate);
-        const now = new Date();
-        const diffDays = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        
-        switch (filters.expirationFilter) {
-          case 'expiring_soon': return diffDays <= 7 && diffDays > 0;
-          case 'expired': return diffDays <= 0;
-          case 'active': return diffDays > 7;
-          default: return true;
-        }
-      });
     }
 
     if (filters.marketingEmail !== 'all') {
@@ -202,9 +138,7 @@ export const AdminUsers = () => {
     const defaultFilters: UserFilters = {
       searchTerm: '',
       status: 'all',
-      learningStatus: 'all',
       marketingEmail: 'all',
-      expirationFilter: 'all',
     };
     setFilters(defaultFilters);
   };
@@ -218,33 +152,23 @@ export const AdminUsers = () => {
     switch (action) {
       case 'message':
         toast({
-          title: "알림 발송 완료",
-          description: `선택된 ${userIds.length}명의 회원에게 알림을 발송했습니다.`,
-          duration: 3000,
+          title: "메시지 발송",
+          description: `선택된 ${userIds.length}명의 사용자에게 메시지를 발송했습니다.`
         });
         break;
       case 'export':
-        exportToExcel(userIds);
-        break;
-      case 'extend_access':
-        toast({
-          title: "수강권 연장 완료",
-          description: `선택된 ${userIds.length}명의 수강권을 30일 연장했습니다.`,
-          duration: 3000,
-        });
+        exportToCSV(userIds);
         break;
       case 'status_change':
         toast({
-          title: "상태 변경 완료",
-          description: `선택된 ${userIds.length}명의 회원 상태를 변경했습니다.`,
-          duration: 3000,
+          title: "상태 변경",
+          description: `선택된 ${userIds.length}명의 사용자 상태를 변경했습니다.`
         });
         break;
       default:
         toast({
           title: "기능 준비 중",
-          description: "해당 기능은 추후 구현 예정입니다.",
-          variant: "destructive"
+          description: "해당 기능은 추후 구현 예정입니다."
         });
     }
   };
@@ -271,33 +195,28 @@ export const AdminUsers = () => {
     }
   };
 
-  const exportToExcel = (userIds: string[]) => {
+  const exportToCSV = (userIds: string[]) => {
     const selectedUsers = users.filter(user => userIds.includes(user.id));
     const csvContent = [
-      ['회원ID', '이름', '이메일', '연락처', '가입일', '상태', '수강중', '완주', '평균진도', '총학습시간', '총결제금액', '수강권만료일', '마케팅수신', '수료증'].join(','),
+      ['회원ID', '이름', '이메일', '연락처', '가입일', '최근접속일', '총결제금액', '상태', '마케팅수신'].join(','),
       ...selectedUsers.map(user => [
         user.memberId,
         user.name,
         user.email,
         user.phone || '',
         new Date(user.joinDate).toLocaleDateString(),
-        user.status === 'active' ? '정상' : '휴면',
-        user.currentCourses,
-        user.completedCourses,
-        `${user.averageProgress}%`,
-        `${Math.floor(user.totalLearningTime / 60)}h ${user.totalLearningTime % 60}m`,
+        user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : '',
         user.totalPayment,
-        user.expirationDate ? new Date(user.expirationDate).toLocaleDateString() : '',
-        user.marketingEmail ? '동의' : '거부',
-        user.certificatesEarned
+        user.status,
+        user.marketingEmail ? '동의' : '거부'
       ].join(','))
     ].join('\n');
 
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `회원정보_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `users_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -305,18 +224,17 @@ export const AdminUsers = () => {
 
     toast({
       title: "내보내기 완료",
-      description: "회원 정보가 Excel 파일로 내보내졌습니다.",
-      duration: 3000,
+      description: "회원 목록이 Excel 파일로 내보내졌습니다."
     });
   };
 
   return (
     <AdminLayout>
-      <div className="space-y-6 p-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 min-h-screen">
+      <div className="space-y-8 p-6">
         {/* 페이지 헤더 */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border">
-          <h1 className="text-3xl font-bold text-foreground mb-2">회원 관리</h1>
-          <p className="text-muted-foreground">교육 플랫폼 회원들의 학습 현황과 정보를 종합적으로 관리합니다</p>
+        <div className="border-b pb-4">
+          <h1 className="text-3xl font-bold text-foreground">회원 관리</h1>
+          <p className="text-muted-foreground mt-1">등록된 회원들을 조회하고 관리할 수 있습니다</p>
         </div>
 
         {/* 요약 대시보드 */}
@@ -327,8 +245,6 @@ export const AdminUsers = () => {
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onReset={handleResetFilters}
-          totalUsers={mockUsers.length}
-          filteredUsers={users.length}
         />
 
         {/* 사용자 목록 테이블 */}
