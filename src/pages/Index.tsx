@@ -4,7 +4,6 @@ import CategorySection from "@/components/CategorySection";
 import FeaturedCourses from "@/components/FeaturedCourses";
 import SecondBanner from "@/components/SecondBanner";
 import Footer from "@/components/Footer";
-import { BlogUpdateTester } from "@/components/BlogUpdateTester";
 
 const Index = () => {
   return (
@@ -15,9 +14,6 @@ const Index = () => {
         <CategorySection />
         <FeaturedCourses />
         <SecondBanner />
-        <div className="container mx-auto py-8">
-          <BlogUpdateTester />
-        </div>
       </main>
       <Footer />
     </div>
