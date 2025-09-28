@@ -11,6 +11,7 @@ import { PlayCircle, CheckCircle, Clock, ArrowLeft, ArrowRight, File, BookOpen, 
 import { useToast } from '@/hooks/use-toast';
 import '@/types/vimeo.d.ts';
 import { VideoProgressTracker } from '@/utils/VideoProgressTracker';
+import { getVimeoVideoInfo, extractVimeoId, isValidVimeoUrl } from '@/utils/vimeoUtils';
 import Header from '@/components/Header';
 
 interface CourseSession {
@@ -22,6 +23,7 @@ interface CourseSession {
   section_id?: string;
   attachment_url?: string;
   attachment_name?: string;
+  duration_minutes?: number;
 }
 
 interface CourseSection {
@@ -31,6 +33,16 @@ interface CourseSection {
   attachment_url?: string;
   attachment_name?: string;
   sessions: CourseSession[];
+}
+
+interface CourseMaterial {
+  id: string;
+  title: string;
+  file_url: string;
+  file_name: string;
+  file_type?: string;
+  file_size?: number;
+  order_index: number;
 }
 
 interface SessionProgress {
@@ -52,8 +64,9 @@ const Learn = () => {
   const [loading, setLoading] = useState(true);
   const [videoProgress, setVideoProgress] = useState<{ [key: string]: number }>({});
   const [showSidebar, setShowSidebar] = useState(true);
-  const [courseMaterials, setCourseMaterials] = useState<any[]>([]);
+  const [courseMaterials, setCourseMaterials] = useState<CourseMaterial[]>([]);
   const [isMaterialsOpen, setIsMaterialsOpen] = useState(false);
+  const [sessionDurations, setSessionDurations] = useState<{ [key: string]: number }>({});
 
   // 인스턴스 관리를 위해 useRef 사용
   const playerRef = useRef<any>(null);
@@ -98,11 +111,12 @@ const Learn = () => {
       // A. 강의 자료를 먼저 로드
       await fetchCourseMaterials(currentSession.id);
       
-      // B. 트래커 생성 및 데이터 로드
+      // B. 트래커 생성 및 데이터 로드 - 실제 비디오 길이 사용
+      const actualDuration = sessionDurations[currentSession.id] || 5; // 기본값 5분
       const tracker = new VideoProgressTracker(
         currentSession.id,
         user.id,
-        300 // Default 5 minutes since duration_minutes is removed
+        actualDuration * 60 // 분을 초로 변환
       );
       await tracker.initialize(); // 기존 데이터 로드 대기
       trackerRef.current = tracker;
@@ -284,7 +298,7 @@ const Learn = () => {
       setSections(sectionsData || []);
       setProgress(progressData || []);
 
-      // 모든 세션을 평면화
+      // 모든 세션을 평면화하고 비디오 시간 정보 로드
       const allSessions = sectionsData?.flatMap(section => 
         section.sessions?.map((session: any) => ({
           ...session,
@@ -293,6 +307,9 @@ const Learn = () => {
       ) || [];
 
       setSessions(allSessions);
+      
+      // 각 세션의 Vimeo 영상 시간 정보를 가져와서 저장
+      await loadSessionDurations(allSessions);
 
       // 초기 세션 설정
       if (initialSessionId) {
@@ -465,11 +482,19 @@ const Learn = () => {
     // completed가 true이면 100% 진도율로 표시
     if (sessionProgress.completed) return 100;
     
-    // 그렇지 않으면 watched_duration_seconds 기반으로 계산
+    // 그렇지 않으면 watched_duration_seconds와 실제 비디오 길이를 사용하여 계산
     const watchedTime = sessionProgress.watched_duration_seconds || 0;
-    // 기본 영상 길이를 5분(300초)로 가정하여 진도율 계산
-    const estimatedDuration = 300; // 5분
-    return Math.min((watchedTime / estimatedDuration) * 100, 95); // 최대 95%까지만
+    const actualDuration = sessionDurations[sessionId];
+    
+    if (actualDuration && actualDuration > 0) {
+      // 실제 비디오 길이(분)를 초로 변환하여 계산
+      const durationInSeconds = actualDuration * 60;
+      return Math.min((watchedTime / durationInSeconds) * 100, 95);
+    } else {
+      // 비디오 길이를 못 가져온 경우 기본값 사용
+      const estimatedDuration = 300; // 5분
+      return Math.min((watchedTime / estimatedDuration) * 100, 95);
+    }
   };
 
   const navigateToSession = async (session: CourseSession) => {
@@ -482,22 +507,54 @@ const Learn = () => {
     // 강의 자료는 useEffect에서 자동으로 로드됩니다
   };
 
+  const loadSessionDurations = async (sessions: CourseSession[]) => {
+    const durations: { [key: string]: number } = {};
+    
+    for (const session of sessions) {
+      if (session.video_url && isValidVimeoUrl(session.video_url)) {
+        try {
+          const videoInfo = await getVimeoVideoInfo(session.video_url);
+          if (videoInfo) {
+            durations[session.id] = videoInfo.duration;
+          }
+        } catch (error) {
+          console.error(`Error fetching duration for session ${session.id}:`, error);
+        }
+      }
+    }
+    
+    setSessionDurations(durations);
+  };
+
   const fetchCourseMaterials = async (sessionId: string) => {
     try {
-      // DB에서 직접 세션의 section_id를 조회하여 안정성 확보
+      // 세션과 섹션 레벨 모두에서 자료를 가져옵니다
       const { data: sessionData, error: sessionError } = await supabase
         .from('course_sessions')
-        .select('section_id')
+        .select('section_id, course_id')
         .eq('id', sessionId)
         .single();
 
-      if (sessionError || !sessionData?.section_id) {
-        console.error('Session not found or no section_id:', sessionError);
+      if (sessionError) {
+        console.error('Session not found:', sessionError);
         setCourseMaterials([]);
         return;
       }
       
-      // 해당 섹션의 모든 자료를 가져옵니다
+      // 세션별, 섹션별, 강의별 자료를 모두 가져옵니다
+      const { data: materials, error: materialsError } = await supabase
+        .from('course_materials')
+        .select('*')
+        .or(`session_id.eq.${sessionId},section_id.eq.${sessionData.section_id},course_id.eq.${sessionData.course_id}`)
+        .order('order_index');
+
+      if (materialsError) {
+        console.error('Error fetching materials:', materialsError);
+        setCourseMaterials([]);
+        return;
+      }
+
+      setCourseMaterials(materials || []);
       const { data, error } = await supabase
         .from('course_materials')
         .select('*')
@@ -597,11 +654,7 @@ const Learn = () => {
 
 
 
-  const extractVimeoId = (url: string | null | undefined) => {
-    if (!url) return null;
-    const match = url.match(/vimeo\.com\/(?:video\/)?(\d+)(?:\?.*)?/);
-    return match ? match[1] : null;
-  };
+  // Vimeo 유틸리티 함수들은 별도 파일에서 import하여 사용
 
   const extractVimeoHash = (url: string | null | undefined) => {
     if (!url) return null;
@@ -935,15 +988,16 @@ const Learn = () => {
                                   {session.title}
                                 </div>
                                  <div className="flex items-center justify-between mt-1">
-                                   <div className={`text-xs flex items-center gap-1 ${
-                                     currentSession?.id === session.id 
-                                       ? 'text-primary-foreground/70' 
-                                       : 'text-muted-foreground'
-                                   }`}>
-                                     <Clock className="h-3 w-3" />
-                                     {!isSessionCompleted(session.id) && (
-                                       <span>{Math.round(getSessionProgress(session.id))}%</span>
-                                     )}
+                                    <div className={`text-xs flex items-center gap-1 ${
+                                      currentSession?.id === session.id 
+                                        ? 'text-primary-foreground/70' 
+                                        : 'text-muted-foreground'
+                                    }`}>
+                                      <Clock className="h-3 w-3" />
+                                      <span>{sessionDurations[session.id] ? `${sessionDurations[session.id]}분` : '로딩 중...'}</span>
+                                      {!isSessionCompleted(session.id) && (
+                                        <span> • {Math.round(getSessionProgress(session.id))}%</span>
+                                      )}
                                    </div>
                                    
                                    <div className="flex items-center gap-2">
