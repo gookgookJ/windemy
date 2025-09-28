@@ -22,6 +22,162 @@ interface UserStats {
   studentUsers: number;
 }
 
+// Mock 데이터 생성 함수
+const generateMockUsers = (page: number, itemsPerPage: number, filters: UserFilterOptions) => {
+  const mockUsers = [
+    {
+      id: '1',
+      full_name: '김영희',
+      email: 'kim.younghee@email.com',
+      phone: '010-1234-5678',
+      role: 'student',
+      created_at: '2024-01-15T10:30:00Z',
+      avatar_url: null,
+      marketing_consent: true,
+      total_payment: 89000,
+      status: 'active',
+      last_login: '2024-03-20T14:22:00Z'
+    },
+    {
+      id: '2',
+      full_name: '이철수',
+      email: 'lee.chulsoo@email.com',
+      phone: '010-2345-6789',
+      role: 'instructor',
+      created_at: '2023-11-08T09:15:00Z',
+      avatar_url: null,
+      marketing_consent: false,
+      total_payment: 245000,
+      status: 'active',
+      last_login: '2024-03-19T16:45:00Z'
+    },
+    {
+      id: '3',
+      full_name: '박민지',
+      email: 'park.minji@email.com',
+      phone: '010-3456-7890',
+      role: 'student',
+      created_at: '2024-02-20T11:00:00Z',
+      avatar_url: null,
+      marketing_consent: true,
+      total_payment: 156000,
+      status: 'active',
+      last_login: '2024-03-18T09:30:00Z'
+    },
+    {
+      id: '4',
+      full_name: '정수연',
+      email: 'jung.suyeon@email.com',
+      phone: '010-4567-8901',
+      role: 'admin',
+      created_at: '2023-08-12T08:45:00Z',
+      avatar_url: null,
+      marketing_consent: true,
+      total_payment: 0,
+      status: 'active',
+      last_login: '2024-03-21T10:15:00Z'
+    },
+    {
+      id: '5',
+      full_name: '한지민',
+      email: 'han.jimin@email.com',
+      phone: '010-5678-9012',
+      role: 'student',
+      created_at: '2024-03-01T13:20:00Z',
+      avatar_url: null,
+      marketing_consent: false,
+      total_payment: 78000,
+      status: 'inactive',
+      last_login: '2024-03-05T15:10:00Z'
+    },
+    {
+      id: '6',
+      full_name: '강태우',
+      email: 'kang.taewoo@email.com',
+      phone: '010-6789-0123',
+      role: 'instructor',
+      created_at: '2023-09-15T12:30:00Z',
+      avatar_url: null,
+      marketing_consent: true,
+      total_payment: 320000,
+      status: 'active',
+      last_login: '2024-03-20T11:40:00Z'
+    },
+    {
+      id: '7',
+      full_name: '송혜교',
+      email: 'song.hyekyo@email.com',
+      phone: '010-7890-1234',
+      role: 'student',
+      created_at: '2024-01-28T16:45:00Z',
+      avatar_url: null,
+      marketing_consent: true,
+      total_payment: 134000,
+      status: 'active',
+      last_login: '2024-03-19T14:25:00Z'
+    },
+    {
+      id: '8',
+      full_name: '최민호',
+      email: 'choi.minho@email.com',
+      phone: '010-8901-2345',
+      role: 'student',
+      created_at: '2024-02-14T09:00:00Z',
+      avatar_url: null,
+      marketing_consent: false,
+      total_payment: 67000,
+      status: 'active',
+      last_login: '2024-03-17T13:50:00Z'
+    }
+  ];
+
+  // 필터 적용
+  let filteredUsers = mockUsers;
+
+  if (filters.searchTerm) {
+    const searchTerm = filters.searchTerm.toLowerCase();
+    filteredUsers = filteredUsers.filter(user => 
+      user.full_name.toLowerCase().includes(searchTerm) ||
+      user.email.toLowerCase().includes(searchTerm) ||
+      user.phone.includes(searchTerm)
+    );
+  }
+
+  if (filters.role !== 'all') {
+    filteredUsers = filteredUsers.filter(user => user.role === filters.role);
+  }
+
+  if (filters.status !== 'all') {
+    filteredUsers = filteredUsers.filter(user => user.status === filters.status);
+  }
+
+  if (filters.marketingEmail !== 'all') {
+    filteredUsers = filteredUsers.filter(user => 
+      user.marketing_consent === (filters.marketingEmail === 'true')
+    );
+  }
+
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  
+  return {
+    users: filteredUsers.slice(startIndex, endIndex),
+    totalCount: filteredUsers.length
+  };
+};
+
+const generateMockStats = (): UserStats => {
+  return {
+    totalUsers: 847,
+    activeUsers: 692,
+    inactiveUsers: 155,
+    newUsersThisMonth: 84,
+    adminUsers: 3,
+    instructorUsers: 24,
+    studentUsers: 820,
+  };
+};
+
 export const AdminUsers = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -41,119 +197,33 @@ export const AdminUsers = () => {
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
-  // 페이지 변경 시 데이터 다시 fetch
+  // Mock 데이터 로딩
   useEffect(() => {
-    fetchUsers();
-  }, [filters, currentPage]);
-
-  // Stats는 별도로 fetch (페이지네이션과 무관)
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
+    const loadMockData = async () => {
       setLoading(true);
       
-      // 기본 쿼리 설정
-      let query = supabase
-        .from('profiles')
-        .select('*', { count: 'exact' });
-
-      // 검색 필터 적용
-      if (filters.searchTerm) {
-        query = query.or(`full_name.ilike.%${filters.searchTerm}%,email.ilike.%${filters.searchTerm}%,phone.ilike.%${filters.searchTerm}%`);
-      }
-
-      // 역할 필터 적용
-      if (filters.role !== 'all') {
-        query = query.eq('role', filters.role);
-      }
-
-      // 날짜 필터 적용
-      if (filters.startDate) {
-        query = query.gte('created_at', filters.startDate.toISOString());
-      }
-      if (filters.endDate) {
-        query = query.lte('created_at', filters.endDate.toISOString());
-      }
-
-      // 마케팅 동의 필터 적용
-      if (filters.marketingEmail !== 'all') {
-        query = query.eq('marketing_consent', filters.marketingEmail === 'true');
-      }
-
-      // 페이지네이션 적용
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      // 실제 API 호출을 시뮬레이션하기 위한 딜레이
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      query = query
-        .range(from, to)
-        .order('created_at', { ascending: false });
-
-      const { data: userData, error: userError, count } = await query;
-
-      if (userError) throw userError;
-
-      // 각 사용자의 총 결제 금액 조회
-      const usersWithPayments = await Promise.all(
-        (userData || []).map(async (user) => {
-          const { data: orders } = await supabase
-            .from('orders')
-            .select('total_amount')
-            .eq('user_id', user.id)
-            .eq('status', 'completed');
-
-          const totalPayment = orders?.reduce((sum, order) => sum + order.total_amount, 0) || 0;
-
-          return {
-            ...user,
-            total_payment: totalPayment,
-            status: 'active' // 기본값, 실제 상태 로직은 필요에 따라 구현
-          };
-        })
-      );
-
-      setUsers(usersWithPayments);
-      setTotalCount(count || 0);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      toast({
-        title: "사용자 목록 조회 실패",
-        description: "사용자 목록을 불러오는데 실패했습니다.",
-        variant: "destructive",
-      });
-    } finally {
+      const { users: mockUsers, totalCount: mockTotalCount } = generateMockUsers(currentPage, ITEMS_PER_PAGE, filters);
+      
+      setUsers(mockUsers);
+      setTotalCount(mockTotalCount);
       setLoading(false);
-    }
-  };
+    };
 
-  const fetchStats = async () => {
-    try {
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('role, created_at');
+    loadMockData();
+  }, [filters, currentPage]);
 
-      if (error) throw error;
+  // Mock Stats 로딩
+  useEffect(() => {
+    const loadMockStats = async () => {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setStats(generateMockStats());
+    };
 
-      const now = new Date();
-      const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-      const stats: UserStats = {
-        totalUsers: profiles?.length || 0,
-        activeUsers: profiles?.length || 0,
-        inactiveUsers: 0,
-        newUsersThisMonth: profiles?.filter(p => new Date(p.created_at) >= thisMonth).length || 0,
-        adminUsers: profiles?.filter(p => p.role === 'admin').length || 0,
-        instructorUsers: profiles?.filter(p => p.role === 'instructor').length || 0,
-        studentUsers: profiles?.filter(p => p.role === 'student').length || 0,
-      };
-
-      setStats(stats);
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    }
-  };
+    loadMockStats();
+  }, []);
 
   const handleFiltersChange = (newFilters: UserFilterOptions) => {
     setFilters(newFilters);
