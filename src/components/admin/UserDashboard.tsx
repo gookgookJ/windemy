@@ -12,11 +12,30 @@ interface UserStats {
 }
 
 interface UserDashboardProps {
-  stats: UserStats;
+  stats: UserStats | null;
   loading?: boolean;
 }
 
 export const UserDashboard = ({ stats, loading }: UserDashboardProps) => {
+  // Return loading state if stats is null or loading is true
+  if (loading || !stats) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-6">
+              <div className="animate-pulse">
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-muted rounded w-1/2 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-full"></div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
   const statCards = [
     {
       title: "전체 사용자",
@@ -54,19 +73,6 @@ export const UserDashboard = ({ stats, loading }: UserDashboardProps) => {
     { label: "관리자", value: stats.adminUsers, color: "bg-red-500" }
   ];
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="p-6">
-              <div className="h-20 bg-muted rounded"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
