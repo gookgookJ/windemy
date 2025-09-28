@@ -56,6 +56,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Bypass Vite dev server and module requests to avoid interfering with HMR/dynamic imports
+  if (
+    url.origin === self.location.origin &&
+    (url.pathname.startsWith('/@vite') ||
+     url.pathname.startsWith('/@react-refresh') ||
+     url.pathname.startsWith('/src/') ||
+     url.pathname.startsWith('/node_modules/.vite/'))
+  ) {
+    return; // Let the browser handle these
+  }
+
   // Handle different types of requests
   if (isStaticAsset(url)) {
     event.respondWith(cacheFirstStrategy(request, CACHE_DURATION.STATIC));
