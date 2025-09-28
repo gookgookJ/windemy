@@ -42,10 +42,14 @@ export const AdminUsers = () => {
 
   useEffect(() => {
     fetchUsers();
+  }, [filters]);
+
+  useEffect(() => {
     fetchStats();
   }, []);
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
       let query = supabase
         .from('profiles')
@@ -161,12 +165,10 @@ export const AdminUsers = () => {
 
   const handleFiltersChange = (newFilters: UserFilterOptions) => {
     setFilters(newFilters);
-    setLoading(true);
-    fetchUsers();
   };
 
   const handleResetFilters = () => {
-    const defaultFilters = {
+    const defaultFilters: UserFilterOptions = {
       searchTerm: '',
       status: 'all',
       role: 'all',
@@ -174,8 +176,6 @@ export const AdminUsers = () => {
       marketingSms: 'all',
     };
     setFilters(defaultFilters);
-    setLoading(true);
-    fetchUsers();
   };
 
   const handleUserSelect = (userId: string) => {
@@ -258,7 +258,6 @@ export const AdminUsers = () => {
       description: "사용자 목록이 CSV 파일로 내보내졌습니다."
     });
   };
-
 
   return (
     <AdminLayout>
