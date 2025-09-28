@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,183 +20,6 @@ interface UserDetailModalProps {
   onClose: () => void;
 }
 
-// Mock 데이터 생성 함수
-const generateMockUserDetail = (userId: string) => {
-  const mockUserDetails: { [key: string]: any } = {
-    '1': {
-      profile: {
-        id: '1',
-        full_name: '김영희',
-        email: 'kim.younghee@email.com',
-        phone: '010-1234-5678',
-        role: 'student',
-        created_at: '2024-01-15T10:30:00Z',
-        updated_at: '2024-03-15T10:30:00Z',
-        avatar_url: null,
-        marketing_consent: true,
-      },
-      enrollments: [
-        {
-          id: 'e1',
-          enrolled_at: '2024-02-01T10:00:00Z',
-          progress: 75,
-          completed_at: null,
-          courses: {
-            id: 'c1',
-            title: '실무 웹 개발 완성 과정',
-            instructor: {
-              full_name: '이철수'
-            }
-          }
-        },
-        {
-          id: 'e2',
-          enrolled_at: '2024-01-20T10:00:00Z',
-          progress: 100,
-          completed_at: '2024-02-20T15:30:00Z',
-          courses: {
-            id: 'c2',
-            title: 'JavaScript 기초부터 심화까지',
-            instructor: {
-              full_name: '박민지'
-            }
-          }
-        }
-      ],
-      orders: [
-        {
-          id: 'order-1',
-          created_at: '2024-03-01T14:30:00Z',
-          total_amount: 89000,
-          status: 'completed',
-          payment_method: 'card',
-          order_items: [
-            {
-              courses: {
-                title: '실무 웹 개발 완성 과정'
-              }
-            }
-          ]
-        },
-        {
-          id: 'order-2',
-          created_at: '2024-01-20T11:00:00Z',
-          total_amount: 67000,
-          status: 'completed',
-          payment_method: 'card',
-          order_items: [
-            {
-              courses: {
-                title: 'JavaScript 기초부터 심화까지'
-              }
-            }
-          ]
-        }
-      ]
-    },
-    '2': {
-      profile: {
-        id: '2',
-        full_name: '이철수',
-        email: 'lee.chulsoo@email.com',
-        phone: '010-2345-6789',
-        role: 'instructor',
-        created_at: '2023-11-08T09:15:00Z',
-        updated_at: '2024-03-10T09:15:00Z',
-        avatar_url: null,
-        marketing_consent: false,
-      },
-      enrollments: [],
-      orders: []
-    },
-    '3': {
-      profile: {
-        id: '3',
-        full_name: '박민지',
-        email: 'park.minji@email.com',
-        phone: '010-3456-7890',
-        role: 'student',
-        created_at: '2024-02-20T11:00:00Z',
-        updated_at: '2024-03-18T11:00:00Z',
-        avatar_url: null,
-        marketing_consent: true,
-      },
-      enrollments: [
-        {
-          id: 'e3',
-          enrolled_at: '2024-03-01T09:00:00Z',
-          progress: 45,
-          completed_at: null,
-          courses: {
-            id: 'c3',
-            title: 'React 완벽 마스터',
-            instructor: {
-              full_name: '강태우'
-            }
-          }
-        }
-      ],
-      orders: [
-        {
-          id: 'order-3',
-          created_at: '2024-03-01T09:00:00Z',
-          total_amount: 156000,
-          status: 'completed',
-          payment_method: 'card',
-          order_items: [
-            {
-              courses: {
-                title: 'React 완벽 마스터'
-              }
-            }
-          ]
-        }
-      ]
-    }
-  };
-
-  return mockUserDetails[userId] || null;
-};
-
-const generateMockAdminNotes = (userId: string) => {
-  const mockNotes: { [key: string]: any[] } = {
-    '1': [
-      {
-        id: 'note-1',
-        note: '결제 관련 문의 - 카드 승인 오류 해결 완료',
-        created_at: '2024-03-15T10:30:00Z',
-        updated_at: '2024-03-15T10:30:00Z',
-        created_by: {
-          full_name: '관리자'
-        }
-      },
-      {
-        id: 'note-2',
-        note: '강의 진도 문의 - 영상 재생 오류 해결',
-        created_at: '2024-03-10T14:20:00Z',
-        updated_at: '2024-03-10T14:20:00Z',
-        created_by: {
-          full_name: '관리자'
-        }
-      }
-    ],
-    '2': [
-      {
-        id: 'note-3',
-        note: '강사 계정 승인 완료',
-        created_at: '2024-03-05T11:15:00Z',
-        updated_at: '2024-03-05T11:15:00Z',
-        created_by: {
-          full_name: '관리자'
-        }
-      }
-    ],
-    '3': []
-  };
-
-  return mockNotes[userId] || [];
-};
-
 export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps) => {
   const [userDetail, setUserDetail] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -209,15 +33,77 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
     
     setLoading(true);
     
-    // Mock 데이터 로딩 시뮬레이션
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const mockDetail = generateMockUserDetail(userId);
-    const mockNotes = generateMockAdminNotes(userId);
-    
-    setUserDetail(mockDetail);
-    setAdminNotes(mockNotes);
-    setLoading(false);
+    try {
+      // 사용자 프로필 정보 조회
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // 수강 정보 조회
+      const { data: enrollmentsData, error: enrollmentsError } = await supabase
+        .from('enrollments')
+        .select(`
+          *,
+          courses (
+            id,
+            title,
+            instructor:profiles!instructor_id (
+              full_name
+            )
+          )
+        `)
+        .eq('user_id', userId);
+
+      if (enrollmentsError) throw enrollmentsError;
+
+      // 주문 정보 조회
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (
+            courses (
+              title
+            )
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (ordersError) throw ordersError;
+
+      // 관리자 메모 조회
+      const { data: notesData, error: notesError } = await supabase
+        .from('admin_notes')
+        .select(`
+          *,
+          created_by:profiles!created_by (
+            full_name
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (notesError) throw notesError;
+
+      setUserDetail({
+        profile: profileData,
+        enrollments: enrollmentsData || [],
+        orders: ordersData || []
+      });
+      setAdminNotes(notesData || []);
+      
+    } catch (error) {
+      console.error('Error fetching user detail:', error);
+      setUserDetail(null);
+      setAdminNotes([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -231,27 +117,44 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
     
     setAddingNote(true);
     
-    // Mock 메모 추가 시뮬레이션
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const newMockNote = {
-      id: `note-${Date.now()}`,
-      note: newNote.trim(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      created_by: {
-        full_name: '관리자'
-      }
-    };
-    
-    setAdminNotes(prev => [newMockNote, ...prev]);
-    setNewNote('');
-    setAddingNote(false);
-    
-    toast({
-      title: "메모 추가 완료",
-      description: "관리자 메모가 성공적으로 추가되었습니다.",
-    });
+    try {
+      const { data: currentUser } = await supabase.auth.getUser();
+      if (!currentUser.user) throw new Error('User not authenticated');
+
+      const { data: newNoteData, error } = await supabase
+        .from('admin_notes')
+        .insert({
+          user_id: userId,
+          note: newNote.trim(),
+          created_by: currentUser.user.id
+        })
+        .select(`
+          *,
+          created_by:profiles!created_by (
+            full_name
+          )
+        `)
+        .single();
+
+      if (error) throw error;
+
+      setAdminNotes(prev => [newNoteData, ...prev]);
+      setNewNote('');
+      
+      toast({
+        title: "메모 추가 완료",
+        description: "관리자 메모가 성공적으로 추가되었습니다.",
+      });
+    } catch (error) {
+      console.error('Error adding note:', error);
+      toast({
+        title: "메모 추가 실패",
+        description: "관리자 메모 추가에 실패했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setAddingNote(false);
+    }
   };
 
   const getRoleLabel = (role: string) => {
@@ -268,6 +171,26 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
       case 'admin': return 'destructive' as const;
       case 'instructor': return 'default' as const;
       case 'student': return 'secondary' as const;
+      default: return 'outline' as const;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'pending': return '대기중';
+      case 'completed': return '완료';
+      case 'cancelled': return '취소';
+      case 'refunded': return '환불';
+      default: return status;
+    }
+  };
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'completed': return 'default' as const;
+      case 'pending': return 'secondary' as const;
+      case 'cancelled': return 'destructive' as const;
+      case 'refunded': return 'outline' as const;
       default: return 'outline' as const;
     }
   };
@@ -462,20 +385,21 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                           {userDetail.orders.slice(0, 5).map((order: any) => (
                             <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
                               <div>
-                                <p className="font-medium">주문 #{order.id.slice(0, 8)}</p>
+                                <p className="font-medium">주문 #{order.id.slice(-8)}</p>
                                 <p className="text-sm text-muted-foreground">
                                   {order.order_items?.[0]?.courses?.title || '상품 정보 없음'}
-                                  {order.order_items?.length > 1 && ` 외 ${order.order_items.length - 1}개`}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                   {format(new Date(order.created_at), 'yyyy-MM-dd HH:mm', { locale: ko })}
                                 </p>
                               </div>
                               <div className="text-right">
-                                <p className="font-medium">{order.total_amount.toLocaleString()}원</p>
-                                <Badge variant={order.status === 'completed' ? 'default' : 'secondary'}>
-                                  {order.status === 'completed' ? '완료' : order.status}
+                                <Badge variant={getStatusBadgeVariant(order.status)}>
+                                  {getStatusLabel(order.status)}
                                 </Badge>
+                                <p className="text-sm font-medium mt-1">
+                                  {order.total_amount.toLocaleString()}원
+                                </p>
                               </div>
                             </div>
                           ))}
@@ -495,54 +419,44 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                         관리자 메모
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      {/* 새 메모 추가 */}
-                      <div className="space-y-2">
-                        <Label>새 메모 추가</Label>
-                        <Textarea
-                          value={newNote}
-                          onChange={(e) => setNewNote(e.target.value)}
-                          placeholder="CS 처리 내역이나 특이사항을 기록하세요..."
-                          rows={3}
-                        />
-                        <Button 
-                          onClick={addNote}
-                          disabled={!newNote.trim() || addingNote}
-                          size="sm"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          {addingNote ? '추가 중...' : '메모 추가'}
-                        </Button>
-                      </div>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex gap-2">
+                          <Textarea
+                            placeholder="새 메모를 입력하세요..."
+                            value={newNote}
+                            onChange={(e) => setNewNote(e.target.value)}
+                            className="flex-1"
+                            rows={3}
+                          />
+                          <Button 
+                            onClick={addNote}
+                            disabled={!newNote.trim() || addingNote}
+                            size="sm"
+                            className="self-end"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            {addingNote ? '추가 중...' : '추가'}
+                          </Button>
+                        </div>
 
-                      <Separator />
+                        <Separator />
 
-                      {/* 메모 목록 */}
-                      <div>
-                        <Label>메모 이력</Label>
-                        <ScrollArea className="h-60 mt-2">
+                        <div className="space-y-3">
                           {adminNotes.length > 0 ? (
-                            <div className="space-y-3">
-                              {adminNotes.map((note: any) => (
-                                <div key={note.id} className="p-3 border rounded-lg">
-                                  <div className="flex items-start justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                      <Badge variant="outline" className="text-xs">
-                                        {note.created_by?.full_name || '시스템'}
-                                      </Badge>
-                                      <span className="text-xs text-muted-foreground">
-                                        {format(new Date(note.created_at), 'yyyy-MM-dd HH:mm', { locale: ko })}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <p className="text-sm whitespace-pre-wrap">{note.note}</p>
+                            adminNotes.map((note: any) => (
+                              <div key={note.id} className="p-3 border rounded-lg">
+                                <p className="text-sm mb-2">{note.note}</p>
+                                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                  <span>작성자: {note.created_by?.full_name || '관리자'}</span>
+                                  <span>{format(new Date(note.created_at), 'yyyy-MM-dd HH:mm', { locale: ko })}</span>
                                 </div>
-                              ))}
-                            </div>
+                              </div>
+                            ))
                           ) : (
-                            <p className="text-center text-muted-foreground py-8">등록된 메모가 없습니다.</p>
+                            <p className="text-center text-muted-foreground py-8">작성된 메모가 없습니다.</p>
                           )}
-                        </ScrollArea>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -551,8 +465,17 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
             </Tabs>
           </div>
         ) : (
-          <div className="text-center text-muted-foreground py-8">
-            사용자 정보를 찾을 수 없습니다.
+          <div className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="font-medium mb-2">사용자 정보를 찾을 수 없습니다</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                요청하신 사용자의 정보를 불러올 수 없습니다.
+              </p>
+              <Button variant="outline" onClick={onClose}>
+                닫기
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>
