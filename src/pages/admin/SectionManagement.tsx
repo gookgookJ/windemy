@@ -63,19 +63,41 @@ export const SectionManagement = () => {
 
   const fetchSections = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: sectionsRaw, error } = await supabase
         .from('course_sections')
         .select(`
           *,
           course:courses(title, id),
-          sessions:course_sessions(id, title),
-          materials:course_materials(id, title, file_name, file_type, order_index)
+          sessions:course_sessions(id, title)
         `)
         .order('course_id', { ascending: true })
         .order('order_index', { ascending: true });
 
       if (error) throw error;
-      setSections(data || []);
+
+      const sectionIds = (sectionsRaw || []).map((s: any) => s.id);
+      let materialsBySection: Record<string, any[]> = {};
+
+      if (sectionIds.length > 0) {
+        const { data: mats, error: matsError } = await supabase
+          .from('course_materials')
+          .select('id, title, file_name, file_type, order_index, section_id')
+          .in('section_id', sectionIds)
+          .order('order_index', { ascending: true });
+        if (matsError) throw matsError;
+        materialsBySection = (mats || []).reduce((acc: Record<string, any[]>, m: any) => {
+          acc[m.section_id] = acc[m.section_id] || [];
+          acc[m.section_id].push(m);
+          return acc;
+        }, {});
+      }
+
+      const merged = (sectionsRaw || []).map((s: any) => ({
+        ...s,
+        materials: materialsBySection[s.id] || []
+      }));
+
+      setSections(merged);
     } catch (error) {
       console.error('Error fetching sections:', error);
       toast({

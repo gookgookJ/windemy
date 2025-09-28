@@ -528,41 +528,71 @@ const Learn = () => {
 
   const fetchCourseMaterials = async (sessionId: string) => {
     try {
-      // 세션과 섹션 레벨 모두에서 자료를 가져옵니다
       const { data: sessionData, error: sessionError } = await supabase
         .from('course_sessions')
         .select('section_id, course_id')
         .eq('id', sessionId)
         .single();
 
-      if (sessionError) {
+      if (sessionError || !sessionData) {
         console.error('Session not found:', sessionError);
         setCourseMaterials([]);
         return;
       }
       
-      // 세션별, 섹션별, 강의별 자료를 모두 가져옵니다
-      const { data: materials, error: materialsError } = await supabase
+      // 섹션 첨부 조회
+      const { data: sectionRow } = await supabase
+        .from('course_sections')
+        .select('attachment_url, attachment_name')
+        .eq('id', sessionData.section_id)
+        .maybeSingle();
+      
+      // 세션/섹션/강의 레벨의 자료를 모두 조회
+      const { data: mats, error: materialsError } = await supabase
         .from('course_materials')
-        .select('*')
+        .select('id, title, file_url, file_name, file_size, file_type, order_index')
         .or(`session_id.eq.${sessionId},section_id.eq.${sessionData.section_id},course_id.eq.${sessionData.course_id}`)
         .order('order_index');
 
       if (materialsError) {
         console.error('Error fetching materials:', materialsError);
-        setCourseMaterials([]);
-        return;
       }
 
-      setCourseMaterials(materials || []);
-      const { data, error } = await supabase
-        .from('course_materials')
-        .select('*')
-        .eq('section_id', sessionData.section_id)
-        .order('order_index');
+      const combined: CourseMaterial[] = [];
 
-      if (error) throw error;
-      setCourseMaterials(data || []);
+      // 세션 첨부를 가상 자료로 추가 (현재 메모리의 sessions 상태에서 조회)
+      const sessionObj = sessions.find(s => s.id === sessionId);
+      if (sessionObj && sessionObj.attachment_url) {
+        combined.push({
+          id: `session-attachment-${sessionId}`,
+          title: sessionObj.attachment_name || '세션 자료',
+          file_url: sessionObj.attachment_url,
+          file_name: sessionObj.attachment_name || '세션 자료',
+          file_type: 'link',
+          order_index: -2,
+        } as CourseMaterial);
+      }
+
+      // 섹션 첨부를 가상 자료로 추가
+      if (sectionRow?.attachment_url) {
+        combined.push({
+          id: `section-attachment-${sessionData.section_id}`,
+          title: sectionRow.attachment_name || '섹션 자료',
+          file_url: sectionRow.attachment_url,
+          file_name: sectionRow.attachment_name || '섹션 자료',
+          file_type: 'link',
+          order_index: -1,
+        } as CourseMaterial);
+      }
+
+      if (mats && mats.length) {
+        combined.push(...(mats as CourseMaterial[]));
+      }
+
+      // 정렬 (가상 자료가 먼저 오도록)
+      combined.sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+
+      setCourseMaterials(combined);
     } catch (error) {
       console.error('Error fetching course materials:', error);
       setCourseMaterials([]);
