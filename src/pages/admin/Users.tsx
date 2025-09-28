@@ -1,49 +1,35 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
-import { UserSummaryDashboard } from '@/components/admin/UserSummaryDashboard';
-import { UserSearchFilter, UserSearchFilters } from '@/components/admin/UserSearchFilter';
-import { UserListTable, UserListData } from '@/components/admin/UserListTable';
+import { UserSearchFilter, UserFilters } from '@/components/admin/UserSearchFilter';
+import { UserListTable, UserData } from '@/components/admin/UserListTable';
 import { UserDetailModal } from '@/components/admin/UserDetailModal';
 
-interface UserSummaryStats {
-  totalUsers: number;
-  activeUsers: number;
-  dormantUsers: number;
-  suspendedUsers: number;
-  newUsersToday: number;
-  newUsersThisWeek: number;
-  totalRevenue: number;
-  averageRevenue: number;
-}
 
 export const AdminUsers = () => {
-  const [users, setUsers] = useState<UserListData[]>([]);
-  const [stats, setStats] = useState<UserSummaryStats | null>(null);
+  const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
-  const [filters, setFilters] = useState<UserSearchFilters>({
+  const [filters, setFilters] = useState<UserFilters>({
     searchTerm: '',
     status: 'all',
-    memberGrade: 'all',
     enrolledCourse: 'all',
     marketingEmail: 'all',
     marketingSms: 'all',
   });
   const { toast } = useToast();
 
-  // Mock 강의 옵션
+  // Mock 강의 목록
   const courseOptions = [
-    { id: 'course1', title: '웹 개발 마스터 클래스' },
+    { id: 'course1', title: '웹 개발 기초' },
     { id: 'course2', title: 'React 심화 과정' },
-    { id: 'course3', title: 'Node.js 백엔드 개발' },
-    { id: 'course4', title: 'UI/UX 디자인 기초' },
+    { id: 'course3', title: 'Node.js 백엔드' },
+    { id: 'course4', title: 'UI/UX 디자인' },
   ];
 
   useEffect(() => {
     fetchUsers();
-    fetchStats();
   }, [filters]);
 
   const fetchUsers = async () => {
@@ -53,78 +39,66 @@ export const AdminUsers = () => {
     await new Promise(resolve => setTimeout(resolve, 800));
     
     // Mock 사용자 데이터
-    const mockUsers: UserListData[] = [
+    const mockUsers: UserData[] = [
       {
         id: '1',
         memberId: 'USR240001',
         name: '김영희',
         email: 'kim.younghee@example.com',
+        phone: '010-1234-5678',
         joinDate: '2024-01-15T10:30:00Z',
         lastLogin: '2024-03-20T14:22:00Z',
         totalPayment: 168000,
         status: 'active',
-        grade: 'vip',
-        phone: '010-1234-5678'
+        role: 'student'
       },
       {
         id: '2',
         memberId: 'USR240002',
         name: '이철수',
         email: 'lee.chulsoo@example.com',
+        phone: '010-2345-6789',
         joinDate: '2023-11-08T09:15:00Z',
         lastLogin: '2024-03-19T16:45:00Z',
         totalPayment: 245000,
         status: 'active',
-        grade: 'premium',
-        phone: '010-2345-6789'
+        role: 'instructor'
       },
       {
         id: '3',
         memberId: 'USR240003',
         name: '박민지',
         email: 'park.minji@example.com',
+        phone: '010-3456-7890',
         joinDate: '2024-02-20T11:00:00Z',
         lastLogin: '2024-03-18T09:30:00Z',
         totalPayment: 89000,
         status: 'active',
-        grade: 'normal',
-        phone: '010-3456-7890'
+        role: 'student'
       },
       {
         id: '4',
         memberId: 'USR240004',
         name: '정수연',
         email: 'jung.suyeon@example.com',
+        phone: '010-4567-8901',
         joinDate: '2023-08-12T08:45:00Z',
         lastLogin: '2024-02-15T14:20:00Z',
         totalPayment: 320000,
         status: 'dormant',
-        grade: 'vip',
-        phone: '010-4567-8901'
+        role: 'student'
       },
       {
         id: '5',
         memberId: 'USR240005',
         name: '한지민',
         email: 'han.jimin@example.com',
+        phone: '010-5678-9012',
         joinDate: '2024-03-01T13:20:00Z',
         lastLogin: '2024-03-05T15:10:00Z',
         totalPayment: 78000,
         status: 'suspended',
-        grade: 'normal',
-        phone: '010-5678-9012'
-      },
-      {
-        id: '6',
-        memberId: 'USR240006',
-        name: '강태우',
-        email: 'kang.taewoo@example.com',
-        joinDate: '2023-09-15T12:30:00Z',
-        lastLogin: '2024-03-20T11:40:00Z',
-        totalPayment: 156000,
-        status: 'active',
-        grade: 'normal',
-        phone: '010-6789-0123'
+        role: 'student'
       }
     ];
 
@@ -145,11 +119,6 @@ export const AdminUsers = () => {
       filteredUsers = filteredUsers.filter(user => user.status === filters.status);
     }
 
-    if (filters.memberGrade !== 'all') {
-      filteredUsers = filteredUsers.filter(user => user.grade === filters.memberGrade);
-    }
-
-    // 날짜 필터 적용 (필요시)
     if (filters.joinDateStart) {
       filteredUsers = filteredUsers.filter(user => 
         new Date(user.joinDate) >= filters.joinDateStart!
@@ -166,33 +135,15 @@ export const AdminUsers = () => {
     setLoading(false);
   };
 
-  const fetchStats = async () => {
-    // Mock 통계 데이터
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const mockStats: UserSummaryStats = {
-      totalUsers: 1247,
-      activeUsers: 956,
-      dormantUsers: 203,
-      suspendedUsers: 88,
-      newUsersToday: 12,
-      newUsersThisWeek: 84,
-      totalRevenue: 127500000, // 1억 2750만원
-      averageRevenue: 102300
-    };
 
-    setStats(mockStats);
-  };
-
-  const handleFiltersChange = (newFilters: UserSearchFilters) => {
+  const handleFiltersChange = (newFilters: UserFilters) => {
     setFilters(newFilters);
   };
 
   const handleResetFilters = () => {
-    const defaultFilters: UserSearchFilters = {
+    const defaultFilters: UserFilters = {
       searchTerm: '',
       status: 'all',
-      memberGrade: 'all',
       enrolledCourse: 'all',
       marketingEmail: 'all',
       marketingSms: 'all',
@@ -255,7 +206,7 @@ export const AdminUsers = () => {
   const exportToCSV = (userIds: string[]) => {
     const selectedUsers = users.filter(user => userIds.includes(user.id));
     const csvContent = [
-      ['회원ID', '이름', '이메일', '연락처', '가입일', '최근접속일', '총결제금액', '상태', '등급'].join(','),
+      ['회원ID', '이름', '이메일', '연락처', '가입일', '최근접속일', '총결제금액', '상태', '권한'].join(','),
       ...selectedUsers.map(user => [
         user.memberId,
         user.name,
@@ -265,7 +216,7 @@ export const AdminUsers = () => {
         user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : '',
         user.totalPayment,
         user.status,
-        user.grade
+        user.role
       ].join(','))
     ].join('\n');
 
@@ -290,16 +241,10 @@ export const AdminUsers = () => {
       <div className="space-y-6">
         {/* 페이지 헤더 */}
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">사용자 관리</h1>
-          <p className="text-muted-foreground">
-            CS 문의에 필요한 모든 사용자 정보를 한 곳에서 파악하고 즉시 조치하여 응대 시간을 단축합니다.
-          </p>
+          <h1 className="text-3xl font-bold text-foreground">사용자 관리</h1>
         </div>
 
-        {/* 1. 요약 대시보드 */}
-        <UserSummaryDashboard stats={stats} loading={!stats} />
-
-        {/* 2. 검색 및 필터링 영역 */}
+        {/* 검색 및 필터링 영역 */}
         <UserSearchFilter
           filters={filters}
           onFiltersChange={handleFiltersChange}
@@ -307,7 +252,7 @@ export const AdminUsers = () => {
           courseOptions={courseOptions}
         />
 
-        {/* 3. 사용자 목록 테이블 */}
+        {/* 사용자 목록 테이블 */}
         <UserListTable
           users={users}
           loading={loading}
@@ -316,7 +261,7 @@ export const AdminUsers = () => {
           onStatusChange={handleStatusChange}
         />
 
-        {/* 4. 사용자 상세 정보 모달 */}
+        {/* 사용자 상세 정보 모달 */}
         <UserDetailModal
           userId={selectedUserId}
           open={detailModalOpen}
