@@ -18,7 +18,10 @@ export default {
 			}
 		},
 		extend: {
-			fontFamily: {
+      fontFamily: {
+        sans: ['Pretendard', 'Pretendard Variable', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'monospace'],
+      },
 				sans: ['Noto Sans KR', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
 			},
 			colors: {
