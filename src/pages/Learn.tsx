@@ -460,7 +460,16 @@ const Learn = () => {
 
   const getSessionProgress = (sessionId: string) => {
     const sessionProgress = progress.find(p => p.session_id === sessionId);
-    return sessionProgress?.watched_duration_seconds || 0;
+    if (!sessionProgress) return 0;
+    
+    // completed가 true이면 100% 진도율로 표시
+    if (sessionProgress.completed) return 100;
+    
+    // 그렇지 않으면 watched_duration_seconds 기반으로 계산
+    const watchedTime = sessionProgress.watched_duration_seconds || 0;
+    // 기본 영상 길이를 5분(300초)로 가정하여 진도율 계산
+    const estimatedDuration = 300; // 5분
+    return Math.min((watchedTime / estimatedDuration) * 100, 95); // 최대 95%까지만
   };
 
   const navigateToSession = async (session: CourseSession) => {
@@ -810,9 +819,10 @@ const Learn = () => {
                           </Button>
                         ))
                       ) : (
-                        <div className="text-center py-6 text-muted-foreground bg-muted/30 rounded-lg">
-                          <File className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">이 세션에는 강의 자료가 없습니다</p>
+                        <div className="text-center py-8 text-muted-foreground bg-muted/20 rounded-lg border-2 border-dashed border-muted-foreground/20">
+                          <File className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                          <p className="text-sm font-medium mb-1">이 세션에는 강의 자료가 없습니다</p>
+                          <p className="text-xs">강사가 곧 자료를 업로드할 예정입니다</p>
                         </div>
                       )}
                     </div>
@@ -924,31 +934,38 @@ const Learn = () => {
                                 }`}>
                                   {session.title}
                                 </div>
-                                <div className="flex items-center justify-between mt-1">
-                                  <div className={`text-xs flex items-center gap-1 ${
-                                    currentSession?.id === session.id 
-                                      ? 'text-primary-foreground/70' 
-                                      : 'text-muted-foreground'
-                                  }`}>
-                                    <Clock className="h-3 w-3" />
-                                    {session.duration_minutes}분
-                                  </div>
-                                  
-                                  {session.attachment_url && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        downloadFile(session.attachment_url!, session.attachment_name || '세션자료', session.id);
-                                      }}
-                                      className="h-6 w-6 p-0"
-                                    >
-                                      <File className="h-3 w-3" />
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
+                                 <div className="flex items-center justify-between mt-1">
+                                   <div className={`text-xs flex items-center gap-1 ${
+                                     currentSession?.id === session.id 
+                                       ? 'text-primary-foreground/70' 
+                                       : 'text-muted-foreground'
+                                   }`}>
+                                     <Clock className="h-3 w-3" />
+                                     {!isSessionCompleted(session.id) && (
+                                       <span>{Math.round(getSessionProgress(session.id))}%</span>
+                                     )}
+                                   </div>
+                                   
+                                   <div className="flex items-center gap-2">
+                                     {isSessionCompleted(session.id) && (
+                                       <span className="text-xs text-green-600 font-medium">완료</span>
+                                     )}
+                                     {session.attachment_url && (
+                                       <Button
+                                         variant="ghost"
+                                         size="sm"
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           downloadFile(session.attachment_url!, session.attachment_name || '세션자료', session.id);
+                                         }}
+                                         className="h-6 w-6 p-0"
+                                       >
+                                         <File className="h-3 w-3" />
+                                       </Button>
+                                     )}
+                                   </div>
+                                 </div>
+                               </div>
                             </div>
                           </div>
                         ))}
@@ -1010,37 +1027,39 @@ const Learn = () => {
                               }`}>
                                 {session.title}
                               </div>
-                              <div className="flex items-center justify-between mt-1">
-                                <div className={`text-xs flex items-center gap-1 ${
-                                  currentSession?.id === session.id 
-                                    ? 'text-primary-foreground/70' 
-                                    : 'text-muted-foreground'
-                                }`}>
-                                  <Clock className="h-3 w-3" />
-                                  {session.duration_minutes}분
-                                </div>
-                                
-                                <div className="flex items-center gap-2">
-                                  {isSessionCompleted(session.id) && (
-                                    <Badge variant="secondary" className="text-xs px-2 py-0">
-                                      완료
-                                    </Badge>
-                                  )}
-                                  {session.attachment_url && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        downloadFile(session.attachment_url!, session.attachment_name || '세션자료', session.id);
-                                      }}
-                                      className="h-6 w-6 p-0"
-                                    >
-                                      <File className="h-3 w-3 text-primary" />
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
+                               <div className="flex items-center justify-between mt-1">
+                                 <div className={`text-xs flex items-center gap-1 ${
+                                   currentSession?.id === session.id 
+                                     ? 'text-primary-foreground/70' 
+                                     : 'text-muted-foreground'
+                                 }`}>
+                                   <Clock className="h-3 w-3" />
+                                   {!isSessionCompleted(session.id) && (
+                                     <span>{Math.round(getSessionProgress(session.id))}%</span>
+                                   )}
+                                 </div>
+                                 
+                                 <div className="flex items-center gap-2">
+                                   {isSessionCompleted(session.id) && (
+                                     <Badge variant="secondary" className="text-xs px-2 py-0">
+                                       완료
+                                     </Badge>
+                                   )}
+                                   {session.attachment_url && (
+                                     <Button
+                                       variant="ghost"
+                                       size="sm"
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         downloadFile(session.attachment_url!, session.attachment_name || '세션자료', session.id);
+                                       }}
+                                       className="h-6 w-6 p-0"
+                                     >
+                                       <File className="h-3 w-3 text-primary" />
+                                     </Button>
+                                   )}
+                                 </div>
+                               </div>
                             </div>
                           </div>
                         </div>
