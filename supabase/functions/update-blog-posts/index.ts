@@ -129,7 +129,7 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
       }
     }
 
-    // 3) 최후수단: /blog HTML에서 링크 스캔 (CSR일 경우 비어있을 수 있음)
+    // 3) 최후수단: /blog HTML에서 링크 스캔 (windly.cc 블로그 구조에 맞게 개선)
     if (rawPosts.length < 5) {
       const response = await fetch('https://windly.cc/blog', {
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WindlyBot/1.0)', 'Accept-Language': 'ko,en;q=0.9' }
@@ -137,58 +137,100 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
       const html = await response.text();
       console.log('Fetched /blog HTML length:', html.length);
 
-      const allContent = html;
-      const candidates: { url: string; index: number }[] = [];
-      const aHref = /href=['\"](https?:\/\/windly\.cc\/blog\/[^'\"]+|\/blog\/[^'\"]+)['\"]/g;
-      let linkMatch;
-      while ((linkMatch = aHref.exec(allContent)) !== null) {
-        let url = linkMatch[1];
-        if (url.startsWith('/')) url = `https://windly.cc${url}`;
-        if (seen.has(url)) continue;
-        seen.add(url);
-        candidates.push({ url, index: linkMatch.index });
-      }
-      console.log('Blog HTML candidates:', candidates.length);
-
-      async function enrichFromContext(url: string, startIndex: number) {
-        const searchArea = allContent.substring(startIndex, startIndex + 2000);
-        let title = '';
-        let dateStr = '';
-        const altMatch = /alt=["']([^"']+)["']/.exec(searchArea);
-        if (altMatch && altMatch[1].trim().length > 6) title = altMatch[1].trim();
-        if (!title) {
-          const h2Match = /<h2[^>]*>([^<]+)<\/h2>/i.exec(searchArea);
-          if (h2Match) title = h2Match[1].trim();
+      // windly.cc 블로그의 실제 구조에 맞는 파싱
+      // 각 포스팅 카드는 <a href="https://windly.cc/blog/..."> 형태로 되어 있고
+      // 내부에 alt 속성, 제목, 날짜 정보가 포함되어 있음
+      
+      const postCardRegex = /<a href="(https:\/\/windly\.cc\/blog\/[^"]+)"[^>]*>[\s\S]*?<img[^>]*alt="([^"]*)"[^>]*>[\s\S]*?<h2[^>]*class="[^"]*title[^"]*"[^>]*>([^<]+)<\/h2>[\s\S]*?<p[^>]*class="[^"]*created-at[^"]*"[^>]*>([^<]+)<\/p>/g;
+      
+      let match;
+      while ((match = postCardRegex.exec(html)) !== null && rawPosts.length < 10) {
+        const [, url, alt, title, dateText] = match;
+        const cleanTitle = (title || alt).trim().replace(/\s+/g, ' ');
+        const cleanDate = dateText.trim();
+        
+        if (cleanTitle && url && !seen.has(url)) {
+          seen.add(url);
+          // 날짜 형식 변환 (2025.09.27 -> 2025-09-27)
+          const dateForParsing = cleanDate.replace(/\./g, '-');
+          const dateStr = cleanDate; // 원래 형식 유지
+          
+          rawPosts.push({ 
+            title: cleanTitle, 
+            url, 
+            date: dateStr 
+          });
+          
+          console.log(`Found post: "${cleanTitle}" (${dateStr}) from ${url}`);
         }
-        const dateDot = /(\d{4}[.]\d{2}[.]\d{2})/.exec(searchArea);
-        if (dateDot) dateStr = dateDot[1];
-        if (!title) {
-          try {
-            const pr = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WindlyBot/1.0)' } });
-            const ph = await pr.text();
-            const ogTitle = /property=["']og:title["'][^>]*content=["']([^"']+)["']/i.exec(ph)
-                         || /<title>([^<]+)<\/title>/i.exec(ph);
-            if (ogTitle) title = ogTitle[1].trim();
-          } catch {}
-        }
-        return { title, dateStr };
       }
+      
+      // 추가로 간단한 href 링크도 찾아서 보완
+      if (rawPosts.length < 5) {
+        const allContent = html;
+        const candidates: { url: string; index: number }[] = [];
+        const aHref = /href=['\"](https?:\/\/windly\.cc\/blog\/[^'\"]+|\/blog\/[^'\"]+)['\"]/g;
+        let linkMatch;
+        while ((linkMatch = aHref.exec(allContent)) !== null) {
+          let url = linkMatch[1];
+          if (url.startsWith('/')) url = `https://windly.cc${url}`;
+          if (seen.has(url)) continue;
+          seen.add(url);
+          candidates.push({ url, index: linkMatch.index });
+        }
+        console.log('Blog HTML candidates:', candidates.length);
 
-      for (const { url, index } of candidates.slice(0, 15)) {
-        const { title, dateStr } = await enrichFromContext(url, index);
-        if (title && title.length > 5) {
-          rawPosts.push({ title, url, date: dateStr });
+        async function enrichFromContext(url: string, startIndex: number) {
+          const searchArea = allContent.substring(startIndex, startIndex + 2000);
+          let title = '';
+          let dateStr = '';
+          const altMatch = /alt=["']([^"']+)["']/.exec(searchArea);
+          if (altMatch && altMatch[1].trim().length > 6) title = altMatch[1].trim();
+          if (!title) {
+            const h2Match = /<h2[^>]*>([^<]+)<\/h2>/i.exec(searchArea);
+            if (h2Match) title = h2Match[1].trim();
+          }
+          const dateDot = /(\d{4}[.]\d{2}[.]\d{2})/.exec(searchArea);
+          if (dateDot) dateStr = dateDot[1];
+          if (!title) {
+            try {
+              const pr = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WindlyBot/1.0)' } });
+              const ph = await pr.text();
+              const ogTitle = /property=["']og:title["'][^>]*content=["']([^"']+)["']/i.exec(ph)
+                           || /<title>([^<]+)<\/title>/i.exec(ph);
+              if (ogTitle) title = ogTitle[1].trim();
+            } catch {}
+          }
+          return { title, dateStr };
+        }
+
+        for (const { url, index } of candidates.slice(0, 10)) {
+          if (rawPosts.length >= 8) break;
+          const { title, dateStr } = await enrichFromContext(url, index);
+          if (title && title.length > 5) {
+            rawPosts.push({ title, url, date: dateStr });
+          }
         }
       }
     }
 
     console.log(`Total raw posts found: ${rawPosts.length}`);
+    rawPosts.forEach((p, i) => console.log(`Raw post ${i+1}: "${p.title}" (${p.date || 'no date'}) from ${p.url}`));
 
-    // 정렬 및 상위 5개 반환
+    // 정렬 및 상위 5개 반환 (날짜 파싱 개선)
     const postsWithDates = rawPosts.filter(p => p.date);
     const postsWithoutDates = rawPosts.filter(p => !p.date);
+    
     const sorted = postsWithDates
-      .map(p => ({ ...p, ts: Date.parse((p.date as string).replace(/\./g, '-')) }))
+      .map(p => {
+        // 날짜 형식 통일 (2025.09.27 -> 2025-09-27)
+        const normalizedDate = (p.date as string).replace(/\./g, '-');
+        const timestamp = Date.parse(normalizedDate);
+        return { 
+          ...p, 
+          ts: isNaN(timestamp) ? 0 : timestamp 
+        };
+      })
       .sort((a,b) => b.ts - a.ts)
       .slice(0,5)
       .map(p => ({ title: p.title, url: p.url }));
