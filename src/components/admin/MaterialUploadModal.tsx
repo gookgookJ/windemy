@@ -127,8 +127,8 @@ export const MaterialUploadModal = ({
 
   const handleUpload = async () => {
     const validMaterials = newMaterials.filter(m => 
-      (m.type === 'file' && m.file && m.title) || 
-      (m.type === 'link' && m.url && m.title)
+      (m.type === 'file' && m.file) || 
+      (m.type === 'link' && m.url)
     );
 
     if (validMaterials.length === 0) {
@@ -167,9 +167,14 @@ export const MaterialUploadModal = ({
           fileType = material.file.type;
         } else if (material.type === 'link') {
           fileUrl = material.url!;
-          fileName = material.title;
+          fileName = material.title || material.url!;
           fileType = 'link';
         }
+
+        // 제목이 없으면 파일명에서 확장자를 제거한 이름을 사용
+        const finalTitle = material.title || (material.type === 'file' && material.file 
+          ? material.file.name.replace(/\.[^/.]+$/, "") 
+          : fileName);
 
         // Insert into database
         const { error: insertError } = await supabase
@@ -178,7 +183,7 @@ export const MaterialUploadModal = ({
             course_id: courseId,
             section_id: sectionId || null,
             session_id: sessionId || null,
-            title: material.title,
+            title: finalTitle,
             file_url: fileUrl,
             file_name: fileName,
             file_size: fileSize || null,
@@ -278,11 +283,11 @@ export const MaterialUploadModal = ({
 
                     <div className="space-y-3">
                       <div>
-                        <Label>제목</Label>
+                        <Label>제목 (선택사항)</Label>
                         <Input
                           value={material.title}
                           onChange={(e) => updateNewMaterial(index, { title: e.target.value })}
-                          placeholder="자료 제목을 입력하세요"
+                          placeholder="제목을 입력하지 않으면 파일명이 사용됩니다"
                           className="mt-1"
                         />
                       </div>
@@ -334,22 +339,33 @@ export const MaterialUploadModal = ({
                         )}
                       </div>
                     ) : (
-                      <div>
-                        <Label>링크 URL</Label>
-                        <Input
-                          type="url"
-                          value={material.url || ''}
-                          onChange={(e) => updateNewMaterial(index, { url: e.target.value })}
-                          placeholder="https://example.com/file.pdf"
-                          className="mt-1"
-                        />
-                        {material.url && (
-                          <div className="mt-1 text-xs text-blue-600">
-                            ✓ 링크가 입력되었습니다
-                          </div>
-                        )}
+                      <div className="space-y-3">
+                        <div>
+                          <Label>링크 제목 (선택사항)</Label>
+                          <Input
+                            value={material.title || ''}
+                            onChange={(e) => updateNewMaterial(index, { title: e.target.value })}
+                            placeholder="제목을 입력하지 않으면 URL이 사용됩니다"
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>링크 URL</Label>
+                          <Input
+                            type="url"
+                            value={material.url || ''}
+                            onChange={(e) => updateNewMaterial(index, { url: e.target.value })}
+                            placeholder="https://example.com/file.pdf"
+                            className="mt-1"
+                          />
+                          {material.url && (
+                            <div className="mt-1 text-xs text-blue-600">
+                              ✓ 링크가 입력되었습니다
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      )}
+                    )}
                     </div>
                   </div>
                 ))}
