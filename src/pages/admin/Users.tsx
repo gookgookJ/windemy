@@ -14,14 +14,11 @@ export const AdminUsers = () => {
   const [filters, setFilters] = useState<UserFilters>({
     searchTerm: '',
     status: 'all',
-    userGrade: 'all',
-    enrolledCourse: 'all',
     marketingEmail: 'all',
-    marketingSms: 'all',
   });
   const { toast } = useToast();
 
-  // Mock 사용자 데이터
+  // 단순화된 Mock 사용자 데이터
   const mockUsers: UserData[] = [
     {
       id: '1',
@@ -33,9 +30,7 @@ export const AdminUsers = () => {
       lastLogin: '2024-03-20T14:22:00Z',
       totalPayment: 340000,
       status: 'active',
-      grade: 'vip',
-      marketingEmail: true,
-      marketingSms: false
+      marketingEmail: true
     },
     {
       id: '2',
@@ -47,9 +42,7 @@ export const AdminUsers = () => {
       lastLogin: '2024-03-19T16:45:00Z',
       totalPayment: 180000,
       status: 'active',
-      grade: 'instructor',
-      marketingEmail: true,
-      marketingSms: true
+      marketingEmail: true
     },
     {
       id: '3',
@@ -61,9 +54,7 @@ export const AdminUsers = () => {
       lastLogin: '2024-03-18T09:30:00Z',
       totalPayment: 89000,
       status: 'active',
-      grade: 'general',
-      marketingEmail: false,
-      marketingSms: false
+      marketingEmail: false
     },
     {
       id: '4',
@@ -75,9 +66,7 @@ export const AdminUsers = () => {
       lastLogin: '2024-02-15T14:20:00Z',
       totalPayment: 520000,
       status: 'dormant',
-      grade: 'vip',
-      marketingEmail: true,
-      marketingSms: false
+      marketingEmail: true
     },
     {
       id: '5',
@@ -87,11 +76,9 @@ export const AdminUsers = () => {
       phone: '010-5678-9012',
       joinDate: '2024-03-01T13:20:00Z',
       lastLogin: '2024-03-05T15:10:00Z',
-      totalPayment: 0,
-      status: 'suspended',
-      grade: 'general',
-      marketingEmail: false,
-      marketingSms: false
+      totalPayment: 65000,
+      status: 'active',
+      marketingEmail: false
     }
   ];
 
@@ -122,18 +109,9 @@ export const AdminUsers = () => {
       filteredUsers = filteredUsers.filter(user => user.status === filters.status);
     }
 
-    if (filters.userGrade !== 'all') {
-      filteredUsers = filteredUsers.filter(user => user.grade === filters.userGrade);
-    }
-
     if (filters.marketingEmail !== 'all') {
       const emailConsent = filters.marketingEmail === 'true';
       filteredUsers = filteredUsers.filter(user => user.marketingEmail === emailConsent);
-    }
-
-    if (filters.marketingSms !== 'all') {
-      const smsConsent = filters.marketingSms === 'true';
-      filteredUsers = filteredUsers.filter(user => user.marketingSms === smsConsent);
     }
 
     if (filters.joinDateStart) {
@@ -148,14 +126,6 @@ export const AdminUsers = () => {
       );
     }
 
-    if (filters.lastLoginStart && filters.lastLoginEnd) {
-      filteredUsers = filteredUsers.filter(user => {
-        if (!user.lastLogin) return false;
-        const lastLogin = new Date(user.lastLogin);
-        return lastLogin >= filters.lastLoginStart! && lastLogin <= filters.lastLoginEnd!;
-      });
-    }
-
     setUsers(filteredUsers);
     setLoading(false);
   };
@@ -168,10 +138,7 @@ export const AdminUsers = () => {
     const defaultFilters: UserFilters = {
       searchTerm: '',
       status: 'all',
-      userGrade: 'all',
-      enrolledCourse: 'all',
       marketingEmail: 'all',
-      marketingSms: 'all',
     };
     setFilters(defaultFilters);
   };
@@ -231,17 +198,17 @@ export const AdminUsers = () => {
   const exportToCSV = (userIds: string[]) => {
     const selectedUsers = users.filter(user => userIds.includes(user.id));
     const csvContent = [
-      ['회원ID', '이름', '이메일', '연락처', '등급', '가입일', '최근접속일', '총결제금액', '상태'].join(','),
+      ['회원ID', '이름', '이메일', '연락처', '가입일', '최근접속일', '총결제금액', '상태', '마케팅수신'].join(','),
       ...selectedUsers.map(user => [
         user.memberId,
         user.name,
         user.email,
         user.phone || '',
-        user.grade,
         new Date(user.joinDate).toLocaleDateString(),
         user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : '',
         user.totalPayment,
-        user.status
+        user.status,
+        user.marketingEmail ? '동의' : '거부'
       ].join(','))
     ].join('\n');
 
@@ -257,16 +224,17 @@ export const AdminUsers = () => {
 
     toast({
       title: "내보내기 완료",
-      description: "사용자 목록이 CSV 파일로 내보내졌습니다."
+      description: "회원 목록이 Excel 파일로 내보내졌습니다."
     });
   };
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-8 p-6">
         {/* 페이지 헤더 */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">사용자 관리</h1>
+        <div className="border-b pb-4">
+          <h1 className="text-3xl font-bold text-foreground">회원 관리</h1>
+          <p className="text-muted-foreground mt-1">등록된 회원들을 조회하고 관리할 수 있습니다</p>
         </div>
 
         {/* 요약 대시보드 */}

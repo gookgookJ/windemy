@@ -18,10 +18,8 @@ export interface UserData {
   joinDate: string;
   lastLogin?: string;
   totalPayment: number;
-  status: 'active' | 'dormant' | 'suspended' | 'withdrawn';
-  grade: 'general' | 'vip' | 'instructor';
+  status: 'active' | 'dormant';
   marketingEmail: boolean;
-  marketingSms: boolean;
 }
 
 interface UserListTableProps {
@@ -34,28 +32,12 @@ interface UserListTableProps {
 
 const statusLabels = {
   active: '정상',
-  dormant: '휴면',
-  suspended: '이용정지',
-  withdrawn: '탈퇴'
+  dormant: '휴면'
 };
 
 const statusColors = {
   active: 'default',
-  dormant: 'secondary',
-  suspended: 'destructive',
-  withdrawn: 'outline'
-} as const;
-
-const gradeLabels = {
-  general: '일반',
-  vip: 'VIP',
-  instructor: '강사'
-};
-
-const gradeColors = {
-  general: 'outline',
-  vip: 'default',
-  instructor: 'secondary'
+  dormant: 'secondary'
 } as const;
 
 export const UserListTable = ({
@@ -140,35 +122,40 @@ export const UserListTable = ({
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="shadow-sm">
+      <CardHeader className="bg-muted/20">
         <div className="flex items-center justify-between">
-          <CardTitle>사용자 목록 ({users.length}명)</CardTitle>
+          <CardTitle className="text-lg text-foreground">
+            회원 목록 
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              ({users.length}명)
+            </span>
+          </CardTitle>
           
           {selectedUsers.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
                 {selectedUsers.length}명 선택됨
               </span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
+                  <Button variant="default" size="sm" className="h-9">
                     일괄 처리
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+                <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem onClick={() => onBulkAction('message', selectedUsers)}>
                     <MessageCircle className="mr-2 h-4 w-4" />
                     메시지 발송
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onBulkAction('export', selectedUsers)}>
                     <Download className="mr-2 h-4 w-4" />
-                    CSV 내보내기
+                    Excel 내보내기
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => onBulkAction('status_change', selectedUsers)}>
                     <Settings className="mr-2 h-4 w-4" />
-                    상태 일괄 변경
+                    상태 변경
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -177,23 +164,20 @@ export const UserListTable = ({
         </div>
       </CardHeader>
       
-      <CardContent>
-        <div className="rounded-md border">
+      <CardContent className="p-0">
+        <div className="overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="bg-muted/30">
                 <TableHead className="w-12">
                   <Checkbox
                     checked={selectedUsers.length === users.length && users.length > 0}
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
-                <TableHead>회원 ID</TableHead>
-                <TableHead>이름</TableHead>
-                <TableHead>이메일</TableHead>
-                <TableHead>등급</TableHead>
+                <TableHead className="font-semibold">회원정보</TableHead>
                 <TableHead 
-                  className="cursor-pointer"
+                  className="cursor-pointer font-semibold"
                   onClick={() => handleSort('joinDate')}
                 >
                   <div className="flex items-center gap-1">
@@ -202,16 +186,16 @@ export const UserListTable = ({
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="cursor-pointer"
+                  className="cursor-pointer font-semibold"
                   onClick={() => handleSort('lastLogin')}
                 >
                   <div className="flex items-center gap-1">
-                    최근 접속일
+                    최근접속
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="cursor-pointer text-right"
+                  className="cursor-pointer text-right font-semibold"
                   onClick={() => handleSort('totalPayment')}
                 >
                   <div className="flex items-center justify-end gap-1">
@@ -219,13 +203,13 @@ export const UserListTable = ({
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead>상태</TableHead>
+                <TableHead className="font-semibold">상태</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedUsers.map((user) => (
-                <TableRow key={user.id} className="hover:bg-muted/50">
+                <TableRow key={user.id} className="hover:bg-muted/30 border-b">
                   <TableCell>
                     <Checkbox
                       checked={selectedUsers.includes(user.id)}
@@ -233,60 +217,57 @@ export const UserListTable = ({
                     />
                   </TableCell>
                   <TableCell 
-                    className="font-mono text-sm cursor-pointer hover:text-primary"
+                    className="cursor-pointer hover:bg-muted/50 p-4"
                     onClick={() => onUserSelect(user.id)}
                   >
-                    {user.memberId}
-                  </TableCell>
-                  <TableCell 
-                    className="font-medium cursor-pointer hover:text-primary"
-                    onClick={() => onUserSelect(user.id)}
-                  >
-                    {user.name}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {user.email}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={gradeColors[user.grade]}>
-                      {gradeLabels[user.grade]}
-                    </Badge>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-foreground">{user.name}</span>
+                        <span className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                          {user.memberId}
+                        </span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">{user.email}</div>
+                      {user.phone && (
+                        <div className="text-xs text-muted-foreground">{user.phone}</div>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    {formatDate(user.joinDate)}
+                    <div className="text-sm">{formatDate(user.joinDate)}</div>
                   </TableCell>
                   <TableCell>
-                    {formatDate(user.lastLogin)}
+                    <div className="text-sm">
+                      {user.lastLogin ? formatDate(user.lastLogin) : 
+                        <span className="text-muted-foreground">-</span>
+                      }
+                    </div>
                   </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCurrency(user.totalPayment)}
+                  <TableCell className="text-right">
+                    <div className="font-medium">{formatCurrency(user.totalPayment)}</div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={statusColors[user.status]}>
+                    <Badge variant={statusColors[user.status]} className="text-xs">
                       {statusLabels[user.status]}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="w-44">
                         <DropdownMenuItem onClick={() => onUserSelect(user.id)}>
                           <Eye className="mr-2 h-4 w-4" />
-                          상세 정보 보기
+                          상세보기
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onStatusChange(user.id, 'active')}>
-                          상태: 정상으로 변경
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onStatusChange(user.id, 'suspended')}>
-                          상태: 이용정지로 변경
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onStatusChange(user.id, 'dormant')}>
-                          상태: 휴면으로 변경
+                        <DropdownMenuItem 
+                          onClick={() => onStatusChange(user.id, user.status === 'active' ? 'dormant' : 'active')}
+                        >
+                          상태: {user.status === 'active' ? '휴면' : '정상'}으로 변경
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -298,8 +279,9 @@ export const UserListTable = ({
         </div>
         
         {users.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">검색 조건에 맞는 사용자가 없습니다.</p>
+          <div className="text-center py-12">
+            <div className="text-muted-foreground text-lg mb-2">검색된 회원이 없습니다</div>
+            <p className="text-sm text-muted-foreground">다른 검색어나 필터를 사용해보세요</p>
           </div>
         )}
       </CardContent>
