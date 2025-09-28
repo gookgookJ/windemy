@@ -178,7 +178,7 @@ const generateMockStats = (): UserStats => {
   };
 };
 
-export const AdminUsers = () => {
+const AdminUsers = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
