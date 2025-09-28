@@ -1,45 +1,114 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminLayout } from '@/layouts/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Filter, UserCheck, UserX, Mail, Calendar, Trash2 } from 'lucide-react';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { UserDashboard } from '@/components/admin/UserDashboard';
+import { UserFilters, UserFilterOptions } from '@/components/admin/UserFilters';
+import { UserTable, UserTableData } from '@/components/admin/UserTable';
+import { UserDetailModal } from '@/components/admin/UserDetailModal';
 
-interface User {
-  id: string;
-  full_name: string;
-  email: string;
-  role: string;
-  created_at: string;
-  avatar_url?: string;
-  phone?: string;
+interface UserStats {
+  totalUsers: number;
+  activeUsers: number;
+  inactiveUsers: number;
+  adminUsers: number;
+  instructorUsers: number;
+  studentUsers: number;
+  newUsersToday: number;
+  newUsersThisWeek: number;
 }
 
 export const AdminUsers = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserTableData[]>([]);
+  const [stats, setStats] = useState<UserStats>({
+    totalUsers: 0,
+    activeUsers: 0,
+    inactiveUsers: 0,
+    adminUsers: 0,
+    instructorUsers: 0,
+    studentUsers: 0,
+    newUsersToday: 0,
+    newUsersThisWeek: 0,
+  });
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [filters, setFilters] = useState<UserFilterOptions>({
+    searchTerm: '',
+    status: 'all',
+    role: 'all',
+    marketingEmail: 'all',
+    marketingSms: 'all',
+  });
   const { toast } = useToast();
 
   useEffect(() => {
     fetchUsers();
+    fetchStats();
   }, []);
 
   const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          id,
+          full_name,
+          email,
+          role,
+          created_at,
+          phone,
+          avatar_url,
+          marketing_consent
+        `)
         .order('created_at', { ascending: false });
 
+      // 필터 적용
+      if (filters.searchTerm) {
+        query = query.or(`full_name.ilike.%${filters.searchTerm}%,email.ilike.%${filters.searchTerm}%,phone.ilike.%${filters.searchTerm}%`);
+      }
+
+      if (filters.role !== 'all') {
+        query = query.eq('role', filters.role);
+      }
+
+      if (filters.startDate) {
+        query = query.gte('created_at', filters.startDate.toISOString());
+      }
+
+      if (filters.endDate) {
+        const endDate = new Date(filters.endDate);
+        endDate.setHours(23, 59, 59, 999);
+        query = query.lte('created_at', endDate.toISOString());
+      }
+
+      if (filters.marketingEmail !== 'all') {
+        query = query.eq('marketing_consent', filters.marketingEmail === 'true');
+      }
+
+      const { data, error } = await query;
+
       if (error) throw error;
-      setUsers(data || []);
+
+      // 각 사용자의 결제 정보도 함께 가져오기
+      const usersWithPayments = await Promise.all((data || []).map(async (user) => {
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('total_amount')
+          .eq('user_id', user.id)
+          .eq('status', 'completed');
+
+        const totalPayment = (orders || []).reduce((sum, order) => sum + order.total_amount, 0);
+
+        return {
+          ...user,
+          total_payment: totalPayment,
+          status: 'active', // TODO: 실제 상태 로직 구현
+          last_login: null, // TODO: 실제 로그인 기록 구현
+        };
+      }));
+
+      setUsers(usersWithPayments);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -52,7 +121,80 @@ export const AdminUsers = () => {
     }
   };
 
-  const updateUserRole = async (userId: string, newRole: string) => {
+  const fetchStats = async () => {
+    try {
+      // 전체 사용자 수
+      const { count: totalUsers } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // 역할별 사용자 수
+      const { data: roleStats } = await supabase
+        .from('profiles')
+        .select('role')
+        .not('role', 'is', null);
+
+      const adminUsers = roleStats?.filter(u => u.role === 'admin').length || 0;
+      const instructorUsers = roleStats?.filter(u => u.role === 'instructor').length || 0;
+      const studentUsers = roleStats?.filter(u => u.role === 'student').length || 0;
+
+      // 신규 가입자 (오늘)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const { count: newUsersToday } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', today.toISOString());
+
+      // 신규 가입자 (이번 주)
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - 7);
+      weekStart.setHours(0, 0, 0, 0);
+      const { count: newUsersThisWeek } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', weekStart.toISOString());
+
+      setStats({
+        totalUsers: totalUsers || 0,
+        activeUsers: totalUsers || 0, // TODO: 실제 활성 사용자 로직
+        inactiveUsers: 0, // TODO: 실제 비활성 사용자 로직
+        adminUsers,
+        instructorUsers,
+        studentUsers,
+        newUsersToday: newUsersToday || 0,
+        newUsersThisWeek: newUsersThisWeek || 0,
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  const handleFiltersChange = (newFilters: UserFilterOptions) => {
+    setFilters(newFilters);
+    setLoading(true);
+    fetchUsers();
+  };
+
+  const handleResetFilters = () => {
+    const defaultFilters = {
+      searchTerm: '',
+      status: 'all',
+      role: 'all',
+      marketingEmail: 'all',
+      marketingSms: 'all',
+    };
+    setFilters(defaultFilters);
+    setLoading(true);
+    fetchUsers();
+  };
+
+  const handleUserSelect = (userId: string) => {
+    setSelectedUserId(userId);
+    setDetailModalOpen(true);
+  };
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
     try {
       const { error } = await supabase
         .from('profiles')
@@ -79,210 +221,94 @@ export const AdminUsers = () => {
     }
   };
 
-  const deleteUser = async (userId: string) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('인증이 필요합니다.');
-      }
-
-      const response = await supabase.functions.invoke('delete-user', {
-        body: { userId },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message || '사용자 삭제에 실패했습니다.');
-      }
-
-      // Remove user from local state
-      setUsers(users.filter(user => user.id !== userId));
-
-      toast({
-        title: "성공",
-        description: "사용자가 성공적으로 삭제되었습니다."
-      });
-    } catch (error: any) {
-      console.error('Error deleting user:', error);
-      toast({
-        title: "오류",
-        description: error.message || "사용자 삭제에 실패했습니다.",
-        variant: "destructive"
-      });
+  const handleBulkAction = async (action: string, userIds: string[]) => {
+    switch (action) {
+      case 'message':
+        toast({
+          title: "기능 준비 중",
+          description: "메시지 발송 기능은 추후 구현 예정입니다."
+        });
+        break;
+      case 'export':
+        exportToCSV(userIds);
+        break;
+      case 'status_change':
+        toast({
+          title: "기능 준비 중",
+          description: "상태 변경 기능은 추후 구현 예정입니다."
+        });
+        break;
     }
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
+  const exportToCSV = (userIds: string[]) => {
+    const selectedUsers = users.filter(user => userIds.includes(user.id));
+    const csvContent = [
+      ['이름', '이메일', '역할', '가입일', '총 결제금액'].join(','),
+      ...selectedUsers.map(user => [
+        user.full_name || '',
+        user.email,
+        user.role,
+        new Date(user.created_at).toLocaleDateString(),
+        user.total_payment
+      ].join(','))
+    ].join('\n');
 
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'destructive';
-      case 'instructor':
-        return 'default';
-      default:
-        return 'secondary';
-    }
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `users_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "성공",
+      description: "사용자 목록이 CSV 파일로 내보내졌습니다."
+    });
   };
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return '관리자';
-      case 'instructor':
-        return '강사';
-      default:
-        return '학생';
-    }
-  };
-
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="text-lg">로딩 중...</div>
-          </div>
-        </div>
-      </AdminLayout>
-    );
-  }
 
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground mb-2">사용자 관리</h1>
-          <p className="text-muted-foreground">등록된 사용자들을 관리하고 권한을 설정하세요</p>
+          <p className="text-muted-foreground">
+            CS 문의에 필요한 모든 사용자 정보를 한 곳에서 파악하고 즉시 조치하여 응대 시간을 단축합니다.
+          </p>
         </div>
 
-        {/* 필터 및 검색 */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="이름 또는 이메일로 검색..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="권한 필터" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">모든 권한</SelectItem>
-                  <SelectItem value="admin">관리자</SelectItem>
-                  <SelectItem value="instructor">강사</SelectItem>
-                  <SelectItem value="student">학생</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+        {/* 1. 요약 대시보드 */}
+        <UserDashboard stats={stats} loading={loading} />
 
-        {/* 사용자 목록 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>사용자 목록 ({filteredUsers.length}명)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {filteredUsers.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                      <UserCheck className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">{user.full_name || '이름 없음'}</h3>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          {user.email}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <Badge variant={getRoleBadgeVariant(user.role)}>
-                      {getRoleLabel(user.role)}
-                    </Badge>
-                    
-                    <Select 
-                      value={user.role} 
-                      onValueChange={(newRole) => updateUserRole(user.id, newRole)}
-                    >
-                      <SelectTrigger className="w-[120px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="student">학생</SelectItem>
-                        <SelectItem value="instructor">강사</SelectItem>
-                        <SelectItem value="admin">관리자</SelectItem>
-                      </SelectContent>
-                    </Select>
+        {/* 2. 검색 및 필터링 영역 */}
+        <UserFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          onReset={handleResetFilters}
+        />
 
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>사용자 삭제 확인</AlertDialogTitle>
-                          <AlertDialogDescription className="space-y-2">
-                            <p>정말로 이 사용자를 삭제하시겠습니까?</p>
-                            <div className="bg-muted p-3 rounded-lg">
-                              <p className="font-medium">{user.full_name || '이름 없음'}</p>
-                              <p className="text-sm text-muted-foreground">{user.email}</p>
-                            </div>
-                            <p className="text-sm text-destructive">
-                              ⚠️ 이 작업은 되돌릴 수 없습니다. 사용자의 모든 데이터가 영구적으로 삭제됩니다.
-                            </p>
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>취소</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => deleteUser(user.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            삭제
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              ))}
-              
-              {filteredUsers.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  검색 조건에 맞는 사용자가 없습니다.
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* 3. 사용자 목록 테이블 */}
+        <UserTable
+          users={users}
+          loading={loading}
+          onUserSelect={handleUserSelect}
+          onRoleChange={handleRoleChange}
+          onBulkAction={handleBulkAction}
+        />
+
+        {/* 4. 사용자 상세 정보 뷰 */}
+        <UserDetailModal
+          userId={selectedUserId}
+          open={detailModalOpen}
+          onClose={() => {
+            setDetailModalOpen(false);
+            setSelectedUserId(null);
+          }}
+        />
       </div>
     </AdminLayout>
   );
