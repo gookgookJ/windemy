@@ -115,6 +115,18 @@ const CourseCard = ({
 
         {/* Tags */}
         <div className="flex flex-wrap gap-1.5">
+          {/* Level tag - always first */}
+          <Badge 
+            variant="outline" 
+            className={`text-[10px] px-1.5 py-0.5 rounded-sm border font-medium ${
+              level === "beginner" ? "border-green-500/60 text-green-600 bg-green-50" :
+              level === "intermediate" ? "border-yellow-500/60 text-yellow-600 bg-yellow-50" :
+              "border-red-500/60 text-red-600 bg-red-50"
+            }`}
+          >
+            {level === "beginner" ? "Lv1" : level === "intermediate" ? "Lv2" : "Lv3"}
+          </Badge>
+
           {/* Display admin-set promotional tags */}
           {tags.map(tag => {
             const tagColors = {
@@ -140,17 +152,6 @@ const CourseCard = ({
               BEST
             </Badge>
           )}
-          
-          <Badge 
-            variant="outline" 
-            className={`text-[10px] px-1.5 py-0.5 rounded-sm border font-medium ${
-              level === "beginner" ? "border-green-500/60 text-green-600 bg-green-50" :
-              level === "intermediate" ? "border-yellow-500/60 text-yellow-600 bg-yellow-50" :
-              "border-red-500/60 text-red-600 bg-red-50"
-            }`}
-          >
-            {level === "beginner" ? "Lv1" : level === "intermediate" ? "Lv2" : "Lv3"}
-          </Badge>
         </div>
       </CardContent>
     </Card>

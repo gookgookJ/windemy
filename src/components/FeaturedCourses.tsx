@@ -356,6 +356,17 @@ const FeaturedCourses = memo(() => {
 
           {/* Tags - moved here below instructor name */}
           <div className="flex flex-wrap gap-1">
+            {/* Level tag - always first */}
+            {course.level && (
+              <span className={`text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-sm font-medium border ${
+                course.level === "beginner" ? "border-green-500/60 text-green-600 bg-green-50" :
+                course.level === "intermediate" ? "border-yellow-500/60 text-yellow-600 bg-yellow-50" :
+                "border-red-500/60 text-red-600 bg-red-50"
+              }`}>
+                {course.level === "beginner" ? "Lv1" : course.level === "intermediate" ? "Lv2" : "Lv3"}
+              </span>
+            )}
+
             {/* Display promotional tags */}
             {course.tags?.map(tag => {
               const tagColors = {
@@ -375,17 +386,6 @@ const FeaturedCourses = memo(() => {
                 </span>
               );
             })}
-            
-            {/* Level tag */}
-            {course.level && (
-              <span className={`text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-sm font-medium border ${
-                course.level === "beginner" ? "border-green-500/60 text-green-600 bg-green-50" :
-                course.level === "intermediate" ? "border-yellow-500/60 text-yellow-600 bg-yellow-50" :
-                "border-red-500/60 text-red-600 bg-red-50"
-              }`}>
-                {course.level === "beginner" ? "Lv1" : course.level === "intermediate" ? "Lv2" : "Lv3"}
-              </span>
-            )}
           </div>
         </div>
       </Link>
