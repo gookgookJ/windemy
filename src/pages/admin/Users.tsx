@@ -1,120 +1,127 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminLayout } from '@/layouts/AdminLayout';
-import { useToast } from '@/hooks/use-toast';
 import { UserDashboard } from '@/components/admin/UserDashboard';
 import { UserFilters, UserFilterOptions } from '@/components/admin/UserFilters';
-import { UserTable, UserTableData } from '@/components/admin/UserTable';
+import { UserTable } from '@/components/admin/UserTable';
 import { UserDetailModal } from '@/components/admin/UserDetailModal';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+// 페이지네이션 상수
+const ITEMS_PER_PAGE = 20;
 
 interface UserStats {
   totalUsers: number;
   activeUsers: number;
   inactiveUsers: number;
+  newUsersThisMonth: number;
   adminUsers: number;
   instructorUsers: number;
   studentUsers: number;
-  newUsersToday: number;
-  newUsersThisWeek: number;
 }
 
 export const AdminUsers = () => {
-  const [users, setUsers] = useState<UserTableData[]>([]);
-  const [stats, setStats] = useState<UserStats>({
-    totalUsers: 0,
-    activeUsers: 0,
-    inactiveUsers: 0,
-    adminUsers: 0,
-    instructorUsers: 0,
-    studentUsers: 0,
-    newUsersToday: 0,
-    newUsersThisWeek: 0,
-  });
+  const [users, setUsers] = useState<any[]>([]);
+  const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [filters, setFilters] = useState<UserFilterOptions>({
     searchTerm: '',
     status: 'all',
     role: 'all',
     marketingEmail: 'all',
-    marketingSms: 'all',
+    marketingSms: 'all'
   });
   const { toast } = useToast();
 
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  // 페이지 변경 시 데이터 다시 fetch
   useEffect(() => {
     fetchUsers();
+  }, [filters, currentPage]);
+
+  // Stats는 별도로 fetch (페이지네이션과 무관)
+  useEffect(() => {
     fetchStats();
   }, []);
 
   const fetchUsers = async () => {
     try {
+      setLoading(true);
+      
+      // 기본 쿼리 설정
       let query = supabase
         .from('profiles')
-        .select(`
-          id,
-          full_name,
-          email,
-          role,
-          created_at,
-          phone,
-          avatar_url,
-          marketing_consent
-        `)
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact' });
 
-      // 필터 적용
+      // 검색 필터 적용
       if (filters.searchTerm) {
         query = query.or(`full_name.ilike.%${filters.searchTerm}%,email.ilike.%${filters.searchTerm}%,phone.ilike.%${filters.searchTerm}%`);
       }
 
+      // 역할 필터 적용
       if (filters.role !== 'all') {
         query = query.eq('role', filters.role);
       }
 
+      // 날짜 필터 적용
       if (filters.startDate) {
         query = query.gte('created_at', filters.startDate.toISOString());
       }
-
       if (filters.endDate) {
-        const endDate = new Date(filters.endDate);
-        endDate.setHours(23, 59, 59, 999);
-        query = query.lte('created_at', endDate.toISOString());
+        query = query.lte('created_at', filters.endDate.toISOString());
       }
 
+      // 마케팅 동의 필터 적용
       if (filters.marketingEmail !== 'all') {
         query = query.eq('marketing_consent', filters.marketingEmail === 'true');
       }
 
-      const { data, error } = await query;
+      // 페이지네이션 적용
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+      
+      query = query
+        .range(from, to)
+        .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      const { data: userData, error: userError, count } = await query;
 
-      // 각 사용자의 결제 정보도 함께 가져오기
-      const usersWithPayments = await Promise.all((data || []).map(async (user) => {
-        const { data: orders } = await supabase
-          .from('orders')
-          .select('total_amount')
-          .eq('user_id', user.id)
-          .eq('status', 'completed');
+      if (userError) throw userError;
 
-        const totalPayment = (orders || []).reduce((sum, order) => sum + order.total_amount, 0);
+      // 각 사용자의 총 결제 금액 조회
+      const usersWithPayments = await Promise.all(
+        (userData || []).map(async (user) => {
+          const { data: orders } = await supabase
+            .from('orders')
+            .select('total_amount')
+            .eq('user_id', user.id)
+            .eq('status', 'completed');
 
-        return {
-          ...user,
-          total_payment: totalPayment,
-          status: 'active', // TODO: 실제 상태 로직 구현
-          last_login: null, // TODO: 실제 로그인 기록 구현
-        };
-      }));
+          const totalPayment = orders?.reduce((sum, order) => sum + order.total_amount, 0) || 0;
+
+          return {
+            ...user,
+            total_payment: totalPayment,
+            status: 'active' // 기본값, 실제 상태 로직은 필요에 따라 구현
+          };
+        })
+      );
 
       setUsers(usersWithPayments);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
-        title: "오류",
-        description: "사용자 데이터를 불러오는데 실패했습니다.",
-        variant: "destructive"
+        title: "사용자 목록 조회 실패",
+        description: "사용자 목록을 불러오는데 실패했습니다.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -123,48 +130,26 @@ export const AdminUsers = () => {
 
   const fetchStats = async () => {
     try {
-      // 전체 사용자 수
-      const { count: totalUsers } = await supabase
+      const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('*', { count: 'exact', head: true });
+        .select('role, created_at');
 
-      // 역할별 사용자 수
-      const { data: roleStats } = await supabase
-        .from('profiles')
-        .select('role')
-        .not('role', 'is', null);
+      if (error) throw error;
 
-      const adminUsers = roleStats?.filter(u => u.role === 'admin').length || 0;
-      const instructorUsers = roleStats?.filter(u => u.role === 'instructor').length || 0;
-      const studentUsers = roleStats?.filter(u => u.role === 'student').length || 0;
+      const now = new Date();
+      const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // 신규 가입자 (오늘)
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const { count: newUsersToday } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', today.toISOString());
+      const stats: UserStats = {
+        totalUsers: profiles?.length || 0,
+        activeUsers: profiles?.length || 0,
+        inactiveUsers: 0,
+        newUsersThisMonth: profiles?.filter(p => new Date(p.created_at) >= thisMonth).length || 0,
+        adminUsers: profiles?.filter(p => p.role === 'admin').length || 0,
+        instructorUsers: profiles?.filter(p => p.role === 'instructor').length || 0,
+        studentUsers: profiles?.filter(p => p.role === 'student').length || 0,
+      };
 
-      // 신규 가입자 (이번 주)
-      const weekStart = new Date();
-      weekStart.setDate(weekStart.getDate() - 7);
-      weekStart.setHours(0, 0, 0, 0);
-      const { count: newUsersThisWeek } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', weekStart.toISOString());
-
-      setStats({
-        totalUsers: totalUsers || 0,
-        activeUsers: totalUsers || 0, // TODO: 실제 활성 사용자 로직
-        inactiveUsers: 0, // TODO: 실제 비활성 사용자 로직
-        adminUsers,
-        instructorUsers,
-        studentUsers,
-        newUsersToday: newUsersToday || 0,
-        newUsersThisWeek: newUsersThisWeek || 0,
-      });
+      setStats(stats);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
@@ -172,26 +157,23 @@ export const AdminUsers = () => {
 
   const handleFiltersChange = (newFilters: UserFilterOptions) => {
     setFilters(newFilters);
-    setLoading(true);
-    fetchUsers();
+    setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
   };
 
   const handleResetFilters = () => {
-    const defaultFilters = {
+    setFilters({
       searchTerm: '',
       status: 'all',
       role: 'all',
       marketingEmail: 'all',
-      marketingSms: 'all',
-    };
-    setFilters(defaultFilters);
-    setLoading(true);
-    fetchUsers();
+      marketingSms: 'all'
+    });
+    setCurrentPage(1);
   };
 
   const handleUserSelect = (userId: string) => {
     setSelectedUserId(userId);
-    setDetailModalOpen(true);
+    setShowDetailModal(true);
   };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
@@ -208,36 +190,29 @@ export const AdminUsers = () => {
       ));
 
       toast({
-        title: "성공",
-        description: "사용자 권한이 변경되었습니다."
+        title: "권한 변경 완료",
+        description: "사용자 권한이 성공적으로 변경되었습니다.",
       });
     } catch (error) {
       console.error('Error updating user role:', error);
       toast({
-        title: "오류",
+        title: "권한 변경 실패",
         description: "사용자 권한 변경에 실패했습니다.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
   const handleBulkAction = async (action: string, userIds: string[]) => {
     switch (action) {
-      case 'message':
-        toast({
-          title: "기능 준비 중",
-          description: "메시지 발송 기능은 추후 구현 예정입니다."
-        });
-        break;
       case 'export':
         exportToCSV(userIds);
         break;
-      case 'status_change':
+      default:
         toast({
           title: "기능 준비 중",
-          description: "상태 변경 기능은 추후 구현 예정입니다."
+          description: "해당 기능은 추후 구현 예정입니다.",
         });
-        break;
     }
   };
 
@@ -265,11 +240,10 @@ export const AdminUsers = () => {
     document.body.removeChild(link);
 
     toast({
-      title: "성공",
-      description: "사용자 목록이 CSV 파일로 내보내졌습니다."
+      title: "내보내기 완료",
+      description: "사용자 목록이 CSV 파일로 내보내졌습니다.",
     });
   };
-
 
   return (
     <AdminLayout>
@@ -292,20 +266,82 @@ export const AdminUsers = () => {
         />
 
         {/* 3. 사용자 목록 테이블 */}
-        <UserTable
-          users={users}
-          loading={loading}
-          onUserSelect={handleUserSelect}
-          onRoleChange={handleRoleChange}
-          onBulkAction={handleBulkAction}
-        />
+        <div className="space-y-4">
+          <UserTable 
+            users={users}
+            loading={loading}
+            onUserSelect={handleUserSelect}
+            onRoleChange={handleRoleChange}
+            onBulkAction={handleBulkAction}
+          />
 
-        {/* 4. 사용자 상세 정보 뷰 */}
+          {/* 페이지네이션 */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="text-sm text-muted-foreground">
+                총 {totalCount}개 항목 중 {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} 표시
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  이전
+                </Button>
+                
+                <div className="flex items-center space-x-1">
+                  {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                  {totalPages > 5 && currentPage < totalPages - 2 && (
+                    <>
+                      <span className="px-2">...</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(totalPages)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {totalPages}
+                      </Button>
+                    </>
+                  )}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  다음
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
         <UserDetailModal
           userId={selectedUserId}
-          open={detailModalOpen}
+          open={showDetailModal}
           onClose={() => {
-            setDetailModalOpen(false);
+            setShowDetailModal(false);
             setSelectedUserId(null);
           }}
         />

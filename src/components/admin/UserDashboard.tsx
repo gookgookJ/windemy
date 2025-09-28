@@ -5,11 +5,10 @@ interface UserStats {
   totalUsers: number;
   activeUsers: number;
   inactiveUsers: number;
+  newUsersThisMonth: number;
   adminUsers: number;
   instructorUsers: number;
   studentUsers: number;
-  newUsersToday: number;
-  newUsersThisWeek: number;
 }
 
 interface UserDashboardProps {
@@ -133,20 +132,14 @@ export const UserDashboard = ({ stats, loading }: UserDashboardProps) => {
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">오늘</span>
+                <span className="text-sm font-medium">이번 달</span>
                 <span className="text-lg font-semibold text-green-600">
-                  +{stats.newUsersToday}명
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">이번 주</span>
-                <span className="text-lg font-semibold text-blue-600">
-                  +{stats.newUsersThisWeek}명
+                  +{stats.newUsersThisMonth}명
                 </span>
               </div>
               <div className="pt-2 border-t">
                 <p className="text-xs text-muted-foreground">
-                  일일 평균: {(stats.newUsersThisWeek / 7).toFixed(1)}명
+                  이번 달 신규 가입자
                 </p>
               </div>
             </div>

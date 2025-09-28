@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,23 @@ export const UserFilters = ({
   courseOptions = []
 }: UserFiltersProps) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [searchInput, setSearchInput] = useState(filters.searchTerm);
+
+  // 디바운싱을 위한 useEffect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput !== filters.searchTerm) {
+        updateFilter('searchTerm', searchInput);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // 필터 변경 시 searchInput도 동기화
+  useEffect(() => {
+    setSearchInput(filters.searchTerm);
+  }, [filters.searchTerm]);
 
   const updateFilter = (key: keyof UserFilterOptions, value: any) => {
     onFiltersChange({
@@ -72,8 +89,8 @@ export const UserFilters = ({
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="이름, 이메일, 연락처, 회원 ID로 검색..."
-              value={filters.searchTerm}
-              onChange={(e) => updateFilter('searchTerm', e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="pl-10"
             />
           </div>
