@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { User, Mail, Phone, Calendar, CreditCard, BookOpen, MessageSquare, Plus } from 'lucide-react';
+import { User, Mail, Phone, Calendar, CreditCard, BookOpen, MessageSquare, Plus, Clock, Star, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +18,183 @@ interface UserDetailModalProps {
   open: boolean;
   onClose: () => void;
 }
+
+// Mock 데이터 생성 함수
+const generateMockUserDetail = (userId: string) => {
+  const mockUserDetails: { [key: string]: any } = {
+    '1': {
+      profile: {
+        id: '1',
+        full_name: '김영희',
+        email: 'kim.younghee@email.com',
+        phone: '010-1234-5678',
+        role: 'student',
+        created_at: '2024-01-15T10:30:00Z',
+        updated_at: '2024-03-15T10:30:00Z',
+        avatar_url: null,
+        marketing_consent: true,
+      },
+      enrollments: [
+        {
+          id: 'e1',
+          enrolled_at: '2024-02-01T10:00:00Z',
+          progress: 75,
+          completed_at: null,
+          courses: {
+            id: 'c1',
+            title: '실무 웹 개발 완성 과정',
+            instructor: {
+              full_name: '이철수'
+            }
+          }
+        },
+        {
+          id: 'e2',
+          enrolled_at: '2024-01-20T10:00:00Z',
+          progress: 100,
+          completed_at: '2024-02-20T15:30:00Z',
+          courses: {
+            id: 'c2',
+            title: 'JavaScript 기초부터 심화까지',
+            instructor: {
+              full_name: '박민지'
+            }
+          }
+        }
+      ],
+      orders: [
+        {
+          id: 'order-1',
+          created_at: '2024-03-01T14:30:00Z',
+          total_amount: 89000,
+          status: 'completed',
+          payment_method: 'card',
+          order_items: [
+            {
+              courses: {
+                title: '실무 웹 개발 완성 과정'
+              }
+            }
+          ]
+        },
+        {
+          id: 'order-2',
+          created_at: '2024-01-20T11:00:00Z',
+          total_amount: 67000,
+          status: 'completed',
+          payment_method: 'card',
+          order_items: [
+            {
+              courses: {
+                title: 'JavaScript 기초부터 심화까지'
+              }
+            }
+          ]
+        }
+      ]
+    },
+    '2': {
+      profile: {
+        id: '2',
+        full_name: '이철수',
+        email: 'lee.chulsoo@email.com',
+        phone: '010-2345-6789',
+        role: 'instructor',
+        created_at: '2023-11-08T09:15:00Z',
+        updated_at: '2024-03-10T09:15:00Z',
+        avatar_url: null,
+        marketing_consent: false,
+      },
+      enrollments: [],
+      orders: []
+    },
+    '3': {
+      profile: {
+        id: '3',
+        full_name: '박민지',
+        email: 'park.minji@email.com',
+        phone: '010-3456-7890',
+        role: 'student',
+        created_at: '2024-02-20T11:00:00Z',
+        updated_at: '2024-03-18T11:00:00Z',
+        avatar_url: null,
+        marketing_consent: true,
+      },
+      enrollments: [
+        {
+          id: 'e3',
+          enrolled_at: '2024-03-01T09:00:00Z',
+          progress: 45,
+          completed_at: null,
+          courses: {
+            id: 'c3',
+            title: 'React 완벽 마스터',
+            instructor: {
+              full_name: '강태우'
+            }
+          }
+        }
+      ],
+      orders: [
+        {
+          id: 'order-3',
+          created_at: '2024-03-01T09:00:00Z',
+          total_amount: 156000,
+          status: 'completed',
+          payment_method: 'card',
+          order_items: [
+            {
+              courses: {
+                title: 'React 완벽 마스터'
+              }
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  return mockUserDetails[userId] || null;
+};
+
+const generateMockAdminNotes = (userId: string) => {
+  const mockNotes: { [key: string]: any[] } = {
+    '1': [
+      {
+        id: 'note-1',
+        note: '결제 관련 문의 - 카드 승인 오류 해결 완료',
+        created_at: '2024-03-15T10:30:00Z',
+        updated_at: '2024-03-15T10:30:00Z',
+        created_by: {
+          full_name: '관리자'
+        }
+      },
+      {
+        id: 'note-2',
+        note: '강의 진도 문의 - 영상 재생 오류 해결',
+        created_at: '2024-03-10T14:20:00Z',
+        updated_at: '2024-03-10T14:20:00Z',
+        created_by: {
+          full_name: '관리자'
+        }
+      }
+    ],
+    '2': [
+      {
+        id: 'note-3',
+        note: '강사 계정 승인 완료',
+        created_at: '2024-03-05T11:15:00Z',
+        updated_at: '2024-03-05T11:15:00Z',
+        created_by: {
+          full_name: '관리자'
+        }
+      }
+    ],
+    '3': []
+  };
+
+  return mockNotes[userId] || [];
+};
 
 export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps) => {
   const [userDetail, setUserDetail] = useState<any>(null);
@@ -32,71 +208,16 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
     if (!userId) return;
     
     setLoading(true);
-    try {
-      // 사용자 기본 정보 조회
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (profileError) throw profileError;
-
-      // 수강 정보 조회
-      const { data: enrollments, error: enrollmentsError } = await supabase
-        .from('enrollments')
-        .select(`
-          *,
-          courses (
-            id,
-            title,
-            instructor_id,
-            profiles!courses_instructor_id_fkey (full_name)
-          )
-        `)
-        .eq('user_id', userId);
-
-      if (enrollmentsError) throw enrollmentsError;
-
-      // 주문 정보 조회
-      const { data: orders, error: ordersError } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          order_items (
-            *,
-            courses (title)
-          )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (ordersError) throw ordersError;
-
-      // 관리자 메모 조회
-      const { data: notes, error: notesError } = await supabase
-        .from('admin_notes')
-        .select(`
-          *,
-          profiles!admin_notes_created_by_fkey (full_name)
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (notesError) throw notesError;
-
-      setUserDetail({
-        profile,
-        enrollments: enrollments || [],
-        orders: orders || []
-      });
-      setAdminNotes(notes || []);
-    } catch (error) {
-      console.error('Error fetching user detail:', error);
-    } finally {
-      setLoading(false);
-    }
+    
+    // Mock 데이터 로딩 시뮬레이션
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const mockDetail = generateMockUserDetail(userId);
+    const mockNotes = generateMockAdminNotes(userId);
+    
+    setUserDetail(mockDetail);
+    setAdminNotes(mockNotes);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -109,34 +230,28 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
     if (!newNote.trim() || !userId) return;
     
     setAddingNote(true);
-    try {
-      const { error } = await supabase
-        .from('admin_notes')
-        .insert([{
-          user_id: userId,
-          note: newNote.trim(),
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        }]);
-
-      if (error) throw error;
-
-      setNewNote('');
-      await fetchUserDetail(); // 메모 목록 새로고침
-      
-      toast({
-        title: "메모 추가 완료",
-        description: "관리자 메모가 성공적으로 추가되었습니다.",
-      });
-    } catch (error) {
-      console.error('Error adding note:', error);
-      toast({
-        title: "메모 추가 실패",
-        description: "메모 추가 중 오류가 발생했습니다.",
-        variant: "destructive",
-      });
-    } finally {
-      setAddingNote(false);
-    }
+    
+    // Mock 메모 추가 시뮬레이션
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const newMockNote = {
+      id: `note-${Date.now()}`,
+      note: newNote.trim(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      created_by: {
+        full_name: '관리자'
+      }
+    };
+    
+    setAdminNotes(prev => [newMockNote, ...prev]);
+    setNewNote('');
+    setAddingNote(false);
+    
+    toast({
+      title: "메모 추가 완료",
+      description: "관리자 메모가 성공적으로 추가되었습니다.",
+    });
   };
 
   const getRoleLabel = (role: string) => {
@@ -159,9 +274,12 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>사용자 상세 정보</DialogTitle>
+          <DialogDescription>
+            사용자의 상세 정보, 학습 현황, 결제 내역 및 관리자 메모를 확인할 수 있습니다.
+          </DialogDescription>
         </DialogHeader>
 
         {loading ? (
@@ -172,9 +290,9 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
             </div>
           </div>
         ) : userDetail ? (
-          <div className="flex flex-col h-[80vh]">
+          <div className="flex flex-col h-[75vh]">
             {/* 상단 사용자 요약 정보 */}
-            <div className="flex items-center space-x-4 p-4 bg-muted/50 rounded-lg mb-4">
+            <div className="flex items-center space-x-4 p-4 bg-muted/30 rounded-lg mb-4">
               <div className="flex-1">
                 <h3 className="font-semibold text-lg">{userDetail.profile.full_name}</h3>
                 <p className="text-muted-foreground">{userDetail.profile.email}</p>
@@ -283,7 +401,7 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                               <div>
                                 <h4 className="font-medium">{enrollment.courses?.title}</h4>
                                 <p className="text-sm text-muted-foreground">
-                                  강사: {enrollment.courses?.profiles?.full_name || '정보 없음'}
+                                  강사: {enrollment.courses?.instructor?.full_name || '정보 없음'}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                   수강 시작: {format(new Date(enrollment.enrolled_at), 'yyyy-MM-dd', { locale: ko })}
@@ -317,17 +435,17 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-3 gap-4 mb-4">
-                        <div className="text-center p-3 bg-muted/50 rounded-lg">
+                        <div className="text-center p-3 bg-muted/30 rounded-lg">
                           <p className="text-sm font-medium">총 주문</p>
                           <p className="text-xl font-bold">{userDetail.orders.length}건</p>
                         </div>
-                        <div className="text-center p-3 bg-muted/50 rounded-lg">
+                        <div className="text-center p-3 bg-muted/30 rounded-lg">
                           <p className="text-sm font-medium">총 결제 금액</p>
                           <p className="text-xl font-bold">
                             {userDetail.orders.reduce((sum: number, order: any) => sum + order.total_amount, 0).toLocaleString()}원
                           </p>
                         </div>
-                        <div className="text-center p-3 bg-muted/50 rounded-lg">
+                        <div className="text-center p-3 bg-muted/30 rounded-lg">
                           <p className="text-sm font-medium">최근 주문</p>
                           <p className="text-xl font-bold">
                             {userDetail.orders.length > 0 
@@ -408,14 +526,16 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                               {adminNotes.map((note: any) => (
                                 <div key={note.id} className="p-3 border rounded-lg">
                                   <div className="flex items-start justify-between mb-2">
-                                    <span className="text-sm font-medium">
-                                      {note.profiles?.full_name || '알 수 없음'}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {format(new Date(note.created_at), 'yyyy-MM-dd HH:mm', { locale: ko })}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline" className="text-xs">
+                                        {note.created_by?.full_name || '시스템'}
+                                      </Badge>
+                                      <span className="text-xs text-muted-foreground">
+                                        {format(new Date(note.created_at), 'yyyy-MM-dd HH:mm', { locale: ko })}
+                                      </span>
+                                    </div>
                                   </div>
-                                  <p className="text-sm">{note.note}</p>
+                                  <p className="text-sm whitespace-pre-wrap">{note.note}</p>
                                 </div>
                               ))}
                             </div>
@@ -430,7 +550,11 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
               </div>
             </Tabs>
           </div>
-        ) : null}
+        ) : (
+          <div className="text-center text-muted-foreground py-8">
+            사용자 정보를 찾을 수 없습니다.
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
