@@ -1,249 +1,186 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminLayout } from '@/layouts/AdminLayout';
+import { useToast } from '@/hooks/use-toast';
 import { UserDashboard } from '@/components/admin/UserDashboard';
 import { UserFilters, UserFilterOptions } from '@/components/admin/UserFilters';
-import { UserTable } from '@/components/admin/UserTable';
+import { UserTable, UserTableData } from '@/components/admin/UserTable';
 import { UserDetailModal } from '@/components/admin/UserDetailModal';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-
-// 페이지네이션 상수
-const ITEMS_PER_PAGE = 20;
 
 interface UserStats {
   totalUsers: number;
   activeUsers: number;
   inactiveUsers: number;
-  newUsersThisMonth: number;
   adminUsers: number;
   instructorUsers: number;
   studentUsers: number;
+  newUsersThisMonth: number;
 }
 
-// Mock 데이터 생성 함수
-const generateMockUsers = (page: number, itemsPerPage: number, filters: UserFilterOptions) => {
-  const mockUsers = [
-    {
-      id: '1',
-      full_name: '김영희',
-      email: 'kim.younghee@email.com',
-      phone: '010-1234-5678',
-      role: 'student',
-      created_at: '2024-01-15T10:30:00Z',
-      avatar_url: null,
-      marketing_consent: true,
-      total_payment: 89000,
-      status: 'active',
-      last_login: '2024-03-20T14:22:00Z'
-    },
-    {
-      id: '2',
-      full_name: '이철수',
-      email: 'lee.chulsoo@email.com',
-      phone: '010-2345-6789',
-      role: 'instructor',
-      created_at: '2023-11-08T09:15:00Z',
-      avatar_url: null,
-      marketing_consent: false,
-      total_payment: 245000,
-      status: 'active',
-      last_login: '2024-03-19T16:45:00Z'
-    },
-    {
-      id: '3',
-      full_name: '박민지',
-      email: 'park.minji@email.com',
-      phone: '010-3456-7890',
-      role: 'student',
-      created_at: '2024-02-20T11:00:00Z',
-      avatar_url: null,
-      marketing_consent: true,
-      total_payment: 156000,
-      status: 'active',
-      last_login: '2024-03-18T09:30:00Z'
-    },
-    {
-      id: '4',
-      full_name: '정수연',
-      email: 'jung.suyeon@email.com',
-      phone: '010-4567-8901',
-      role: 'admin',
-      created_at: '2023-08-12T08:45:00Z',
-      avatar_url: null,
-      marketing_consent: true,
-      total_payment: 0,
-      status: 'active',
-      last_login: '2024-03-21T10:15:00Z'
-    },
-    {
-      id: '5',
-      full_name: '한지민',
-      email: 'han.jimin@email.com',
-      phone: '010-5678-9012',
-      role: 'student',
-      created_at: '2024-03-01T13:20:00Z',
-      avatar_url: null,
-      marketing_consent: false,
-      total_payment: 78000,
-      status: 'inactive',
-      last_login: '2024-03-05T15:10:00Z'
-    },
-    {
-      id: '6',
-      full_name: '강태우',
-      email: 'kang.taewoo@email.com',
-      phone: '010-6789-0123',
-      role: 'instructor',
-      created_at: '2023-09-15T12:30:00Z',
-      avatar_url: null,
-      marketing_consent: true,
-      total_payment: 320000,
-      status: 'active',
-      last_login: '2024-03-20T11:40:00Z'
-    },
-    {
-      id: '7',
-      full_name: '송혜교',
-      email: 'song.hyekyo@email.com',
-      phone: '010-7890-1234',
-      role: 'student',
-      created_at: '2024-01-28T16:45:00Z',
-      avatar_url: null,
-      marketing_consent: true,
-      total_payment: 134000,
-      status: 'active',
-      last_login: '2024-03-19T14:25:00Z'
-    },
-    {
-      id: '8',
-      full_name: '최민호',
-      email: 'choi.minho@email.com',
-      phone: '010-8901-2345',
-      role: 'student',
-      created_at: '2024-02-14T09:00:00Z',
-      avatar_url: null,
-      marketing_consent: false,
-      total_payment: 67000,
-      status: 'active',
-      last_login: '2024-03-17T13:50:00Z'
-    }
-  ];
-
-  // 필터 적용
-  let filteredUsers = mockUsers;
-
-  if (filters.searchTerm) {
-    const searchTerm = filters.searchTerm.toLowerCase();
-    filteredUsers = filteredUsers.filter(user => 
-      user.full_name.toLowerCase().includes(searchTerm) ||
-      user.email.toLowerCase().includes(searchTerm) ||
-      user.phone.includes(searchTerm)
-    );
-  }
-
-  if (filters.role !== 'all') {
-    filteredUsers = filteredUsers.filter(user => user.role === filters.role);
-  }
-
-  if (filters.status !== 'all') {
-    filteredUsers = filteredUsers.filter(user => user.status === filters.status);
-  }
-
-  if (filters.marketingEmail !== 'all') {
-    filteredUsers = filteredUsers.filter(user => 
-      user.marketing_consent === (filters.marketingEmail === 'true')
-    );
-  }
-
-  const startIndex = (page - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  
-  return {
-    users: filteredUsers.slice(startIndex, endIndex),
-    totalCount: filteredUsers.length
-  };
-};
-
-const generateMockStats = (): UserStats => {
-  return {
-    totalUsers: 847,
-    activeUsers: 692,
-    inactiveUsers: 155,
-    newUsersThisMonth: 84,
-    adminUsers: 3,
-    instructorUsers: 24,
-    studentUsers: 820,
-  };
-};
-
-const AdminUsers = () => {
-  const [users, setUsers] = useState<any[]>([]);
-  const [stats, setStats] = useState<UserStats | null>(null);
+export const AdminUsers = () => {
+  const [users, setUsers] = useState<UserTableData[]>([]);
+  const [stats, setStats] = useState<UserStats>({
+    totalUsers: 0,
+    activeUsers: 0,
+    inactiveUsers: 0,
+    adminUsers: 0,
+    instructorUsers: 0,
+    studentUsers: 0,
+    newUsersThisMonth: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [filters, setFilters] = useState<UserFilterOptions>({
     searchTerm: '',
     status: 'all',
     role: 'all',
     marketingEmail: 'all',
-    marketingSms: 'all'
+    marketingSms: 'all',
   });
   const { toast } = useToast();
 
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
-
-  // Mock 데이터 로딩
   useEffect(() => {
-    const loadMockData = async () => {
-      setLoading(true);
-      
-      // 실제 API 호출을 시뮬레이션하기 위한 딜레이
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const { users: mockUsers, totalCount: mockTotalCount } = generateMockUsers(currentPage, ITEMS_PER_PAGE, filters);
-      
-      setUsers(mockUsers);
-      setTotalCount(mockTotalCount);
-      setLoading(false);
-    };
-
-    loadMockData();
-  }, [filters, currentPage]);
-
-  // Mock Stats 로딩
-  useEffect(() => {
-    const loadMockStats = async () => {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setStats(generateMockStats());
-    };
-
-    loadMockStats();
+    fetchUsers();
+    fetchStats();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      let query = supabase
+        .from('profiles')
+        .select(`
+          id,
+          full_name,
+          email,
+          role,
+          created_at,
+          phone,
+          avatar_url,
+          marketing_consent
+        `)
+        .order('created_at', { ascending: false });
+
+      // 필터 적용
+      if (filters.searchTerm) {
+        query = query.or(`full_name.ilike.%${filters.searchTerm}%,email.ilike.%${filters.searchTerm}%,phone.ilike.%${filters.searchTerm}%`);
+      }
+
+      if (filters.role !== 'all') {
+        query = query.eq('role', filters.role);
+      }
+
+      if (filters.startDate) {
+        query = query.gte('created_at', filters.startDate.toISOString());
+      }
+
+      if (filters.endDate) {
+        const endDate = new Date(filters.endDate);
+        endDate.setHours(23, 59, 59, 999);
+        query = query.lte('created_at', endDate.toISOString());
+      }
+
+      if (filters.marketingEmail !== 'all') {
+        query = query.eq('marketing_consent', filters.marketingEmail === 'true');
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // 각 사용자의 결제 정보도 함께 가져오기
+      const usersWithPayments = await Promise.all((data || []).map(async (user) => {
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('total_amount')
+          .eq('user_id', user.id)
+          .eq('status', 'completed');
+
+        const totalPayment = (orders || []).reduce((sum, order) => sum + order.total_amount, 0);
+
+        return {
+          ...user,
+          total_payment: totalPayment,
+          status: 'active', // TODO: 실제 상태 로직 구현
+          last_login: null, // TODO: 실제 로그인 기록 구현
+        };
+      }));
+
+      setUsers(usersWithPayments);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: "오류",
+        description: "사용자 데이터를 불러오는데 실패했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      // 전체 사용자 수
+      const { count: totalUsers } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // 역할별 사용자 수
+      const { data: roleStats } = await supabase
+        .from('profiles')
+        .select('role')
+        .not('role', 'is', null);
+
+      const adminUsers = roleStats?.filter(u => u.role === 'admin').length || 0;
+      const instructorUsers = roleStats?.filter(u => u.role === 'instructor').length || 0;
+      const studentUsers = roleStats?.filter(u => u.role === 'student').length || 0;
+
+      // 신규 가입자 (이번 달)
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+      const { count: newUsersThisMonth } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', monthStart.toISOString());
+
+      setStats({
+        totalUsers: totalUsers || 0,
+        activeUsers: totalUsers || 0, // TODO: 실제 활성 사용자 로직
+        inactiveUsers: 0, // TODO: 실제 비활성 사용자 로직
+        adminUsers,
+        instructorUsers,
+        studentUsers,
+        newUsersThisMonth: newUsersThisMonth || 0,
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
 
   const handleFiltersChange = (newFilters: UserFilterOptions) => {
     setFilters(newFilters);
-    setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
+    setLoading(true);
+    fetchUsers();
   };
 
   const handleResetFilters = () => {
-    setFilters({
+    const defaultFilters = {
       searchTerm: '',
       status: 'all',
       role: 'all',
       marketingEmail: 'all',
-      marketingSms: 'all'
-    });
-    setCurrentPage(1);
+      marketingSms: 'all',
+    };
+    setFilters(defaultFilters);
+    setLoading(true);
+    fetchUsers();
   };
 
   const handleUserSelect = (userId: string) => {
     setSelectedUserId(userId);
-    setShowDetailModal(true);
+    setDetailModalOpen(true);
   };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
@@ -260,29 +197,36 @@ const AdminUsers = () => {
       ));
 
       toast({
-        title: "권한 변경 완료",
-        description: "사용자 권한이 성공적으로 변경되었습니다.",
+        title: "성공",
+        description: "사용자 권한이 변경되었습니다."
       });
     } catch (error) {
       console.error('Error updating user role:', error);
       toast({
-        title: "권한 변경 실패",
+        title: "오류",
         description: "사용자 권한 변경에 실패했습니다.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
 
   const handleBulkAction = async (action: string, userIds: string[]) => {
     switch (action) {
+      case 'message':
+        toast({
+          title: "기능 준비 중",
+          description: "메시지 발송 기능은 추후 구현 예정입니다."
+        });
+        break;
       case 'export':
         exportToCSV(userIds);
         break;
-      default:
+      case 'status_change':
         toast({
           title: "기능 준비 중",
-          description: "해당 기능은 추후 구현 예정입니다.",
+          description: "상태 변경 기능은 추후 구현 예정입니다."
         });
+        break;
     }
   };
 
@@ -310,10 +254,11 @@ const AdminUsers = () => {
     document.body.removeChild(link);
 
     toast({
-      title: "내보내기 완료",
-      description: "사용자 목록이 CSV 파일로 내보내졌습니다.",
+      title: "성공",
+      description: "사용자 목록이 CSV 파일로 내보내졌습니다."
     });
   };
+
 
   return (
     <AdminLayout>
@@ -336,82 +281,20 @@ const AdminUsers = () => {
         />
 
         {/* 3. 사용자 목록 테이블 */}
-        <div className="space-y-4">
-          <UserTable 
-            users={users}
-            loading={loading}
-            onUserSelect={handleUserSelect}
-            onRoleChange={handleRoleChange}
-            onBulkAction={handleBulkAction}
-          />
+        <UserTable
+          users={users}
+          loading={loading}
+          onUserSelect={handleUserSelect}
+          onRoleChange={handleRoleChange}
+          onBulkAction={handleBulkAction}
+        />
 
-          {/* 페이지네이션 */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <div className="text-sm text-muted-foreground">
-                총 {totalCount}개 항목 중 {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} 표시
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  이전
-                </Button>
-                
-                <div className="flex items-center space-x-1">
-                  {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                    const pageNum = i + 1;
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(pageNum)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                  {totalPages > 5 && currentPage < totalPages - 2 && (
-                    <>
-                      <span className="px-2">...</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(totalPages)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {totalPages}
-                      </Button>
-                    </>
-                  )}
-                </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  다음
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-
+        {/* 4. 사용자 상세 정보 뷰 */}
         <UserDetailModal
           userId={selectedUserId}
-          open={showDetailModal}
+          open={detailModalOpen}
           onClose={() => {
-            setShowDetailModal(false);
+            setDetailModalOpen(false);
             setSelectedUserId(null);
           }}
         />
