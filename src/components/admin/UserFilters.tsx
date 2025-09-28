@@ -240,12 +240,12 @@ export const UserFilters = ({
 
               <div>
                 <label className="text-sm font-medium mb-2 block">수강 강의</label>
-                <Select value={filters.enrolledCourse || ''} onValueChange={(value) => updateFilter('enrolledCourse', value || undefined)}>
+                <Select value={filters.enrolledCourse || 'all'} onValueChange={(value) => updateFilter('enrolledCourse', value === 'all' ? undefined : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="특정 강의 수강자" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">전체</SelectItem>
+                    <SelectItem value="all">전체</SelectItem>
                     {courseOptions.map((course) => (
                       <SelectItem key={course.id} value={course.id}>
                         {course.title}
