@@ -338,8 +338,24 @@ const FeaturedCourses = memo(() => {
             />
           </button>
 
-          {/* Tags */}
-          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-wrap gap-1">
+          {/* Remove tags from image overlay */}
+        </div>
+        
+        <div className="space-y-2 sm:space-y-3">
+          <h3 className="font-bold text-sm sm:text-base text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+            {course.title}
+          </h3>
+          
+          {course.instructor_name && 
+           course.instructor_name !== "운영진" && 
+           course.instructor_name !== "강사" && (
+            <div className="text-xs sm:text-sm text-muted-foreground">
+              {course.instructor_name}
+            </div>
+          )}
+
+          {/* Tags - moved here below instructor name */}
+          <div className="flex flex-wrap gap-1">
             {/* Display promotional tags */}
             {course.tags?.map(tag => {
               const tagColors = {
@@ -371,20 +387,6 @@ const FeaturedCourses = memo(() => {
               </span>
             )}
           </div>
-        </div>
-        
-        <div className="space-y-2 sm:space-y-3">
-          <h3 className="font-bold text-sm sm:text-base text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors">
-            {course.title}
-          </h3>
-          
-          {course.instructor_name && 
-           course.instructor_name !== "운영진" && 
-           course.instructor_name !== "강사" && (
-            <div className="text-xs sm:text-sm text-muted-foreground">
-              {course.instructor_name}
-            </div>
-          )}
         </div>
       </Link>
     );
