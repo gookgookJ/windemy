@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -33,6 +35,10 @@ interface UserListTableProps {
   onPointsDistribute: (userIds: string[]) => void;
   onDeleteUser: (userId: string) => void;
   onResetPassword: (userId: string) => void;
+  currentPage: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
 }
 
 const statusLabels = {
@@ -54,7 +60,11 @@ export const UserListTable = ({
   onCouponDistribute,
   onPointsDistribute,
   onDeleteUser,
-  onResetPassword
+  onResetPassword,
+  currentPage,
+  pageSize,
+  onPageChange,
+  onPageSizeChange
 }: UserListTableProps) => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<{
@@ -107,6 +117,16 @@ export const UserListTable = ({
     return 0;
   });
 
+  // Pagination calculations
+  const totalItems = sortedUsers.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedUsers = sortedUsers.slice(startIndex, endIndex);
+
+  const startItem = totalItems > 0 ? startIndex + 1 : 0;
+  const endItem = Math.min(endIndex, totalItems);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ko-KR', {
       style: 'currency',
@@ -141,7 +161,7 @@ export const UserListTable = ({
           <CardTitle className="text-lg font-semibold text-foreground">
             회원 목록 
             <span className="ml-2 text-sm font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
-              총 {users.length}명
+              총 {totalItems}명
             </span>
           </CardTitle>
           
@@ -235,7 +255,7 @@ export const UserListTable = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedUsers.map((user) => (
+              {paginatedUsers.map((user) => (
                 <TableRow key={user.id} className="hover:bg-muted/20 border-b border-border/30 transition-colors">
                   <TableCell className="w-12">
                     <Checkbox
@@ -337,6 +357,93 @@ export const UserListTable = ({
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination */}
+        {totalItems > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-border/30">
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-muted-foreground">
+                {startItem}-{endItem} / {totalItems}명
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">페이지당</span>
+                <Select value={pageSize.toString()} onValueChange={(value) => onPageSizeChange(Number(value))}>
+                  <SelectTrigger className="w-20 h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="30">30</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground">개</span>
+              </div>
+            </div>
+            
+            {totalPages > 1 && (
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage > 1) onPageChange(currentPage - 1);
+                      }}
+                      className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let page;
+                    if (totalPages <= 5) {
+                      page = i + 1;
+                    } else if (currentPage <= 3) {
+                      page = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      page = totalPages - 4 + i;
+                    } else {
+                      page = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onPageChange(page);
+                          }}
+                          isActive={currentPage === page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+                  
+                  {totalPages > 5 && currentPage < totalPages - 2 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage < totalPages) onPageChange(currentPage + 1);
+                      }}
+                      className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+          </div>
+        )}
         
         {users.length === 0 && (
           <div className="text-center py-12">

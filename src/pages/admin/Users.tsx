@@ -21,6 +21,8 @@ const AdminUsers = () => {
   const [couponModalOpen, setCouponModalOpen] = useState(false);
   const [pointsModalOpen, setPointsModalOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [filters, setFilters] = useState<UserFilters>({
     searchTerm: '',
     status: 'all',
@@ -154,6 +156,7 @@ const AdminUsers = () => {
     }
 
     setUsers(filteredUsers);
+    setCurrentPage(1); // Reset to first page when filters change
     setLoading(false);
   };
 
@@ -328,6 +331,13 @@ const AdminUsers = () => {
           onPointsDistribute={handlePointsDistribute}
           onDeleteUser={handleDeleteUser}
           onResetPassword={handleResetPassword}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(newPageSize) => {
+            setPageSize(newPageSize);
+            setCurrentPage(1);
+          }}
         />
 
         {/* Remove UserDetailModal since we're using a separate page now */}
