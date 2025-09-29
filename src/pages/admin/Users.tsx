@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { UserSummaryDashboard } from '@/components/admin/UserSummaryDashboard';
 import { UserSearchFilter, type UserFilters } from '@/components/admin/UserSearchFilter';
 import { UserListTable, type UserData } from '@/components/admin/UserListTable';
+import { UserBulkActionSidebar } from '@/components/admin/UserBulkActionSidebar';
 import { CoursePermissionModal } from '@/components/admin/CoursePermissionModal';
 import { GroupManagementModal } from '@/components/admin/GroupManagementModal';
 import { CouponDistributionModal } from '@/components/admin/CouponDistributionModal';
@@ -27,6 +28,7 @@ const AdminUsers = () => {
   const [adminNoteModalOpen, setAdminNoteModalOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [filters, setFilters] = useState<UserFilters>({
@@ -269,102 +271,119 @@ const AdminUsers = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-8 p-6">
-        {/* 페이지 헤더 */}
-        <div className="border-b border-border/30 pb-6">
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">회원 관리</h1>
-          <p className="text-muted-foreground mt-2 text-base">등록된 회원들을 조회하고 효율적으로 관리할 수 있습니다</p>
-        </div>
-
-        {/* 요약 대시보드 */}
-        <UserSummaryDashboard />
-
-        {/* 검색 및 필터링 영역 */}
-        <UserSearchFilter
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          onReset={handleResetFilters}
-        />
-
-        {/* 사용자 목록 테이블 */}
-        <UserListTable
-          users={users}
-          loading={loading}
-          onUserSelect={handleUserSelect}
-          onBulkAction={handleBulkAction}
-          onStatusChange={handleStatusChange}
+      <div className="flex h-screen">
+        {/* Bulk Action Sidebar */}
+        <UserBulkActionSidebar
+          selectedUsers={selectedUserIds}
+          onDeselectAll={() => setSelectedUserIds([])}
           onCouponDistribute={handleCouponDistribute}
           onPointsDistribute={handlePointsDistribute}
-          onDeleteUser={handleDeleteUser}
-          onResetPassword={handleResetPassword}
-          onAddNote={handleAddNote}
-          currentPage={currentPage}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={(newPageSize) => {
-            setPageSize(newPageSize);
-            setCurrentPage(1);
-          }}
+          onBulkAction={handleBulkAction}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
-        {/* Remove UserDetailModal since we're using a separate page now */}
+        {/* Main Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="space-y-8 p-6">
+            {/* 페이지 헤더 */}
+            <div className="border-b border-border/30 pb-6">
+              <h1 className="text-3xl font-bold text-foreground tracking-tight">회원 관리</h1>
+              <p className="text-muted-foreground mt-2 text-base">등록된 회원들을 조회하고 효율적으로 관리할 수 있습니다</p>
+            </div>
 
-        {/* 강의 권한 관리 모달 */}
-        <CoursePermissionModal
-          open={coursePermissionModalOpen}
-          onClose={() => {
-            setCoursePermissionModalOpen(false);
-            setSelectedUserIds([]);
-          }}
-          userId={selectedUserIds.length === 1 ? selectedUserIds[0] : undefined}
-        />
+            {/* 요약 대시보드 */}
+            <UserSummaryDashboard />
 
-        {/* 그룹 관리 모달 */}
-        <GroupManagementModal
-          open={groupManagementModalOpen}
-          onClose={() => {
-            setGroupManagementModalOpen(false);
-            setSelectedUserIds([]);
-          }}
-          selectedUsers={selectedUserIds}
-          onGroupAssigned={(groupId) => {
-            setSelectedUserIds([]);
-            setGroupManagementModalOpen(false);
-          }}
-        />
+            {/* 검색 및 필터링 영역 */}
+            <UserSearchFilter
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              onReset={handleResetFilters}
+            />
 
-        <CouponDistributionModal
-          open={couponModalOpen}
-          onClose={() => {
-            setCouponModalOpen(false);
-            setSelectedUserIds([]);
-          }}
-          selectedUsers={selectedUserIds}
-        />
-
-        <PointsDistributionModal
-          open={pointsModalOpen}
-          onClose={() => {
-            setPointsModalOpen(false);
-            setSelectedUserIds([]);
-          }}
-          selectedUsers={selectedUserIds}
-        />
-
-        <AdminNoteModal
-          open={adminNoteModalOpen}
-          onClose={() => {
-            setAdminNoteModalOpen(false);
-            setSelectedUserId(null);
-            setSelectedUserEmail('');
-          }}
-          userId={selectedUserId || ''}
-          userEmail={selectedUserEmail}
-          onNoteSaved={() => {
-            // 필요시 사용자 목록 새로고침 등의 작업 수행
-          }}
-        />
+            {/* 사용자 목록 테이블 */}
+            <UserListTable
+              users={users}
+              loading={loading}
+              onUserSelect={handleUserSelect}
+              onBulkAction={handleBulkAction}
+              onStatusChange={handleStatusChange}
+              onCouponDistribute={handleCouponDistribute}
+              onPointsDistribute={handlePointsDistribute}
+              onDeleteUser={handleDeleteUser}
+              onResetPassword={handleResetPassword}
+              onAddNote={handleAddNote}
+              currentPage={currentPage}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(newPageSize) => {
+                setPageSize(newPageSize);
+                setCurrentPage(1);
+              }}
+              selectedUsers={selectedUserIds}
+              onSelectedUsersChange={setSelectedUserIds}
+            />
+          </div>
+        </div>
       </div>
+
+      {/* Modals */}
+      {/* 강의 권한 관리 모달 */}
+      <CoursePermissionModal
+        open={coursePermissionModalOpen}
+        onClose={() => {
+          setCoursePermissionModalOpen(false);
+          setSelectedUserIds([]);
+        }}
+        userId={selectedUserIds.length === 1 ? selectedUserIds[0] : undefined}
+      />
+
+      {/* 그룹 관리 모달 */}
+      <GroupManagementModal
+        open={groupManagementModalOpen}
+        onClose={() => {
+          setGroupManagementModalOpen(false);
+          setSelectedUserIds([]);
+        }}
+        selectedUsers={selectedUserIds}
+        onGroupAssigned={(groupId) => {
+          setSelectedUserIds([]);
+          setGroupManagementModalOpen(false);
+        }}
+      />
+
+      <CouponDistributionModal
+        open={couponModalOpen}
+        onClose={() => {
+          setCouponModalOpen(false);
+          setSelectedUserIds([]);
+        }}
+        selectedUsers={selectedUserIds}
+      />
+
+      <PointsDistributionModal
+        open={pointsModalOpen}
+        onClose={() => {
+          setPointsModalOpen(false);
+          setSelectedUserIds([]);
+        }}
+        selectedUsers={selectedUserIds}
+      />
+
+      <AdminNoteModal
+        open={adminNoteModalOpen}
+        onClose={() => {
+          setAdminNoteModalOpen(false);
+          setSelectedUserId(null);
+          setSelectedUserEmail('');
+        }}
+        userId={selectedUserId || ''}
+        userEmail={selectedUserEmail}
+        onNoteSaved={() => {
+          // 필요시 사용자 목록 새로고침 등의 작업 수행
+        }}
+      />
     </AdminLayout>
   );
 };

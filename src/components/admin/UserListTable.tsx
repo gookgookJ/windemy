@@ -40,6 +40,8 @@ interface UserListTableProps {
   pageSize: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
+  selectedUsers: string[];
+  onSelectedUsersChange: (users: string[]) => void;
 }
 
 const statusLabels = {
@@ -66,9 +68,10 @@ export const UserListTable = ({
   currentPage,
   pageSize,
   onPageChange,
-  onPageSizeChange
+  onPageSizeChange,
+  selectedUsers,
+  onSelectedUsersChange
 }: UserListTableProps) => {
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<{
     key: keyof UserData;
     direction: 'asc' | 'desc';
@@ -76,21 +79,17 @@ export const UserListTable = ({
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedUsers(paginatedUsers.map(user => user.id));
+      onSelectedUsersChange(paginatedUsers.map(user => user.id));
     } else {
-      setSelectedUsers([]);
+      onSelectedUsersChange([]);
     }
-  };
-
-  const handleDeselectAll = () => {
-    setSelectedUsers([]);
   };
 
   const handleSelectUser = (userId: string, checked: boolean) => {
     if (checked) {
-      setSelectedUsers([...selectedUsers, userId]);
+      onSelectedUsersChange([...selectedUsers, userId]);
     } else {
-      setSelectedUsers(selectedUsers.filter(id => id !== userId));
+      onSelectedUsersChange(selectedUsers.filter(id => id !== userId));
     }
   };
 
@@ -159,56 +158,12 @@ export const UserListTable = ({
   return (
     <Card className="shadow-sm border-border/50">
       <CardHeader className="bg-muted/10 border-b border-border/30">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-foreground">
-            회원 목록 
-            <span className="ml-2 text-sm font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
-              총 {totalItems}명
-            </span>
-          </CardTitle>
-          
-          {selectedUsers.length > 0 && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-primary bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20">
-                {selectedUsers.length}명 선택됨
-              </span>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleDeselectAll}
-                className="h-9 text-muted-foreground hover:text-foreground"
-              >
-                선택 해제
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="default" size="sm" className="h-9 font-medium">
-                    선택 작업
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => onCouponDistribute(selectedUsers)}>
-                    <Gift className="mr-2 h-4 w-4" />
-                    쿠폰 지급
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onPointsDistribute(selectedUsers)}>
-                    <Coins className="mr-2 h-4 w-4" />
-                    적립금 지급
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onBulkAction('export', selectedUsers)}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Excel 내보내기
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onBulkAction('group_management', selectedUsers)}>
-                    <Users2 className="mr-2 h-4 w-4" />
-                    그룹 관리
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
-        </div>
+        <CardTitle className="text-lg font-semibold text-foreground">
+          회원 목록 
+          <span className="ml-2 text-sm font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
+            총 {totalItems}명
+          </span>
+        </CardTitle>
       </CardHeader>
       
       <CardContent className="p-0">
