@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
 import { UserSearchFilter, type UserFilters } from '@/components/admin/UserSearchFilter';
@@ -12,6 +12,7 @@ import { GroupAssignmentDropdown } from '@/components/admin/GroupAssignmentDropd
 import { ExportDataDropdown } from '@/components/admin/ExportDataDropdown';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import * as XLSX from 'xlsx';
 
 console.log('[AdminUsers] module loaded');
 
@@ -32,6 +33,7 @@ const AdminUsers = () => {
   const [groupAssignTriggerElement, setGroupAssignTriggerElement] = useState<HTMLElement | null>(null);
   const [groupCreateTriggerElement, setGroupCreateTriggerElement] = useState<HTMLElement | null>(null);
   const [exportTriggerElement, setExportTriggerElement] = useState<HTMLElement | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -191,6 +193,208 @@ const AdminUsers = () => {
     }
   };
 
+  const fetchUserExportData = async (selectedFields: string[], selectedUsers: string[]) => {
+    const userIds = selectedUsers.length > 0 ? selectedUsers : users.map(u => u.id);
+    
+    // 기본 프로필 데이터
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('id', userIds);
+
+    // 그룹 정보
+    const { data: groupMemberships } = await supabase
+      .from('user_group_memberships')
+      .select(`
+        user_id,
+        user_groups (
+          name,
+          color
+        )
+      `)
+      .in('user_id', userIds);
+
+    // 주문 정보
+    const { data: orders } = await supabase
+      .from('orders')
+      .select('*')
+      .in('user_id', userIds);
+
+    // 수강 정보
+    const { data: enrollments } = await supabase
+      .from('enrollments')
+      .select(`
+        *,
+        courses (
+          title
+        )
+      `)
+      .in('user_id', userIds);
+
+    // 포인트 거래 내역
+    const { data: pointsTransactions } = await supabase
+      .from('points_transactions')
+      .select('*')
+      .in('user_id', userIds);
+
+    // 쿠폰 사용 내역
+    const { data: userCoupons } = await supabase
+      .from('user_coupons')
+      .select(`
+        *,
+        coupons (
+          name,
+          code
+        )
+      `)
+      .in('user_id', userIds);
+
+    // 관리자 메모
+    const { data: adminNotes } = await supabase
+      .from('admin_notes')
+      .select('*')
+      .in('user_id', userIds)
+      .order('created_at', { ascending: false });
+
+    // 활동 로그
+    const { data: activityLogs } = await supabase
+      .from('activity_logs')
+      .select('*')
+      .in('user_id', userIds)
+      .order('created_at', { ascending: false });
+
+    // 지원 티켓
+    const { data: supportTickets } = await supabase
+      .from('support_tickets')
+      .select('*')
+      .in('user_id', userIds);
+
+    // 데이터 조합
+    return profiles?.map(profile => {
+      const userOrders = orders?.filter(o => o.user_id === profile.id) || [];
+      const userEnrollments = enrollments?.filter(e => e.user_id === profile.id) || [];
+      const userGroups = groupMemberships?.filter(g => g.user_id === profile.id) || [];
+      const userPoints = pointsTransactions?.filter(p => p.user_id === profile.id) || [];
+      const userCouponsList = userCoupons?.filter(c => c.user_id === profile.id) || [];
+      const userNotes = adminNotes?.filter(n => n.user_id === profile.id) || [];
+      const userActivity = activityLogs?.filter(a => a.user_id === profile.id) || [];
+      const userSupport = supportTickets?.filter(s => s.user_id === profile.id) || [];
+
+      // 계산된 값들
+      const totalPayment = userOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+      const latestOrderDate = userOrders.length > 0 
+        ? Math.max(...userOrders.map(o => new Date(o.created_at).getTime()))
+        : null;
+      const activeCourses = userEnrollments.filter(e => !e.completed_at).length;
+      const groupNames = userGroups.map(g => g.user_groups?.name).filter(Boolean).join(', ');
+      const latestNote = userNotes[0]?.note || '';
+      const currentPoints = userPoints.reduce((sum, p) => sum + p.amount, 0);
+
+      return {
+        // 기본 정보
+        full_name: profile.full_name || '',
+        email: profile.email || '',
+        phone: profile.phone || '',
+        role: profile.role || '',
+        created_at: new Date(profile.created_at).toLocaleDateString('ko-KR'),
+        marketing_consent: profile.marketing_consent ? '동의' : '거부',
+        
+        // 결제 정보
+        total_payment: totalPayment.toLocaleString('ko-KR') + '원',
+        latest_order_date: latestOrderDate ? new Date(latestOrderDate).toLocaleDateString('ko-KR') : '',
+        
+        // 학습 정보
+        active_courses_count: activeCourses,
+        course_list: userEnrollments.map(e => e.courses?.title).filter(Boolean).join(', '),
+        enrollment_details: userEnrollments.map(e => 
+          `${e.courses?.title}: ${(e.progress || 0).toFixed(1)}% (${e.enrolled_at ? new Date(e.enrolled_at).toLocaleDateString('ko-KR') : ''}${e.completed_at ? ` ~ ${new Date(e.completed_at).toLocaleDateString('ko-KR')}` : ''})`
+        ).join(' | '),
+        
+        // 그룹 정보
+        group_name: groupNames,
+        
+        // 메모
+        latest_admin_note: latestNote,
+        
+        // 주문 내역
+        order_history: userOrders.map(o => 
+          `${new Date(o.created_at).toLocaleDateString('ko-KR')}: ${o.total_amount?.toLocaleString('ko-KR')}원 (${o.status})`
+        ).join(' | '),
+        
+        // 포인트
+        points_balance: currentPoints.toLocaleString('ko-KR'),
+        points_history: userPoints.map(p => 
+          `${new Date(p.created_at).toLocaleDateString('ko-KR')}: ${p.amount > 0 ? '+' : ''}${p.amount} (${p.description})`
+        ).join(' | '),
+        
+        // 쿠폰
+        coupon_usage: userCouponsList.map(c => 
+          `${c.coupons?.name} (${c.is_used ? '사용됨' : '미사용'})`
+        ).join(' | '),
+        
+        // 활동
+        recent_activity: userActivity.slice(0, 5).map(a => 
+          `${new Date(a.created_at).toLocaleDateString('ko-KR')}: ${a.action}`
+        ).join(' | '),
+        ip_address: userActivity[0]?.ip_address || '',
+        
+        // 지원
+        support_history: userSupport.map(s => 
+          `${s.subject} (${s.status})`
+        ).join(' | ')
+      };
+    }) || [];
+  };
+
+  const downloadCSV = (data: any[], selectedFields: string[]) => {
+    // 필드 라벨 매핑
+    const fieldLabels: Record<string, string> = {
+      full_name: '전체 이름',
+      email: '이메일',
+      phone: '연락처',
+      role: '역할',
+      created_at: '가입일',
+      marketing_consent: '마케팅 수신동의',
+      total_payment: '누적 결제 금액',
+      latest_order_date: '최근 주문일',
+      active_courses_count: '수강 중인 강의 수',
+      group_name: '그룹명',
+      latest_admin_note: '최근 관리자 메모',
+      course_list: '수강 강의 목록',
+      enrollment_details: '수강 상세 정보',
+      order_history: '주문 내역',
+      points_balance: '현재 보유 포인트',
+      points_history: '포인트 변동 내역',
+      coupon_usage: '쿠폰 사용 내역',
+      recent_activity: '최근 활동',
+      ip_address: 'IP 주소',
+      support_history: '문의 내역'
+    };
+
+    // 선택된 필드만 추출
+    const filteredData = data.map(row => {
+      const filteredRow: any = {};
+      selectedFields.forEach(field => {
+        filteredRow[fieldLabels[field] || field] = row[field] || '';
+      });
+      return filteredRow;
+    });
+
+    // Excel 파일 생성
+    const worksheet = XLSX.utils.json_to_sheet(filteredData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '사용자 데이터');
+    
+    // 파일 다운로드
+    const fileName = `사용자_데이터_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+
+    toast({
+      title: "내보내기 완료",
+      description: `${data.length}명의 데이터가 성공적으로 내보내졌습니다.`,
+    });
+  };
+
   const handleFiltersChange = (newFilters: UserFilters) => {
     setFilters(newFilters);
   };
@@ -329,97 +533,25 @@ const AdminUsers = () => {
     setShowExportDropdown(true);
   };
 
-  const handleDataExport = async (selectedFields: string[], selectedUserIds: string[]) => {
+  const handleExport = async (selectedFields: string[], selectedUsers: string[]) => {
     try {
-      // 실제 데이터 추출 로직을 여기에 구현
-      const selectedUsers = users.filter(user => selectedUserIds.includes(user.id));
-      
-      // CSV 헤더 생성
-      const headers: string[] = [];
-      const fieldLabels: { [key: string]: string } = {
-        'full_name': '전체 이름',
-        'email': '이메일',
-        'phone': '연락처',
-        'role': '역할',
-        'created_at': '가입일',
-        'marketing_consent': '마케팅 수신동의',
-        'total_payment': '누적 결제 금액',
-        'latest_order_date': '최근 주문일',
-        'active_courses_count': '수강 중인 강의 수',
-        'group_name': '그룹명',
-        'latest_admin_note': '최근 관리자 메모'
-        // Tier2 필드들도 추가 가능
-      };
-
-      selectedFields.forEach(field => {
-        headers.push(fieldLabels[field] || field);
-      });
-
-      // CSV 데이터 생성
-      const csvData = selectedUsers.map(user => {
-        const row: string[] = [];
-        selectedFields.forEach(field => {
-          switch (field) {
-            case 'full_name':
-              row.push(user.name || '');
-              break;
-            case 'email':
-              row.push(user.email || '');
-              break;
-            case 'phone':
-              row.push(user.phone || '');
-              break;
-            case 'role':
-              row.push(user.role || '');
-              break;
-            case 'created_at':
-              row.push(new Date(user.joinDate).toLocaleDateString('ko-KR'));
-              break;
-            case 'marketing_consent':
-              row.push(user.marketingEmail ? '동의' : '거부');
-              break;
-            case 'total_payment':
-              row.push(user.totalPayment.toLocaleString('ko-KR'));
-              break;
-            case 'group_name':
-              row.push(user.group || '미분류');
-              break;
-            default:
-              row.push('구현 예정'); // Tier2 필드들은 추후 구현
-          }
-        });
-        return row;
-      });
-
-      // CSV 생성 및 다운로드
-      const csvContent = [
-        headers.join(','),
-        ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
-      ].join('\n');
-
-      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `user_data_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast({
-        title: "데이터 내보내기 완료",
-        description: `${selectedUserIds.length}명의 데이터가 CSV 파일로 내보내졌습니다.`
-      });
+      setIsExporting(true);
+      const userData = await fetchUserExportData(selectedFields, selectedUsers);
+      downloadCSV(userData, selectedFields);
     } catch (error) {
-      console.error('Export error:', error);
+      console.error('Export failed:', error);
       toast({
         title: "내보내기 실패",
         description: "데이터 내보내기 중 오류가 발생했습니다.",
         variant: "destructive"
       });
+    } finally {
+      setIsExporting(false);
     }
   };
+
+  // Get filtered users for pagination
+  const filteredUsers = users;
 
   return (
     <AdminLayout>
@@ -439,7 +571,7 @@ const AdminUsers = () => {
 
         {/* 사용자 목록 테이블 */}
         <UserListTable
-          users={users}
+          users={filteredUsers}
           loading={loading}
           onUserSelect={handleUserSelect}
           onBulkAction={handleBulkAction}
@@ -496,12 +628,6 @@ const AdminUsers = () => {
             setShowGroupAssignmentDropdown(false);
             fetchUsers();
           }}
-          onGroupDeleted={() => {
-            fetchUsers();
-          }}
-          onGroupEdited={() => {
-            fetchUsers();
-          }}
           triggerElement={groupAssignTriggerElement}
         />
       )}
@@ -511,27 +637,32 @@ const AdminUsers = () => {
         <ExportDataDropdown
           selectedUsers={selectedUserIds}
           onClose={() => setShowExportDropdown(false)}
-          onExport={handleDataExport}
+          onExport={handleExport}
           triggerElement={exportTriggerElement}
         />
       )}
 
+      {/* 쿠폰 배포 모달 */}
       <CouponDistributionModal
         open={couponModalOpen}
         onClose={() => {
           setCouponModalOpen(false);
+          setSelectedUserIds([]);
         }}
         selectedUsers={selectedUserIds}
       />
 
+      {/* 포인트 배포 모달 */}
       <PointsDistributionModal
         open={pointsModalOpen}
         onClose={() => {
           setPointsModalOpen(false);
+          setSelectedUserIds([]);
         }}
         selectedUsers={selectedUserIds}
       />
 
+      {/* 관리자 메모 모달 */}
       <AdminNoteModal
         open={adminNoteModalOpen}
         onClose={() => {
@@ -539,10 +670,13 @@ const AdminUsers = () => {
           setSelectedUserId(null);
           setSelectedUserEmail('');
         }}
-        userId={selectedUserId || ''}
+        userId={selectedUserId}
         userEmail={selectedUserEmail}
         onNoteSaved={() => {
-          // 필요시 사용자 목록 새로고침 등의 작업 수행
+          setAdminNoteModalOpen(false);
+          setSelectedUserId(null);
+          setSelectedUserEmail('');
+          fetchUsers();
         }}
       />
     </AdminLayout>

@@ -124,9 +124,9 @@ export function ExportDataDropdown({
       className="fixed z-50 bg-background border border-border rounded-lg shadow-lg"
       style={{ 
         top: position.top + 5, 
-        left: Math.max(10, position.left - 400),
-        width: '1200px', // 더 넓게
-        maxHeight: '500px'
+        left: Math.max(10, position.left - 600),
+        width: '1400px',
+        maxHeight: '400px'
       }}
     >
       <div className="p-6">
@@ -153,47 +153,44 @@ export function ExportDataDropdown({
           </Badge>
         </div>
 
-        {/* 전체 선택 헤더 */}
-        <div className="flex items-center justify-between mb-4 pb-3 border-b">
-          <div>
-            <h3 className="font-semibold text-foreground">내보낼 데이터 선택</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              필요한 데이터 필드를 선택하여 CSV로 내보내기
-            </p>
+        <div className="space-y-4">
+          {/* 전체 선택 헤더 */}
+          <div className="flex items-center justify-between mb-4 pb-3 border-b">
+            <div>
+              <h3 className="font-semibold text-foreground">내보낼 데이터 선택</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                필요한 데이터 필드를 선택하여 Excel로 내보내기
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {allSelectedCount}/{allFields.length}개 선택
+              </span>
+              <Checkbox
+                checked={allSelectedCount === allFields.length}
+                onCheckedChange={handleSelectAll}
+              />
+              <span className="text-sm font-medium">전체 선택</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              {allSelectedCount}/{allFields.length}개 선택
-            </span>
-            <Checkbox
-              checked={allSelectedCount === allFields.length}
-              onCheckedChange={handleSelectAll}
-            />
-            <span className="text-sm font-medium">전체 선택</span>
-          </div>
-        </div>
 
-        {/* 데이터 필드 그리드 */}
-        <div className="max-h-80 overflow-y-auto">
-          <div className="grid grid-cols-4 gap-3">
-            {allFields.map((field) => (
-              <div key={field.key} className={`flex items-start space-x-3 p-3 border border-border/50 rounded-md transition-colors hover:bg-accent/50 ${defaultFields.includes(field.key) ? 'bg-primary/10 border-primary/30' : ''}`}>
-                <Checkbox
-                  checked={selectedFields.includes(field.key)}
-                  onCheckedChange={(checked) => handleFieldToggle(field.key, checked as boolean)}
-                  className="mt-0.5 flex-shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm text-foreground flex items-center gap-1">
-                    {field.label}
-                    {defaultFields.includes(field.key) && (
-                      <span className="text-xs bg-primary/20 text-primary px-1 rounded">기본</span>
-                    )}
+          {/* 데이터 필드 그리드 */}
+          <div className="max-h-80 overflow-y-auto">
+            <div className="grid grid-cols-6 gap-2">
+              {allFields.map((field) => (
+                <div key={field.key} className={`flex items-start space-x-2 p-2 border border-border/50 rounded-md transition-colors hover:bg-accent/50 ${defaultFields.includes(field.key) ? 'bg-primary/10 border-primary/30' : ''}`}>
+                  <Checkbox
+                    checked={selectedFields.includes(field.key)}
+                    onCheckedChange={(checked) => handleFieldToggle(field.key, checked as boolean)}
+                    className="mt-0.5 flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-xs text-foreground">{field.label}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{field.description}</div>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">{field.description}</div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
