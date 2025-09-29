@@ -58,6 +58,9 @@ const mockEnrollments = [
     courseName: '웹 개발 기초',
     status: '수강중',
     progress: 75,
+    enrolledDate: '2024-01-20T09:00:00Z', // 결제일(수강 시작일)
+    expiryDate: '2024-07-20T23:59:59Z', // 수강 만료일
+    orderId: 'ORDER002', // 주문 번호
     lastStudyDate: '2024-03-20T10:00:00Z',
     certificateIssued: false
   },
@@ -66,6 +69,9 @@ const mockEnrollments = [
     courseName: 'React 심화 과정',
     status: '완료',
     progress: 100,
+    enrolledDate: '2024-02-20T14:00:00Z',
+    expiryDate: '2024-08-20T23:59:59Z',
+    orderId: 'ORDER001',
     lastStudyDate: '2024-03-10T15:30:00Z',
     certificateIssued: true
   }
@@ -246,27 +252,23 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
             <div className="flex-1 overflow-y-auto pr-2 min-h-0 space-y-6">
               <TabsContent value="profile" className="space-y-6 mt-0">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Quick Stats */}
+                  {/* Essential Stats Only */}
                   <Card className="lg:col-span-3">
                     <CardHeader>
                       <CardTitle className="text-base flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        회원 활동 요약
+                        <TrendingUp className="h-4 w-4" />
+                        핵심 현황
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="text-center p-4 bg-blue-50 rounded-lg">
-                          <div className="text-2xl font-bold text-blue-600">{Math.floor((new Date().getTime() - new Date(mockUserDetail.joinDate).getTime()) / (1000 * 60 * 60 * 24))}일</div>
-                          <div className="text-sm text-blue-700 mt-1">가입 경과</div>
-                        </div>
+                      <div className="grid grid-cols-3 gap-4">
                         <div className="text-center p-4 bg-green-50 rounded-lg">
-                          <div className="text-2xl font-bold text-green-600">{mockEnrollments.filter(e => e.status === '완료').length}개</div>
+                          <div className="text-2xl font-bold text-green-600">{mockEnrollments.filter(e => e.status === '완료').length}/{mockEnrollments.length}</div>
                           <div className="text-sm text-green-700 mt-1">완료 강의</div>
                         </div>
-                        <div className="text-center p-4 bg-purple-50 rounded-lg">
-                          <div className="text-2xl font-bold text-purple-600">{Math.floor(Math.random() * 20 + 5)}시간</div>
-                          <div className="text-sm text-purple-700 mt-1">총 학습시간</div>
+                        <div className="text-center p-4 bg-blue-50 rounded-lg">
+                          <div className="text-2xl font-bold text-blue-600">{formatCurrency(mockUserDetail.totalPayment)}</div>
+                          <div className="text-sm text-blue-700 mt-1">총 결제액</div>
                         </div>
                         <div className="text-center p-4 bg-orange-50 rounded-lg">
                           <div className="text-2xl font-bold text-orange-600">{Math.floor((new Date().getTime() - new Date(mockUserDetail.lastLogin).getTime()) / (1000 * 60 * 60 * 24))}일 전</div>
@@ -289,38 +291,38 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                       </Button>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 gap-4">
-                        <div className="grid grid-cols-3 gap-3 items-center">
-                          <span className="text-sm font-medium text-muted-foreground">이름</span>
-                          {isEditing ? (
-                            <Input className="col-span-2" defaultValue={mockUserDetail.name} />
-                          ) : (
-                            <span className="col-span-2 font-medium">{mockUserDetail.name}</span>
-                          )}
-                        </div>
-                        
-                        <div className="grid grid-cols-3 gap-3 items-center">
-                          <span className="text-sm font-medium text-muted-foreground">연락처</span>
-                          {isEditing ? (
-                            <Input className="col-span-2" defaultValue={mockUserDetail.phone} />
-                          ) : (
-                            <span className="col-span-2 font-medium">{mockUserDetail.phone}</span>
-                          )}
-                        </div>
-                        
-                        <div className="grid grid-cols-3 gap-3 items-center">
-                          <span className="text-sm font-medium text-muted-foreground">가입일</span>
-                          <span className="col-span-2 text-sm">{formatDate(mockUserDetail.joinDate)}</span>
-                        </div>
-                        
-                        <div className="grid grid-cols-3 gap-3 items-center">
-                          <span className="text-sm font-medium text-muted-foreground">최근접속</span>
-                          <div className="col-span-2 flex items-center gap-2">
-                            <span className="text-sm">{formatDate(mockUserDetail.lastLogin)}</span>
-                            <Badge variant="outline" className="text-xs font-mono">{mockUserDetail.lastLoginIp}</Badge>
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="grid grid-cols-3 gap-3 items-center">
+                            <span className="text-sm font-medium text-muted-foreground">이름</span>
+                            {isEditing ? (
+                              <Input className="col-span-2" defaultValue={mockUserDetail.name} />
+                            ) : (
+                              <span className="col-span-2 font-medium">{mockUserDetail.name}</span>
+                            )}
+                          </div>
+                          
+                          <div className="grid grid-cols-3 gap-3 items-center">
+                            <span className="text-sm font-medium text-muted-foreground">연락처</span>
+                            {isEditing ? (
+                              <Input className="col-span-2" defaultValue={mockUserDetail.phone} />
+                            ) : (
+                              <span className="col-span-2 font-medium">{mockUserDetail.phone}</span>
+                            )}
+                          </div>
+                          
+                          <div className="grid grid-cols-3 gap-3 items-center">
+                            <span className="text-sm font-medium text-muted-foreground">가입일</span>
+                            <span className="col-span-2 text-sm">{format(new Date(mockUserDetail.joinDate), 'yyyy-MM-dd', { locale: ko })}</span>
+                          </div>
+                          
+                          <div className="grid grid-cols-3 gap-3 items-center">
+                            <span className="text-sm font-medium text-muted-foreground">최근접속</span>
+                            <div className="col-span-2 flex items-center gap-2">
+                              <span className="text-sm">{format(new Date(mockUserDetail.lastLogin), 'MM-dd HH:mm', { locale: ko })}</span>
+                              <Badge variant="outline" className="text-xs font-mono">{mockUserDetail.lastLoginIp}</Badge>
+                            </div>
                           </div>
                         </div>
-                      </div>
                     </CardContent>
                   </Card>
 
@@ -340,7 +342,7 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                             <span className="text-sm font-medium">이메일 수신</span>
                           </div>
                           <Badge variant={mockUserDetail.marketingEmail ? 'default' : 'secondary'} className="text-xs">
-                            {mockUserDetail.marketingEmail ? '✅ 동의' : '❌ 거부'}
+                            {mockUserDetail.marketingEmail ? '동의' : '거부'}
                           </Badge>
                         </div>
                         
