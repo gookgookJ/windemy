@@ -101,8 +101,8 @@ export const UserSearchFilter = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">전체 상태</SelectItem>
-                  <SelectItem value="active">✅ 정상 회원</SelectItem>
-                  <SelectItem value="dormant">😴 휴면 회원</SelectItem>
+                  <SelectItem value="active">정상 회원</SelectItem>
+                  <SelectItem value="dormant">휴면 회원</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -116,8 +116,8 @@ export const UserSearchFilter = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">전체</SelectItem>
-                  <SelectItem value="true">📧 수신 동의</SelectItem>
-                  <SelectItem value="false">🚫 수신 거부</SelectItem>
+                  <SelectItem value="true">수신 동의</SelectItem>
+                  <SelectItem value="false">수신 거부</SelectItem>
                 </SelectContent>
               </Select>
             </div>

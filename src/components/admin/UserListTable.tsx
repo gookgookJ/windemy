@@ -153,6 +153,10 @@ export const UserListTable = ({
                     Excel 내보내기
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onBulkAction('course_permission', selectedUsers)}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    강의 권한 설정
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onBulkAction('status_change', selectedUsers)}>
                     <Settings className="mr-2 h-4 w-4" />
                     상태 변경

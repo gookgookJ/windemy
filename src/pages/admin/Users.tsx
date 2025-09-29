@@ -5,12 +5,15 @@ import { UserSummaryDashboard } from '@/components/admin/UserSummaryDashboard';
 import { UserSearchFilter, type UserFilters } from '@/components/admin/UserSearchFilter';
 import { UserListTable, type UserData } from '@/components/admin/UserListTable';
 import { UserDetailModal } from '@/components/admin/UserDetailModal';
+import { CoursePermissionModal } from '@/components/admin/CoursePermissionModal';
 
 export const AdminUsers = () => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [coursePermissionModalOpen, setCoursePermissionModalOpen] = useState(false);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<UserFilters>({
     searchTerm: '',
     status: 'all',
@@ -159,6 +162,10 @@ export const AdminUsers = () => {
       case 'export':
         exportToCSV(userIds);
         break;
+      case 'course_permission':
+        setSelectedUserIds(userIds);
+        setCoursePermissionModalOpen(true);
+        break;
       case 'status_change':
         toast({
           title: "상태 변경",
@@ -264,6 +271,16 @@ export const AdminUsers = () => {
             setDetailModalOpen(false);
             setSelectedUserId(null);
           }}
+        />
+
+        {/* 강의 권한 관리 모달 */}
+        <CoursePermissionModal
+          open={coursePermissionModalOpen}
+          onClose={() => {
+            setCoursePermissionModalOpen(false);
+            setSelectedUserIds([]);
+          }}
+          userId={selectedUserIds.length === 1 ? selectedUserIds[0] : undefined}
         />
       </div>
     </AdminLayout>
