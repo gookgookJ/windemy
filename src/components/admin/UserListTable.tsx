@@ -1,5 +1,17 @@
 import { useState } from 'react';
-import { MoreHorizontal, ArrowUpDown, Download, Settings, Eye, Users2, Gift, Coins, FileText, UserCog, Plus } from 'lucide-react';
+import { 
+  MoreHorizontal, 
+  ArrowUpDown, 
+  Download, 
+  Settings, 
+  Eye, 
+  Users2, 
+  Gift, 
+  Coins, 
+  FileText, 
+  UserCog, 
+  Plus 
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
