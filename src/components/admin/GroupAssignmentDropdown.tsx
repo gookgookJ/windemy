@@ -40,6 +40,7 @@ export function GroupAssignmentDropdown({
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [editGroupName, setEditGroupName] = useState('');
   const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -48,13 +49,14 @@ export function GroupAssignmentDropdown({
     setSelectedGroupId(null);
     fetchGroups();
 
-    // 위치 계산
-    if (triggerElement) {
+    // 위치 계산 - 처음 열릴 때만
+    if (triggerElement && !isInitialized) {
       const rect = triggerElement.getBoundingClientRect();
       setPosition({
         top: rect.bottom + window.scrollY,
         left: rect.left + window.scrollX
       });
+      setIsInitialized(true);
     }
 
     // 외부 클릭 시 닫기
@@ -68,7 +70,7 @@ export function GroupAssignmentDropdown({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [onClose, triggerElement]);
+  }, [onClose, triggerElement, isInitialized]);
 
   const fetchGroups = async () => {
     setLoading(true);
@@ -184,6 +186,7 @@ export function GroupAssignmentDropdown({
         description: `"${groupName}" 그룹이 삭제되었습니다.`
       });
 
+      // 그룹 목록만 새로고침, 위치는 유지
       fetchGroups();
       onGroupDeleted?.();
     } catch (error) {
@@ -221,6 +224,7 @@ export function GroupAssignmentDropdown({
 
       setEditingGroupId(null);
       setEditGroupName('');
+      // 그룹 목록만 새로고침, 위치는 유지
       fetchGroups();
       onGroupEdited?.();
     } catch (error) {
