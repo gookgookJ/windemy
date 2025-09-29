@@ -40,7 +40,7 @@ export function GroupAssignmentDropdown({
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [editGroupName, setEditGroupName] = useState('');
   const [position, setPosition] = useState({ top: 0, left: 0 });
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -49,14 +49,18 @@ export function GroupAssignmentDropdown({
     setSelectedGroupId(null);
     fetchGroups();
 
-    // 위치 계산 - 처음 열릴 때만
-    if (triggerElement && !isInitialized) {
+    // 위치 계산 및 표시
+    if (triggerElement) {
       const rect = triggerElement.getBoundingClientRect();
       setPosition({
         top: rect.bottom + window.scrollY,
         left: rect.left + window.scrollX
       });
-      setIsInitialized(true);
+      
+      // 위치 계산 후 표시
+      requestAnimationFrame(() => {
+        setIsVisible(true);
+      });
     }
 
     // 외부 클릭 시 닫기
@@ -70,7 +74,7 @@ export function GroupAssignmentDropdown({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [onClose, triggerElement, isInitialized]);
+  }, [onClose, triggerElement]);
 
   const fetchGroups = async () => {
     setLoading(true);
@@ -237,10 +241,15 @@ export function GroupAssignmentDropdown({
     }
   };
 
+  // 위치가 계산되기 전에는 렌더링하지 않음
+  if (!isVisible) {
+    return null;
+  }
+
   return (
     <div 
       ref={dropdownRef}
-      className="fixed z-50 bg-background border border-border rounded-lg shadow-lg w-80"
+      className="fixed z-50 bg-background border border-border rounded-lg shadow-lg w-80 animate-fade-in animate-scale-in"
       style={{ 
         top: position.top + 5, 
         left: Math.max(10, position.left - 50) // 버튼에서 50px 왼쪽으로, 최소 10px 여백

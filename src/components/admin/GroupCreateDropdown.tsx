@@ -21,17 +21,23 @@ export function GroupCreateDropdown({
   const [newGroupName, setNewGroupName] = useState('');
   const [success, setSuccess] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [isVisible, setIsVisible] = useState(false);
   const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // 위치 계산
+    // 위치 계산 및 표시
     if (triggerElement) {
       const rect = triggerElement.getBoundingClientRect();
       setPosition({
         top: rect.bottom + window.scrollY,
         left: rect.left + window.scrollX
+      });
+      
+      // 위치 계산 후 표시
+      requestAnimationFrame(() => {
+        setIsVisible(true);
       });
     }
 
@@ -44,10 +50,12 @@ export function GroupCreateDropdown({
 
     document.addEventListener('mousedown', handleClickOutside);
     
-    // 입력 필드에 자동 포커스
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
+    // 입력 필드에 자동 포커스 (약간 지연)
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 100);
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -118,10 +126,15 @@ export function GroupCreateDropdown({
     }
   };
 
+  // 위치가 계산되기 전에는 렌더링하지 않음
+  if (!isVisible) {
+    return null;
+  }
+
   return (
     <div 
       ref={dropdownRef}
-      className="fixed z-50 bg-background border border-border rounded-lg shadow-lg w-72"
+      className="fixed z-50 bg-background border border-border rounded-lg shadow-lg w-72 animate-fade-in animate-scale-in"
       style={{ 
         top: position.top + 5, 
         left: Math.max(10, position.left - 30) // 버튼에서 30px 왼쪽으로, 최소 10px 여백

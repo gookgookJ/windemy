@@ -26,6 +26,7 @@ export function ExportDataDropdown({
   triggerElement 
 }: ExportDataDropdownProps) {
   const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [isVisible, setIsVisible] = useState(false);
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -61,12 +62,17 @@ export function ExportDataDropdown({
   ];
 
   useEffect(() => {
-    // 위치 계산
+    // 위치 계산 및 표시
     if (triggerElement) {
       const rect = triggerElement.getBoundingClientRect();
       setPosition({
         top: rect.bottom + window.scrollY,
         left: rect.left + window.scrollX
+      });
+      
+      // 위치 계산 후 표시
+      requestAnimationFrame(() => {
+        setIsVisible(true);
       });
     }
 
@@ -118,10 +124,15 @@ export function ExportDataDropdown({
 
   const allSelectedCount = allFields.filter(field => selectedFields.includes(field.key)).length;
 
+  // 위치가 계산되기 전에는 렌더링하지 않음
+  if (!isVisible) {
+    return null;
+  }
+
   return (
     <div 
       ref={dropdownRef}
-      className="fixed z-50 bg-background border border-border rounded-lg shadow-lg overflow-hidden"
+      className="fixed z-50 bg-background border border-border rounded-lg shadow-lg overflow-hidden animate-fade-in animate-scale-in"
       style={{ 
         top: position.top + 5, 
         left: Math.max(10, position.left - 650), 
