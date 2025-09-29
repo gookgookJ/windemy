@@ -272,7 +272,7 @@ export const UserListTable = ({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs pointer-events-none">
                       {user.group}
                     </Badge>
                   </TableCell>
@@ -283,7 +283,7 @@ export const UserListTable = ({
                         user.marketingEmail 
                           ? 'bg-success/10 text-success border-success/20' 
                           : 'bg-muted text-muted-foreground border-border'
-                      }`}
+                      } pointer-events-none`}
                     >
                       {user.marketingEmail ? '동의' : '거부'}
                     </Badge>
@@ -298,7 +298,7 @@ export const UserListTable = ({
                         user.status === 'active' 
                           ? 'bg-success/10 text-success border-success/20' 
                           : 'bg-muted text-muted-foreground border-border'
-                      }`}
+                      } pointer-events-none`}
                     >
                       {statusLabels[user.status]}
                     </Badge>
