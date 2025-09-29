@@ -1,292 +1,429 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Plus, Users, Search, X } from 'lucide-react';
+import { Search, Plus, Trash2, Users } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { GroupQuickActions } from './GroupQuickActions';
-import { GroupCard } from './GroupCard';
+import { supabase } from '@/integrations/supabase/client';
 
 interface GroupManagementModalProps {
   open: boolean;
   onClose: () => void;
-  selectedUsers?: string[];
+  selectedUsers: string[];
   onGroupAssigned?: (groupId: string) => void;
 }
 
-// Mock data for existing groups
-const mockGroups = [
-  {
-    id: '1',
-    name: 'VIP 고객',
-    description: '프리미엄 고객 그룹',
-    memberCount: 25,
-    color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    createdAt: '2024-03-01'
-  },
-  {
-    id: '2',
-    name: '신규 회원',
-    description: '최근 1개월 내 가입 회원',
-    memberCount: 120,
-    color: 'bg-green-100 text-green-800 border-green-200',
-    createdAt: '2024-03-15'
-  },
-  {
-    id: '3',
-    name: '장기 미접속',
-    description: '30일 이상 미접속 회원',
-    memberCount: 45,
-    color: 'bg-red-100 text-red-800 border-red-200',
-    createdAt: '2024-02-20'
-  },
-  {
-    id: '4',
-    name: '수강 완료자',
-    description: '최소 1개 강의 완료한 회원',
-    memberCount: 89,
-    color: 'bg-blue-100 text-blue-800 border-blue-200',
-    createdAt: '2024-01-10'
-  }
-];
+interface UserGroup {
+  id: string;
+  name: string;
+  description?: string;
+  color: string;
+  created_at: string;
+  member_count?: number;
+}
 
-const groupColors = [
-  'bg-blue-100 text-blue-800 border-blue-200',
-  'bg-green-100 text-green-800 border-green-200',
-  'bg-yellow-100 text-yellow-800 border-yellow-200',
-  'bg-red-100 text-red-800 border-red-200',
-  'bg-purple-100 text-purple-800 border-purple-200',
-  'bg-pink-100 text-pink-800 border-pink-200',
-  'bg-indigo-100 text-indigo-800 border-indigo-200',
-  'bg-orange-100 text-orange-800 border-orange-200'
-];
-
-export const GroupManagementModal = ({ 
+export function GroupManagementModal({ 
   open, 
   onClose, 
-  selectedUsers = [], 
+  selectedUsers, 
   onGroupAssigned 
-}: GroupManagementModalProps) => {
-  const [newGroupName, setNewGroupName] = useState('');
-  const [newGroupDescription, setNewGroupDescription] = useState('');
-  const [selectedColor, setSelectedColor] = useState(groupColors[0]);
-  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+}: GroupManagementModalProps) {
+  const [groups, setGroups] = useState<UserGroup[]>([]);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [quickAssignGroup, setQuickAssignGroup] = useState<string>('');
+  const [selectedGroupForAssign, setSelectedGroupForAssign] = useState<string>('');
+  const [newGroup, setNewGroup] = useState({
+    name: '',
+    description: '',
+    color: '#3b82f6'
+  });
   const { toast } = useToast();
 
-  const filteredGroups = mockGroups.filter(group =>
+  useEffect(() => {
+    if (open) {
+      fetchGroups();
+    }
+  }, [open]);
+
+  const fetchGroups = async () => {
+    setLoading(true);
+    try {
+      const { data: groupsData, error } = await supabase
+        .from('user_groups')
+        .select(`
+          *,
+          user_group_memberships(count)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const groupsWithCount = groupsData?.map(group => ({
+        ...group,
+        member_count: group.user_group_memberships?.[0]?.count || 0
+      })) || [];
+
+      setGroups(groupsWithCount);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      toast({
+        title: "그룹 조회 실패",
+        description: "그룹 목록을 불러오는데 실패했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredGroups = groups.filter(group => 
     group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    group.description.toLowerCase().includes(searchTerm.toLowerCase())
+    group.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleCreateGroup = () => {
-    if (!newGroupName.trim()) {
+  const handleCreateGroup = async () => {
+    if (!newGroup.name.trim()) {
       toast({
-        title: "그룹 이름을 입력해주세요",
-        variant: "destructive",
+        title: "그룹명 필요",
+        description: "그룹명을 입력해주세요.",
+        variant: "destructive"
       });
       return;
     }
 
-    console.log('새 그룹 생성:', { 
-      name: newGroupName, 
-      description: newGroupDescription,
-      color: selectedColor 
-    });
-    
-    toast({
-      title: "그룹이 생성되었습니다",
-      description: `'${newGroupName}' 그룹이 성공적으로 생성되었습니다.`,
-    });
+    try {
+      const { data, error } = await supabase
+        .from('user_groups')
+        .insert([{
+          name: newGroup.name.trim(),
+          description: newGroup.description.trim() || null,
+          color: newGroup.color
+        }])
+        .select()
+        .single();
 
-    setNewGroupName('');
-    setNewGroupDescription('');
-    setSelectedColor(groupColors[0]);
-    setIsCreatingGroup(false);
+      if (error) throw error;
+
+      setGroups([data, ...groups]);
+      setNewGroup({ name: '', description: '', color: '#3b82f6' });
+      
+      toast({
+        title: "그룹 생성 완료",
+        description: `"${data.name}" 그룹이 생성되었습니다.`
+      });
+    } catch (error: any) {
+      console.error('Error creating group:', error);
+      toast({
+        title: "그룹 생성 실패",
+        description: error.message?.includes('duplicate') ? 
+          "이미 존재하는 그룹명입니다." : 
+          "그룹 생성에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleQuickAssign = () => {
-    if (!quickAssignGroup || selectedUsers.length === 0) {
+  const handleQuickAssign = async () => {
+    if (!selectedGroupForAssign || selectedUsers.length === 0) return;
+
+    try {
+      const memberships = selectedUsers.map(userId => ({
+        user_id: userId,
+        group_id: selectedGroupForAssign
+      }));
+
+      const { error } = await supabase
+        .from('user_group_memberships')
+        .upsert(memberships, { onConflict: 'user_id,group_id' });
+
+      if (error) throw error;
+
+      const groupName = groups.find(g => g.id === selectedGroupForAssign)?.name;
+      
       toast({
-        title: "그룹을 선택해주세요",
-        variant: "destructive",
+        title: "그룹 배정 완료",
+        description: `${selectedUsers.length}명의 사용자가 "${groupName}" 그룹에 배정되었습니다.`
       });
+
+      onGroupAssigned?.(selectedGroupForAssign);
+    } catch (error) {
+      console.error('Error assigning users to group:', error);
+      toast({
+        title: "그룹 배정 실패",
+        description: "사용자를 그룹에 배정하는데 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAssignToGroup = async (groupId: string) => {
+    if (selectedUsers.length === 0) return;
+
+    try {
+      const memberships = selectedUsers.map(userId => ({
+        user_id: userId,
+        group_id: groupId
+      }));
+
+      const { error } = await supabase
+        .from('user_group_memberships')
+        .upsert(memberships, { onConflict: 'user_id,group_id' });
+
+      if (error) throw error;
+
+      const groupName = groups.find(g => g.id === groupId)?.name;
+      
+      toast({
+        title: "그룹 배정 완료",
+        description: `${selectedUsers.length}명의 사용자가 "${groupName}" 그룹에 배정되었습니다.`
+      });
+
+      onGroupAssigned?.(groupId);
+    } catch (error) {
+      console.error('Error assigning users to group:', error);
+      toast({
+        title: "그룹 배정 실패",
+        description: "사용자를 그룹에 배정하는데 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteGroup = async (groupId: string, groupName: string) => {
+    if (!confirm(`"${groupName}" 그룹을 삭제하시겠습니까? 그룹에 속한 사용자들의 배정도 모두 해제됩니다.`)) {
       return;
     }
 
-    const group = mockGroups.find(g => g.id === quickAssignGroup);
-    if (group) {
+    try {
+      const { error } = await supabase
+        .from('user_groups')
+        .delete()
+        .eq('id', groupId);
+
+      if (error) throw error;
+
+      setGroups(groups.filter(g => g.id !== groupId));
+      
       toast({
-        title: "그룹 할당 완료",
-        description: `${selectedUsers.length}명이 '${group.name}' 그룹에 할당되었습니다.`,
+        title: "그룹 삭제 완료",
+        description: `"${groupName}" 그룹이 삭제되었습니다.`
       });
-
-      if (onGroupAssigned) {
-        onGroupAssigned(quickAssignGroup);
-      }
-    }
-  };
-
-  const handleAssignToGroup = (groupId: string, groupName: string) => {
-    if (selectedUsers.length === 0) {
+    } catch (error) {
+      console.error('Error deleting group:', error);
       toast({
-        title: "선택된 사용자가 없습니다",
-        description: "먼저 사용자를 선택해주세요.",
-        variant: "destructive",
+        title: "그룹 삭제 실패",
+        description: "그룹 삭제에 실패했습니다.",
+        variant: "destructive"
       });
-      return;
-    }
-
-    console.log('그룹 할당:', { groupId, userIds: selectedUsers });
-    
-    toast({
-      title: "그룹 할당 완료",
-      description: `${selectedUsers.length}명이 '${groupName}' 그룹에 할당되었습니다.`,
-    });
-
-    if (onGroupAssigned) {
-      onGroupAssigned(groupId);
     }
   };
 
-  const handleDeleteGroup = (groupId: string, groupName: string) => {
-    console.log('그룹 삭제:', groupId);
-    
-    toast({
-      title: "그룹이 삭제되었습니다",
-      description: `'${groupName}' 그룹이 삭제되었습니다.`,
-    });
-  };
+  const colorOptions = [
+    { value: '#3b82f6', label: '블루' },
+    { value: '#10b981', label: '그린' },
+    { value: '#f59e0b', label: '옐로우' },
+    { value: '#ef4444', label: '레드' },
+    { value: '#8b5cf6', label: '퍼플' },
+    { value: '#06b6d4', label: '사이안' },
+    { value: '#84cc16', label: '라임' },
+    { value: '#f97316', label: '오렌지' }
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[80vh] overflow-hidden flex flex-col">
-        <DialogHeader className="pb-4">
-          <DialogTitle className="text-lg flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            그룹 관리
-            {selectedUsers.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {selectedUsers.length}명 선택됨
-              </Badge>
-            )}
-          </DialogTitle>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>그룹 관리</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-4">
-          {/* Quick Assignment */}
-          <GroupQuickActions
-            selectedUsers={selectedUsers}
-            groups={mockGroups}
-            selectedGroup={quickAssignGroup}
-            onGroupChange={setQuickAssignGroup}
-            onAssign={handleQuickAssign}
-          />
-
-          {/* Create New Group */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                새 그룹 생성
-              </CardTitle>
-              <Button 
-                size="sm" 
-                onClick={() => setIsCreatingGroup(!isCreatingGroup)}
-                variant={isCreatingGroup ? "outline" : "default"}
-              >
-                {isCreatingGroup ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-              </Button>
-            </CardHeader>
-            
-            {isCreatingGroup && (
-              <CardContent className="space-y-4 pt-0 border-t">
-                <div className="space-y-3">
-                  <Label htmlFor="groupName">그룹 이름 *</Label>
-                  <Input
-                    id="groupName"
-                    placeholder="예: VIP 고객, 신규 회원"
-                    value={newGroupName}
-                    onChange={(e) => setNewGroupName(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>색상</Label>
-                  <div className="flex gap-2">
-                    {groupColors.map((color, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        className={`w-6 h-6 rounded-full border-2 ${color.split(' ')[0]} ${
-                          selectedColor === color ? 'ring-2 ring-primary ring-offset-1' : ''
-                        }`}
-                        onClick={() => setSelectedColor(color)}
-                      />
+        <div className="space-y-6">
+          {/* 빠른 배정 섹션 */}
+          {selectedUsers.length > 0 && (
+            <div className="p-4 bg-blue-50 rounded-lg border">
+              <h3 className="font-medium mb-3">빠른 그룹 배정</h3>
+              <Alert className="mb-4">
+                <AlertDescription>
+                  선택된 {selectedUsers.length}명의 사용자를 그룹에 배정합니다.
+                </AlertDescription>
+              </Alert>
+              <div className="flex gap-2">
+                <Select value={selectedGroupForAssign} onValueChange={setSelectedGroupForAssign}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="그룹 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groups.map(group => (
+                      <SelectItem key={group.id} value={group.id}>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: group.color }}
+                          />
+                          {group.name}
+                        </div>
+                      </SelectItem>
                     ))}
-                  </div>
-                </div>
-                
-                <Button onClick={handleCreateGroup} className="w-full">
-                  그룹 생성
+                  </SelectContent>
+                </Select>
+                <Button onClick={handleQuickAssign} disabled={!selectedGroupForAssign}>
+                  배정하기
                 </Button>
-              </CardContent>
-            )}
-          </Card>
+              </div>
+            </div>
+          )}
 
-          <Separator />
+          {/* 새 그룹 생성 섹션 */}
+          <div className="p-4 border rounded-lg">
+            <h3 className="font-medium mb-4">새 그룹 생성</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="groupName">그룹명 *</Label>
+                <Input
+                  id="groupName"
+                  value={newGroup.name}
+                  onChange={(e) => setNewGroup(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="그룹명을 입력하세요"
+                />
+              </div>
+              <div>
+                <Label htmlFor="groupColor">색상</Label>
+                <Select 
+                  value={newGroup.color} 
+                  onValueChange={(value) => setNewGroup(prev => ({ ...prev, color: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-4 h-4 rounded-full" 
+                          style={{ backgroundColor: newGroup.color }}
+                        />
+                        {colorOptions.find(c => c.value === newGroup.color)?.label}
+                      </div>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {colorOptions.map(color => (
+                      <SelectItem key={color.value} value={color.value}>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-4 h-4 rounded-full" 
+                            style={{ backgroundColor: color.value }}
+                          />
+                          {color.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-2">
+                <Label htmlFor="groupDescription">설명</Label>
+                <Textarea
+                  id="groupDescription"
+                  value={newGroup.description}
+                  onChange={(e) => setNewGroup(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="그룹에 대한 설명을 입력하세요"
+                  rows={2}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end mt-4">
+              <Button onClick={handleCreateGroup} disabled={!newGroup.name.trim()}>
+                <Plus className="w-4 h-4 mr-2" />
+                그룹 생성
+              </Button>
+            </div>
+          </div>
 
-          {/* Existing Groups */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                기존 그룹 ({mockGroups.length})
-              </h3>
-              
-              <div className="relative w-64">
-                <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+          {/* 기존 그룹 목록 */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium">기존 그룹 ({groups.length}개)</h3>
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="그룹 검색..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-9 w-64"
                 />
               </div>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredGroups.map((group) => (
-                <GroupCard
-                  key={group.id}
-                  group={group}
-                  selectedUsers={selectedUsers}
-                  onAssign={handleAssignToGroup}
-                  onDelete={handleDeleteGroup}
-                />
-              ))}
-            </div>
 
-            {filteredGroups.length === 0 && (
+            {loading ? (
               <div className="text-center py-8">
-                <div className="text-muted-foreground">검색된 그룹이 없습니다</div>
+                <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+                <p className="text-muted-foreground mt-2">그룹을 불러오는 중...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredGroups.length > 0 ? (
+                  filteredGroups.map(group => (
+                    <div key={group.id} className="p-4 border rounded-lg space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-4 h-4 rounded-full flex-shrink-0" 
+                            style={{ backgroundColor: group.color }}
+                          />
+                          <div>
+                            <h4 className="font-medium">{group.name}</h4>
+                            {group.description && (
+                              <p className="text-sm text-muted-foreground">{group.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteGroup(group.id, group.name)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <Badge variant="secondary" className="text-xs">
+                          <Users className="w-3 h-3 mr-1" />
+                          {group.member_count || 0}명
+                        </Badge>
+                        
+                        {selectedUsers.length > 0 && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleAssignToGroup(group.id)}
+                          >
+                            이 그룹에 배정
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="md:col-span-2 text-center py-8">
+                    <p className="text-muted-foreground">
+                      {searchTerm ? '검색 결과가 없습니다.' : '생성된 그룹이 없습니다.'}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="pt-4 border-t flex justify-end">
-          <Button variant="outline" onClick={onClose}>
-            완료
-          </Button>
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button variant="outline" onClick={onClose}>
+              닫기
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
-};
+}
