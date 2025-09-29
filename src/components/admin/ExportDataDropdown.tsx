@@ -135,7 +135,7 @@ export function ExportDataDropdown({
       className="fixed z-50 bg-background border border-border rounded-lg shadow-lg overflow-hidden animate-fade-in animate-scale-in"
       style={{ 
         top: position.top + 5, 
-        left: Math.max(10, position.left - 650), 
+        left: Math.max(10, position.left - 750), // 더 좌측으로 이동 (650 -> 750)
         width: '1000px',
         maxHeight: '650px'
       }}
