@@ -69,7 +69,7 @@ const statusColors = {
 } as const;
 
 export const UserListTable = ({ 
-  users, 
+  users = [], 
   loading, 
   onUserSelect, 
   onBulkAction, 
@@ -85,7 +85,7 @@ export const UserListTable = ({
   pageSize,
   onPageChange,
   onPageSizeChange,
-  selectedUsers,
+  selectedUsers = [],
   onSelectedUsersChange
 }: UserListTableProps) => {
   const [sortConfig, setSortConfig] = useState<{
