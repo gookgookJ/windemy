@@ -7,12 +7,17 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  console.log('테스트 사용자 생성 함수 시작됨')
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('CORS preflight 요청 처리됨')
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    console.log('요청 메서드:', req.method)
+
     // Create a Supabase client with the Auth context of the logged in user.
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -20,12 +25,17 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     )
 
+    console.log('Supabase 클라이언트 생성 완료')
+
     // Get the session or user object
     const {
       data: { user },
     } = await supabaseClient.auth.getUser()
 
+    console.log('현재 사용자 ID:', user?.id)
+
     if (!user) {
+      console.log('인증되지 않은 사용자')
       return new Response(
         JSON.stringify({ error: 'Not authenticated' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -33,18 +43,24 @@ serve(async (req) => {
     }
 
     // Check if the caller is an admin
-    const { data: profile } = await supabaseClient
+    const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
+    console.log('사용자 프로필:', profile)
+    console.log('프로필 에러:', profileError)
+
     if (!profile || profile.role !== 'admin') {
+      console.log('관리자 권한 없음')
       return new Response(
         JSON.stringify({ error: 'Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('관리자 권한 확인됨')
 
     // Create service role client for admin operations
     const supabaseAdmin = createClient(
@@ -58,15 +74,22 @@ serve(async (req) => {
       }
     )
 
+    console.log('관리자 클라이언트 생성 완료')
+
     const body = await req.json()
     const { email, password } = body
 
+    console.log('요청 데이터:', { email, password: password ? '***' : 'none' })
+
     if (!email || !password) {
+      console.log('이메일 또는 비밀번호 누락')
       return new Response(
         JSON.stringify({ error: 'Email and password are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('Auth 사용자 생성 시작')
 
     // Create the auth user
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -75,6 +98,9 @@ serve(async (req) => {
       email_confirm: true
     })
 
+    console.log('Auth 사용자 생성 결과:', authUser ? 'success' : 'failed')
+    console.log('Auth 에러:', authError)
+
     if (authError) {
       return new Response(
         JSON.stringify({ error: authError.message }),
@@ -82,12 +108,12 @@ serve(async (req) => {
       )
     }
 
-    // Jayce user data to copy
-    const jayceUserId = 'eca70779-ecd7-4fe5-b668-e6be42b109a1'
     const testUserId = authUser.user.id
+    console.log('생성된 사용자 ID:', testUserId)
 
     // Create profile with same structure as jayce
-    const { error: profileError } = await supabaseAdmin
+    console.log('프로필 생성 시작')
+    const { error: profileError2 } = await supabaseAdmin
       .from('profiles')
       .insert({
         id: testUserId,
@@ -100,14 +126,18 @@ serve(async (req) => {
         phone: ''
       })
 
-    if (profileError) {
+    console.log('프로필 생성 결과:', profileError2 ? 'failed' : 'success')
+    console.log('프로필 에러:', profileError2)
+
+    if (profileError2) {
       return new Response(
-        JSON.stringify({ error: profileError.message }),
+        JSON.stringify({ error: profileError2.message }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     // Copy orders
+    console.log('주문 데이터 생성 시작')
     const orderData = [
       {
         id: crypto.randomUUID(),
@@ -133,6 +163,7 @@ serve(async (req) => {
       .from('orders')
       .insert(orderData)
 
+    console.log('주문 생성 결과:', ordersError ? 'failed' : 'success')
     if (ordersError) {
       console.error('Orders error:', ordersError)
     }
@@ -155,6 +186,7 @@ serve(async (req) => {
       .from('order_items')
       .insert(orderItemsData)
 
+    console.log('주문 아이템 생성 결과:', orderItemsError ? 'failed' : 'success')
     if (orderItemsError) {
       console.error('Order items error:', orderItemsError)
     }
@@ -179,6 +211,7 @@ serve(async (req) => {
       .from('enrollments')
       .insert(enrollmentsData)
 
+    console.log('수강 신청 생성 결과:', enrollmentsError ? 'failed' : 'success')
     if (enrollmentsError) {
       console.error('Enrollments error:', enrollmentsError)
     }
@@ -191,9 +224,12 @@ serve(async (req) => {
         group_id: 'cd1e286e-f3c5-49a4-a006-c9c16ed815e5'
       })
 
+    console.log('그룹 멤버십 생성 결과:', groupError ? 'failed' : 'success')
     if (groupError) {
       console.error('Group membership error:', groupError)
     }
+
+    console.log('테스트 계정 생성 완료!')
 
     return new Response(
       JSON.stringify({ 
@@ -205,6 +241,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
+    console.error('전체 함수 에러:', error)
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
