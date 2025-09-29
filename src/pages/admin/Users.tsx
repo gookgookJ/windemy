@@ -6,6 +6,7 @@ import { UserSearchFilter, type UserFilters } from '@/components/admin/UserSearc
 import { UserListTable, type UserData } from '@/components/admin/UserListTable';
 import { UserDetailModal } from '@/components/admin/UserDetailModal';
 import { CoursePermissionModal } from '@/components/admin/CoursePermissionModal';
+import { GroupManagementModal } from '@/components/admin/GroupManagementModal';
 
 export const AdminUsers = () => {
   const [users, setUsers] = useState<UserData[]>([]);
@@ -13,6 +14,7 @@ export const AdminUsers = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [coursePermissionModalOpen, setCoursePermissionModalOpen] = useState(false);
+  const [groupManagementModalOpen, setGroupManagementModalOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<UserFilters>({
     searchTerm: '',
@@ -166,6 +168,10 @@ export const AdminUsers = () => {
         setSelectedUserIds(userIds);
         setCoursePermissionModalOpen(true);
         break;
+      case 'group_management':
+        setSelectedUserIds(userIds);
+        setGroupManagementModalOpen(true);
+        break;
       case 'status_change':
         toast({
           title: "상태 변경",
@@ -281,6 +287,20 @@ export const AdminUsers = () => {
             setSelectedUserIds([]);
           }}
           userId={selectedUserIds.length === 1 ? selectedUserIds[0] : undefined}
+        />
+
+        {/* 그룹 관리 모달 */}
+        <GroupManagementModal
+          open={groupManagementModalOpen}
+          onClose={() => {
+            setGroupManagementModalOpen(false);
+            setSelectedUserIds([]);
+          }}
+          selectedUsers={selectedUserIds}
+          onGroupAssigned={(groupId) => {
+            setSelectedUserIds([]);
+            setGroupManagementModalOpen(false);
+          }}
         />
       </div>
     </AdminLayout>

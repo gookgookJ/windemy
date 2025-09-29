@@ -156,7 +156,7 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl h-[90vh] overflow-hidden flex flex-col bg-background">
-        {/* Enhanced Header */}
+        {/* Simplified Header */}
         <DialogHeader className="border-b bg-muted/20 pb-6 pt-6 px-6 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-4">
@@ -164,18 +164,17 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                 <User className="h-8 w-8 text-primary" />
               </div>
               
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <h1 className="text-2xl font-bold">{mockUserDetail.name}</h1>
-                  <Badge variant={mockUserDetail.status === 'active' ? 'default' : 'secondary'} className="h-6 px-3">
-                    {mockUserDetail.status === 'active' ? '✅ 정상회원' : '⏸️ 휴면회원'}
-                  </Badge>
+                  <Badge variant="outline" className="text-xs font-mono bg-primary/10 text-primary">{mockUserDetail.memberId}</Badge>
                 </div>
                 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                {/* Unified Contact Info */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   <div className="flex items-center gap-2 bg-background rounded-lg px-3 py-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{mockUserDetail.email}</span>
+                    <span className="font-medium text-sm">{mockUserDetail.email}</span>
                     <Button 
                       size="sm" 
                       variant="ghost" 
@@ -188,7 +187,7 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                   
                   <div className="flex items-center gap-2 bg-background rounded-lg px-3 py-2">
                     <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{mockUserDetail.phone}</span>
+                    <span className="font-medium text-sm">{mockUserDetail.phone}</span>
                     <Button 
                       size="sm" 
                       variant="ghost" 
@@ -198,30 +197,52 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
-                  
-                  <div className="flex items-center gap-2 bg-background rounded-lg px-3 py-2">
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded font-mono">{mockUserDetail.memberId}</span>
+                </div>
+
+                {/* Essential Info */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <span className="text-muted-foreground">가입일</span>
+                      <div className="font-medium">{format(new Date(mockUserDetail.joinDate), 'yyyy-MM-dd', { locale: ko })}</div>
+                    </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 bg-background rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <span className="text-muted-foreground">최근접속</span>
+                      <div className="font-medium">{format(new Date(mockUserDetail.lastLogin), 'MM-dd HH:mm', { locale: ko })}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-green-600" />
-                    <span className="font-bold text-green-600">{formatCurrency(mockUserDetail.totalPayment)}</span>
+                    <div>
+                      <span className="text-muted-foreground">총 결제</span>
+                      <div className="font-bold text-green-600">{formatCurrency(mockUserDetail.totalPayment)}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <span className="text-muted-foreground">마케팅 수신</span>
+                      <div className={`font-medium ${mockUserDetail.marketingEmail ? 'text-green-600' : 'text-red-600'}`}>
+                        {mockUserDetail.marketingEmail ? '동의' : '거부'}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
             
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="h-9 gap-2">
-                <MessageCircle className="h-4 w-4" />
-                메시지 발송
-              </Button>
-              <Button size="sm" className="h-9 gap-2">
-                <Edit className="h-4 w-4" />
-                정보 수정
-              </Button>
-            </div>
+            {/* Simplified Action */}
+            <Button size="sm" className="h-9 gap-2">
+              <Edit className="h-4 w-4" />
+              정보 수정
+            </Button>
           </div>
         </DialogHeader>
 
