@@ -90,7 +90,7 @@ const AdminUsers = () => {
       }
 
       // 결제 정보는 추후 orders 테이블과 연동하여 계산
-      const usersWithPaymentInfo = data?.map(profile => ({
+      const baseUsers = data?.map(profile => ({
         id: profile.id,
         memberId: `USR${profile.created_at.slice(0, 4).replace('-', '')}${profile.id.slice(0, 6).toUpperCase()}`,
         name: profile.full_name || profile.email,
@@ -101,10 +101,33 @@ const AdminUsers = () => {
         totalPayment: 0, // 추후 orders 테이블과 연동
         status: 'active' as const, // 실제로는 활동 상태에 따라 계산 필요
         marketingEmail: profile.marketing_consent || false,
-        group: profile.role === 'admin' ? '관리자' : '미분류' // 관리자와 일반 회원 구분
+        // 기본값: 관리자는 '관리자', 그 외는 빈 값 (이후 그룹 요약으로 채움)
+        group: profile.role === 'admin' ? '관리자' : ''
       })) || [];
 
-      setUsers(usersWithPaymentInfo);
+      // 그룹 요약(view)로부터 사용자별 그룹명 가져와 병합
+      const userIds = baseUsers.map(u => u.id);
+      let groupNameByUserId: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: groupSummary, error: groupSummaryError } = await supabase
+          .from('user_group_summary')
+          .select('user_id, group_names')
+          .in('user_id', userIds);
+
+        if (!groupSummaryError && groupSummary) {
+          groupSummary.forEach(row => {
+            const names = (row as any).group_names as string[] | null;
+            groupNameByUserId[(row as any).user_id as string] = names && names.length > 0 ? names.join(', ') : '';
+          });
+        }
+      }
+
+      const usersWithGroup = baseUsers.map(u => ({
+        ...u,
+        group: u.group || groupNameByUserId[u.id] || '미분류'
+      }));
+
+      setUsers(usersWithGroup);
       setCurrentPage(1); // Reset to first page when filters change
     } catch (error) {
       console.error('Error fetching users:', error);

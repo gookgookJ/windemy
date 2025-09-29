@@ -114,7 +114,6 @@ export function GroupManagementModal({
       if (error) throw error;
 
       const groupName = groupNameParam ?? groups.find(g => g.id === groupId)?.name ?? '선택한 그룹';
-      setSuccessName(groupName);
       
       toast({
         title: "그룹 배정 완료",
@@ -226,31 +225,17 @@ export function GroupManagementModal({
             <Button variant="outline" onClick={onClose} size="sm">
               닫기
             </Button>
-            {!successName && (
-              <Button
-                onClick={() => {
-                  if (!selectedGroupId) return;
-                  const name = groups.find((g) => g.id === selectedGroupId)?.name;
-                  handleAssignToGroup(selectedGroupId, name);
-                }}
-                disabled={!selectedGroupId || assigning}
-                size="sm"
-              >
-                {assigning ? '배정 중...' : '배정하기'}
-              </Button>
-            )}
-            {successName && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setSuccessName(null);
-                  setSelectedGroupId(null);
-                }}
-              >
-                계속 배정
-              </Button>
-            )}
+            <Button
+              onClick={() => {
+                if (!selectedGroupId) return;
+                const name = groups.find((g) => g.id === selectedGroupId)?.name;
+                handleAssignToGroup(selectedGroupId, name);
+              }}
+              disabled={!selectedGroupId || assigning}
+              size="sm"
+            >
+              {assigning ? '배정 중...' : '배정하기'}
+            </Button>
           </div>
         </div>
       </DialogContent>
