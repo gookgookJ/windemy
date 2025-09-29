@@ -22,7 +22,7 @@ export interface UserData {
   totalPayment: number;
   status: 'active' | 'dormant';
   marketingEmail: boolean;
-  group: string;
+  group?: string; // 그룹 분류 (현재 미사용)
 }
 
 interface UserListTableProps {
@@ -292,8 +292,8 @@ export const UserListTable = ({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className="text-xs pointer-events-none">
-                      {user.group}
+                    <Badge variant="outline" className="text-xs text-muted-foreground">
+                      미분류
                     </Badge>
                   </TableCell>
                   <TableCell>

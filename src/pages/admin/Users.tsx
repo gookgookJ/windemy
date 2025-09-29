@@ -45,7 +45,8 @@ const AdminUsers = () => {
     try {
       let query = supabase
         .from('profiles')
-        .select('*');
+        .select('*')
+        .eq('role', 'student'); // 일반 회원만 조회
 
       // 검색어 필터
       if (filters.searchTerm) {
@@ -93,7 +94,7 @@ const AdminUsers = () => {
         totalPayment: 0, // 추후 orders 테이블과 연동
         status: 'active' as const, // 실제로는 활동 상태에 따라 계산 필요
         marketingEmail: profile.marketing_consent || false,
-        group: profile.role || 'student'
+        group: '미분류' // 그룹 분류 기능 준비중
       })) || [];
 
       setUsers(usersWithPaymentInfo);
