@@ -146,8 +146,8 @@ export function GroupAssignmentDropdown({
       ref={dropdownRef}
       className="absolute z-50 bg-background border border-border rounded-lg shadow-lg w-80"
       style={{ 
-        top: position.top + 10, 
-        left: Math.max(10, position.left - 160) // 화면 왼쪽 가장자리에서 최소 10px 떨어뜨림
+        top: position.top + 5, 
+        left: Math.max(10, position.left - 50) // 버튼에서 50px 왼쪽으로, 최소 10px 여백
       }}
     >
       <div className="p-4">

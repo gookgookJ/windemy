@@ -9,7 +9,7 @@ import { CoursePermissionModal } from '@/components/admin/CoursePermissionModal'
 import { CouponDistributionModal } from '@/components/admin/CouponDistributionModal';
 import { PointsDistributionModal } from '@/components/admin/PointsDistributionModal';
 import { AdminNoteModal } from '@/components/admin/AdminNoteModal';
-import { GroupCreateModal } from '@/components/admin/GroupCreateModal';
+import { GroupCreateDropdown } from '@/components/admin/GroupCreateDropdown';
 import { GroupAssignmentDropdown } from '@/components/admin/GroupAssignmentDropdown';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,7 +23,6 @@ const AdminUsers = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [coursePermissionModalOpen, setCoursePermissionModalOpen] = useState(false);
-  const [groupCreateModalOpen, setGroupCreateModalOpen] = useState(false);
   const [couponModalOpen, setCouponModalOpen] = useState(false);
   const [pointsModalOpen, setPointsModalOpen] = useState(false);
   const [adminNoteModalOpen, setAdminNoteModalOpen] = useState(false);
@@ -31,6 +30,8 @@ const AdminUsers = () => {
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
   const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
   const [groupDropdownPosition, setGroupDropdownPosition] = useState({ top: 0, left: 0 });
+  const [groupCreateDropdownOpen, setGroupCreateDropdownOpen] = useState(false);
+  const [groupCreateDropdownPosition, setGroupCreateDropdownPosition] = useState({ top: 0, left: 0 });
   
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -170,9 +171,6 @@ const AdminUsers = () => {
         setSelectedUserIds(userIds);
         setCoursePermissionModalOpen(true);
         break;
-      case 'groupCreate':
-        setGroupCreateModalOpen(true);
-        break;
       case 'status_change':
         // 일괄 상태 변경 로직 (추후 구현)
         toast({
@@ -274,6 +272,11 @@ const AdminUsers = () => {
     setGroupDropdownOpen(true);
   };
 
+  const handleGroupCreate = (position: { top: number; left: number }) => {
+    setGroupCreateDropdownPosition(position);
+    setGroupCreateDropdownOpen(true);
+  };
+
   const exportToCSV = (userIds: string[]) => {
     const selectedUsers = users.filter(user => userIds.includes(user.id));
     const csvContent = [
@@ -335,6 +338,7 @@ const AdminUsers = () => {
           onDeleteUser={handleDeleteUser}
           onResetPassword={handleResetPassword}
           onGroupAssign={handleGroupAssign}
+          onGroupCreate={handleGroupCreate}
           onAddNote={handleAddNote}
           currentPage={currentPage}
           pageSize={pageSize}
@@ -348,7 +352,7 @@ const AdminUsers = () => {
         />
       </div>
 
-      {/* Modals */}
+      {/* Modals and Dropdowns */}
       {/* 강의 권한 관리 모달 */}
       <CoursePermissionModal
         open={coursePermissionModalOpen}
@@ -359,14 +363,16 @@ const AdminUsers = () => {
         userId={selectedUserIds.length === 1 ? selectedUserIds[0] : undefined}
       />
 
-      {/* 그룹 생성 모달 */}
-      <GroupCreateModal
-        open={groupCreateModalOpen}
-        onClose={() => setGroupCreateModalOpen(false)}
-        onGroupCreated={() => {
-          // 필요시 그룹 목록 새로고침
-        }}
-      />
+      {/* 그룹 생성 드롭다운 */}
+      {groupCreateDropdownOpen && (
+        <GroupCreateDropdown
+          onClose={() => setGroupCreateDropdownOpen(false)}
+          onGroupCreated={() => {
+            // 필요시 그룹 목록 새로고침
+          }}
+          position={groupCreateDropdownPosition}
+        />
+      )}
 
       {/* 그룹 배정 드롭다운 */}
       {groupDropdownOpen && (
@@ -374,7 +380,7 @@ const AdminUsers = () => {
           selectedUsers={selectedUserIds}
           onClose={() => {
             setGroupDropdownOpen(false);
-            setSelectedUserIds([]);
+            // 체크박스 선택 해제하지 않음
           }}
           onGroupAssigned={async () => {
             await fetchUsers(); // 그룹 배정 후 사용자 목록 새로고침
