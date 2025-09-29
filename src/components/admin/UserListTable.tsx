@@ -176,21 +176,28 @@ export const UserListTable = ({
   };
 
   const handleRoleChangeInline = async (userId: string, newRole: string) => {
+    console.log('권한 변경 시작:', { userId, newRole });
+    
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .update({ role: newRole })
-        .eq('id', userId);
+        .eq('id', userId)
+        .select('*');
 
       if (error) {
+        console.error('Supabase 오류:', error);
         throw error;
       }
+
+      console.log('권한 변경 성공:', data);
 
       toast({
         title: "권한 변경 완료",
         description: `사용자 권한이 ${roles.find(r => r.value === newRole)?.label}로 변경되었습니다.`,
       });
 
+      // 즉시 UI 업데이트를 위해 onRefresh 호출
       onRefresh();
     } catch (error: any) {
       console.error('권한 변경 오류:', error);
@@ -424,7 +431,10 @@ export const UserListTable = ({
                   <TableCell className="text-center">
                     <Select
                       value={user.role || 'student'}
-                      onValueChange={(newRole) => handleRoleChangeInline(user.id, newRole)}
+                      onValueChange={(newRole) => {
+                        console.log('권한 변경 시도:', { userId: user.id, newRole, currentRole: user.role });
+                        handleRoleChangeInline(user.id, newRole);
+                      }}
                     >
                       <SelectTrigger className="w-[100px] h-8 text-xs">
                         <SelectValue />
