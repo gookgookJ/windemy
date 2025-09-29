@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, ArrowUpDown, Download, Settings, Eye, Users2, Gift, Coins, FileText } from 'lucide-react';
+import { MoreHorizontal, ArrowUpDown, Download, Settings, Eye, Users2, Gift, Coins, FileText, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -157,69 +157,91 @@ export const UserListTable = ({
 
   return (
     <Card className="shadow-sm border-border/50">
-      <CardHeader className="bg-muted/10 border-b border-border/30">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-foreground">
-            회원 목록 
-            <span className="ml-2 text-sm font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
-              총 {totalItems}명
+      <CardHeader className="bg-muted/10 border-b border-border/30 space-y-4">
+        {/* 테이블 제목 */}
+        <CardTitle className="text-lg font-semibold text-foreground">
+          회원 목록 
+          <span className="ml-2 text-sm font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
+            총 {totalItems}명
+          </span>
+        </CardTitle>
+        
+        {/* 일괄 작업 툴바 - 항상 표시 */}
+        <div className="flex items-center justify-between bg-background/50 border border-border/50 rounded-lg px-4 py-3">
+          <div className="flex items-center gap-3">
+            <span className={`text-sm font-medium px-3 py-1.5 rounded-md transition-colors ${
+              selectedUsers.length > 0 
+                ? 'bg-primary/10 text-primary' 
+                : 'bg-muted/50 text-muted-foreground'
+            }`}>
+              {selectedUsers.length > 0 ? `${selectedUsers.length}명 선택됨` : '선택된 회원 없음'}
             </span>
-          </CardTitle>
+          </div>
           
-          {/* Bulk Actions */}
-          {selectedUsers.length > 0 && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground bg-primary/10 text-primary px-3 py-1.5 rounded-md font-medium">
-                {selectedUsers.length}명 선택됨
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onCouponDistribute(selectedUsers)}
-                  className="h-8"
-                >
-                  <Gift className="h-4 w-4 mr-1.5" />
-                  쿠폰 지급
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onPointsDistribute(selectedUsers)}
-                  className="h-8"
-                >
-                  <Coins className="h-4 w-4 mr-1.5" />
-                  포인트 지급
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onBulkAction('group_management', selectedUsers)}
-                  className="h-8"
-                >
-                  <Users2 className="h-4 w-4 mr-1.5" />
-                  그룹 관리
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onBulkAction('export', selectedUsers)}
-                  className="h-8"
-                >
-                  <Download className="h-4 w-4 mr-1.5" />
-                  내보내기
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onSelectedUsersChange([])}
-                  className="h-8 text-muted-foreground hover:text-foreground"
-                >
-                  선택 해제
-                </Button>
-              </div>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onBulkAction('status_change', selectedUsers)}
+              disabled={selectedUsers.length === 0}
+              className="h-8"
+            >
+              <Settings className="h-4 w-4 mr-1.5" />
+              상태변경
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onCouponDistribute(selectedUsers)}
+              disabled={selectedUsers.length === 0}
+              className="h-8"
+            >
+              <Gift className="h-4 w-4 mr-1.5" />
+              쿠폰 지급
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPointsDistribute(selectedUsers)}
+              disabled={selectedUsers.length === 0}
+              className="h-8"
+            >
+              <Coins className="h-4 w-4 mr-1.5" />
+              포인트 지급
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onBulkAction('group_management', selectedUsers)}
+              disabled={selectedUsers.length === 0}
+              className="h-8"
+            >
+              <Users2 className="h-4 w-4 mr-1.5" />
+              그룹 관리
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onBulkAction('export', selectedUsers)}
+              disabled={selectedUsers.length === 0}
+              className="h-8"
+            >
+              <Download className="h-4 w-4 mr-1.5" />
+              내보내기
+            </Button>
+          </div>
+          
+          <div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onSelectedUsersChange([])}
+              disabled={selectedUsers.length === 0}
+              className="h-8 text-muted-foreground hover:text-foreground"
+            >
+              선택 해제
+            </Button>
+          </div>
         </div>
       </CardHeader>
       
@@ -227,16 +249,17 @@ export const UserListTable = ({
         <div className="overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/30">
+              <TableRow className="bg-muted/30 border-b-2 border-border/50">
                 <TableHead className="w-12">
                   <Checkbox
                     checked={selectedUsers.length === paginatedUsers.length && paginatedUsers.length > 0}
                     onCheckedChange={handleSelectAll}
+                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                   />
                 </TableHead>
                 <TableHead className="font-semibold text-muted-foreground">회원 정보</TableHead>
                 <TableHead 
-                  className="cursor-pointer font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                  className="cursor-pointer font-semibold text-muted-foreground hover:text-foreground transition-colors min-w-[100px]"
                   onClick={() => handleSort('joinDate')}
                 >
                   <div className="flex items-center gap-1">
@@ -245,7 +268,7 @@ export const UserListTable = ({
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="cursor-pointer font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                  className="cursor-pointer font-semibold text-muted-foreground hover:text-foreground transition-colors min-w-[100px]"
                   onClick={() => handleSort('lastLogin')}
                 >
                   <div className="flex items-center gap-1">
@@ -253,10 +276,10 @@ export const UserListTable = ({
                     <ArrowUpDown className="h-3.5 w-3.5" />
                   </div>
                 </TableHead>
-                <TableHead className="font-semibold text-muted-foreground">그룹</TableHead>
-                <TableHead className="font-semibold text-muted-foreground">마케팅 수신</TableHead>
+                <TableHead className="font-semibold text-muted-foreground min-w-[80px]">그룹</TableHead>
+                <TableHead className="font-semibold text-muted-foreground min-w-[80px]">마케팅 수신</TableHead>
                 <TableHead 
-                  className="cursor-pointer text-right font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                  className="cursor-pointer text-right font-semibold text-muted-foreground hover:text-foreground transition-colors min-w-[120px]"
                   onClick={() => handleSort('totalPayment')}
                 >
                    <div className="flex items-center justify-end gap-1">
@@ -264,7 +287,7 @@ export const UserListTable = ({
                     <ArrowUpDown className="h-3.5 w-3.5" />
                   </div>
                 </TableHead>
-                <TableHead className="font-semibold text-muted-foreground">상태</TableHead>
+                <TableHead className="font-semibold text-muted-foreground min-w-[60px]">상태</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
@@ -282,7 +305,7 @@ export const UserListTable = ({
                     className="cursor-pointer hover:bg-primary/5 p-4 rounded-md transition-colors"
                     onClick={() => onUserSelect(user.id)}
                   >
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-foreground text-sm">{user.name}</span>
                         <span className="text-xs font-mono text-muted-foreground bg-muted/70 px-2 py-0.5 rounded-md">
@@ -295,22 +318,22 @@ export const UserListTable = ({
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <div className="text-sm font-medium">{formatDate(user.joinDate)}</div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <div className="text-sm font-medium">
                       {user.lastLogin ? formatDate(user.lastLogin) : 
                         <span className="text-muted-foreground italic">미접속</span>
                       }
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <Badge variant="outline" className="text-xs text-muted-foreground">
-                      미분류
+                      {user.group || '미분류'}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <Badge 
                       variant={user.marketingEmail ? "default" : "secondary"} 
                       className={`text-xs font-medium ${
@@ -325,13 +348,13 @@ export const UserListTable = ({
                   <TableCell className="text-right">
                     <div className="font-semibold text-foreground">{formatCurrency(user.totalPayment)}</div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <Badge 
                       variant={statusColors[user.status]} 
                       className={`text-xs font-medium ${
                         user.status === 'active' 
                           ? 'bg-success/10 text-success border-success/20' 
-                          : 'bg-muted text-muted-foreground border-border'
+                          : 'bg-warning/10 text-warning border-warning/20'
                       } pointer-events-none`}
                     >
                       {statusLabels[user.status]}
@@ -345,11 +368,15 @@ export const UserListTable = ({
                         </Button>
                       </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={() => onUserSelect(user.id)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          회원 상세정보
+                        </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => onStatusChange(user.id, user.status === 'active' ? 'dormant' : 'active')}
                         >
-                          <Settings className="mr-2 h-4 w-4" />
-                          상태: {user.status === 'active' ? '휴면' : '정상'}으로 변경
+                          <UserCog className="mr-2 h-4 w-4" />
+                          상태변경 ({user.status === 'active' ? '휴면' : '정상'}으로)
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onResetPassword(user.id)}>
                           <Settings className="mr-2 h-4 w-4" />

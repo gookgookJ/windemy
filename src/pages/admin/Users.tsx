@@ -148,6 +148,13 @@ const AdminUsers = () => {
         setSelectedUserIds(userIds);
         setGroupManagementModalOpen(true);
         break;
+      case 'status_change':
+        // 일괄 상태 변경 로직 (추후 구현)
+        toast({
+          title: "일괄 상태 변경",
+          description: "선택된 회원들의 상태 변경 기능은 추후 구현 예정입니다."
+        });
+        break;
       default:
         toast({
           title: "기능 준비 중",
