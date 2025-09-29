@@ -121,17 +121,17 @@ export function ExportDataDropdown({
   return (
     <div 
       ref={dropdownRef}
-      className="fixed z-50 bg-background border border-border rounded-lg shadow-lg"
+      className="fixed z-50 bg-background border border-border rounded-lg shadow-lg overflow-hidden"
       style={{ 
         top: position.top + 5, 
-        left: Math.max(10, position.left - 600),
+        left: Math.max(10, position.left - 900), // 더 왼쪽으로 이동
         width: '1400px',
-        maxHeight: '400px'
+        maxHeight: '650px' // 높이 증가
       }}
     >
-      <div className="p-6">
+      <div className="flex flex-col h-full">
         {/* 헤더 */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between p-6 pb-4 bg-background border-b sticky top-0 z-20">
           <div className="flex items-center gap-2">
             <FileSpreadsheet className="w-5 h-5 text-primary" />
             <span className="font-semibold text-lg">데이터 내보내기</span>
@@ -147,55 +147,60 @@ export function ExportDataDropdown({
         </div>
 
         {/* 선택된 사용자 수 */}
-        <div className="mb-4">
+        <div className="px-6 pb-4 bg-background border-b sticky top-[73px] z-20">
           <Badge variant="secondary" className="text-sm">
             {selectedUsers.length}명의 데이터 내보내기
           </Badge>
         </div>
 
-        <div className="space-y-4">
-          {/* 전체 선택 헤더 */}
-          <div className="flex items-center justify-between mb-4 pb-3 border-b">
-            <div>
-              <h3 className="font-semibold text-foreground">내보낼 데이터 선택</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                필요한 데이터 필드를 선택하여 Excel로 내보내기
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {allSelectedCount}/{allFields.length}개 선택
-              </span>
-              <Checkbox
-                checked={allSelectedCount === allFields.length}
-                onCheckedChange={handleSelectAll}
-              />
-              <span className="text-sm font-medium">전체 선택</span>
-            </div>
+        {/* 전체 선택 헤더 */}
+        <div className="flex items-center justify-between px-6 py-4 bg-background border-b sticky top-[121px] z-20">
+          <div>
+            <h3 className="font-semibold text-foreground">내보낼 데이터 선택</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              필요한 데이터 필드를 선택하여 Excel로 내보내기
+            </p>
           </div>
-
-          {/* 데이터 필드 그리드 */}
-          <div className="max-h-80 overflow-y-auto">
-            <div className="grid grid-cols-6 gap-2">
-              {allFields.map((field) => (
-                <div key={field.key} className={`flex items-start space-x-2 p-2 border border-border/50 rounded-md transition-colors hover:bg-accent/50 ${defaultFields.includes(field.key) ? 'bg-primary/10 border-primary/30' : ''}`}>
-                  <Checkbox
-                    checked={selectedFields.includes(field.key)}
-                    onCheckedChange={(checked) => handleFieldToggle(field.key, checked as boolean)}
-                    className="mt-0.5 flex-shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-xs text-foreground">{field.label}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{field.description}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {allSelectedCount}/{allFields.length}개 선택
+            </span>
+            <Checkbox
+              checked={allSelectedCount === allFields.length}
+              onCheckedChange={handleSelectAll}
+            />
+            <span className="text-sm font-medium">전체 선택</span>
           </div>
         </div>
 
-        {/* 액션 버튼 */}
-        <div className="flex items-center justify-between gap-3 mt-6 pt-4 border-t">
+        {/* 데이터 필드 그리드 - 스크롤 가능 영역 */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="grid grid-cols-6 gap-2">
+            {allFields.map((field) => (
+              <div 
+                key={field.key} 
+                className={`flex items-start space-x-2 p-3 border rounded-md transition-all duration-200 ${
+                  selectedFields.includes(field.key) 
+                    ? 'border-primary bg-primary/10 shadow-sm' 
+                    : 'border-border/50 bg-background hover:bg-accent/50'
+                }`}
+              >
+                <Checkbox
+                  checked={selectedFields.includes(field.key)}
+                  onCheckedChange={(checked) => handleFieldToggle(field.key, checked as boolean)}
+                  className="mt-0.5 flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-xs text-foreground leading-tight">{field.label}</div>
+                  <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{field.description}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 액션 버튼 - 하단 고정 */}
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t bg-background sticky bottom-0 z-20">
           <div className="text-sm text-muted-foreground">
             총 {selectedFields.length}개 필드 선택됨
           </div>
