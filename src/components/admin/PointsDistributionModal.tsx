@@ -157,20 +157,20 @@ export function PointsDistributionModal({ open, onClose, selectedUsers }: Points
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>적립금 지급</DialogTitle>
+      <DialogContent className="max-w-lg">
+        <DialogHeader className="pb-6">
+          <DialogTitle className="text-xl">적립금 지급</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <Alert>
-            <AlertDescription>
+        <div className="space-y-6">
+          <Alert className="border-blue-200 bg-blue-50">
+            <AlertDescription className="text-base text-blue-800">
               선택된 {selectedUsers.length}명의 사용자에게 적립금을 지급합니다.
             </AlertDescription>
           </Alert>
 
-          <div>
-            <Label htmlFor="amount">지급 금액 (원) *</Label>
+          <div className="space-y-3">
+            <Label htmlFor="amount" className="text-sm font-medium">지급 금액 (원) *</Label>
             <Input
               id="amount"
               type="number"
@@ -180,17 +180,18 @@ export function PointsDistributionModal({ open, onClose, selectedUsers }: Points
                 ...prev, 
                 amount: parseInt(e.target.value) || 0 
               }))}
-              placeholder="지급할 적립금 금액"
+              placeholder="지급할 적립금 금액을 입력하세요"
+              className="h-11"
             />
           </div>
 
-          <div>
-            <Label htmlFor="reason">지급 사유</Label>
+          <div className="space-y-3">
+            <Label htmlFor="reason" className="text-sm font-medium">지급 사유</Label>
             <Select value={selectedReason} onValueChange={handleReasonChange}>
-              <SelectTrigger>
+              <SelectTrigger className="h-11">
                 <SelectValue placeholder="지급 사유를 선택하세요" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-50">
                 {POINT_REASONS.map(reason => (
                   <SelectItem key={reason.value} value={reason.value}>
                     {reason.label}
@@ -200,8 +201,8 @@ export function PointsDistributionModal({ open, onClose, selectedUsers }: Points
             </Select>
           </div>
 
-          <div>
-            <Label htmlFor="description">상세 설명 *</Label>
+          <div className="space-y-3">
+            <Label htmlFor="description" className="text-sm font-medium">상세 설명 *</Label>
             <Textarea
               id="description"
               value={pointsData.description}
@@ -214,18 +215,18 @@ export function PointsDistributionModal({ open, onClose, selectedUsers }: Points
             />
           </div>
 
-          <div>
-            <Label>만료 설정</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">만료 설정</Label>
             <Select 
               value={pointsData.expiryType} 
               onValueChange={(value: 'none' | 'date' | 'days') => 
                 setPointsData(prev => ({ ...prev, expiryType: value }))
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-11">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-50">
                 <SelectItem value="none">만료 없음</SelectItem>
                 <SelectItem value="date">만료일 지정</SelectItem>
                 <SelectItem value="days">만료 기간 지정</SelectItem>
@@ -234,13 +235,13 @@ export function PointsDistributionModal({ open, onClose, selectedUsers }: Points
           </div>
 
           {pointsData.expiryType === 'date' && (
-            <div>
-              <Label>만료일</Label>
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">만료일</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-start text-left font-normal"
+                    className="w-full justify-start text-left font-normal h-11"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {pointsData.expiryDate ? (
@@ -267,8 +268,8 @@ export function PointsDistributionModal({ open, onClose, selectedUsers }: Points
           )}
 
           {pointsData.expiryType === 'days' && (
-            <div>
-              <Label htmlFor="expiryDays">만료 기간 (일)</Label>
+            <div className="space-y-3">
+              <Label htmlFor="expiryDays" className="text-sm font-medium">만료 기간 (일)</Label>
               <Input
                 id="expiryDays"
                 type="number"
@@ -279,29 +280,34 @@ export function PointsDistributionModal({ open, onClose, selectedUsers }: Points
                   expiryDays: parseInt(e.target.value) || 0 
                 }))}
                 placeholder="예: 30 (30일 후 만료)"
+                className="h-11"
               />
             </div>
           )}
 
           {pointsData.amount > 0 && (
-            <Alert>
-              <AlertDescription>
-                <div className="space-y-1">
-                  <div>개별 지급액: {pointsData.amount.toLocaleString()}원</div>
-                  <div>총 지급액: {totalAmount.toLocaleString()}원</div>
-                  <div>대상자: {selectedUsers.length}명</div>
+            <Alert className="border-green-200 bg-green-50">
+              <AlertDescription className="text-green-800">
+                <div className="space-y-2">
+                  <div className="font-medium">지급 요약</div>
+                  <div className="space-y-1 text-sm">
+                    <div>• 개별 지급액: {pointsData.amount.toLocaleString()}원</div>
+                    <div>• 총 지급액: {totalAmount.toLocaleString()}원</div>
+                    <div>• 대상자: {selectedUsers.length}명</div>
+                  </div>
                 </div>
               </AlertDescription>
             </Alert>
           )}
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={onClose}>
+          <div className="flex justify-end gap-3 pt-6 border-t">
+            <Button variant="outline" onClick={onClose} className="h-11 px-6">
               취소
             </Button>
             <Button 
               onClick={handleDistribute} 
               disabled={loading || !pointsData.amount || !pointsData.description.trim()}
+              className="h-11 px-6"
             >
               {loading ? '지급 중...' : '적립금 지급'}
             </Button>

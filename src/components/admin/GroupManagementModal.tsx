@@ -39,8 +39,7 @@ export function GroupManagementModal({
   const [selectedGroupForAssign, setSelectedGroupForAssign] = useState<string>('');
   const [newGroup, setNewGroup] = useState({
     name: '',
-    description: '',
-    color: '#3b82f6'
+    description: ''
   });
   const { toast } = useToast();
 
@@ -96,13 +95,17 @@ export function GroupManagementModal({
       return;
     }
 
+    // 랜덤 색상 자동 선택
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
     try {
       const { data, error } = await supabase
         .from('user_groups')
         .insert([{
           name: newGroup.name.trim(),
           description: newGroup.description.trim() || null,
-          color: newGroup.color
+          color: randomColor
         }])
         .select()
         .single();
@@ -110,7 +113,7 @@ export function GroupManagementModal({
       if (error) throw error;
 
       setGroups([data, ...groups]);
-      setNewGroup({ name: '', description: '', color: '#3b82f6' });
+      setNewGroup({ name: '', description: '' });
       
       toast({
         title: "그룹 생성 완료",
@@ -244,22 +247,22 @@ export function GroupManagementModal({
         <div className="space-y-6">
           {/* 빠른 배정 섹션 */}
           {selectedUsers.length > 0 && (
-            <div className="p-4 bg-blue-50 rounded-lg border">
-              <h3 className="font-medium mb-3">빠른 그룹 배정</h3>
-              <Alert className="mb-4">
-                <AlertDescription>
+            <div className="p-6 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 className="text-lg font-semibold mb-4">빠른 그룹 배정</h3>
+              <Alert className="mb-6">
+                <AlertDescription className="text-base">
                   선택된 {selectedUsers.length}명의 사용자를 그룹에 배정합니다.
                 </AlertDescription>
               </Alert>
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <Select value={selectedGroupForAssign} onValueChange={setSelectedGroupForAssign}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="그룹 선택" />
+                  <SelectTrigger className="flex-1 h-11">
+                    <SelectValue placeholder="그룹을 선택하세요" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50">
                     {groups.map(group => (
                       <SelectItem key={group.id} value={group.id}>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                           <div 
                             className="w-3 h-3 rounded-full" 
                             style={{ backgroundColor: group.color }}
@@ -270,7 +273,11 @@ export function GroupManagementModal({
                     ))}
                   </SelectContent>
                 </Select>
-                <Button onClick={handleQuickAssign} disabled={!selectedGroupForAssign}>
+                <Button 
+                  onClick={handleQuickAssign} 
+                  disabled={!selectedGroupForAssign}
+                  className="h-11 px-6"
+                >
                   배정하기
                 </Button>
               </div>
@@ -278,63 +285,37 @@ export function GroupManagementModal({
           )}
 
           {/* 새 그룹 생성 섹션 */}
-          <div className="p-4 border rounded-lg">
-            <h3 className="font-medium mb-4">새 그룹 생성</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-6 border rounded-lg bg-card">
+            <h3 className="text-lg font-semibold mb-6">새 그룹 생성</h3>
+            <div className="space-y-6">
               <div>
-                <Label htmlFor="groupName">그룹명 *</Label>
+                <Label htmlFor="groupName" className="text-sm font-medium mb-2 block">그룹명 *</Label>
                 <Input
                   id="groupName"
                   value={newGroup.name}
                   onChange={(e) => setNewGroup(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="그룹명을 입력하세요"
+                  placeholder="예: VIP 고객, 신규 회원"
+                  className="h-11"
                 />
               </div>
               <div>
-                <Label htmlFor="groupColor">색상</Label>
-                <Select 
-                  value={newGroup.color} 
-                  onValueChange={(value) => setNewGroup(prev => ({ ...prev, color: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue>
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-4 h-4 rounded-full" 
-                          style={{ backgroundColor: newGroup.color }}
-                        />
-                        {colorOptions.find(c => c.value === newGroup.color)?.label}
-                      </div>
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {colorOptions.map(color => (
-                      <SelectItem key={color.value} value={color.value}>
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-4 h-4 rounded-full" 
-                            style={{ backgroundColor: color.value }}
-                          />
-                          {color.label}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="groupDescription">설명</Label>
+                <Label htmlFor="groupDescription" className="text-sm font-medium mb-2 block">설명</Label>
                 <Textarea
                   id="groupDescription"
                   value={newGroup.description}
                   onChange={(e) => setNewGroup(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="그룹에 대한 설명을 입력하세요"
-                  rows={2}
+                  rows={3}
+                  className="resize-none"
                 />
               </div>
             </div>
-            <div className="flex justify-end mt-4">
-              <Button onClick={handleCreateGroup} disabled={!newGroup.name.trim()}>
+            <div className="flex justify-end mt-8">
+              <Button 
+                onClick={handleCreateGroup} 
+                disabled={!newGroup.name.trim()}
+                className="h-10 px-6"
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 그룹 생성
               </Button>
@@ -343,39 +324,39 @@ export function GroupManagementModal({
 
           {/* 기존 그룹 목록 */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium">기존 그룹 ({groups.length}개)</h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold">기존 그룹 ({groups.length}개)</h3>
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="그룹 검색..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 w-64"
+                  className="pl-10 w-64 h-10"
                 />
               </div>
             </div>
 
             {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
-                <p className="text-muted-foreground mt-2">그룹을 불러오는 중...</p>
+              <div className="text-center py-12">
+                <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+                <p className="text-muted-foreground mt-4 text-base">그룹을 불러오는 중...</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredGroups.length > 0 ? (
                   filteredGroups.map(group => (
-                    <div key={group.id} className="p-4 border rounded-lg space-y-3">
-                      <div className="flex items-start justify-between">
+                    <div key={group.id} className="p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <div 
                             className="w-4 h-4 rounded-full flex-shrink-0" 
                             style={{ backgroundColor: group.color }}
                           />
                           <div>
-                            <h4 className="font-medium">{group.name}</h4>
+                            <h4 className="font-semibold text-base">{group.name}</h4>
                             {group.description && (
-                              <p className="text-sm text-muted-foreground">{group.description}</p>
+                              <p className="text-sm text-muted-foreground mt-1">{group.description}</p>
                             )}
                           </div>
                         </div>
@@ -383,14 +364,14 @@ export function GroupManagementModal({
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteGroup(group.id, group.name)}
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs px-3 py-1">
                           <Users className="w-3 h-3 mr-1" />
                           {group.member_count || 0}명
                         </Badge>
@@ -399,6 +380,7 @@ export function GroupManagementModal({
                           <Button
                             size="sm"
                             onClick={() => handleAssignToGroup(group.id)}
+                            className="h-8 px-4"
                           >
                             이 그룹에 배정
                           </Button>
@@ -407,8 +389,8 @@ export function GroupManagementModal({
                     </div>
                   ))
                 ) : (
-                  <div className="md:col-span-2 text-center py-8">
-                    <p className="text-muted-foreground">
+                  <div className="md:col-span-2 text-center py-12">
+                    <p className="text-muted-foreground text-base">
                       {searchTerm ? '검색 결과가 없습니다.' : '생성된 그룹이 없습니다.'}
                     </p>
                   </div>
@@ -417,8 +399,8 @@ export function GroupManagementModal({
             )}
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={onClose}>
+          <div className="flex justify-end gap-3 pt-6 border-t">
+            <Button variant="outline" onClick={onClose} className="h-10 px-6">
               닫기
             </Button>
           </div>
