@@ -155,12 +155,6 @@ export const AdminUsers = () => {
 
   const handleBulkAction = async (action: string, userIds: string[]) => {
     switch (action) {
-      case 'message':
-        toast({
-          title: "메시지 발송",
-          description: `선택된 ${userIds.length}명의 사용자에게 메시지를 발송했습니다.`
-        });
-        break;
       case 'export':
         exportToCSV(userIds);
         break;
@@ -171,12 +165,6 @@ export const AdminUsers = () => {
       case 'group_management':
         setSelectedUserIds(userIds);
         setGroupManagementModalOpen(true);
-        break;
-      case 'status_change':
-        toast({
-          title: "상태 변경",
-          description: `선택된 ${userIds.length}명의 사용자 상태를 변경했습니다.`
-        });
         break;
       default:
         toast({

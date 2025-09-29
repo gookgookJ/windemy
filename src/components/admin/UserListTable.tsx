@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, ArrowUpDown, MessageCircle, Download, Settings, Eye, Users2 } from 'lucide-react';
+import { MoreHorizontal, ArrowUpDown, Download, Settings, Eye, Users2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -144,26 +144,18 @@ export const UserListTable = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => onBulkAction('message', selectedUsers)}>
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    메시지 발송
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onBulkAction('export', selectedUsers)}>
                     <Download className="mr-2 h-4 w-4" />
                     Excel 내보내기
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onBulkAction('course_permission', selectedUsers)}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    강의 권한 설정
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onBulkAction('group_management', selectedUsers)}>
                     <Users2 className="mr-2 h-4 w-4" />
                     그룹 관리
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onBulkAction('status_change', selectedUsers)}>
+                  <DropdownMenuItem onClick={() => onBulkAction('course_permission', selectedUsers)}>
                     <Settings className="mr-2 h-4 w-4" />
-                    상태 변경
+                    강의 권한 설정
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
