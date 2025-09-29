@@ -30,8 +30,14 @@ export function ExportDataDropdown({
   const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Tier1 필드들 (기본 선택)
-  const tier1Fields: ExportField[] = [
+  // 기본 선택 필드들
+  const defaultFields = [
+    'full_name', 'email', 'phone', 'role', 'created_at', 'marketing_consent', 
+    'total_payment', 'latest_order_date', 'active_courses_count', 'group_name', 'latest_admin_note'
+  ];
+
+  // 전체 필드 목록
+  const allFields: ExportField[] = [
     { key: 'full_name', label: '전체 이름', description: '사용자 식별 기본 정보', category: 'basic' },
     { key: 'email', label: '이메일', description: '연락 및 식별 정보', category: 'basic' },
     { key: 'phone', label: '연락처', description: '연락 정보', category: 'basic' },
@@ -42,11 +48,7 @@ export function ExportDataDropdown({
     { key: 'latest_order_date', label: '최근 주문일', description: '최근 활동성 지표', category: 'payment' },
     { key: 'active_courses_count', label: '수강 중인 강의 수', description: '현재 수강 강의 개수', category: 'learning' },
     { key: 'group_name', label: '그룹명', description: '기수, 기업 등 그룹 관리', category: 'group' },
-    { key: 'latest_admin_note', label: '최근 관리자 메모', description: 'VIP, 블랙리스트 등 특이사항', category: 'note' }
-  ];
-
-  // Tier2 필드들 (선택 옵션)
-  const tier2Fields: ExportField[] = [
+    { key: 'latest_admin_note', label: '최근 관리자 메모', description: 'VIP, 블랙리스트 등 특이사항', category: 'note' },
     { key: 'course_list', label: '수강 강의 목록', description: '전체 수강 강의 리스트', category: 'learning' },
     { key: 'enrollment_details', label: '수강 상세 정보', description: '시작일, 진도율, 완료일', category: 'learning' },
     { key: 'order_history', label: '주문 내역', description: '결제 관련 상세 내역', category: 'payment' },
@@ -68,8 +70,8 @@ export function ExportDataDropdown({
       });
     }
 
-    // Tier1 필드들을 기본 선택
-    setSelectedFields(tier1Fields.map(field => field.key));
+    // 기본 필드들을 자동 선택
+    setSelectedFields(defaultFields);
 
     // 외부 클릭 시 닫기
     const handleClickOutside = (event: MouseEvent) => {
@@ -92,23 +94,11 @@ export function ExportDataDropdown({
     }
   };
 
-  const handleSelectAllTier1 = (checked: boolean) => {
-    const tier1Keys = tier1Fields.map(field => field.key);
+  const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const newFields = [...new Set([...selectedFields, ...tier1Keys])];
-      setSelectedFields(newFields);
+      setSelectedFields(allFields.map(field => field.key));
     } else {
-      setSelectedFields(selectedFields.filter(key => !tier1Keys.includes(key)));
-    }
-  };
-
-  const handleSelectAllTier2 = (checked: boolean) => {
-    const tier2Keys = tier2Fields.map(field => field.key);
-    if (checked) {
-      const newFields = [...new Set([...selectedFields, ...tier2Keys])];
-      setSelectedFields(newFields);
-    } else {
-      setSelectedFields(selectedFields.filter(key => !tier2Keys.includes(key)));
+      setSelectedFields([]);
     }
   };
 
@@ -126,8 +116,7 @@ export function ExportDataDropdown({
     onClose();
   };
 
-  const tier1SelectedCount = tier1Fields.filter(field => selectedFields.includes(field.key)).length;
-  const tier2SelectedCount = tier2Fields.filter(field => selectedFields.includes(field.key)).length;
+  const allSelectedCount = allFields.filter(field => selectedFields.includes(field.key)).length;
 
   return (
     <div 
@@ -135,9 +124,9 @@ export function ExportDataDropdown({
       className="fixed z-50 bg-background border border-border rounded-lg shadow-lg"
       style={{ 
         top: position.top + 5, 
-        left: Math.max(10, position.left - 200),
-        width: '800px', // 가로로 넓게
-        maxHeight: '600px'
+        left: Math.max(10, position.left - 400),
+        width: '1200px', // 더 넓게
+        maxHeight: '500px'
       }}
     >
       <div className="p-6">
@@ -164,87 +153,47 @@ export function ExportDataDropdown({
           </Badge>
         </div>
 
-        <div className="space-y-6 max-h-96 overflow-y-auto">
-          {/* Tier 1: 필수 데이터 */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-bold">Tier 1</span>
-                  필수 데이터 (기본 선택)
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  사용자 식별 및 기본 비즈니스 지표
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {tier1SelectedCount}/{tier1Fields.length}개 선택
-                </span>
-                <Checkbox
-                  checked={tier1SelectedCount === tier1Fields.length}
-                  onCheckedChange={handleSelectAllTier1}
-                />
-                <span className="text-sm font-medium">전체 선택</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {tier1Fields.map((field) => (
-                <div key={field.key} className="flex items-start space-x-3 p-3 border border-border/50 rounded-md bg-primary/5">
-                  <Checkbox
-                    checked={selectedFields.includes(field.key)}
-                    onCheckedChange={(checked) => handleFieldToggle(field.key, checked as boolean)}
-                    className="mt-0.5"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm text-foreground">{field.label}</div>
-                    <div className="text-xs text-muted-foreground">{field.description}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* 전체 선택 헤더 */}
+        <div className="flex items-center justify-between mb-4 pb-3 border-b">
+          <div>
+            <h3 className="font-semibold text-foreground">내보낼 데이터 선택</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              필요한 데이터 필드를 선택하여 CSV로 내보내기
+            </p>
           </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {allSelectedCount}/{allFields.length}개 선택
+            </span>
+            <Checkbox
+              checked={allSelectedCount === allFields.length}
+              onCheckedChange={handleSelectAll}
+            />
+            <span className="text-sm font-medium">전체 선택</span>
+          </div>
+        </div>
 
-          {/* Tier 2: 운영/CS 데이터 */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <span className="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs font-bold">Tier 2</span>
-                  운영/CS 데이터 (선택 옵션)
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  문제 해결 및 상세 관리용 정보
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {tier2SelectedCount}/{tier2Fields.length}개 선택
-                </span>
+        {/* 데이터 필드 그리드 */}
+        <div className="max-h-80 overflow-y-auto">
+          <div className="grid grid-cols-4 gap-3">
+            {allFields.map((field) => (
+              <div key={field.key} className={`flex items-start space-x-3 p-3 border border-border/50 rounded-md transition-colors hover:bg-accent/50 ${defaultFields.includes(field.key) ? 'bg-primary/10 border-primary/30' : ''}`}>
                 <Checkbox
-                  checked={tier2SelectedCount === tier2Fields.length}
-                  onCheckedChange={handleSelectAllTier2}
+                  checked={selectedFields.includes(field.key)}
+                  onCheckedChange={(checked) => handleFieldToggle(field.key, checked as boolean)}
+                  className="mt-0.5 flex-shrink-0"
                 />
-                <span className="text-sm font-medium">전체 선택</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {tier2Fields.map((field) => (
-                <div key={field.key} className="flex items-start space-x-3 p-3 border border-border/50 rounded-md hover:bg-accent/50 transition-colors">
-                  <Checkbox
-                    checked={selectedFields.includes(field.key)}
-                    onCheckedChange={(checked) => handleFieldToggle(field.key, checked as boolean)}
-                    className="mt-0.5"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm text-foreground">{field.label}</div>
-                    <div className="text-xs text-muted-foreground">{field.description}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm text-foreground flex items-center gap-1">
+                    {field.label}
+                    {defaultFields.includes(field.key) && (
+                      <span className="text-xs bg-primary/20 text-primary px-1 rounded">기본</span>
+                    )}
                   </div>
+                  <div className="text-xs text-muted-foreground mt-1">{field.description}</div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
