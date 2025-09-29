@@ -51,6 +51,7 @@ interface UserListTableProps {
   onAddNote: (userId: string, userEmail: string) => void;
   onGroupAssign: (userIds: string[], triggerElement: HTMLElement) => void;
   onGroupCreate: (triggerElement: HTMLElement) => void;
+  onExportData: (userIds: string[], triggerElement: HTMLElement) => void;
   currentPage: number;
   pageSize: number;
   onPageChange: (page: number) => void;
@@ -82,6 +83,7 @@ export const UserListTable = ({
   onAddNote,
   onGroupAssign,
   onGroupCreate,
+  onExportData,
   currentPage,
   pageSize,
   onPageChange,
@@ -264,7 +266,9 @@ export const UserListTable = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onBulkAction('export', selectedUsers)}
+              onClick={(e) => {
+                onExportData(selectedUsers, e.currentTarget);
+              }}
               disabled={selectedUsers.length === 0}
               className="h-8"
             >

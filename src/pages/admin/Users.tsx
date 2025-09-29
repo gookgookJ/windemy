@@ -9,6 +9,7 @@ import { PointsDistributionModal } from '@/components/admin/PointsDistributionMo
 import { AdminNoteModal } from '@/components/admin/AdminNoteModal';
 import { GroupCreateDropdown } from '@/components/admin/GroupCreateDropdown';
 import { GroupAssignmentDropdown } from '@/components/admin/GroupAssignmentDropdown';
+import { ExportDataDropdown } from '@/components/admin/ExportDataDropdown';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -27,8 +28,10 @@ const AdminUsers = () => {
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
   const [showGroupAssignmentDropdown, setShowGroupAssignmentDropdown] = useState(false);
   const [showGroupCreateDropdown, setShowGroupCreateDropdown] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [groupAssignTriggerElement, setGroupAssignTriggerElement] = useState<HTMLElement | null>(null);
   const [groupCreateTriggerElement, setGroupCreateTriggerElement] = useState<HTMLElement | null>(null);
+  const [exportTriggerElement, setExportTriggerElement] = useState<HTMLElement | null>(null);
   
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -210,9 +213,6 @@ const AdminUsers = () => {
 
   const handleBulkAction = async (action: string, userIds: string[]) => {
     switch (action) {
-      case 'export':
-        exportToCSV(userIds);
-        break;
       case 'course_permission':
         setSelectedUserIds(userIds);
         setCoursePermissionModalOpen(true);
@@ -323,37 +323,102 @@ const AdminUsers = () => {
     setShowGroupCreateDropdown(true);
   };
 
-  const exportToCSV = (userIds: string[]) => {
-    const selectedUsers = users.filter(user => userIds.includes(user.id));
-    const csvContent = [
-      ['회원ID', '이름', '이메일', '연락처', '가입일', '최근접속일', '총결제금액', '상태', '마케팅수신'].join(','),
-      ...selectedUsers.map(user => [
-        user.memberId,
-        user.name,
-        user.email,
-        user.phone || '',
-        new Date(user.joinDate).toLocaleDateString(),
-        user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : '',
-        user.totalPayment,
-        user.status,
-        user.marketingEmail ? '동의' : '거부'
-      ].join(','))
-    ].join('\n');
+  const handleExportData = (userIds: string[], triggerElement: HTMLElement) => {
+    setSelectedUserIds(userIds);
+    setExportTriggerElement(triggerElement);
+    setShowExportDropdown(true);
+  };
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `users_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDataExport = async (selectedFields: string[], selectedUserIds: string[]) => {
+    try {
+      // 실제 데이터 추출 로직을 여기에 구현
+      const selectedUsers = users.filter(user => selectedUserIds.includes(user.id));
+      
+      // CSV 헤더 생성
+      const headers: string[] = [];
+      const fieldLabels: { [key: string]: string } = {
+        'full_name': '전체 이름',
+        'email': '이메일',
+        'phone': '연락처',
+        'role': '역할',
+        'created_at': '가입일',
+        'marketing_consent': '마케팅 수신동의',
+        'total_payment': '누적 결제 금액',
+        'latest_order_date': '최근 주문일',
+        'active_courses_count': '수강 중인 강의 수',
+        'group_name': '그룹명',
+        'latest_admin_note': '최근 관리자 메모'
+        // Tier2 필드들도 추가 가능
+      };
 
-    toast({
-      title: "내보내기 완료",
-      description: "회원 목록이 Excel 파일로 내보내졌습니다."
-    });
+      selectedFields.forEach(field => {
+        headers.push(fieldLabels[field] || field);
+      });
+
+      // CSV 데이터 생성
+      const csvData = selectedUsers.map(user => {
+        const row: string[] = [];
+        selectedFields.forEach(field => {
+          switch (field) {
+            case 'full_name':
+              row.push(user.name || '');
+              break;
+            case 'email':
+              row.push(user.email || '');
+              break;
+            case 'phone':
+              row.push(user.phone || '');
+              break;
+            case 'role':
+              row.push(user.role || '');
+              break;
+            case 'created_at':
+              row.push(new Date(user.joinDate).toLocaleDateString('ko-KR'));
+              break;
+            case 'marketing_consent':
+              row.push(user.marketingEmail ? '동의' : '거부');
+              break;
+            case 'total_payment':
+              row.push(user.totalPayment.toLocaleString('ko-KR'));
+              break;
+            case 'group_name':
+              row.push(user.group || '미분류');
+              break;
+            default:
+              row.push('구현 예정'); // Tier2 필드들은 추후 구현
+          }
+        });
+        return row;
+      });
+
+      // CSV 생성 및 다운로드
+      const csvContent = [
+        headers.join(','),
+        ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `user_data_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "데이터 내보내기 완료",
+        description: `${selectedUserIds.length}명의 데이터가 CSV 파일로 내보내졌습니다.`
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "내보내기 실패",
+        description: "데이터 내보내기 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -385,6 +450,7 @@ const AdminUsers = () => {
           onResetPassword={handleResetPassword}
           onGroupAssign={handleGroupAssign}
           onGroupCreate={handleGroupCreate}
+          onExportData={handleExportData}
           onAddNote={handleAddNote}
           currentPage={currentPage}
           pageSize={pageSize}
@@ -437,6 +503,16 @@ const AdminUsers = () => {
             fetchUsers();
           }}
           triggerElement={groupAssignTriggerElement}
+        />
+      )}
+
+      {/* 데이터 내보내기 드롭다운 */}
+      {showExportDropdown && (
+        <ExportDataDropdown
+          selectedUsers={selectedUserIds}
+          onClose={() => setShowExportDropdown(false)}
+          onExport={handleDataExport}
+          triggerElement={exportTriggerElement}
         />
       )}
 
