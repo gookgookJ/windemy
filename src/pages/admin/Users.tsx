@@ -228,7 +228,6 @@ const AdminUsers = () => {
     }
   };
 
-  
   const handleAddNote = (userId: string, userEmail: string) => {
     setSelectedUserId(userId);
     setSelectedUserEmail(userEmail);
