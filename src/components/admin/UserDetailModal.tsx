@@ -7,8 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
-import { Edit, Lock, MessageCircle, User, BookOpen, CreditCard, Activity, Plus, X, Copy, Phone, Mail, Calendar, MapPin, Clock, TrendingUp, AlertCircle, CheckCircle, MoreHorizontal, Search, Filter } from 'lucide-react';
+import { Edit, MessageCircle, User, BookOpen, CreditCard, Activity, Plus, Copy, Phone, Mail, Calendar, Clock, TrendingUp, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -58,9 +57,9 @@ const mockEnrollments = [
     courseName: '웹 개발 기초',
     status: '수강중',
     progress: 75,
-    enrolledDate: '2024-01-20T09:00:00Z', // 결제일(수강 시작일)
-    expiryDate: '2024-07-20T23:59:59Z', // 수강 만료일
-    orderId: 'ORDER002', // 주문 번호
+    enrolledDate: '2024-01-20T09:00:00Z',
+    expiryDate: '2024-07-20T23:59:59Z',
+    orderId: 'ORDER002',
     lastStudyDate: '2024-03-20T10:00:00Z',
     certificateIssued: false
   },
@@ -118,7 +117,6 @@ const mockActivityLogs = [
 export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps) => {
   const [newMemo, setNewMemo] = useState('');
   const [activeTab, setActiveTab] = useState('profile');
-  const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
 
   if (!userId) return null;
@@ -142,10 +140,6 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
     });
   };
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'yyyy-MM-dd HH:mm', { locale: ko });
-  };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ko-KR', {
       style: 'currency',
@@ -156,7 +150,7 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl h-[90vh] overflow-hidden flex flex-col bg-background">
-        {/* Simplified Header */}
+        {/* Simplified Header with all key info */}
         <DialogHeader className="border-b bg-muted/20 pb-6 pt-6 px-6 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-4">
@@ -199,7 +193,7 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                   </div>
                 </div>
 
-                {/* Essential Info */}
+                {/* Essential Info Grid */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -246,13 +240,13 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
           </div>
         </DialogHeader>
 
-        {/* Enhanced Content */}
+        {/* Content */}
         <div className="flex-1 overflow-hidden min-h-0 px-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
             <TabsList className="grid w-full grid-cols-4 mb-4 bg-muted/30 flex-shrink-0 h-12">
               <TabsTrigger value="profile" className="flex items-center gap-2 font-medium data-[state=active]:bg-background h-10">
                 <User className="h-4 w-4" />
-                회원 정보
+                관리자 메모
               </TabsTrigger>
               <TabsTrigger value="learning" className="flex items-center gap-2 font-medium data-[state=active]:bg-background h-10">
                 <BookOpen className="h-4 w-4" />
@@ -270,119 +264,9 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 overflow-y-auto pr-2 min-h-0 space-y-6">
+            <div className="flex-1 overflow-y-auto pr-2 min-h-0">
               <TabsContent value="profile" className="space-y-6 mt-0">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Essential Stats Only */}
-                  <Card className="lg:col-span-3">
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4" />
-                        핵심 현황
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="text-center p-4 bg-green-50 rounded-lg">
-                          <div className="text-2xl font-bold text-green-600">{mockEnrollments.filter(e => e.status === '완료').length}/{mockEnrollments.length}</div>
-                          <div className="text-sm text-green-700 mt-1">완료 강의</div>
-                        </div>
-                        <div className="text-center p-4 bg-blue-50 rounded-lg">
-                          <div className="text-2xl font-bold text-blue-600">{formatCurrency(mockUserDetail.totalPayment)}</div>
-                          <div className="text-sm text-blue-700 mt-1">총 결제액</div>
-                        </div>
-                        <div className="text-center p-4 bg-orange-50 rounded-lg">
-                          <div className="text-2xl font-bold text-orange-600">{Math.floor((new Date().getTime() - new Date(mockUserDetail.lastLogin).getTime()) / (1000 * 60 * 60 * 24))}일 전</div>
-                          <div className="text-sm text-orange-700 mt-1">최근 접속</div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* 기본 정보 */}
-                  <Card className="lg:col-span-2">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        기본 정보
-                      </CardTitle>
-                      <Button size="sm" variant="outline" onClick={() => setIsEditing(!isEditing)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        {isEditing ? '저장' : '편집'}
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4">
-                          <div className="grid grid-cols-3 gap-3 items-center">
-                            <span className="text-sm font-medium text-muted-foreground">이름</span>
-                            {isEditing ? (
-                              <Input className="col-span-2" defaultValue={mockUserDetail.name} />
-                            ) : (
-                              <span className="col-span-2 font-medium">{mockUserDetail.name}</span>
-                            )}
-                          </div>
-                          
-                          <div className="grid grid-cols-3 gap-3 items-center">
-                            <span className="text-sm font-medium text-muted-foreground">연락처</span>
-                            {isEditing ? (
-                              <Input className="col-span-2" defaultValue={mockUserDetail.phone} />
-                            ) : (
-                              <span className="col-span-2 font-medium">{mockUserDetail.phone}</span>
-                            )}
-                          </div>
-                          
-                          <div className="grid grid-cols-3 gap-3 items-center">
-                            <span className="text-sm font-medium text-muted-foreground">가입일</span>
-                            <span className="col-span-2 text-sm">{format(new Date(mockUserDetail.joinDate), 'yyyy-MM-dd', { locale: ko })}</span>
-                          </div>
-                          
-                          <div className="grid grid-cols-3 gap-3 items-center">
-                            <span className="text-sm font-medium text-muted-foreground">최근접속</span>
-                            <div className="col-span-2 flex items-center gap-2">
-                              <span className="text-sm">{format(new Date(mockUserDetail.lastLogin), 'MM-dd HH:mm', { locale: ko })}</span>
-                              <Badge variant="outline" className="text-xs font-mono">{mockUserDetail.lastLoginIp}</Badge>
-                            </div>
-                          </div>
-                        </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* 마케팅 & 권한 정보 */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        마케팅 & 권한 설정
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">이메일 수신</span>
-                          </div>
-                          <Badge variant={mockUserDetail.marketingEmail ? 'default' : 'secondary'} className="text-xs">
-                            {mockUserDetail.marketingEmail ? '동의' : '거부'}
-                          </Badge>
-                        </div>
-                        
-                        <div className="text-xs text-muted-foreground pl-3">
-                          마지막 변경: {formatDate(mockUserDetail.marketingEmailChangedAt)}
-                        </div>
-                        
-                        <div className="pt-2 border-t">
-                          <Button size="sm" variant="outline" className="w-full">
-                            <Lock className="h-4 w-4 mr-2" />
-                            권한 설정 변경
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* 관리자 메모 - 전체 너비 */}
+                {/* Only Admin Memos - Core functionality */}
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-base flex items-center gap-2">
@@ -414,7 +298,7 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                           <p className="text-sm mb-2 leading-relaxed">{memo.content}</p>
                           <div className="flex items-center justify-between text-xs text-muted-foreground">
                             <span className="font-medium">{memo.author}</span>
-                            <span>{formatDate(memo.createdAt)}</span>
+                            <span>{format(new Date(memo.createdAt), 'MM-dd HH:mm', { locale: ko })}</span>
                           </div>
                         </div>
                       ))}
@@ -423,206 +307,167 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                 </Card>
               </TabsContent>
 
-              <TabsContent value="learning" className="space-y-6 mt-0">
-                {/* 수강 통계 */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-900">{mockEnrollments.length}개</div>
-                        <div className="text-sm text-blue-700 mt-1">전체 수강</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-gradient-to-br from-green-50 to-green-100">
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-900">{mockEnrollments.filter(e => e.status === '완료').length}개</div>
-                        <div className="text-sm text-green-700 mt-1">완료</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-gradient-to-br from-orange-50 to-orange-100">
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-orange-900">{mockEnrollments.filter(e => e.status === '수강중').length}개</div>
-                        <div className="text-sm text-orange-700 mt-1">진행중</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-900">{mockEnrollments.reduce((sum, e) => sum + e.progress, 0) / mockEnrollments.length}%</div>
-                        <div className="text-sm text-purple-700 mt-1">평균 진도</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <BookOpen className="h-4 w-4" />
-                      수강 내역 관리
-                    </CardTitle>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        <Plus className="h-4 w-4 mr-2" />
-                        권한 부여
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Filter className="h-4 w-4 mr-2" />
-                        필터
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>강의명</TableHead>
-                          <TableHead>상태</TableHead>
-                          <TableHead>진도율</TableHead>
-                          <TableHead>최근학습</TableHead>
-                          <TableHead>인증서</TableHead>
-                          <TableHead className="text-right">관리</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {mockEnrollments.map((enrollment) => (
-                          <TableRow key={enrollment.id} className="hover:bg-muted/30">
-                            <TableCell className="font-medium">{enrollment.courseName}</TableCell>
-                            <TableCell>
-                              <Badge 
-                                variant={enrollment.status === '완료' ? 'default' : 'secondary'} 
-                                className="text-xs flex items-center gap-1 w-fit"
-                              >
-                                {enrollment.status === '완료' ? <CheckCircle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                                {enrollment.status}
+              <TabsContent value="learning" className="space-y-4 mt-0">
+                <div className="space-y-4">
+                  {mockEnrollments.map((enrollment) => (
+                    <Card key={enrollment.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+                          {/* Course Info */}
+                          <div className="lg:col-span-2 space-y-3">
+                            <div className="flex items-start justify-between">
+                              <h3 className="font-semibold text-lg">{enrollment.courseName}</h3>
+                              <Badge variant={enrollment.status === '완료' ? 'default' : 'secondary'}>
+                                {enrollment.status === '완료' ? '완료' : '수강중'}
                               </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Progress value={enrollment.progress} className="w-24 h-2" />
-                                <span className="text-sm font-medium min-w-[3rem]">{enrollment.progress}%</span>
+                            </div>
+                            
+                            {/* Key Information */}
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                  <Calendar className="h-4 w-4" />
+                                  <span>수강 시작</span>
+                                </div>
+                                <div className="font-medium">{format(new Date(enrollment.enrolledDate), 'yyyy-MM-dd', { locale: ko })}</div>
                               </div>
-                            </TableCell>
-                            <TableCell className="text-sm">{formatDate(enrollment.lastStudyDate)}</TableCell>
-                            <TableCell>
-                              {enrollment.certificateIssued ? (
-                                <Badge variant="outline" className="text-xs text-green-600">발급완료</Badge>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">미발급</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex gap-1 justify-end">
-                                <Button size="sm" variant="outline" className="h-8 px-3">
-                                  연장
-                                </Button>
-                                <Button size="sm" variant="ghost" className="h-8 px-3 text-destructive hover:text-destructive">
-                                  회수
+                              
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                  <Clock className="h-4 w-4" />
+                                  <span>만료일</span>
+                                </div>
+                                <div className={`font-medium ${new Date(enrollment.expiryDate) < new Date() ? 'text-red-600' : new Date(enrollment.expiryDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) ? 'text-orange-600' : 'text-green-600'}`}>
+                                  {format(new Date(enrollment.expiryDate), 'yyyy-MM-dd', { locale: ko })}
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                  <CreditCard className="h-4 w-4" />
+                                  <span>주문번호</span>
+                                </div>
+                                <Button 
+                                  variant="link" 
+                                  size="sm" 
+                                  className="h-auto p-0 font-mono text-xs text-blue-600 hover:text-blue-800"
+                                  onClick={() => {
+                                    setActiveTab('payment');
+                                  }}
+                                >
+                                  {enrollment.orderId}
                                 </Button>
                               </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="payment" className="space-y-6 mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-900">{mockUserDetail.totalOrders}건</div>
-                        <div className="text-sm text-blue-700 mt-1">총 주문</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-gradient-to-br from-green-50 to-green-100">
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-900">{formatCurrency(mockUserDetail.totalPayment)}</div>
-                        <div className="text-sm text-green-700 mt-1">총 결제금액</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-lg text-purple-900">{formatDate(mockUserDetail.lastOrderDate)}</div>
-                        <div className="text-sm text-purple-700 mt-1">최근 주문</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">주문 내역</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>주문일</TableHead>
-                          <TableHead>주문번호</TableHead>
-                          <TableHead>상품명</TableHead>
-                          <TableHead className="text-right">금액</TableHead>
-                          <TableHead>상태</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {mockOrders.map((order) => (
-                          <TableRow key={order.id} className="cursor-pointer hover:bg-muted/30">
-                            <TableCell className="text-sm">{formatDate(order.date)}</TableCell>
-                            <TableCell className="font-mono text-sm text-primary hover:underline">
-                              {order.id}
-                            </TableCell>
-                            <TableCell>{order.productName}</TableCell>
-                            <TableCell className="text-right font-medium">{formatCurrency(order.amount)}</TableCell>
-                            <TableCell>
-                              <Badge variant="default" className="text-xs">{order.status}</Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="activity" className="space-y-6 mt-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">최근 활동</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {mockActivityLogs.map((log) => (
-                        <div key={log.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30">
-                          <div className="flex-1">
-                            <div className="font-medium text-sm">{log.activity}</div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              IP: <span className="font-mono">{log.ip}</span>
+                              
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                  <BookOpen className="h-4 w-4" />
+                                  <span>최근 학습</span>
+                                </div>
+                                <div className="text-sm">{format(new Date(enrollment.lastStudyDate), 'MM-dd HH:mm', { locale: ko })}</div>
+                              </div>
+                            </div>
+                            
+                            {enrollment.certificateIssued && (
+                              <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+                                <CheckCircle className="h-4 w-4" />
+                                <span className="font-medium text-sm">수료증 발급완료</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Progress */}
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">진도율</span>
+                              <span className="text-lg font-bold text-primary">{enrollment.progress}%</span>
+                            </div>
+                            <Progress value={enrollment.progress} className="h-3" />
+                            
+                            <div className="text-xs text-center">
+                              <div className="font-semibold">12/16 강의 완료</div>
+                              <div className="text-muted-foreground">총 24시간</div>
                             </div>
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            {formatDate(log.timestamp)}
+                          
+                          {/* Action Buttons */}
+                          <div className="flex flex-col gap-2">
+                            <Button size="sm" variant="outline" className="w-full">
+                              상세 현황
+                            </Button>
+                            <Button size="sm" variant="outline" className="w-full">
+                              기간 연장
+                            </Button>
+                            {enrollment.certificateIssued && (
+                              <Button size="sm" variant="outline" className="w-full">
+                                수료증 재발급
+                              </Button>
+                            )}
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="payment" className="space-y-4 mt-0">
+                <div className="space-y-4">
+                  {mockOrders.map((order) => (
+                    <Card key={order.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center">
+                          <div className="space-y-1">
+                            <div className="font-mono text-sm text-muted-foreground">{order.id}</div>
+                            <div className="font-semibold">{order.productName}</div>
+                          </div>
+                          
+                          <div className="text-sm text-muted-foreground">
+                            {format(new Date(order.date), 'yyyy-MM-dd HH:mm', { locale: ko })}
+                          </div>
+                          
+                          <div className="text-right">
+                            <div className="font-bold text-lg">{formatCurrency(order.amount)}</div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <Badge variant="default" className="bg-green-50 text-green-700 border-green-200">
+                              {order.status}
+                            </Badge>
+                            <Button size="sm" variant="outline">
+                              상세보기
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="activity" className="space-y-4 mt-0">
+                <Card>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>시간</TableHead>
+                          <TableHead>활동</TableHead>
+                          <TableHead>IP 주소</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {mockActivityLogs.map((log) => (
+                          <TableRow key={log.id}>
+                            <TableCell className="text-sm">
+                              {format(new Date(log.timestamp), 'MM-dd HH:mm', { locale: ko })}
+                            </TableCell>
+                            <TableCell>{log.activity}</TableCell>
+                            <TableCell className="font-mono text-xs">{log.ip}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
               </TabsContent>
