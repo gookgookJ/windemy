@@ -206,26 +206,14 @@ export const GroupManagementModal = ({
             
             {isCreatingGroup && (
               <CardContent className="space-y-4 pt-0 border-t">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="groupName">그룹 이름 *</Label>
-                    <Input
-                      id="groupName"
-                      placeholder="예: VIP 고객"
-                      value={newGroupName}
-                      onChange={(e) => setNewGroupName(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="groupDescription">설명</Label>
-                    <Input
-                      id="groupDescription"
-                      placeholder="그룹 설명"
-                      value={newGroupDescription}
-                      onChange={(e) => setNewGroupDescription(e.target.value)}
-                    />
-                  </div>
+                <div className="space-y-3">
+                  <Label htmlFor="groupName">그룹 이름 *</Label>
+                  <Input
+                    id="groupName"
+                    placeholder="예: VIP 고객, 신규 회원"
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-2">

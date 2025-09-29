@@ -52,7 +52,7 @@ export const GroupCard = ({ group, selectedUsers, onAssign, onEdit, onDelete }: 
               onClick={() => onAssign(group.id, group.name)}
             >
               <UserPlus className="h-3 w-3 mr-1" />
-              할당
+              배정
             </Button>
           )}
           

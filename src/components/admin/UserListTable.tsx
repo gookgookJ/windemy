@@ -140,7 +140,7 @@ export const UserListTable = ({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="default" size="sm" className="h-9 font-medium">
-                    일괄 작업
+                    선택 작업
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
@@ -175,7 +175,7 @@ export const UserListTable = ({
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
-                <TableHead className="font-semibold text-muted-foreground">회원 정보</TableHead>
+                <TableHead className="font-semibold text-muted-foreground">그룹/회원 정보</TableHead>
                 <TableHead 
                   className="cursor-pointer font-semibold text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => handleSort('joinDate')}
@@ -198,8 +198,8 @@ export const UserListTable = ({
                   className="cursor-pointer text-right font-semibold text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => handleSort('totalPayment')}
                 >
-                  <div className="flex items-center justify-end gap-1">
-                    결제 금액
+                   <div className="flex items-center justify-end gap-1">
+                    누적 결제액
                     <ArrowUpDown className="h-3.5 w-3.5" />
                   </div>
                 </TableHead>
@@ -221,7 +221,11 @@ export const UserListTable = ({
                     className="cursor-pointer hover:bg-primary/5 p-4 rounded-md transition-colors"
                     onClick={() => onUserSelect(user.id)}
                   >
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="text-xs text-muted-foreground bg-blue-50 px-2 py-0.5 rounded-md">VIP 고객</span>
+                      </div>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-foreground text-sm">{user.name}</span>
                         <span className="text-xs font-mono text-muted-foreground bg-muted/70 px-2 py-0.5 rounded-md">

@@ -32,7 +32,7 @@ export const GroupQuickActions = ({
       <div className="flex items-center gap-3 mb-3">
         <UserPlus className="h-4 w-4 text-primary" />
         <Label className="font-medium text-primary">
-          선택한 {selectedUsers.length}명을 그룹에 할당
+          선택한 {selectedUsers.length}명을 그룹에 배정
         </Label>
       </div>
       
@@ -53,7 +53,7 @@ export const GroupQuickActions = ({
           </SelectContent>
         </Select>
         <Button onClick={onAssign} disabled={!selectedGroup}>
-          할당
+          배정
         </Button>
       </div>
     </div>

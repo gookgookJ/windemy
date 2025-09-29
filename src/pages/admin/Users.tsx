@@ -20,6 +20,7 @@ export const AdminUsers = () => {
     searchTerm: '',
     status: 'all',
     marketingEmail: 'all',
+    group: 'all',
   });
   const { toast } = useToast();
 
@@ -144,6 +145,7 @@ export const AdminUsers = () => {
       searchTerm: '',
       status: 'all',
       marketingEmail: 'all',
+      group: 'all',
     };
     setFilters(defaultFilters);
   };
@@ -165,6 +167,18 @@ export const AdminUsers = () => {
       case 'group_management':
         setSelectedUserIds(userIds);
         setGroupManagementModalOpen(true);
+        break;
+      case 'coupon_distribution':
+        toast({
+          title: "쿠폰 지급 준비 중",
+          description: "선택한 회원들에게 쿠폰을 지급하는 기능을 준비 중입니다."
+        });
+        break;
+      case 'points_distribution':
+        toast({
+          title: "적립금 지급 준비 중",
+          description: "선택한 회원들에게 적립금을 지급하는 기능을 준비 중입니다."
+        });
         break;
       default:
         toast({
@@ -246,6 +260,8 @@ export const AdminUsers = () => {
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onReset={handleResetFilters}
+          onCouponDistribution={() => handleBulkAction('coupon_distribution', selectedUserIds)}
+          onPointsDistribution={() => handleBulkAction('points_distribution', selectedUserIds)}
         />
 
         {/* 사용자 목록 테이블 */}
