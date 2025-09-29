@@ -104,7 +104,7 @@ const AdminUsers = () => {
       let query = supabase
         .from('profiles')
         .select('*')
-        .in('role', ['student', 'admin']); // 일반 회원과 관리자 조회
+        .in('role', ['student', 'instructor', 'admin']); // 모든 역할 조회
 
       // 검색어 필터
       if (filters.searchTerm) {
