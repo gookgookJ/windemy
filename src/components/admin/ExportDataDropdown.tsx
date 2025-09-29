@@ -124,9 +124,9 @@ export function ExportDataDropdown({
       className="fixed z-50 bg-background border border-border rounded-lg shadow-lg overflow-hidden"
       style={{ 
         top: position.top + 5, 
-        left: Math.max(10, position.left - 900), // 더 왼쪽으로 이동
-        width: '1400px',
-        maxHeight: '650px' // 높이 증가
+        left: Math.max(10, position.left - 650), 
+        width: '1000px',
+        maxHeight: '650px'
       }}
     >
       <div className="flex flex-col h-full">
@@ -175,7 +175,7 @@ export function ExportDataDropdown({
 
         {/* 데이터 필드 그리드 - 스크롤 가능 영역 */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          <div className="grid grid-cols-6 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {allFields.map((field) => (
               <div 
                 key={field.key} 
