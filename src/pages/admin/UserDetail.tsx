@@ -297,7 +297,37 @@ export const AdminUserDetail = () => {
         description: "메모를 삭제하는데 실패했습니다.",
         variant: "destructive",
       });
+  const handleDeleteComment = async (commentId: string, noteId: string) => {
+    try {
+      const { error } = await supabase
+        .from('admin_note_comments')
+        .delete()
+        .eq('id', commentId);
+
+      if (error) throw error;
+
+      // Update the note by removing the comment
+      setAdminNotes(prevNotes =>
+        prevNotes.map(note =>
+          note.id === noteId
+            ? { ...note, comments: note.comments?.filter(comment => comment.id !== commentId) || [] }
+            : note
+        )
+      );
+      
+      toast({
+        title: "댓글이 삭제되었습니다",
+        description: "관리자 메모 댓글이 성공적으로 삭제되었습니다.",
+      });
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      toast({
+        title: "댓글 삭제 실패",
+        description: "댓글을 삭제하는데 실패했습니다.",
+        variant: "destructive",
+      });
     }
+  };
   };
 
   const handleAddComment = async (noteId: string) => {
@@ -551,7 +581,7 @@ export const AdminUserDetail = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Textarea
-                    placeholder="CS 처리 내역이나 특이사항을 기록하세요... (Ctrl+Enter로 빠른 저장)"
+                    placeholder="관리자 메모를 입력하세요..."
                     value={newMemo}
                     onChange={(e) => setNewMemo(e.target.value)}
                     rows={3}
@@ -591,15 +621,24 @@ export const AdminUserDetail = () => {
                               </div>
                             </div>
                             
-                            {/* Comments */}
                             {memo.comments && memo.comments.length > 0 && (
                               <div className="mt-3 pl-4 border-l-2 border-primary/20 space-y-2">
                                 {memo.comments.map((comment) => (
                                   <div key={comment.id} className="bg-background/50 p-2 rounded text-xs">
                                     <p className="mb-1">{comment.comment_text}</p>
-                                    <div className="flex justify-between text-muted-foreground">
+                                    <div className="flex justify-between items-center text-muted-foreground">
                                       <span>{comment.created_by_profile?.full_name || '관리자'}</span>
-                                      <span>{format(new Date(comment.created_at), 'MM-dd HH:mm', { locale: ko })}</span>
+                                      <div className="flex items-center gap-2">
+                                        <span>{format(new Date(comment.created_at), 'MM-dd HH:mm', { locale: ko })}</span>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
+                                          onClick={() => handleDeleteComment(comment.id, memo.id)}
+                                        >
+                                          <Trash2 className="h-2 w-2" />
+                                        </Button>
+                                      </div>
                                     </div>
                                   </div>
                                 ))}
@@ -649,87 +688,91 @@ export const AdminUserDetail = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  enrollments.map((enrollment) => (
-                    <Card key={enrollment.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-                          {/* Course Info */}
-                          <div className="lg:col-span-2 space-y-3">
-                            <div className="flex items-start justify-between">
-                              <h3 className="font-semibold text-lg">{enrollment.course?.title || '강의명 없음'}</h3>
-                              <Badge variant={enrollment.completed_at ? 'default' : 'secondary'}>
-                                {enrollment.completed_at ? '완료' : '수강중'}
-                              </Badge>
-                            </div>
-                            
-                            {/* Key Information */}
-                            <div className="grid grid-cols-2 gap-3 text-sm">
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="space-y-4">
+                    {enrollments.map((enrollment) => (
+                      <Card key={enrollment.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-lg mb-2">
+                                {enrollment.course?.title || '강의명 없음'}
+                              </h3>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
                                   <Calendar className="h-4 w-4" />
-                                  <span>수강 시작</span>
+                                  <span>수강 시작: {enrollment.enrolled_at ? format(new Date(enrollment.enrolled_at), 'yyyy.MM.dd', { locale: ko }) : '-'}</span>
                                 </div>
-                                <div className="font-medium">
-                                  {enrollment.enrolled_at ? format(new Date(enrollment.enrolled_at), 'yyyy-MM-dd', { locale: ko }) : '-'}
-                                </div>
-                              </div>
-                              
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                  <Clock className="h-4 w-4" />
-                                  <span>완료일</span>
-                                </div>
-                                <div className={`font-medium ${enrollment.completed_at ? 'text-green-600' : 'text-muted-foreground'}`}>
-                                  {enrollment.completed_at ? format(new Date(enrollment.completed_at), 'yyyy-MM-dd', { locale: ko }) : '수강 중'}
-                                </div>
+                                {enrollment.completed_at && (
+                                  <div className="flex items-center gap-1 text-green-600">
+                                    <CheckCircle className="h-4 w-4" />
+                                    <span>완료: {format(new Date(enrollment.completed_at), 'yyyy.MM.dd', { locale: ko })}</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
-                            
-                            {enrollment.completed_at && (
-                              <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 rounded-lg">
-                                <CheckCircle className="h-4 w-4" />
-                                <span className="font-medium text-sm">수강 완료</span>
-                              </div>
-                            )}
+                            <Badge variant={enrollment.completed_at ? 'default' : 'secondary'} className={
+                              enrollment.completed_at 
+                                ? 'bg-green-100 text-green-800 border-green-200' 
+                                : enrollment.progress && enrollment.progress > 0 
+                                  ? 'bg-blue-100 text-blue-800 border-blue-200'
+                                  : 'bg-gray-100 text-gray-800 border-gray-200'
+                            }>
+                              {enrollment.completed_at ? '수강완료' : enrollment.progress && enrollment.progress > 0 ? '수강중' : '미시작'}
+                            </Badge>
                           </div>
                           
-                          {/* Progress */}
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium">진도율</span>
-                              <span className="text-lg font-bold text-primary">{enrollment.progress || 0}%</span>
+                          {/* Progress Section */}
+                          <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium text-gray-700">학습 진도</span>
+                              <span className="text-lg font-bold text-primary">{Math.round(enrollment.progress || 0)}%</span>
                             </div>
-                            <Progress value={enrollment.progress || 0} className="h-3" />
-                            
-                            <div className="text-xs text-center">
-                              <div className="font-semibold">진행률</div>
-                              <div className="text-muted-foreground">{enrollment.progress || 0}% 완료</div>
+                            <Progress 
+                              value={enrollment.progress || 0} 
+                              className="h-2 mb-2" 
+                            />
+                            <div className="text-xs text-gray-600 text-center">
+                              {enrollment.progress === 100 
+                                ? '🎉 축하합니다! 모든 학습을 완료했습니다.' 
+                                : enrollment.progress && enrollment.progress > 0
+                                  ? `${Math.round(enrollment.progress)}% 진행 중입니다. 화이팅!`
+                                  : '아직 학습을 시작하지 않았습니다.'}
                             </div>
                           </div>
-                          
+
                           {/* Action Buttons */}
-                          <div className="flex flex-col gap-2">
+                          <div className="flex gap-2">
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="w-full"
-                              onClick={() => window.open(`/admin/courses/${enrollment.course_id}`, '_blank')}
+                              className="flex-1"
+                              onClick={() => window.open(`/learn/${enrollment.course_id}`, '_blank')}
                             >
-                              강의 관리
+                              강의 바로가기
                             </Button>
-                            <Button size="sm" variant="outline" className="w-full">
-                              기간 연장
-                            </Button>
+                            {!enrollment.completed_at && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="flex-1"
+                              >
+                                학습 독려 메시지
+                              </Button>
+                            )}
                             {enrollment.completed_at && (
-                              <Button size="sm" variant="outline" className="w-full">
-                                수료증 발급
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="flex-1"
+                              >
+                                수료증 확인
                               </Button>
                             )}
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
@@ -744,45 +787,111 @@ export const AdminUserDetail = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  orders.map((order) => (
-                    <Card key={order.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center">
-                          <div className="space-y-1">
-                            <div className="font-mono text-sm text-muted-foreground">{order.id.slice(0, 8)}...</div>
-                            <div className="font-semibold">
-                              {order.order_items?.[0]?.course?.title || '강의명 없음'}
-                              {order.order_items && order.order_items.length > 1 && 
-                                ` 외 ${order.order_items.length - 1}개`
-                              }
-                            </div>
-                          </div>
-                          
-                          <div className="text-sm text-muted-foreground">
-                            {order.created_at ? format(new Date(order.created_at), 'yyyy-MM-dd HH:mm', { locale: ko }) : '-'}
-                          </div>
-                          
-                          <div className="text-right">
-                            <div className="font-bold text-lg">{formatCurrency(order.total_amount)}</div>
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <Badge 
-                              variant={order.status === 'completed' ? 'default' : 'secondary'}
-                              className={order.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : ''}
-                            >
-                              {order.status === 'completed' ? '결제완료' : 
-                               order.status === 'pending' ? '결제대기' : 
-                               order.status || '미확인'}
-                            </Badge>
-                            <Button size="sm" variant="outline">
-                              상세보기
-                            </Button>
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="font-semibold mb-2">결제 정보 요약</h3>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <div className="text-muted-foreground">총 주문 수</div>
+                          <div className="font-bold text-lg">{orders.length}건</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">총 결제 금액</div>
+                          <div className="font-bold text-lg text-green-600">{formatCurrency(totalPayment)}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">최근 결제일</div>
+                          <div className="font-bold text-lg">
+                            {orders[0]?.created_at ? format(new Date(orders[0].created_at), 'yyyy.MM.dd', { locale: ko }) : '-'}
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))
+                      </div>
+                    </div>
+
+                    {orders.map((order) => (
+                      <Card key={order.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-6">
+                          <div className="space-y-4">
+                            {/* Order Header */}
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <div className="text-sm text-muted-foreground mb-1">주문번호</div>
+                                <div className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{order.id}</div>
+                              </div>
+                              <Badge 
+                                variant={order.status === 'completed' ? 'default' : 'secondary'}
+                                className={order.status === 'completed' ? 'bg-green-100 text-green-800 border-green-200' : ''}
+                              >
+                                {order.status === 'completed' ? '결제완료' : 
+                                 order.status === 'pending' ? '결제대기' : 
+                                 order.status || '미확인'}
+                              </Badge>
+                            </div>
+
+                            {/* Order Details Grid */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg">
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">결제일시</div>
+                                <div className="font-medium text-sm">
+                                  {order.created_at ? format(new Date(order.created_at), 'yyyy.MM.dd HH:mm', { locale: ko }) : '-'}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">결제 금액</div>
+                                <div className="font-bold text-lg text-green-600">{formatCurrency(order.total_amount)}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">결제 방법</div>
+                                <div className="font-medium text-sm">
+                                  {order.payment_method === 'free' ? '무료' : 
+                                   order.payment_method === 'card' ? '카드' :
+                                   order.payment_method === 'bank_transfer' ? '계좌이체' :
+                                   order.payment_method || '미확인'}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">PG 거래번호</div>
+                                <div className="font-mono text-xs">
+                                  {order.stripe_payment_intent_id ? order.stripe_payment_intent_id.slice(0, 20) + '...' : '-'}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Course Items */}
+                            <div>
+                              <div className="text-sm font-medium mb-2">주문 강의</div>
+                              <div className="space-y-2">
+                                {order.order_items?.map((item, index) => (
+                                  <div key={index} className="flex items-center justify-between bg-white border rounded-lg p-3">
+                                    <div className="flex-1">
+                                      <div className="font-medium">{item.course?.title || '강의명 없음'}</div>
+                                      <div className="text-xs text-muted-foreground">강의 ID: {item.course_id}</div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="font-medium">{formatCurrency(item.price || 0)}</div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-2 pt-2 border-t">
+                              <Button size="sm" variant="outline" className="flex-1">
+                                영수증 다운로드
+                              </Button>
+                              <Button size="sm" variant="outline" className="flex-1">
+                                환불 처리
+                              </Button>
+                              <Button size="sm" variant="outline" className="flex-1">
+                                결제 상세보기
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
