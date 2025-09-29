@@ -81,25 +81,30 @@ export const UserSearchFilter = ({
             
             <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
               <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm" className="h-10 px-3">
+                <Button 
+                  variant={isExpanded ? "default" : "outline"} 
+                  size="sm" 
+                  className="h-10 px-4 bg-primary text-primary-foreground hover:bg-primary/90 border-primary"
+                >
                   <Filter className="h-4 w-4 mr-2" />
                   상세 필터
                   {getActiveFilterCount() > 0 && (
-                    <Badge variant="secondary" className="ml-2 text-xs">
+                    <Badge variant="secondary" className="ml-2 text-xs bg-background/20 text-primary-foreground">
                       {getActiveFilterCount()}
                     </Badge>
                   )}
-                  <ChevronDown className={`h-4 w-4 ml-2 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-4 w-4 ml-2 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                 </Button>
               </CollapsibleTrigger>
               
-              <CollapsibleContent className="mt-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg bg-muted/20">
+              <CollapsibleContent>
+                <div className="mt-4 p-4 border border-border/60 rounded-lg bg-card shadow-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* 회원 상태 */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">회원 상태</label>
+                    <label className="text-sm font-semibold text-foreground">회원 상태</label>
                     <Select value={filters.status} onValueChange={(value) => updateFilter('status', value)}>
-                      <SelectTrigger className="bg-background border-border/60 h-9">
+                      <SelectTrigger className="bg-background border-border/60 h-10 focus:border-primary focus:ring-1 focus:ring-primary/20">
                         <SelectValue placeholder="상태 선택" />
                       </SelectTrigger>
                       <SelectContent>
@@ -112,9 +117,9 @@ export const UserSearchFilter = ({
 
                   {/* 그룹 필터 */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">그룹</label>
+                    <label className="text-sm font-semibold text-foreground">그룹</label>
                     <Select value={filters.group || 'all'} onValueChange={(value) => updateFilter('group', value)}>
-                      <SelectTrigger className="bg-background border-border/60 h-9">
+                      <SelectTrigger className="bg-background border-border/60 h-10 focus:border-primary focus:ring-1 focus:ring-primary/20">
                         <SelectValue placeholder="그룹 선택" />
                       </SelectTrigger>
                       <SelectContent>
@@ -128,9 +133,9 @@ export const UserSearchFilter = ({
 
                   {/* 마케팅 수신 동의 */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">마케팅 수신동의</label>
+                    <label className="text-sm font-semibold text-foreground">마케팅 수신동의</label>
                     <Select value={filters.marketingEmail} onValueChange={(value) => updateFilter('marketingEmail', value)}>
-                      <SelectTrigger className="bg-background border-border/60 h-9">
+                      <SelectTrigger className="bg-background border-border/60 h-10 focus:border-primary focus:ring-1 focus:ring-primary/20">
                         <SelectValue placeholder="수신동의 선택" />
                       </SelectTrigger>
                       <SelectContent>
@@ -143,10 +148,10 @@ export const UserSearchFilter = ({
 
                   {/* 가입일 필터 */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">가입일 범위</label>
+                    <label className="text-sm font-semibold text-foreground">가입일 범위</label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start bg-background border-border/60 h-9 text-sm">
+                        <Button variant="outline" className="w-full justify-start bg-background border-border/60 h-10 text-sm focus:border-primary focus:ring-1 focus:ring-primary/20">
                           <Calendar className="mr-2 h-4 w-4" />
                           {filters.joinDateStart ? format(filters.joinDateStart, 'yyyy-MM-dd') : "시작일 선택"}
                         </Button>
@@ -161,6 +166,7 @@ export const UserSearchFilter = ({
                         />
                       </PopoverContent>
                     </Popover>
+                   </div>
                   </div>
                 </div>
               </CollapsibleContent>
