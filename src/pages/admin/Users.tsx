@@ -6,10 +6,12 @@ import { UserSearchFilter, type UserFilters } from '@/components/admin/UserSearc
 import { UserListTable, type UserData } from '@/components/admin/UserListTable';
 import { CoursePermissionModal } from '@/components/admin/CoursePermissionModal';
 import { GroupManagementModal } from '@/components/admin/GroupManagementModal';
-import { CouponDistributionModal } from '@/components/admin/CouponDistributionModal';
-import { PointsDistributionModal } from '@/components/admin/PointsDistributionModal';
+// import { CouponDistributionModal } from '@/components/admin/CouponDistributionModal';
+// import { PointsDistributionModal } from '@/components/admin/PointsDistributionModal';
 
-export const AdminUsers = () => {
+console.log('[AdminUsers] module loaded');
+
+const AdminUsers = () => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -354,6 +356,8 @@ export const AdminUsers = () => {
           }}
         />
 
+{/* CouponDistributionModal temporarily disabled for debugging */}
+{/*
         <CouponDistributionModal
           open={couponModalOpen}
           onClose={() => {
@@ -371,6 +375,7 @@ export const AdminUsers = () => {
           }}
           selectedUsers={selectedUserIds}
         />
+*/}
       </div>
     </AdminLayout>
   );
