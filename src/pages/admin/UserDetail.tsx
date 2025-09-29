@@ -297,6 +297,9 @@ export const AdminUserDetail = () => {
         description: "메모를 삭제하는데 실패했습니다.",
         variant: "destructive",
       });
+    }
+  };
+
   const handleDeleteComment = async (commentId: string, noteId: string) => {
     try {
       const { error } = await supabase
