@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Search, Filter, RotateCcw, Calendar } from 'lucide-react';
+import { Search, RotateCcw, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,7 +29,6 @@ export const UserSearchFilter = ({
   onFiltersChange,
   onReset
 }: UserSearchFilterProps) => {
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const updateFilter = (key: keyof UserFilters, value: any) => {
     onFiltersChange({
@@ -66,21 +64,6 @@ export const UserSearchFilter = ({
           </div>
           
           <div className="flex gap-2">
-            <Button
-              variant={showAdvancedFilters ? "default" : "outline"}
-              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className="h-11 px-4 font-medium"
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              고급 필터
-              {getActiveFilterCount() > 0 && (
-                <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary border-primary/20">
-                  {getActiveFilterCount()}
-                </Badge>
-              )}
-            </Button>
-            
-            
             {getActiveFilterCount() > 0 && (
               <Button
                 variant="ghost"
@@ -94,9 +77,8 @@ export const UserSearchFilter = ({
           </div>
         </div>
 
-        {/* 고급 필터 영역 */}
-        {showAdvancedFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-6 border-t bg-muted/20 -mx-6 px-6 pb-6 rounded-b-lg">
+        {/* 필터 영역 */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-6 border-t bg-muted/20 -mx-6 px-6 pb-6 rounded-b-lg">
             {/* 회원 상태 */}
             <div className="space-y-3">
               <label className="text-sm font-semibold text-foreground">회원 상태</label>
@@ -166,7 +148,6 @@ export const UserSearchFilter = ({
               </Popover>
             </div>
           </div>
-        )}
       </CardContent>
     </Card>
   );
