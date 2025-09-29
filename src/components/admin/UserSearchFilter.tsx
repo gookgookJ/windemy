@@ -150,7 +150,6 @@ export const UserSearchFilter = ({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">전체 그룹</SelectItem>
-                      <SelectItem value="admin">관리자</SelectItem>
                       <SelectItem value="미분류">미분류</SelectItem>
                       {availableGroups.map((group) => (
                         <SelectItem key={group.id} value={group.name}>

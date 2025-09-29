@@ -197,17 +197,8 @@ const AdminUsers = () => {
       }
 
       const usersWithGroup = baseUsers.map(u => {
-        // 실제 그룹 배정이 있으면 그것을 사용, 없으면 역할별 기본 그룹명 사용
         const actualGroup = groupNameByUserId[u.id];
-        let finalGroup = '';
-        
-        if (actualGroup) {
-          finalGroup = actualGroup;
-        } else {
-          // 그룹 배정이 없는 경우 역할별 기본값
-          finalGroup = u.role === 'admin' ? '관리자' : '미분류';
-        }
-        
+        const finalGroup = actualGroup && actualGroup.length > 0 ? actualGroup : '미분류';
         return {
           ...u,
           group: finalGroup
@@ -219,9 +210,9 @@ const AdminUsers = () => {
       if (filters.group && filters.group !== 'all' && filters.group !== 'admin') {
         filteredUsers = usersWithGroup.filter(user => {
           if (filters.group === '미분류') {
-            return user.group === '미분류';
+            return (user.group || '') === '미분류';
           }
-          return user.group.includes(filters.group!);
+          return (user.group || '').includes(filters.group!);
         });
       }
 
