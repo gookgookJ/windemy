@@ -168,7 +168,8 @@ export const UserListTable = ({
         
         {/* 일괄 작업 툴바 - 항상 표시 */}
         <div className="flex items-center justify-between bg-background/50 border border-border/50 rounded-lg px-4 py-3">
-          <div className="flex items-center gap-3">
+          {/* 선택 상태 영역 */}
+          <div className="flex items-center gap-2">
             <span className={`text-sm font-medium px-3 py-1.5 rounded-md transition-colors ${
               selectedUsers.length > 0 
                 ? 'bg-primary/10 text-primary' 
@@ -176,8 +177,18 @@ export const UserListTable = ({
             }`}>
               {selectedUsers.length > 0 ? `${selectedUsers.length}명 선택됨` : '선택된 회원 없음'}
             </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onSelectedUsersChange([])}
+              disabled={selectedUsers.length === 0}
+              className="h-8 text-muted-foreground hover:text-foreground"
+            >
+              선택 해제
+            </Button>
           </div>
           
+          {/* 작업 툴바 */}
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -228,18 +239,6 @@ export const UserListTable = ({
             >
               <Download className="h-4 w-4 mr-1.5" />
               내보내기
-            </Button>
-          </div>
-          
-          <div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onSelectedUsersChange([])}
-              disabled={selectedUsers.length === 0}
-              className="h-8 text-muted-foreground hover:text-foreground"
-            >
-              선택 해제
             </Button>
           </div>
         </div>
@@ -371,12 +370,6 @@ export const UserListTable = ({
                         <DropdownMenuItem onClick={() => onUserSelect(user.id)}>
                           <Eye className="mr-2 h-4 w-4" />
                           회원 상세정보
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => onStatusChange(user.id, user.status === 'active' ? 'dormant' : 'active')}
-                        >
-                          <UserCog className="mr-2 h-4 w-4" />
-                          상태변경 ({user.status === 'active' ? '휴면' : '정상'}으로)
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onResetPassword(user.id)}>
                           <Settings className="mr-2 h-4 w-4" />
