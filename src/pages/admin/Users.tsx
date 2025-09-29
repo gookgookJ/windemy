@@ -656,6 +656,7 @@ const AdminUsers = () => {
           onExportData={handleExportData}
           onAddNote={handleAddNote}
           onRoleChange={handleRoleChange}
+          onRefresh={fetchUsers}
           currentPage={currentPage}
           pageSize={pageSize}
           onPageChange={setCurrentPage}

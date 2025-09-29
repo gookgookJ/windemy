@@ -11,7 +11,9 @@ import {
   FileText, 
   UserCog, 
   Plus,
-  Shield
+  Shield,
+  User,
+  GraduationCap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -21,6 +23,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -54,6 +58,7 @@ interface UserListTableProps {
   onGroupCreate: (triggerElement: HTMLElement) => void;
   onExportData: (userIds: string[], triggerElement: HTMLElement) => void;
   onRoleChange: (userId: string, userName: string, userEmail: string, currentRole: string) => void;
+  onRefresh: () => void;
   currentPage: number;
   pageSize: number;
   onPageChange: (page: number) => void;
@@ -72,6 +77,12 @@ const statusColors = {
   dormant: 'secondary'
 } as const;
 
+const roles = [
+  { value: 'student', label: '학생', icon: User, color: 'bg-blue-100 text-blue-800' },
+  { value: 'instructor', label: '강사', icon: GraduationCap, color: 'bg-green-100 text-green-800' },
+  { value: 'admin', label: '관리자', icon: Shield, color: 'bg-red-100 text-red-800' },
+];
+
 export const UserListTable = ({ 
   users = [], 
   loading, 
@@ -87,6 +98,7 @@ export const UserListTable = ({
   onGroupCreate,
   onExportData,
   onRoleChange,
+  onRefresh,
   currentPage,
   pageSize,
   onPageChange,
@@ -94,6 +106,7 @@ export const UserListTable = ({
   selectedUsers = [],
   onSelectedUsersChange
 }: UserListTableProps) => {
+  const { toast } = useToast();
   const [sortConfig, setSortConfig] = useState<{
     key: keyof UserData;
     direction: 'asc' | 'desc';
@@ -160,6 +173,33 @@ export const UserListTable = ({
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
     return format(new Date(dateString), 'yyyy-MM-dd', { locale: ko });
+  };
+
+  const handleRoleChangeInline = async (userId: string, newRole: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', userId);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "권한 변경 완료",
+        description: `사용자 권한이 ${roles.find(r => r.value === newRole)?.label}로 변경되었습니다.`,
+      });
+
+      onRefresh();
+    } catch (error: any) {
+      console.error('권한 변경 오류:', error);
+      toast({
+        title: "권한 변경 실패",
+        description: error.message || "권한 변경 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -324,6 +364,7 @@ export const UserListTable = ({
                   </div>
                 </TableHead>
                 <TableHead className="font-semibold text-muted-foreground min-w-[80px] text-center">그룹</TableHead>
+                <TableHead className="font-semibold text-muted-foreground min-w-[100px] text-center">권한</TableHead>
                 <TableHead className="font-semibold text-muted-foreground min-w-[80px] text-center">마케팅 수신</TableHead>
                 <TableHead 
                   className="cursor-pointer text-right font-semibold text-muted-foreground hover:text-foreground transition-colors min-w-[120px]"
@@ -379,6 +420,26 @@ export const UserListTable = ({
                     <Badge variant="outline" className="text-xs text-muted-foreground">
                       {user.group || '미분류'}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Select
+                      value={user.role || 'student'}
+                      onValueChange={(newRole) => handleRoleChangeInline(user.id, newRole)}
+                    >
+                      <SelectTrigger className="w-[100px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {roles.map((role) => (
+                          <SelectItem key={role.value} value={role.value} className="text-xs">
+                            <div className="flex items-center gap-2">
+                              <role.icon className="h-3 w-3" />
+                              <span>{role.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge 
