@@ -59,8 +59,11 @@ interface Order {
   created_at: string | null;
   total_amount: number;
   status: string | null;
+  payment_method?: string | null;
+  stripe_payment_intent_id?: string | null;
   order_items: Array<{
     course_id: string;
+    price?: number | null;
     course: {
       title: string;
     };
@@ -330,7 +333,6 @@ export const AdminUserDetail = () => {
         variant: "destructive",
       });
     }
-  };
   };
 
   const handleAddComment = async (noteId: string) => {
