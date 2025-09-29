@@ -39,7 +39,8 @@ export const AdminUsers = () => {
       lastLogin: '2024-03-20T14:22:00Z',
       totalPayment: 340000,
       status: 'active',
-      marketingEmail: true
+      marketingEmail: true,
+      group: 'VIP 고객'
     },
     {
       id: '2',
@@ -51,7 +52,8 @@ export const AdminUsers = () => {
       lastLogin: '2024-03-19T16:45:00Z',
       totalPayment: 180000,
       status: 'active',
-      marketingEmail: true
+      marketingEmail: true,
+      group: '신규 회원'
     },
     {
       id: '3',
@@ -63,7 +65,8 @@ export const AdminUsers = () => {
       lastLogin: '2024-03-18T09:30:00Z',
       totalPayment: 89000,
       status: 'active',
-      marketingEmail: false
+      marketingEmail: false,
+      group: '신규 회원'
     },
     {
       id: '4',
@@ -75,7 +78,8 @@ export const AdminUsers = () => {
       lastLogin: '2024-02-15T14:20:00Z',
       totalPayment: 520000,
       status: 'dormant',
-      marketingEmail: true
+      marketingEmail: true,
+      group: '장기 미접속'
     },
     {
       id: '5',
@@ -87,7 +91,8 @@ export const AdminUsers = () => {
       lastLogin: '2024-03-05T15:10:00Z',
       totalPayment: 65000,
       status: 'active',
-      marketingEmail: false
+      marketingEmail: false,
+      group: '신규 회원'
     }
   ];
 
@@ -121,6 +126,17 @@ export const AdminUsers = () => {
     if (filters.marketingEmail !== 'all') {
       const emailConsent = filters.marketingEmail === 'true';
       filteredUsers = filteredUsers.filter(user => user.marketingEmail === emailConsent);
+    }
+
+    if (filters.group && filters.group !== 'all') {
+      const groupMap: Record<string, string> = {
+        'vip': 'VIP 고객',
+        'new': '신규 회원',
+        'inactive': '장기 미접속',
+        'completed': '수강 완료자'
+      };
+      const groupName = groupMap[filters.group] || filters.group;
+      filteredUsers = filteredUsers.filter(user => user.group === groupName);
     }
 
     if (filters.joinDateStart) {
@@ -211,6 +227,42 @@ export const AdminUsers = () => {
     }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setUsers(users.filter(user => user.id !== userId));
+
+      toast({
+        title: "계정 삭제 완료",
+        description: "사용자 계정이 성공적으로 삭제되었습니다."
+      });
+    } catch (error) {
+      toast({
+        title: "계정 삭제 실패",
+        description: "계정 삭제에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleResetPassword = async (userId: string) => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      toast({
+        title: "비밀번호 초기화 완료",
+        description: "임시 비밀번호가 이메일로 발송되었습니다."
+      });
+    } catch (error) {
+      toast({
+        title: "비밀번호 초기화 실패",
+        description: "비밀번호 초기화에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const exportToCSV = (userIds: string[]) => {
     const selectedUsers = users.filter(user => userIds.includes(user.id));
     const csvContent = [
@@ -272,6 +324,8 @@ export const AdminUsers = () => {
           onStatusChange={handleStatusChange}
           onCouponDistribute={handleCouponDistribute}
           onPointsDistribute={handlePointsDistribute}
+          onDeleteUser={handleDeleteUser}
+          onResetPassword={handleResetPassword}
         />
 
         {/* Remove UserDetailModal since we're using a separate page now */}

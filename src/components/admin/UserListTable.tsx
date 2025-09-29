@@ -20,6 +20,7 @@ export interface UserData {
   totalPayment: number;
   status: 'active' | 'dormant';
   marketingEmail: boolean;
+  group: string;
 }
 
 interface UserListTableProps {
@@ -30,6 +31,8 @@ interface UserListTableProps {
   onStatusChange: (userId: string, newStatus: string) => void;
   onCouponDistribute: (userIds: string[]) => void;
   onPointsDistribute: (userIds: string[]) => void;
+  onDeleteUser: (userId: string) => void;
+  onResetPassword: (userId: string) => void;
 }
 
 const statusLabels = {
@@ -49,7 +52,9 @@ export const UserListTable = ({
   onBulkAction, 
   onStatusChange,
   onCouponDistribute,
-  onPointsDistribute
+  onPointsDistribute,
+  onDeleteUser,
+  onResetPassword
 }: UserListTableProps) => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<{
@@ -63,6 +68,10 @@ export const UserListTable = ({
     } else {
       setSelectedUsers([]);
     }
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedUsers([]);
   };
 
   const handleSelectUser = (userId: string, checked: boolean) => {
@@ -141,6 +150,14 @@ export const UserListTable = ({
               <span className="text-sm font-medium text-primary bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20">
                 {selectedUsers.length}명 선택됨
               </span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleDeselectAll}
+                className="h-9 text-muted-foreground hover:text-foreground"
+              >
+                선택 해제
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="default" size="sm" className="h-9 font-medium">
@@ -202,7 +219,8 @@ export const UserListTable = ({
                     <ArrowUpDown className="h-3.5 w-3.5" />
                   </div>
                 </TableHead>
-                <TableHead>그룹</TableHead>
+                <TableHead className="font-semibold text-muted-foreground">그룹</TableHead>
+                <TableHead className="font-semibold text-muted-foreground">마케팅 수신</TableHead>
                 <TableHead 
                   className="cursor-pointer text-right font-semibold text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => handleSort('totalPayment')}
@@ -255,7 +273,19 @@ export const UserListTable = ({
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="text-xs">
-                      VIP 고객
+                      {user.group}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant={user.marketingEmail ? "default" : "secondary"} 
+                      className={`text-xs font-medium ${
+                        user.marketingEmail 
+                          ? 'bg-success/10 text-success border-success/20' 
+                          : 'bg-muted text-muted-foreground border-border'
+                      }`}
+                    >
+                      {user.marketingEmail ? '수신동의' : '수신거부'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -280,16 +310,24 @@ export const UserListTable = ({
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44">
-                        <DropdownMenuItem onClick={() => onUserSelect(user.id)}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          상세보기
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
+                        <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuItem 
                           onClick={() => onStatusChange(user.id, user.status === 'active' ? 'dormant' : 'active')}
                         >
+                          <Settings className="mr-2 h-4 w-4" />
                           상태: {user.status === 'active' ? '휴면' : '정상'}으로 변경
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onResetPassword(user.id)}>
+                          <Settings className="mr-2 h-4 w-4" />
+                          비밀번호 초기화
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={() => onDeleteUser(user.id)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Settings className="mr-2 h-4 w-4" />
+                          계정 삭제
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
