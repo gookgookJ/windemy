@@ -72,6 +72,41 @@ export type Database = {
           },
         ]
       }
+      admin_note_comments: {
+        Row: {
+          comment_text: string
+          created_at: string
+          created_by: string
+          id: string
+          note_id: string
+          updated_at: string
+        }
+        Insert: {
+          comment_text: string
+          created_at?: string
+          created_by: string
+          id?: string
+          note_id: string
+          updated_at?: string
+        }
+        Update: {
+          comment_text?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          note_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_note_comments_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "admin_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_notes: {
         Row: {
           created_at: string

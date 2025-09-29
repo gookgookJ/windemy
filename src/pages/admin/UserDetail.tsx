@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, MessageCircle, User, BookOpen, CreditCard, Activity, Plus, Copy, Phone, Mail, Calendar, Clock, TrendingUp, CheckCircle, Edit } from 'lucide-react';
+import { ArrowLeft, MessageCircle, User, BookOpen, CreditCard, Activity, Plus, Copy, Phone, Mail, Calendar, Clock, TrendingUp, CheckCircle, Edit, Trash2, Reply } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -31,6 +31,15 @@ interface AdminNote {
   created_by_profile?: {
     full_name: string | null;
   } | null;
+  comments?: Array<{
+    id: string;
+    comment_text: string;
+    created_by: string;
+    created_at: string;
+    created_by_profile?: {
+      full_name: string | null;
+    } | null;
+  }>;
 }
 
 interface Enrollment {
@@ -78,6 +87,8 @@ export const AdminUserDetail = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [totalPayment, setTotalPayment] = useState(0);
+  const [newComment, setNewComment] = useState<{[key: string]: string}>({});
+  const [userNumber, setUserNumber] = useState<string>('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -100,17 +111,30 @@ export const AdminUserDetail = () => {
 
       if (profile) {
         setUserData(profile);
+        // Generate user number from created_at and id
+        const userDate = profile.created_at ? new Date(profile.created_at) : new Date();
+        const yearMonth = userDate.getFullYear().toString() + (userDate.getMonth() + 1).toString().padStart(2, '0');
+        const shortId = profile.id.replace(/-/g, '').slice(0, 6);
+        setUserNumber(`USR${yearMonth}${shortId}`);
       }
 
-      // Fetch admin notes
+      // Fetch admin notes with comments
       const { data: notes } = await supabase
         .from('admin_notes')
-        .select('*')
+        .select(`
+          *,
+          admin_note_comments (
+            id,
+            comment_text,
+            created_by,
+            created_at
+          )
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (notes) {
-        // Fetch creator names separately
+        // Fetch creator names for notes and comments
         const notesWithProfiles = await Promise.all(
           notes.map(async (note) => {
             const { data: profile } = await supabase
@@ -119,9 +143,26 @@ export const AdminUserDetail = () => {
               .eq('id', note.created_by)
               .single();
             
+            // Fetch comment creators
+            const commentsWithProfiles = await Promise.all(
+              (note.admin_note_comments || []).map(async (comment: any) => {
+                const { data: commentProfile } = await supabase
+                  .from('profiles')
+                  .select('full_name')
+                  .eq('id', comment.created_by)
+                  .single();
+                
+                return {
+                  ...comment,
+                  created_by_profile: commentProfile
+                };
+              })
+            );
+            
             return {
               ...note,
-              created_by_profile: profile
+              created_by_profile: profile,
+              comments: commentsWithProfiles
             };
           })
         );
@@ -235,6 +276,88 @@ export const AdminUserDetail = () => {
     }
   };
 
+  const handleDeleteMemo = async (memoId: string) => {
+    try {
+      const { error } = await supabase
+        .from('admin_notes')
+        .delete()
+        .eq('id', memoId);
+
+      if (error) throw error;
+
+      setAdminNotes(adminNotes.filter(note => note.id !== memoId));
+      toast({
+        title: "메모가 삭제되었습니다",
+        description: "관리자 메모가 성공적으로 삭제되었습니다.",
+      });
+    } catch (error) {
+      console.error('Error deleting memo:', error);
+      toast({
+        title: "메모 삭제 실패",
+        description: "메모를 삭제하는데 실패했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddComment = async (noteId: string) => {
+    const commentText = newComment[noteId]?.trim();
+    if (!commentText) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('admin_note_comments')
+        .insert({
+          note_id: noteId,
+          comment_text: commentText,
+          created_by: user.id
+        })
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        // Fetch creator profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+        
+        const commentWithProfile = {
+          ...data,
+          created_by_profile: profile
+        };
+        
+        // Update the note with the new comment
+        setAdminNotes(prevNotes =>
+          prevNotes.map(note =>
+            note.id === noteId
+              ? { ...note, comments: [...(note.comments || []), commentWithProfile] }
+              : note
+          )
+        );
+        
+        setNewComment(prev => ({ ...prev, [noteId]: '' }));
+        toast({
+          title: "댓글이 추가되었습니다",
+          description: "관리자 메모에 댓글이 성공적으로 추가되었습니다.",
+        });
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast({
+        title: "댓글 추가 실패",
+        description: "댓글을 추가하는데 실패했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCopyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast({
@@ -293,7 +416,7 @@ export const AdminUserDetail = () => {
                       <div className="flex items-center gap-3">
                         <h2 className="text-2xl font-bold">{userData?.full_name || userData?.email || '사용자'}</h2>
                         <Badge variant="outline" className="text-xs font-mono bg-primary/10 text-primary">
-                          {userId.slice(0, 8)}...
+                          {userNumber}
                         </Badge>
                       </div>
                       
@@ -327,42 +450,42 @@ export const AdminUserDetail = () => {
                       </div>
 
                       {/* Essential Info Grid */}
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <span className="text-muted-foreground">가입일</span>
-                            <div className="font-medium">
-                              {userData?.created_at ? format(new Date(userData.created_at), 'yyyy-MM-dd', { locale: ko }) : '-'}
-                            </div>
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 p-4 bg-background/50 rounded-lg border">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            <span className="text-sm">가입일</span>
+                          </div>
+                          <div className="font-medium">
+                            {userData?.created_at ? format(new Date(userData.created_at), 'yyyy-MM-dd', { locale: ko }) : '-'}
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <span className="text-muted-foreground">정보 수정</span>
-                            <div className="font-medium">
-                              {userData?.updated_at ? format(new Date(userData.updated_at), 'MM-dd HH:mm', { locale: ko }) : '-'}
-                            </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            <span className="text-sm">정보 수정</span>
+                          </div>
+                          <div className="font-medium">
+                            {userData?.updated_at ? format(new Date(userData.updated_at), 'MM-dd HH:mm', { locale: ko }) : '-'}
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="h-4 w-4 text-green-600" />
-                          <div>
-                            <span className="text-muted-foreground">총 결제</span>
-                            <div className="font-bold text-green-600">{formatCurrency(totalPayment)}</div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-green-600">
+                            <TrendingUp className="h-4 w-4" />
+                            <span className="text-sm text-muted-foreground">총 결제</span>
                           </div>
+                          <div className="font-bold text-green-600 text-lg">{formatCurrency(totalPayment)}</div>
                         </div>
                         
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <span className="text-muted-foreground">마케팅 수신</span>
-                            <div className={`font-medium ${userData?.marketing_consent ? 'text-green-600' : 'text-red-600'}`}>
-                              {userData?.marketing_consent ? '동의' : '거부'}
-                            </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Mail className="h-4 w-4" />
+                            <span className="text-sm">마케팅 수신</span>
+                          </div>
+                          <div className={`font-medium ${userData?.marketing_consent ? 'text-green-600' : 'text-red-600'}`}>
+                            {userData?.marketing_consent ? '동의' : '거부'}
                           </div>
                         </div>
                       </div>
@@ -385,7 +508,7 @@ export const AdminUserDetail = () => {
                 className="gap-2"
               >
                 <MessageCircle className="h-4 w-4" />
-                관리자 메모 ({adminNotes.length})
+                관리자 메모
               </Button>
               <Button 
                 variant={activeSection === 'learning' ? 'default' : 'ghost'} 
@@ -393,7 +516,7 @@ export const AdminUserDetail = () => {
                 className="gap-2"
               >
                 <BookOpen className="h-4 w-4" />
-                수강 내역 ({enrollments.length})
+                수강 내역
               </Button>
               <Button 
                 variant={activeSection === 'payment' ? 'default' : 'ghost'} 
@@ -401,7 +524,7 @@ export const AdminUserDetail = () => {
                 className="gap-2"
               >
                 <CreditCard className="h-4 w-4" />
-                결제 정보 ({orders.length})
+                결제 정보
               </Button>
               <Button 
                 variant={activeSection === 'activity' ? 'default' : 'ghost'} 
@@ -419,7 +542,7 @@ export const AdminUserDetail = () => {
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-base flex items-center gap-2">
                     <MessageCircle className="h-4 w-4" />
-                    관리자 메모 <Badge variant="secondary" className="text-xs">{adminNotes.length}</Badge>
+                    관리자 메모
                   </CardTitle>
                   <Button size="sm" onClick={handleAddMemo} disabled={!newMemo.trim()}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -448,13 +571,65 @@ export const AdminUserDetail = () => {
                       </div>
                     ) : (
                       adminNotes.map((memo) => (
-                        <div key={memo.id} className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition-colors">
-                          <p className="text-sm mb-2 leading-relaxed">{memo.note}</p>
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span className="font-medium">
-                              {memo.created_by_profile?.full_name || '관리자'}
-                            </span>
-                            <span>{format(new Date(memo.created_at), 'MM-dd HH:mm', { locale: ko })}</span>
+                        <div key={memo.id} className="border rounded-lg bg-muted/10 hover:bg-muted/20 transition-colors">
+                          <div className="p-4">
+                            <p className="text-sm mb-2 leading-relaxed">{memo.note}</p>
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span className="font-medium">
+                                {memo.created_by_profile?.full_name || '관리자'}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <span>{format(new Date(memo.created_at), 'MM-dd HH:mm', { locale: ko })}</span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                                  onClick={() => handleDeleteMemo(memo.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            {/* Comments */}
+                            {memo.comments && memo.comments.length > 0 && (
+                              <div className="mt-3 pl-4 border-l-2 border-primary/20 space-y-2">
+                                {memo.comments.map((comment) => (
+                                  <div key={comment.id} className="bg-background/50 p-2 rounded text-xs">
+                                    <p className="mb-1">{comment.comment_text}</p>
+                                    <div className="flex justify-between text-muted-foreground">
+                                      <span>{comment.created_by_profile?.full_name || '관리자'}</span>
+                                      <span>{format(new Date(comment.created_at), 'MM-dd HH:mm', { locale: ko })}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {/* Add Comment */}
+                            <div className="mt-3 flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="댓글 추가..."
+                                value={newComment[memo.id] || ''}
+                                onChange={(e) => setNewComment(prev => ({ ...prev, [memo.id]: e.target.value }))}
+                                className="flex-1 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleAddComment(memo.id);
+                                  }
+                                }}
+                              />
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0"
+                                onClick={() => handleAddComment(memo.id)}
+                                disabled={!newComment[memo.id]?.trim()}
+                              >
+                                <Reply className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       ))
