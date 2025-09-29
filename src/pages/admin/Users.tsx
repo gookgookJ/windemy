@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
-import { UserSummaryDashboard } from '@/components/admin/UserSummaryDashboard';
 import { UserSearchFilter, type UserFilters } from '@/components/admin/UserSearchFilter';
 import { UserListTable, type UserData } from '@/components/admin/UserListTable';
-
 import { CoursePermissionModal } from '@/components/admin/CoursePermissionModal';
 import { CouponDistributionModal } from '@/components/admin/CouponDistributionModal';
 import { PointsDistributionModal } from '@/components/admin/PointsDistributionModal';
@@ -13,7 +11,6 @@ import { GroupCreateDropdown } from '@/components/admin/GroupCreateDropdown';
 import { GroupAssignmentDropdown } from '@/components/admin/GroupAssignmentDropdown';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { format } from 'date-fns';
 
 console.log('[AdminUsers] module loaded');
 
