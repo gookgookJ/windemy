@@ -3,10 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Search, Plus, Trash2, Users } from 'lucide-react';
+import { Search, Users } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,16 +33,10 @@ export function GroupManagementModal({
 }: GroupManagementModalProps) {
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [loading, setLoading] = useState(false);
-  const [newGroup, setNewGroup] = useState({ name: '', description: '' });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [assigning, setAssigning] = useState(false);
   const [successName, setSuccessName] = useState<string | null>(null);
-  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<{ name: string; description: string | null }>({
-    name: '',
-    description: ''
-  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -52,8 +44,6 @@ export function GroupManagementModal({
       setSearchTerm('');
       setSelectedGroupId(null);
       setSuccessName(null);
-      setEditingGroupId(null);
-      setEditValues({ name: '', description: '' });
       fetchGroups();
     }
   }, [open]);
@@ -96,62 +86,22 @@ export function GroupManagementModal({
       (group.description ? group.description.toLowerCase().includes(q) : false)
     );
   });
-  const handleCreateGroup = async () => {
-    if (!newGroup.name.trim()) {
-      toast({
-        title: "그룹명 필요",
-        description: "그룹명을 입력해주세요.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // 랜덤 색상 자동 선택
-    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-
-    try {
-      const { data, error } = await supabase
-        .from('user_groups')
-        .insert([{
-          name: newGroup.name.trim(),
-          description: newGroup.description.trim() || null,
-          color: randomColor
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setGroups([data, ...groups]);
-      setNewGroup({ name: '', description: '' });
-      
-      if (selectedUsers.length > 0) {
-        await handleAssignToGroup(data.id, data.name);
-      } else {
-        toast({
-          title: "그룹 생성 완료",
-          description: `"${data.name}" 그룹이 생성되었습니다.`
-        });
-        onClose();
-      }
-    } catch (error: any) {
-      console.error('Error creating group:', error);
-      toast({
-        title: "그룹 생성 실패",
-        description: error.message?.includes('duplicate') ? 
-          "이미 존재하는 그룹명입니다." : 
-          "그룹 생성에 실패했습니다.",
-        variant: "destructive"
-      });
-    }
-  };
 
   const handleAssignToGroup = async (groupId: string, groupNameParam?: string) => {
     if (selectedUsers.length === 0) return;
 
     try {
       setAssigning(true);
+      
+      // 먼저 기존 그룹 멤버십을 모두 삭제
+      const { error: deleteError } = await supabase
+        .from('user_group_memberships')
+        .delete()
+        .in('user_id', selectedUsers);
+
+      if (deleteError) throw deleteError;
+
+      // 새로운 그룹에 배정
       const memberships = selectedUsers.map(userId => ({
         user_id: userId,
         group_id: groupId
@@ -159,7 +109,7 @@ export function GroupManagementModal({
 
       const { error } = await supabase
         .from('user_group_memberships')
-        .upsert(memberships, { onConflict: 'user_id,group_id' });
+        .insert(memberships);
 
       if (error) throw error;
 
@@ -185,7 +135,6 @@ export function GroupManagementModal({
     }
   };
 
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
@@ -207,7 +156,7 @@ export function GroupManagementModal({
             <>
               {/* 기존 그룹 선택 */}
               <div className="space-y-3">
-                <Label className="text-sm font-medium">기존 그룹 선택</Label>
+                <Label className="text-sm font-medium">배정할 그룹 선택</Label>
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                   <Input
@@ -227,156 +176,43 @@ export function GroupManagementModal({
                     {filteredGroups.length > 0 ? (
                       filteredGroups.map((group, index) => {
                         const selected = selectedGroupId === group.id;
-                        const isEditing = editingGroupId === group.id;
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={group.id}
+                            onClick={() => setSelectedGroupId(group.id)}
                             className={`flex items-center justify-between w-full p-3 text-left transition-colors ${
                               selected ? 'bg-accent' : 'hover:bg-accent'
                             } ${index !== filteredGroups.length - 1 ? 'border-b' : ''}`}
                           >
-                            <div className="flex items-center gap-3 flex-1">
+                            <div className="flex items-center gap-3">
                               <div
                                 className="w-3 h-3 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: group.color }}
                               />
-                              <div className="flex-1 min-w-0">
-                                {isEditing ? (
-                                  <div className="flex items-center gap-2">
-                                    <Input
-                                      value={editValues.name}
-                                      onChange={(e) => setEditValues(v => ({ ...v, name: e.target.value }))}
-                                      className="h-8"
-                                    />
-                                    <Input
-                                      placeholder="설명(선택)"
-                                      value={editValues.description ?? ''}
-                                      onChange={(e) => setEditValues(v => ({ ...v, description: e.target.value }))}
-                                      className="h-8"
-                                    />
-                                  </div>
-                                ) : (
-                                  <>
-                                    <p className="font-medium text-sm truncate">{group.name}</p>
-                                    {group.description && (
-                                      <p className="text-xs text-muted-foreground truncate">{group.description}</p>
-                                    )}
-                                  </>
+                              <div>
+                                <p className="font-medium text-sm">{group.name}</p>
+                                {group.description && (
+                                  <p className="text-xs text-muted-foreground">{group.description}</p>
                                 )}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 ml-3">
-                              {!isEditing ? (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 px-2"
-                                    onClick={() => {
-                                      setEditingGroupId(group.id);
-                                      setEditValues({ name: group.name, description: group.description ?? '' });
-                                    }}
-                                  >
-                                    수정
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 px-2 text-destructive hover:text-destructive"
-                                    onClick={async () => {
-                                      if (!confirm(`"${group.name}" 그룹을 삭제할까요?`)) return;
-                                      const { error } = await supabase.from('user_groups').delete().eq('id', group.id);
-                                      if (error) {
-                                        toast({ title: '삭제 실패', description: '그룹 삭제에 실패했습니다.', variant: 'destructive' });
-                                      } else {
-                                        setGroups(prev => prev.filter(g => g.id !== group.id));
-                                        toast({ title: '삭제 완료', description: '그룹이 삭제되었습니다.' });
-                                      }
-                                    }}
-                                  >
-                                    삭제
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    className="h-8 px-3"
-                                    onClick={() => {
-                                      setSelectedGroupId(group.id);
-                                    }}
-                                  >
-                                    선택
-                                  </Button>
-                                </>
-                              ) : (
-                                <>
-                                  <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    className="h-8 px-2"
-                                    onClick={async () => {
-                                      if (!editValues.name.trim()) {
-                                        toast({ title: '그룹명 필요', description: '그룹명을 입력하세요.', variant: 'destructive' });
-                                        return;
-                                      }
-                                      const { error } = await supabase
-                                        .from('user_groups')
-                                        .update({ name: editValues.name.trim(), description: (editValues.description ?? '').trim() || null })
-                                        .eq('id', group.id);
-                                      if (error) {
-                                        toast({ title: '수정 실패', description: error.message?.includes('duplicate') ? '이미 존재하는 그룹명입니다.' : '그룹 수정에 실패했습니다.', variant: 'destructive' });
-                                      } else {
-                                        setGroups(prev => prev.map(g => g.id === group.id ? { ...g, name: editValues.name.trim(), description: (editValues.description ?? '').trim() || null } : g));
-                                        setEditingGroupId(null);
-                                        toast({ title: '수정 완료', description: '그룹 정보가 업데이트되었습니다.' });
-                                      }
-                                    }}
-                                  >
-                                    저장
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 px-2"
-                                    onClick={() => {
-                                      setEditingGroupId(null);
-                                    }}
-                                  >
-                                    취소
-                                  </Button>
-                                </>
-                              )}
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Users className="w-3 h-3" />
+                              {group.member_count || 0}명
                             </div>
-                          </div>
+                          </button>
                         );
                       })
                     ) : (
                       <div className="text-center py-8">
-                        <p className="text-muted-foreground text-sm">검색 결과가 없습니다</p>
+                        <p className="text-muted-foreground text-sm">
+                          {searchTerm ? '검색 결과가 없습니다' : '등록된 그룹이 없습니다'}
+                        </p>
                       </div>
                     )}
                   </div>
                 )}
-              </div>
-
-              {/* 새 그룹 생성 */}
-              <div className="border-t pt-4">
-                <Label className="text-sm font-medium">새 그룹 생성</Label>
-                <div className="flex gap-2 mt-3">
-                  <Input
-                    placeholder="그룹명 입력"
-                    value={newGroup.name}
-                    onChange={(e) => setNewGroup((prev) => ({ ...prev, name: e.target.value }))}
-                    className="flex-1 h-9"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && newGroup.name.trim()) {
-                        e.preventDefault();
-                        handleCreateGroup();
-                      }
-                    }}
-                  />
-                  <Button onClick={handleCreateGroup} disabled={!newGroup.name.trim()} size="sm" className="h-9 px-3">
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
               </div>
             </>
           )}

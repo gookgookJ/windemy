@@ -10,6 +10,7 @@ import { GroupManagementModal } from '@/components/admin/GroupManagementModal';
 import { CouponDistributionModal } from '@/components/admin/CouponDistributionModal';
 import { PointsDistributionModal } from '@/components/admin/PointsDistributionModal';
 import { AdminNoteModal } from '@/components/admin/AdminNoteModal';
+import { GroupCreateModal } from '@/components/admin/GroupCreateModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
@@ -23,6 +24,7 @@ const AdminUsers = () => {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [coursePermissionModalOpen, setCoursePermissionModalOpen] = useState(false);
   const [groupManagementModalOpen, setGroupManagementModalOpen] = useState(false);
+  const [groupCreateModalOpen, setGroupCreateModalOpen] = useState(false);
   const [couponModalOpen, setCouponModalOpen] = useState(false);
   const [pointsModalOpen, setPointsModalOpen] = useState(false);
   const [adminNoteModalOpen, setAdminNoteModalOpen] = useState(false);
@@ -147,6 +149,9 @@ const AdminUsers = () => {
       case 'group_management':
         setSelectedUserIds(userIds);
         setGroupManagementModalOpen(true);
+        break;
+      case 'groupCreate':
+        setGroupCreateModalOpen(true);
         break;
       case 'status_change':
         // 일괄 상태 변경 로직 (추후 구현)
@@ -336,6 +341,15 @@ const AdminUsers = () => {
         selectedUsers={selectedUserIds}
         onGroupAssigned={async (groupId) => {
           await fetchUsers(); // 그룹 배정 후 사용자 목록 새로고침
+        }}
+      />
+
+      {/* 그룹 생성 모달 */}
+      <GroupCreateModal
+        open={groupCreateModalOpen}
+        onClose={() => setGroupCreateModalOpen(false)}
+        onGroupCreated={() => {
+          // 필요시 그룹 목록 새로고침
         }}
       />
 

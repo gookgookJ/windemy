@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, ArrowUpDown, Download, Settings, Eye, Users2, Gift, Coins, FileText, UserCog } from 'lucide-react';
+import { MoreHorizontal, ArrowUpDown, Download, Settings, Eye, Users2, Gift, Coins, FileText, UserCog, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -229,7 +229,16 @@ export const UserListTable = ({
               className="h-8"
             >
               <Users2 className="h-4 w-4 mr-1.5" />
-              그룹 관리
+              그룹 배정
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onBulkAction('groupCreate', [])}
+              className="h-8"
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              그룹 생성
             </Button>
             <Button
               variant="outline"
