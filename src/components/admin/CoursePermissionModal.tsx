@@ -10,9 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Search, Plus, Calendar as CalendarIcon, Trash2, Settings, Users } from 'lucide-react';
+import { Search, Plus, Calendar as CalendarIcon, Trash2, Settings, Users, Filter, Clock, CheckCircle, BookOpen, Crown, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 
 interface CoursePermissionModalProps {
   open: boolean;
@@ -57,6 +58,8 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [selectedGroup, setSelectedGroup] = useState<string>('');
+  const [activeTab, setActiveTab] = useState('permissions');
+  const { toast } = useToast();
 
   const filteredCourses = mockCourses.filter(course =>
     course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -71,25 +74,62 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
     }
   };
 
+  const handlePermissionGrant = () => {
+    if (selectedCourses.length > 0 && startDate && endDate) {
+      toast({
+        title: "권한이 부여되었습니다",
+        description: `${selectedCourses.length}개 강의에 대한 권한이 설정되었습니다.`,
+      });
+      onClose();
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader className="border-b pb-4 flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-            <Settings className="h-5 w-5 text-primary" />
-            강의 권한 관리
-            {userId && <span className="text-sm text-muted-foreground ml-2">• 사용자 ID: {userId}</span>}
-          </DialogTitle>
+      <DialogContent className="max-w-6xl h-[85vh] overflow-hidden flex flex-col bg-background">
+        <DialogHeader className="border-b bg-gradient-to-r from-primary/5 to-primary/10 pb-6 pt-6 px-6 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
+                <Settings className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                  강의 권한 관리
+                </DialogTitle>
+                {userId && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    사용자별 맞춤 강의 권한을 설정하고 관리할 수 있습니다
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs">
+                선택 {selectedCourses.length}개
+              </Badge>
+            </div>
+          </div>
         </DialogHeader>
 
-        <Tabs defaultValue="permissions" className="flex-1 flex flex-col min-h-0">
-          <TabsList className="grid grid-cols-3 mb-4 bg-muted/30 flex-shrink-0">
-            <TabsTrigger value="permissions" className="font-medium data-[state=active]:bg-background">개별 권한 설정</TabsTrigger>
-            <TabsTrigger value="groups" className="font-medium data-[state=active]:bg-background">그룹 관리</TabsTrigger>
-            <TabsTrigger value="history" className="font-medium data-[state=active]:bg-background">권한 내역</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 px-6">
+          <TabsList className="grid grid-cols-3 mb-4 bg-muted/30 flex-shrink-0 h-12">
+            <TabsTrigger value="permissions" className="font-medium data-[state=active]:bg-background h-10 gap-2">
+              <BookOpen className="h-4 w-4" />
+              개별 권한 설정
+            </TabsTrigger>
+            <TabsTrigger value="groups" className="font-medium data-[state=active]:bg-background h-10 gap-2">
+              <Users className="h-4 w-4" />
+              그룹 관리
+            </TabsTrigger>
+            <TabsTrigger value="history" className="font-medium data-[state=active]:bg-background h-10 gap-2">
+              <Clock className="h-4 w-4" />
+              권한 내역
+            </TabsTrigger>
           </TabsList>
 
-          <div className="flex-1 overflow-y-auto pr-2 min-h-0">
+          <div className="flex-1 overflow-y-auto pr-2 min-h-0 space-y-6">
             <TabsContent value="permissions" className="space-y-6 mt-0">
               {/* 강의 검색 및 선택 */}
               <Card>
@@ -203,13 +243,33 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
                     </div>
                   </div>
 
-                  <div className="flex justify-end gap-3 mt-6">
-                    <Button variant="outline" onClick={onClose}>
-                      취소
-                    </Button>
-                    <Button disabled={selectedCourses.length === 0}>
-                      권한 부여 ({selectedCourses.length}개 강의)
-                    </Button>
+                  <div className="flex justify-between items-center mt-6 pt-4 border-t bg-muted/20 -mx-6 px-6 py-4">
+                    <div className="text-sm text-muted-foreground">
+                      {selectedCourses.length > 0 && startDate && endDate ? (
+                        <span className="flex items-center gap-2 text-green-600">
+                          <CheckCircle className="h-4 w-4" />
+                          {selectedCourses.length}개 강의 • {format(startDate, 'yyyy-MM-dd')} ~ {format(endDate, 'yyyy-MM-dd')}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2 text-muted-foreground">
+                          <AlertCircle className="h-4 w-4" />
+                          강의와 기간을 모두 선택해주세요
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-3">
+                      <Button variant="outline" onClick={onClose}>
+                        취소
+                      </Button>
+                      <Button 
+                        disabled={selectedCourses.length === 0 || !startDate || !endDate}
+                        onClick={handlePermissionGrant}
+                        className="gap-2"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        권한 부여 ({selectedCourses.length}개)
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -7,9 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
-import { Edit, Lock, MessageCircle, User, BookOpen, CreditCard, Activity, Plus, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Edit, Lock, MessageCircle, User, BookOpen, CreditCard, Activity, Plus, X, Copy, Phone, Mail, Calendar, MapPin, Clock, TrendingUp, AlertCircle, CheckCircle, MoreHorizontal, Search, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 
 interface UserDetailModalProps {
   userId: string | null;
@@ -109,15 +111,29 @@ const mockActivityLogs = [
 
 export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps) => {
   const [newMemo, setNewMemo] = useState('');
+  const [activeTab, setActiveTab] = useState('profile');
+  const [isEditing, setIsEditing] = useState(false);
+  const { toast } = useToast();
 
   if (!userId) return null;
 
   const handleAddMemo = () => {
     if (newMemo.trim()) {
-      // 실제로는 API 호출로 메모 저장
       console.log('새 메모 추가:', newMemo);
       setNewMemo('');
+      toast({
+        title: "메모가 추가되었습니다",
+        description: "관리자 메모가 성공적으로 저장되었습니다.",
+      });
     }
+  };
+
+  const handleCopyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: `${label}이(가) 복사되었습니다`,
+      description: text,
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -133,134 +149,249 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="border-b pb-4 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl font-bold">{mockUserDetail.name}</span>
-                  <Badge variant={mockUserDetail.status === 'active' ? 'default' : 'secondary'} className="text-xs">
-                    {mockUserDetail.status === 'active' ? '정상' : '휴면'}
+      <DialogContent className="max-w-6xl h-[90vh] overflow-hidden flex flex-col bg-background">
+        {/* Enhanced Header */}
+        <DialogHeader className="border-b bg-muted/20 pb-6 pt-6 px-6 flex-shrink-0">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/40 rounded-full flex items-center justify-center">
+                <User className="h-8 w-8 text-primary" />
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-bold">{mockUserDetail.name}</h1>
+                  <Badge variant={mockUserDetail.status === 'active' ? 'default' : 'secondary'} className="h-6 px-3">
+                    {mockUserDetail.status === 'active' ? '✅ 정상회원' : '⏸️ 휴면회원'}
                   </Badge>
                 </div>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <span className="font-medium">{mockUserDetail.email}</span>
-                <span className="text-border">•</span>
-                <span className="font-mono bg-muted/50 px-2 py-0.5 rounded text-xs">{mockUserDetail.memberId}</span>
-              </div>
+                
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                  <div className="flex items-center gap-2 bg-background rounded-lg px-3 py-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{mockUserDetail.email}</span>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="h-6 w-6 p-0 ml-1"
+                      onClick={() => handleCopyToClipboard(mockUserDetail.email, '이메일')}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 bg-background rounded-lg px-3 py-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{mockUserDetail.phone}</span>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="h-6 w-6 p-0 ml-1"
+                      onClick={() => handleCopyToClipboard(mockUserDetail.phone, '연락처')}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 bg-background rounded-lg px-3 py-2">
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded font-mono">{mockUserDetail.memberId}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 bg-background rounded-lg px-3 py-2">
+                    <TrendingUp className="h-4 w-4 text-green-600" />
+                    <span className="font-bold text-green-600">{formatCurrency(mockUserDetail.totalPayment)}</span>
+                  </div>
+                </div>
               </div>
             </div>
             
+            {/* Action Buttons */}
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="h-9">
-                <Edit className="h-4 w-4 mr-2" />
-                정보수정
+              <Button size="sm" variant="outline" className="h-9 gap-2">
+                <MessageCircle className="h-4 w-4" />
+                메시지 발송
               </Button>
-              <Button size="sm" variant="outline" className="h-9">
-                <MessageCircle className="h-4 w-4 mr-2" />
-                메시지
+              <Button size="sm" className="h-9 gap-2">
+                <Edit className="h-4 w-4" />
+                정보 수정
               </Button>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden min-h-0">
-          <Tabs defaultValue="profile" className="w-full h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-4 mb-4 bg-muted/30 flex-shrink-0">
-              <TabsTrigger value="profile" className="flex items-center gap-2 font-medium data-[state=active]:bg-background">
+        {/* Enhanced Content */}
+        <div className="flex-1 overflow-hidden min-h-0 px-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-4 mb-4 bg-muted/30 flex-shrink-0 h-12">
+              <TabsTrigger value="profile" className="flex items-center gap-2 font-medium data-[state=active]:bg-background h-10">
                 <User className="h-4 w-4" />
                 회원 정보
               </TabsTrigger>
-              <TabsTrigger value="learning" className="flex items-center gap-2 font-medium data-[state=active]:bg-background">
+              <TabsTrigger value="learning" className="flex items-center gap-2 font-medium data-[state=active]:bg-background h-10">
                 <BookOpen className="h-4 w-4" />
                 수강 내역
+                <Badge variant="secondary" className="text-xs h-5">{mockEnrollments.length}</Badge>
               </TabsTrigger>
-              <TabsTrigger value="payment" className="flex items-center gap-2 font-medium data-[state=active]:bg-background">
+              <TabsTrigger value="payment" className="flex items-center gap-2 font-medium data-[state=active]:bg-background h-10">
                 <CreditCard className="h-4 w-4" />
                 결제 정보
+                <Badge variant="secondary" className="text-xs h-5">{mockUserDetail.totalOrders}</Badge>
               </TabsTrigger>
-              <TabsTrigger value="activity" className="flex items-center gap-2 font-medium data-[state=active]:bg-background">
+              <TabsTrigger value="activity" className="flex items-center gap-2 font-medium data-[state=active]:bg-background h-10">
                 <Activity className="h-4 w-4" />
                 활동 로그
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 overflow-y-auto pr-2 min-h-0">
+            <div className="flex-1 overflow-y-auto pr-2 min-h-0 space-y-6">
               <TabsContent value="profile" className="space-y-6 mt-0">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* 기본 정보 */}
-                  <Card>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Quick Stats */}
+                  <Card className="lg:col-span-3">
                     <CardHeader>
-                      <CardTitle className="text-base">기본 정보</CardTitle>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        회원 활동 요약
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-3 gap-3 text-sm">
-                        <span className="text-muted-foreground">이름</span>
-                        <span className="col-span-2 font-medium">{mockUserDetail.name}</span>
-                        
-                        <span className="text-muted-foreground">이메일</span>
-                        <span className="col-span-2">{mockUserDetail.email}</span>
-                        
-                        <span className="text-muted-foreground">연락처</span>
-                        <span className="col-span-2">{mockUserDetail.phone}</span>
-                        
-                        <span className="text-muted-foreground">가입일</span>
-                        <span className="col-span-2">{formatDate(mockUserDetail.joinDate)}</span>
-                        
-                        <span className="text-muted-foreground">최근접속</span>
-                        <span className="col-span-2">{formatDate(mockUserDetail.lastLogin)}</span>
-                        
-                        <span className="text-muted-foreground">접속IP</span>
-                        <span className="col-span-2 font-mono text-xs">{mockUserDetail.lastLoginIp}</span>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center p-4 bg-blue-50 rounded-lg">
+                          <div className="text-2xl font-bold text-blue-600">{Math.floor((new Date().getTime() - new Date(mockUserDetail.joinDate).getTime()) / (1000 * 60 * 60 * 24))}일</div>
+                          <div className="text-sm text-blue-700 mt-1">가입 경과</div>
+                        </div>
+                        <div className="text-center p-4 bg-green-50 rounded-lg">
+                          <div className="text-2xl font-bold text-green-600">{mockEnrollments.filter(e => e.status === '완료').length}개</div>
+                          <div className="text-sm text-green-700 mt-1">완료 강의</div>
+                        </div>
+                        <div className="text-center p-4 bg-purple-50 rounded-lg">
+                          <div className="text-2xl font-bold text-purple-600">{Math.floor(Math.random() * 20 + 5)}시간</div>
+                          <div className="text-sm text-purple-700 mt-1">총 학습시간</div>
+                        </div>
+                        <div className="text-center p-4 bg-orange-50 rounded-lg">
+                          <div className="text-2xl font-bold text-orange-600">{Math.floor((new Date().getTime() - new Date(mockUserDetail.lastLogin).getTime()) / (1000 * 60 * 60 * 24))}일 전</div>
+                          <div className="text-sm text-orange-700 mt-1">최근 접속</div>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  {/* 마케팅 정보 */}
+                  {/* 기본 정보 */}
+                  <Card className="lg:col-span-2">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        기본 정보
+                      </CardTitle>
+                      <Button size="sm" variant="outline" onClick={() => setIsEditing(!isEditing)}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        {isEditing ? '저장' : '편집'}
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="grid grid-cols-3 gap-3 items-center">
+                          <span className="text-sm font-medium text-muted-foreground">이름</span>
+                          {isEditing ? (
+                            <Input className="col-span-2" defaultValue={mockUserDetail.name} />
+                          ) : (
+                            <span className="col-span-2 font-medium">{mockUserDetail.name}</span>
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-3 items-center">
+                          <span className="text-sm font-medium text-muted-foreground">연락처</span>
+                          {isEditing ? (
+                            <Input className="col-span-2" defaultValue={mockUserDetail.phone} />
+                          ) : (
+                            <span className="col-span-2 font-medium">{mockUserDetail.phone}</span>
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-3 items-center">
+                          <span className="text-sm font-medium text-muted-foreground">가입일</span>
+                          <span className="col-span-2 text-sm">{formatDate(mockUserDetail.joinDate)}</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-3 items-center">
+                          <span className="text-sm font-medium text-muted-foreground">최근접속</span>
+                          <div className="col-span-2 flex items-center gap-2">
+                            <span className="text-sm">{formatDate(mockUserDetail.lastLogin)}</span>
+                            <Badge variant="outline" className="text-xs font-mono">{mockUserDetail.lastLoginIp}</Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* 마케팅 & 권한 정보 */}
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-base">마케팅 수신설정</CardTitle>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        마케팅 & 권한 설정
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">이메일 수신</span>
-                        <Badge variant={mockUserDetail.marketingEmail ? 'default' : 'secondary'} className="text-xs">
-                          {mockUserDetail.marketingEmail ? '동의' : '거부'}
-                        </Badge>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        마지막 변경: {formatDate(mockUserDetail.marketingEmailChangedAt)}
+                    <CardContent className="space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">이메일 수신</span>
+                          </div>
+                          <Badge variant={mockUserDetail.marketingEmail ? 'default' : 'secondary'} className="text-xs">
+                            {mockUserDetail.marketingEmail ? '✅ 동의' : '❌ 거부'}
+                          </Badge>
+                        </div>
+                        
+                        <div className="text-xs text-muted-foreground pl-3">
+                          마지막 변경: {formatDate(mockUserDetail.marketingEmailChangedAt)}
+                        </div>
+                        
+                        <div className="pt-2 border-t">
+                          <Button size="sm" variant="outline" className="w-full">
+                            <Lock className="h-4 w-4 mr-2" />
+                            권한 설정 변경
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
                 </div>
 
-                {/* 관리자 메모 */}
+                {/* 관리자 메모 - 전체 너비 */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">관리자 메모</CardTitle>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <MessageCircle className="h-4 w-4" />
+                      관리자 메모 <Badge variant="secondary" className="text-xs">{mockAdminMemos.length}</Badge>
+                    </CardTitle>
+                    <Button size="sm" onClick={handleAddMemo} disabled={!newMemo.trim()}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      메모 추가
+                    </Button>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="space-y-3">
-                      <Textarea
-                        placeholder="CS 처리 내역이나 특이사항을 기록하세요..."
-                        value={newMemo}
-                        onChange={(e) => setNewMemo(e.target.value)}
-                        rows={3}
-                        className="resize-none"
-                      />
-                      <Button onClick={handleAddMemo} disabled={!newMemo.trim()} size="sm">
-                        메모 추가
-                      </Button>
-                    </div>
+                    <Textarea
+                      placeholder="CS 처리 내역이나 특이사항을 기록하세요... (Ctrl+Enter로 빠른 저장)"
+                      value={newMemo}
+                      onChange={(e) => setNewMemo(e.target.value)}
+                      rows={3}
+                      className="resize-none"
+                      onKeyDown={(e) => {
+                        if (e.ctrlKey && e.key === 'Enter') {
+                          handleAddMemo();
+                        }
+                      }}
+                    />
                     
-                    <div className="space-y-3">
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
                       {mockAdminMemos.map((memo) => (
-                        <div key={memo.id} className="p-4 border rounded-lg bg-muted/20">
-                          <p className="text-sm mb-2">{memo.content}</p>
-                          <div className="text-xs text-muted-foreground">
-                            <span className="font-medium">{memo.author}</span> • {formatDate(memo.createdAt)}
+                        <div key={memo.id} className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition-colors">
+                          <p className="text-sm mb-2 leading-relaxed">{memo.content}</p>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span className="font-medium">{memo.author}</span>
+                            <span>{formatDate(memo.createdAt)}</span>
                           </div>
                         </div>
                       ))}
@@ -270,13 +401,61 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
               </TabsContent>
 
               <TabsContent value="learning" className="space-y-6 mt-0">
+                {/* 수강 통계 */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-900">{mockEnrollments.length}개</div>
+                        <div className="text-sm text-blue-700 mt-1">전체 수강</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-gradient-to-br from-green-50 to-green-100">
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-900">{mockEnrollments.filter(e => e.status === '완료').length}개</div>
+                        <div className="text-sm text-green-700 mt-1">완료</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-gradient-to-br from-orange-50 to-orange-100">
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-orange-900">{mockEnrollments.filter(e => e.status === '수강중').length}개</div>
+                        <div className="text-sm text-orange-700 mt-1">진행중</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-900">{mockEnrollments.reduce((sum, e) => sum + e.progress, 0) / mockEnrollments.length}%</div>
+                        <div className="text-sm text-purple-700 mt-1">평균 진도</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-base">수강 내역</CardTitle>
-                    <Button size="sm" variant="outline">
-                      <Plus className="h-4 w-4 mr-2" />
-                      권한 부여
-                    </Button>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <BookOpen className="h-4 w-4" />
+                      수강 내역 관리
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline">
+                        <Plus className="h-4 w-4 mr-2" />
+                        권한 부여
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <Filter className="h-4 w-4 mr-2" />
+                        필터
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <Table>
@@ -286,29 +465,46 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                           <TableHead>상태</TableHead>
                           <TableHead>진도율</TableHead>
                           <TableHead>최근학습</TableHead>
-                          <TableHead>관리</TableHead>
+                          <TableHead>인증서</TableHead>
+                          <TableHead className="text-right">관리</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {mockEnrollments.map((enrollment) => (
-                          <TableRow key={enrollment.id}>
+                          <TableRow key={enrollment.id} className="hover:bg-muted/30">
                             <TableCell className="font-medium">{enrollment.courseName}</TableCell>
                             <TableCell>
-                              <Badge variant={enrollment.status === '완료' ? 'default' : 'secondary'} className="text-xs">
+                              <Badge 
+                                variant={enrollment.status === '완료' ? 'default' : 'secondary'} 
+                                className="text-xs flex items-center gap-1 w-fit"
+                              >
+                                {enrollment.status === '완료' ? <CheckCircle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
                                 {enrollment.status}
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Progress value={enrollment.progress} className="w-20 h-2" />
-                                <span className="text-sm font-medium">{enrollment.progress}%</span>
+                              <div className="flex items-center gap-3">
+                                <Progress value={enrollment.progress} className="w-24 h-2" />
+                                <span className="text-sm font-medium min-w-[3rem]">{enrollment.progress}%</span>
                               </div>
                             </TableCell>
                             <TableCell className="text-sm">{formatDate(enrollment.lastStudyDate)}</TableCell>
                             <TableCell>
-                              <Button size="sm" variant="ghost" className="h-8 text-xs">
-                                권한회수
-                              </Button>
+                              {enrollment.certificateIssued ? (
+                                <Badge variant="outline" className="text-xs text-green-600">발급완료</Badge>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">미발급</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex gap-1 justify-end">
+                                <Button size="sm" variant="outline" className="h-8 px-3">
+                                  연장
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-8 px-3 text-destructive hover:text-destructive">
+                                  회수
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
