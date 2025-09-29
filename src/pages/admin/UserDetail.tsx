@@ -573,91 +573,139 @@ export const AdminUserDetail = () => {
 
             {/* Content Sections */}
             {activeSection === 'profile' && (
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <MessageCircle className="h-4 w-4" />
-                    관리자 메모
-                  </CardTitle>
-                  <Button size="sm" onClick={handleAddMemo} disabled={!newMemo.trim()}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    메모 추가
-                  </Button>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg flex items-center gap-2 text-primary">
+                      <MessageCircle className="h-5 w-5" />
+                      관리자 메모
+                    </CardTitle>
+                    <Button 
+                      size="sm" 
+                      onClick={handleAddMemo} 
+                      disabled={!newMemo.trim()}
+                      className="shadow-sm"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      메모 추가
+                    </Button>
+                  </div>
                   <Textarea
-                    placeholder="관리자 메모를 입력하세요..."
+                    placeholder="새 관리자 메모를 입력하세요... (Ctrl+Enter로 빠른 저장)"
                     value={newMemo}
                     onChange={(e) => setNewMemo(e.target.value)}
                     rows={3}
-                    className="resize-none"
+                    className="mt-4 resize-none border-2 focus:border-primary/30"
                     onKeyDown={(e) => {
                       if (e.ctrlKey && e.key === 'Enter') {
                         handleAddMemo();
                       }
                     }}
                   />
-                  
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
-                    {adminNotes.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p>등록된 관리자 메모가 없습니다.</p>
+                </CardHeader>
+                <CardContent>
+                  {adminNotes.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <div className="w-20 h-20 mx-auto mb-4 bg-muted/20 rounded-full flex items-center justify-center">
+                        <MessageCircle className="h-8 w-8 opacity-50" />
                       </div>
-                    ) : (
-                      adminNotes.map((memo) => (
-                        <div key={memo.id} className="border rounded-lg bg-muted/10 hover:bg-muted/20 transition-colors">
-                          <div className="p-4">
-                            <p className="text-sm mb-2 leading-relaxed">{memo.note}</p>
-                            <div className="flex items-center justify-between text-xs text-muted-foreground">
-                              <span className="font-medium">
-                                {memo.created_by_profile?.full_name || '관리자'}
-                              </span>
-                              <div className="flex items-center gap-2">
-                                <span>{format(new Date(memo.created_at), 'MM-dd HH:mm', { locale: ko })}</span>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                                  onClick={() => handleDeleteMemo(memo.id)}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
+                      <h3 className="font-medium mb-2">관리자 메모가 없습니다</h3>
+                      <p className="text-sm">위에서 첫 번째 메모를 작성해보세요.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {adminNotes.map((memo, index) => (
+                        <div key={memo.id} className="relative">
+                          {/* Timeline connector */}
+                          {index !== adminNotes.length - 1 && (
+                            <div className="absolute left-4 top-12 bottom-0 w-px bg-border z-0" />
+                          )}
+                          
+                          <div className="relative bg-card border-2 border-border/50 rounded-xl p-6 hover:border-primary/20 hover:shadow-md transition-all duration-200">
+                            {/* Timeline dot */}
+                            <div className="absolute -left-2 top-6 w-4 h-4 bg-primary rounded-full border-2 border-background z-10" />
                             
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                                  <span className="text-xs font-bold text-primary">
+                                    {memo.created_by_profile?.full_name?.charAt(0) || 'A'}
+                                  </span>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm">
+                                    {memo.created_by_profile?.full_name || '관리자'}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {format(new Date(memo.created_at), 'yyyy년 MM월 dd일 HH:mm', { locale: ko })}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => handleDeleteMemo(memo.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+
+                            <div className="bg-muted/30 rounded-lg p-4 mb-4">
+                              <p className="text-sm leading-relaxed whitespace-pre-wrap">{memo.note}</p>
+                            </div>
+
+                            {/* Comments Section */}
                             {memo.comments && memo.comments.length > 0 && (
-                              <div className="mt-3 pl-4 border-l-2 border-primary/20 space-y-2">
+                              <div className="space-y-3 mb-4">
+                                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                                  <Reply className="h-3 w-3" />
+                                  댓글 {memo.comments.length}개
+                                </div>
                                 {memo.comments.map((comment) => (
-                                  <div key={comment.id} className="bg-background/50 p-2 rounded text-xs">
-                                    <p className="mb-1">{comment.comment_text}</p>
-                                    <div className="flex justify-between items-center text-muted-foreground">
-                                      <span>{comment.created_by_profile?.full_name || '관리자'}</span>
-                                      <div className="flex items-center gap-2">
-                                        <span>{format(new Date(comment.created_at), 'MM-dd HH:mm', { locale: ko })}</span>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
-                                          onClick={() => handleDeleteComment(comment.id, memo.id)}
-                                        >
-                                          <Trash2 className="h-2 w-2" />
-                                        </Button>
+                                  <div key={comment.id} className="bg-background/80 border rounded-lg p-3">
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex items-start gap-2 flex-1">
+                                        <div className="w-6 h-6 bg-secondary rounded-full flex items-center justify-center">
+                                          <span className="text-xs font-medium">
+                                            {comment.created_by_profile?.full_name?.charAt(0) || 'A'}
+                                          </span>
+                                        </div>
+                                        <div className="flex-1">
+                                          <p className="text-sm leading-relaxed">{comment.comment_text}</p>
+                                          <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-xs text-muted-foreground">
+                                              {comment.created_by_profile?.full_name || '관리자'}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">•</span>
+                                            <span className="text-xs text-muted-foreground">
+                                              {format(new Date(comment.created_at), 'MM-dd HH:mm', { locale: ko })}
+                                            </span>
+                                          </div>
+                                        </div>
                                       </div>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 w-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                        onClick={() => handleDeleteComment(comment.id, memo.id)}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
                                     </div>
                                   </div>
                                 ))}
                               </div>
                             )}
-                            
+
                             {/* Add Comment */}
-                            <div className="mt-3 flex gap-2">
+                            <div className="flex gap-2">
                               <input
                                 type="text"
                                 placeholder="댓글 추가..."
                                 value={newComment[memo.id] || ''}
                                 onChange={(e) => setNewComment(prev => ({ ...prev, [memo.id]: e.target.value }))}
-                                className="flex-1 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                className="flex-1 px-3 py-2 text-sm border-2 rounded-lg focus:outline-none focus:border-primary/30"
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
                                     handleAddComment(memo.id);
@@ -666,113 +714,126 @@ export const AdminUserDetail = () => {
                               />
                               <Button
                                 size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0"
                                 onClick={() => handleAddComment(memo.id)}
                                 disabled={!newComment[memo.id]?.trim()}
+                                className="px-3"
                               >
-                                <Reply className="h-3 w-3" />
+                                <Reply className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
                         </div>
-                      ))
-                    )}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
 
             {activeSection === 'learning' && (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {enrollments.length === 0 ? (
-                  <Card>
-                    <CardContent className="text-center py-8 text-muted-foreground">
-                      <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p>수강 내역이 없습니다.</p>
+                  <Card className="border-0 shadow-sm">
+                    <CardContent className="text-center py-16">
+                      <div className="w-20 h-20 mx-auto mb-6 bg-muted/20 rounded-full flex items-center justify-center">
+                        <BookOpen className="h-10 w-10 opacity-50 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">수강 내역이 없습니다</h3>
+                      <p className="text-muted-foreground">아직 등록된 강의가 없습니다.</p>
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="grid gap-6">
                     {enrollments.map((enrollment) => (
-                      <Card key={enrollment.id} className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-lg mb-2">
-                                {enrollment.course?.title || '강의명 없음'}
-                              </h3>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-4 w-4" />
-                                  <span>수강 시작: {enrollment.enrolled_at ? format(new Date(enrollment.enrolled_at), 'yyyy.MM.dd', { locale: ko }) : '-'}</span>
-                                </div>
-                                {enrollment.completed_at && (
-                                  <div className="flex items-center gap-1 text-green-600">
-                                    <CheckCircle className="h-4 w-4" />
-                                    <span>완료: {format(new Date(enrollment.completed_at), 'yyyy.MM.dd', { locale: ko })}</span>
+                      <Card key={enrollment.id} className="border-0 shadow-md hover:shadow-lg transition-all duration-200">
+                        <CardContent className="p-0">
+                          <div className="flex">
+                            {/* Course Status Indicator */}
+                            <div className={`w-1 ${enrollment.completed_at ? 'bg-green-500' : enrollment.progress && enrollment.progress > 0 ? 'bg-blue-500' : 'bg-muted'}`} />
+                            
+                            <div className="flex-1 p-6">
+                              <div className="flex items-start justify-between mb-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <h3 className="text-lg font-semibold">{enrollment.course?.title || '강의명 없음'}</h3>
+                                    <Badge 
+                                      variant={enrollment.completed_at ? 'default' : enrollment.progress && enrollment.progress > 0 ? 'secondary' : 'outline'}
+                                      className="text-xs"
+                                    >
+                                      {enrollment.completed_at ? (
+                                        <>
+                                          <CheckCircle className="w-3 h-3 mr-1" />
+                                          수료완료
+                                        </>
+                                      ) : enrollment.progress && enrollment.progress > 0 ? (
+                                        <>
+                                          <TrendingUp className="w-3 h-3 mr-1" />
+                                          수강중
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Clock className="w-3 h-3 mr-1" />
+                                          미시작
+                                        </>
+                                      )}
+                                    </Badge>
                                   </div>
-                                )}
+                                  
+                                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                    <div className="bg-muted/30 rounded-lg p-3">
+                                      <p className="text-xs text-muted-foreground mb-1">등록일</p>
+                                      <p className="font-medium text-sm">
+                                        {enrollment.enrolled_at 
+                                          ? format(new Date(enrollment.enrolled_at), 'yyyy-MM-dd', { locale: ko })
+                                          : '-'
+                                        }
+                                      </p>
+                                    </div>
+                                    
+                                    <div className="bg-muted/30 rounded-lg p-3">
+                                      <p className="text-xs text-muted-foreground mb-1">진도율</p>
+                                      <p className="font-bold text-sm text-primary">
+                                        {Math.round(enrollment.progress || 0)}%
+                                      </p>
+                                    </div>
+                                    
+                                    <div className="bg-muted/30 rounded-lg p-3">
+                                      <p className="text-xs text-muted-foreground mb-1">수료일</p>
+                                      <p className="font-medium text-sm">
+                                        {enrollment.completed_at 
+                                          ? format(new Date(enrollment.completed_at), 'yyyy-MM-dd', { locale: ko })
+                                          : '-'
+                                        }
+                                      </p>
+                                    </div>
+                                    
+                                    <div className="bg-muted/30 rounded-lg p-3">
+                                      <p className="text-xs text-muted-foreground mb-1">강의 ID</p>
+                                      <p className="font-mono text-xs text-muted-foreground truncate">
+                                        {enrollment.course_id}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {/* Progress Bar */}
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-sm font-medium">학습 진행률</span>
+                                      <span className="text-sm text-muted-foreground">
+                                        {Math.round(enrollment.progress || 0)}% 완료
+                                      </span>
+                                    </div>
+                                    <Progress 
+                                      value={enrollment.progress || 0} 
+                                      className="h-3"
+                                      style={{
+                                        background: 'var(--muted)',
+                                      }}
+                                    />
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                            <Badge variant={enrollment.completed_at ? 'default' : 'secondary'} className={
-                              enrollment.completed_at 
-                                ? 'bg-green-100 text-green-800 border-green-200' 
-                                : enrollment.progress && enrollment.progress > 0 
-                                  ? 'bg-blue-100 text-blue-800 border-blue-200'
-                                  : 'bg-gray-100 text-gray-800 border-gray-200'
-                            }>
-                              {enrollment.completed_at ? '수강완료' : enrollment.progress && enrollment.progress > 0 ? '수강중' : '미시작'}
-                            </Badge>
-                          </div>
-                          
-                          {/* Progress Section */}
-                          <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-gray-700">학습 진도</span>
-                              <span className="text-lg font-bold text-primary">{Math.round(enrollment.progress || 0)}%</span>
-                            </div>
-                            <Progress 
-                              value={enrollment.progress || 0} 
-                              className="h-2 mb-2" 
-                            />
-                            <div className="text-xs text-gray-600 text-center">
-                              {enrollment.progress === 100 
-                                ? '🎉 축하합니다! 모든 학습을 완료했습니다.' 
-                                : enrollment.progress && enrollment.progress > 0
-                                  ? `${Math.round(enrollment.progress)}% 진행 중입니다. 화이팅!`
-                                  : '아직 학습을 시작하지 않았습니다.'}
-                            </div>
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex gap-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="flex-1"
-                              onClick={() => window.open(`/learn/${enrollment.course_id}`, '_blank')}
-                            >
-                              강의 바로가기
-                            </Button>
-                            {!enrollment.completed_at && (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                className="flex-1"
-                              >
-                                학습 독려 메시지
-                              </Button>
-                            )}
-                            {enrollment.completed_at && (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                className="flex-1"
-                              >
-                                수료증 확인
-                              </Button>
-                            )}
                           </div>
                         </CardContent>
                       </Card>
@@ -783,115 +844,141 @@ export const AdminUserDetail = () => {
             )}
 
             {activeSection === 'payment' && (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {orders.length === 0 ? (
-                  <Card>
-                    <CardContent className="text-center py-8 text-muted-foreground">
-                      <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p>결제 내역이 없습니다.</p>
+                  <Card className="border-0 shadow-sm">
+                    <CardContent className="text-center py-16">
+                      <div className="w-20 h-20 mx-auto mb-6 bg-muted/20 rounded-full flex items-center justify-center">
+                        <CreditCard className="h-10 w-10 opacity-50 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">결제 내역이 없습니다</h3>
+                      <p className="text-muted-foreground">아직 결제한 주문이 없습니다.</p>
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="font-semibold mb-2">결제 정보 요약</h3>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <div className="text-muted-foreground">총 주문 수</div>
-                          <div className="font-bold text-lg">{orders.length}건</div>
-                        </div>
-                        <div>
-                          <div className="text-muted-foreground">총 결제 금액</div>
-                          <div className="font-bold text-lg text-green-600">{formatCurrency(totalPayment)}</div>
-                        </div>
-                        <div>
-                          <div className="text-muted-foreground">최근 결제일</div>
-                          <div className="font-bold text-lg">
-                            {orders[0]?.created_at ? format(new Date(orders[0].created_at), 'yyyy.MM.dd', { locale: ko }) : '-'}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {orders.map((order) => (
-                      <Card key={order.id} className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-6">
-                          <div className="space-y-4">
-                            {/* Order Header */}
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <div className="text-sm text-muted-foreground mb-1">주문번호</div>
-                                <div className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{order.id}</div>
+                  <div className="grid gap-6">
+                    {orders.map((order, index) => (
+                      <Card key={order.id} className="border-0 shadow-md overflow-hidden">
+                        <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 pb-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                                <span className="font-bold text-primary">#{index + 1}</span>
                               </div>
+                              <div>
+                                <CardTitle className="text-lg">주문 #{order.id.slice(0, 8)}</CardTitle>
+                                <p className="text-sm text-muted-foreground">
+                                  {order.created_at && format(new Date(order.created_at), 'yyyy년 MM월 dd일 HH:mm', { locale: ko })}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
                               <Badge 
-                                variant={order.status === 'completed' ? 'default' : 'secondary'}
-                                className={order.status === 'completed' ? 'bg-green-100 text-green-800 border-green-200' : ''}
+                                variant={order.status === 'completed' ? 'default' : order.status === 'pending' ? 'secondary' : 'destructive'}
+                                className="text-sm px-3 py-1"
                               >
                                 {order.status === 'completed' ? '결제완료' : 
                                  order.status === 'pending' ? '결제대기' : 
-                                 order.status || '미확인'}
+                                 order.status === 'failed' ? '결제실패' : order.status}
                               </Badge>
                             </div>
-
-                            {/* Order Details Grid */}
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg">
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">결제일시</div>
-                                <div className="font-medium text-sm">
-                                  {order.created_at ? format(new Date(order.created_at), 'yyyy.MM.dd HH:mm', { locale: ko }) : '-'}
-                                </div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">결제 금액</div>
-                                <div className="font-bold text-lg text-green-600">{formatCurrency(order.total_amount)}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">결제 방법</div>
-                                <div className="font-medium text-sm">
-                                  {order.payment_method === 'free' ? '무료' : 
-                                   order.payment_method === 'card' ? '카드' :
-                                   order.payment_method === 'bank_transfer' ? '계좌이체' :
-                                   order.payment_method || '미확인'}
-                                </div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">PG 거래번호</div>
-                                <div className="font-mono text-xs">
-                                  {order.stripe_payment_intent_id ? order.stripe_payment_intent_id.slice(0, 20) + '...' : '-'}
-                                </div>
+                          </div>
+                        </CardHeader>
+                        
+                        <CardContent className="p-6">
+                          {/* Payment Summary */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                            <div className="bg-muted/30 rounded-lg p-4">
+                              <p className="text-xs text-muted-foreground mb-1">총 결제금액</p>
+                              <p className="text-xl font-bold text-primary">
+                                {formatCurrency(order.total_amount)}
+                              </p>
+                            </div>
+                            
+                            <div className="bg-muted/30 rounded-lg p-4">
+                              <p className="text-xs text-muted-foreground mb-1">결제수단</p>
+                              <p className="font-medium">
+                                {order.payment_method || '카드결제'}
+                              </p>
+                            </div>
+                            
+                            <div className="bg-muted/30 rounded-lg p-4">
+                              <p className="text-xs text-muted-foreground mb-1">주문 ID</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-mono text-xs text-muted-foreground truncate flex-1">
+                                  {order.id}
+                                </p>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => handleCopyToClipboard(order.id, '주문 ID')}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
                               </div>
                             </div>
+                            
+                            <div className="bg-muted/30 rounded-lg p-4">
+                              <p className="text-xs text-muted-foreground mb-1">PG 거래번호</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-mono text-xs text-muted-foreground truncate flex-1">
+                                  {order.stripe_payment_intent_id ? order.stripe_payment_intent_id.slice(0, 20) + '...' : '-'}
+                                </p>
+                                {order.stripe_payment_intent_id && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => handleCopyToClipboard(order.stripe_payment_intent_id || '', 'PG 거래번호')}
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
 
-                            {/* Course Items */}
-                            <div>
-                              <div className="text-sm font-medium mb-2">주문 강의</div>
-                              <div className="space-y-2">
-                                {order.order_items?.map((item, index) => (
-                                  <div key={index} className="flex items-center justify-between bg-white border rounded-lg p-3">
-                                    <div className="flex-1">
-                                      <div className="font-medium">{item.course?.title || '강의명 없음'}</div>
-                                      <div className="text-xs text-muted-foreground">강의 ID: {item.course_id}</div>
+                          {/* Order Items */}
+                          <div className="space-y-4">
+                            <h4 className="font-semibold text-sm flex items-center gap-2">
+                              <BookOpen className="h-4 w-4" />
+                              주문 강의 ({order.order_items?.length || 0}개)
+                            </h4>
+                            <div className="space-y-3">
+                              {order.order_items?.map((item, index) => (
+                                <div key={index} className="flex items-center justify-between bg-muted/20 border border-border/50 rounded-lg p-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                                      <BookOpen className="h-4 w-4 text-primary" />
                                     </div>
-                                    <div className="text-right">
-                                      <div className="font-medium">{formatCurrency(item.price || 0)}</div>
+                                    <div>
+                                      <p className="font-medium">{item.course?.title || '강의명 없음'}</p>
+                                      <p className="text-xs text-muted-foreground">강의 ID: {item.course_id}</p>
                                     </div>
                                   </div>
-                                ))}
-                              </div>
+                                  <div className="text-right">
+                                    <p className="font-bold text-primary">{formatCurrency(item.price || 0)}</p>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
+                          </div>
 
-                            {/* Actions */}
-                            <div className="flex gap-2 pt-2 border-t">
-                              <Button size="sm" variant="outline" className="flex-1">
-                                영수증 다운로드
-                              </Button>
-                              <Button size="sm" variant="outline" className="flex-1">
-                                환불 처리
-                              </Button>
-                              <Button size="sm" variant="outline" className="flex-1">
-                                결제 상세보기
-                              </Button>
-                            </div>
+                          {/* Actions */}
+                          <div className="flex gap-3 mt-6 pt-4 border-t">
+                            <Button size="sm" variant="outline" className="flex-1">
+                              <Copy className="h-4 w-4 mr-2" />
+                              영수증 다운로드
+                            </Button>
+                            <Button size="sm" variant="outline" className="flex-1">
+                              <Edit className="h-4 w-4 mr-2" />
+                              환불 처리
+                            </Button>
+                            <Button size="sm" variant="outline" className="flex-1">
+                              <CreditCard className="h-4 w-4 mr-2" />
+                              결제 상세보기
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -902,39 +989,66 @@ export const AdminUserDetail = () => {
             )}
 
             {activeSection === 'activity' && (
-              <Card>
+              <Card className="border-0 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-base">활동 로그</CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2 text-primary">
+                    <Activity className="h-5 w-5" />
+                    활동 로그
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    사용자의 최근 활동 기록을 확인할 수 있습니다.
+                  </p>
                 </CardHeader>
                 <CardContent>
                   {activityLogs.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p>활동 로그가 없습니다.</p>
+                    <div className="text-center py-16">
+                      <div className="w-20 h-20 mx-auto mb-6 bg-muted/20 rounded-full flex items-center justify-center">
+                        <Activity className="h-10 w-10 opacity-50 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">활동 로그가 없습니다</h3>
+                      <p className="text-muted-foreground">아직 기록된 활동이 없습니다.</p>
                     </div>
                   ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>시간</TableHead>
-                          <TableHead>활동</TableHead>
-                          <TableHead>IP 주소</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {activityLogs.map((log) => (
-                          <TableRow key={log.id}>
-                            <TableCell className="text-sm">
-                              {format(new Date(log.created_at), 'MM-dd HH:mm', { locale: ko })}
-                            </TableCell>
-                            <TableCell>{log.action} {log.entity_type && `(${log.entity_type})`}</TableCell>
-                            <TableCell className="font-mono text-xs">
-                              {log.ip_address ? String(log.ip_address) : '-'}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                    <div className="space-y-4">
+                      {activityLogs.map((log, index) => (
+                        <div key={log.id} className="relative">
+                          {/* Timeline connector */}
+                          {index !== activityLogs.length - 1 && (
+                            <div className="absolute left-4 top-12 bottom-0 w-px bg-border z-0" />
+                          )}
+                          
+                          <div className="relative flex items-start gap-4 p-4 bg-card border border-border/50 rounded-lg hover:border-primary/20 transition-colors">
+                            {/* Timeline dot */}
+                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 z-10">
+                              <Activity className="h-4 w-4 text-primary" />
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <p className="font-medium text-sm">
+                                    {log.action}
+                                    {log.entity_type && (
+                                      <span className="text-muted-foreground"> ({log.entity_type})</span>
+                                    )}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {format(new Date(log.created_at), 'yyyy년 MM월 dd일 HH:mm:ss', { locale: ko })}
+                                  </p>
+                                </div>
+                                
+                                {log.ip_address && (
+                                  <div className="text-right">
+                                    <p className="text-xs text-muted-foreground">IP 주소</p>
+                                    <p className="font-mono text-xs">{String(log.ip_address)}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </CardContent>
               </Card>
