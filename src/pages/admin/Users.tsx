@@ -46,7 +46,7 @@ const AdminUsers = () => {
       let query = supabase
         .from('profiles')
         .select('*')
-        .eq('role', 'student'); // 일반 회원만 조회
+        .in('role', ['student', 'admin']); // 일반 회원과 관리자 조회
 
       // 검색어 필터
       if (filters.searchTerm) {
@@ -94,7 +94,7 @@ const AdminUsers = () => {
         totalPayment: 0, // 추후 orders 테이블과 연동
         status: 'active' as const, // 실제로는 활동 상태에 따라 계산 필요
         marketingEmail: profile.marketing_consent || false,
-        group: '미분류' // 그룹 분류 기능 준비중
+        group: profile.role === 'admin' ? '관리자' : '미분류' // 관리자와 일반 회원 구분
       })) || [];
 
       setUsers(usersWithPaymentInfo);
