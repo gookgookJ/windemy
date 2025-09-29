@@ -48,8 +48,8 @@ interface UserListTableProps {
   onDeleteUser: (userId: string) => void;
   onResetPassword: (userId: string) => void;
   onAddNote: (userId: string, userEmail: string) => void;
-  onGroupAssign: (userIds: string[], position: { top: number; left: number }) => void;
-  onGroupCreate: (position: { top: number; left: number }) => void;
+  onGroupAssign: (userIds: string[], triggerElement: HTMLElement) => void;
+  onGroupCreate: (triggerElement: HTMLElement) => void;
   currentPage: number;
   pageSize: number;
   onPageChange: (page: number) => void;
@@ -241,11 +241,7 @@ export const UserListTable = ({
               variant="outline"
               size="sm"
               onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                onGroupAssign(selectedUsers, { 
-                  top: rect.bottom + window.scrollY, 
-                  left: rect.left + window.scrollX 
-                });
+                onGroupAssign(selectedUsers, e.currentTarget);
               }}
               disabled={selectedUsers.length === 0}
               className="h-8"
@@ -257,11 +253,7 @@ export const UserListTable = ({
               variant="outline"
               size="sm"
               onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                onGroupCreate({ 
-                  top: rect.bottom + window.scrollY, 
-                  left: rect.left + window.scrollX 
-                });
+                onGroupCreate(e.currentTarget);
               }}
               className="h-8"
             >

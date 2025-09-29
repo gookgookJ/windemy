@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Users, Check, X } from 'lucide-react';
+import { Search, Users, Check, X, Edit, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -10,7 +10,9 @@ interface GroupAssignmentDropdownProps {
   selectedUsers: string[];
   onClose: () => void;
   onGroupAssigned?: (groupId: string) => void;
-  position?: { top: number; left: number };
+  onGroupDeleted?: () => void;
+  onGroupEdited?: () => void;
+  triggerElement?: HTMLElement | null;
 }
 
 interface UserGroup {
@@ -26,13 +28,18 @@ export function GroupAssignmentDropdown({
   selectedUsers, 
   onClose, 
   onGroupAssigned,
-  position = { top: 0, left: 0 }
+  onGroupDeleted,
+  onGroupEdited,
+  triggerElement
 }: GroupAssignmentDropdownProps) {
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [assigning, setAssigning] = useState(false);
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [editGroupName, setEditGroupName] = useState('');
+  const [position, setPosition] = useState({ top: 0, left: 0 });
   const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -40,6 +47,15 @@ export function GroupAssignmentDropdown({
     setSearchTerm('');
     setSelectedGroupId(null);
     fetchGroups();
+
+    // 위치 계산
+    if (triggerElement) {
+      const rect = triggerElement.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX
+      });
+    }
 
     // 외부 클릭 시 닫기
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,7 +68,7 @@ export function GroupAssignmentDropdown({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [onClose]);
+  }, [onClose, triggerElement]);
 
   const fetchGroups = async () => {
     setLoading(true);
@@ -141,10 +157,86 @@ export function GroupAssignmentDropdown({
     }
   };
 
+  const handleDeleteGroup = async (groupId: string, groupName: string) => {
+    if (!confirm(`"${groupName}" 그룹을 삭제하시겠습니까?\n그룹에 속한 사용자들은 그룹 배정이 해제됩니다.`)) {
+      return;
+    }
+
+    try {
+      // 먼저 해당 그룹의 멤버십을 모두 삭제
+      const { error: membershipError } = await supabase
+        .from('user_group_memberships')
+        .delete()
+        .eq('group_id', groupId);
+
+      if (membershipError) throw membershipError;
+
+      // 그룹 삭제
+      const { error: groupError } = await supabase
+        .from('user_groups')
+        .delete()
+        .eq('id', groupId);
+
+      if (groupError) throw groupError;
+
+      toast({
+        title: "그룹 삭제 완료",
+        description: `"${groupName}" 그룹이 삭제되었습니다.`
+      });
+
+      fetchGroups();
+      onGroupDeleted?.();
+    } catch (error) {
+      console.error('Error deleting group:', error);
+      toast({
+        title: "그룹 삭제 실패",
+        description: "그룹 삭제에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEditGroup = async (groupId: string) => {
+    if (!editGroupName.trim()) {
+      toast({
+        title: "그룹명 필요",
+        description: "그룹명을 입력해주세요.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('user_groups')
+        .update({ name: editGroupName.trim() })
+        .eq('id', groupId);
+
+      if (error) throw error;
+
+      toast({
+        title: "그룹 수정 완료",
+        description: `그룹명이 "${editGroupName.trim()}"으로 변경되었습니다.`
+      });
+
+      setEditingGroupId(null);
+      setEditGroupName('');
+      fetchGroups();
+      onGroupEdited?.();
+    } catch (error) {
+      console.error('Error editing group:', error);
+      toast({
+        title: "그룹 수정 실패",
+        description: "그룹 수정에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div 
       ref={dropdownRef}
-      className="absolute z-50 bg-background border border-border rounded-lg shadow-lg w-80"
+      className="fixed z-50 bg-background border border-border rounded-lg shadow-lg w-80"
       style={{ 
         top: position.top + 5, 
         left: Math.max(10, position.left - 50) // 버튼에서 50px 왼쪽으로, 최소 10px 여백
@@ -196,30 +288,102 @@ export function GroupAssignmentDropdown({
             {filteredGroups.length > 0 ? (
               filteredGroups.map((group, index) => {
                 const selected = selectedGroupId === group.id;
+                const editing = editingGroupId === group.id;
                 return (
-                  <button
-                    type="button"
+                  <div
                     key={group.id}
-                    onClick={() => setSelectedGroupId(group.id)}
-                    className={`flex items-center justify-between w-full p-2 text-left transition-colors text-sm ${
+                    className={`flex items-center w-full transition-colors text-sm ${
                       selected ? 'bg-accent' : 'hover:bg-accent'
                     } ${index !== filteredGroups.length - 1 ? 'border-b' : ''}`}
                   >
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div
-                        className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: group.color }}
-                      />
-                      <div className="truncate">
-                        <p className="font-medium text-xs">{group.name}</p>
+                    {editing ? (
+                      <div className="flex items-center gap-2 w-full p-2">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: group.color }}
+                        />
+                        <Input
+                          value={editGroupName}
+                          onChange={(e) => setEditGroupName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleEditGroup(group.id);
+                            }
+                            if (e.key === 'Escape') {
+                              setEditingGroupId(null);
+                              setEditGroupName('');
+                            }
+                          }}
+                          className="h-6 text-xs flex-1"
+                          autoFocus
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => handleEditGroup(group.id)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Check className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingGroupId(null);
+                            setEditGroupName('');
+                          }}
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Users className="w-3 h-3" />
-                      {group.member_count || 0}
-                      {selected && <Check className="w-3 h-3 text-primary ml-1" />}
-                    </div>
-                  </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedGroupId(group.id)}
+                          className="flex items-center gap-2 flex-1 min-w-0 p-2 text-left"
+                        >
+                          <div
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: group.color }}
+                          />
+                          <div className="truncate">
+                            <p className="font-medium text-xs">{group.name}</p>
+                          </div>
+                        </button>
+                        <div className="flex items-center gap-1 px-2">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground mr-2">
+                            <Users className="w-3 h-3" />
+                            {group.member_count || 0}
+                            {selected && <Check className="w-3 h-3 text-primary ml-1" />}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingGroupId(group.id);
+                              setEditGroupName(group.name);
+                            }}
+                            className="h-6 w-6 p-0 hover:bg-accent-foreground/10"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteGroup(group.id, group.name);
+                            }}
+                            className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 );
               })
             ) : (

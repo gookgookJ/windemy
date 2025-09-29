@@ -9,22 +9,32 @@ import { supabase } from '@/integrations/supabase/client';
 interface GroupCreateDropdownProps {
   onClose: () => void;
   onGroupCreated?: () => void;
-  position?: { top: number; left: number };
+  triggerElement?: HTMLElement | null;
 }
 
 export function GroupCreateDropdown({ 
   onClose, 
   onGroupCreated,
-  position = { top: 0, left: 0 }
+  triggerElement
 }: GroupCreateDropdownProps) {
   const [loading, setLoading] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [success, setSuccess] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
   const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // 위치 계산
+    if (triggerElement) {
+      const rect = triggerElement.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX
+      });
+    }
+
     // 외부 클릭 시 닫기
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -42,7 +52,7 @@ export function GroupCreateDropdown({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [onClose]);
+  }, [onClose, triggerElement]);
 
   const handleCreateGroup = async () => {
     if (!newGroupName.trim()) {
@@ -111,7 +121,7 @@ export function GroupCreateDropdown({
   return (
     <div 
       ref={dropdownRef}
-      className="absolute z-50 bg-background border border-border rounded-lg shadow-lg w-72"
+      className="fixed z-50 bg-background border border-border rounded-lg shadow-lg w-72"
       style={{ 
         top: position.top + 5, 
         left: Math.max(10, position.left - 30) // 버튼에서 30px 왼쪽으로, 최소 10px 여백

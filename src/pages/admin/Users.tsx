@@ -28,10 +28,10 @@ const AdminUsers = () => {
   const [adminNoteModalOpen, setAdminNoteModalOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
-  const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
-  const [groupDropdownPosition, setGroupDropdownPosition] = useState({ top: 0, left: 0 });
-  const [groupCreateDropdownOpen, setGroupCreateDropdownOpen] = useState(false);
-  const [groupCreateDropdownPosition, setGroupCreateDropdownPosition] = useState({ top: 0, left: 0 });
+  const [showGroupAssignmentDropdown, setShowGroupAssignmentDropdown] = useState(false);
+  const [showGroupCreateDropdown, setShowGroupCreateDropdown] = useState(false);
+  const [groupAssignTriggerElement, setGroupAssignTriggerElement] = useState<HTMLElement | null>(null);
+  const [groupCreateTriggerElement, setGroupCreateTriggerElement] = useState<HTMLElement | null>(null);
   
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -266,15 +266,15 @@ const AdminUsers = () => {
     setAdminNoteModalOpen(true);
   };
   
-  const handleGroupAssign = (userIds: string[], position: { top: number; left: number }) => {
+  const handleGroupAssign = (userIds: string[], triggerElement: HTMLElement) => {
     setSelectedUserIds(userIds);
-    setGroupDropdownPosition(position);
-    setGroupDropdownOpen(true);
+    setGroupAssignTriggerElement(triggerElement);
+    setShowGroupAssignmentDropdown(true);
   };
 
-  const handleGroupCreate = (position: { top: number; left: number }) => {
-    setGroupCreateDropdownPosition(position);
-    setGroupCreateDropdownOpen(true);
+  const handleGroupCreate = (triggerElement: HTMLElement) => {
+    setGroupCreateTriggerElement(triggerElement);
+    setShowGroupCreateDropdown(true);
   };
 
   const exportToCSV = (userIds: string[]) => {
@@ -364,28 +364,33 @@ const AdminUsers = () => {
       />
 
       {/* 그룹 생성 드롭다운 */}
-      {groupCreateDropdownOpen && (
+      {showGroupCreateDropdown && (
         <GroupCreateDropdown
-          onClose={() => setGroupCreateDropdownOpen(false)}
+          onClose={() => setShowGroupCreateDropdown(false)}
           onGroupCreated={() => {
-            // 필요시 그룹 목록 새로고침
+            setShowGroupCreateDropdown(false);
+            fetchUsers();
           }}
-          position={groupCreateDropdownPosition}
+          triggerElement={groupCreateTriggerElement}
         />
       )}
 
       {/* 그룹 배정 드롭다운 */}
-      {groupDropdownOpen && (
+      {showGroupAssignmentDropdown && (
         <GroupAssignmentDropdown
           selectedUsers={selectedUserIds}
-          onClose={() => {
-            setGroupDropdownOpen(false);
-            // 체크박스 선택 해제하지 않음
+          onClose={() => setShowGroupAssignmentDropdown(false)}
+          onGroupAssigned={() => {
+            setShowGroupAssignmentDropdown(false);
+            fetchUsers();
           }}
-          onGroupAssigned={async () => {
-            await fetchUsers(); // 그룹 배정 후 사용자 목록 새로고침
+          onGroupDeleted={() => {
+            fetchUsers();
           }}
-          position={groupDropdownPosition}
+          onGroupEdited={() => {
+            fetchUsers();
+          }}
+          triggerElement={groupAssignTriggerElement}
         />
       )}
 
