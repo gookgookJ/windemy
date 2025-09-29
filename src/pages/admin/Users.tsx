@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { UserSummaryDashboard } from '@/components/admin/UserSummaryDashboard';
 import { UserSearchFilter, type UserFilters } from '@/components/admin/UserSearchFilter';
 import { UserListTable, type UserData } from '@/components/admin/UserListTable';
-import { UserDetailModal } from '@/components/admin/UserDetailModal';
+import { UserDetailModal } from '@/components/admin/UserDetailModal'; // Remove this import
 import { CoursePermissionModal } from '@/components/admin/CoursePermissionModal';
 import { GroupManagementModal } from '@/components/admin/GroupManagementModal';
 
@@ -149,8 +149,8 @@ export const AdminUsers = () => {
   };
 
   const handleUserSelect = (userId: string) => {
-    setSelectedUserId(userId);
-    setDetailModalOpen(true);
+    // Navigate to user detail page instead of opening modal
+    window.location.href = `/admin/users/${userId}`;
   };
 
   const handleBulkAction = async (action: string, userIds: string[]) => {
@@ -269,15 +269,7 @@ export const AdminUsers = () => {
           onStatusChange={handleStatusChange}
         />
 
-        {/* 사용자 상세 정보 모달 */}
-        <UserDetailModal
-          userId={selectedUserId}
-          open={detailModalOpen}
-          onClose={() => {
-            setDetailModalOpen(false);
-            setSelectedUserId(null);
-          }}
-        />
+        {/* Remove UserDetailModal since we're using a separate page now */}
 
         {/* 강의 권한 관리 모달 */}
         <CoursePermissionModal
