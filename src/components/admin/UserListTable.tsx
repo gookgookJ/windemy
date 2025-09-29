@@ -34,7 +34,8 @@ export interface UserData {
   totalPayment: number;
   status: 'active' | 'dormant';
   marketingEmail: boolean;
-  group?: string; // 그룹 분류 (현재 미사용)
+  role?: string; // 사용자 역할 (admin, student 등)
+  group?: string; // 그룹 분류
 }
 
 interface UserListTableProps {

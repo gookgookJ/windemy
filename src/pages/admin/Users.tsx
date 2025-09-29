@@ -100,8 +100,8 @@ const AdminUsers = () => {
         totalPayment: 0, // 추후 orders 테이블과 연동
         status: 'active' as const, // 실제로는 활동 상태에 따라 계산 필요
         marketingEmail: profile.marketing_consent || false,
-        // 기본값: 관리자는 '관리자', 그 외는 빈 값 (이후 그룹 요약으로 채움)
-        group: profile.role === 'admin' ? '관리자' : ''
+        role: profile.role, // 역할 정보 보존
+        group: '' // 초기값은 빈 문자열로 설정
       })) || [];
 
       // 그룹 요약(view)로부터 사용자별 그룹명 가져와 병합
@@ -121,10 +121,23 @@ const AdminUsers = () => {
         }
       }
 
-      const usersWithGroup = baseUsers.map(u => ({
-        ...u,
-        group: u.group || groupNameByUserId[u.id] || '미분류'
-      }));
+      const usersWithGroup = baseUsers.map(u => {
+        // 실제 그룹 배정이 있으면 그것을 사용, 없으면 역할별 기본 그룹명 사용
+        const actualGroup = groupNameByUserId[u.id];
+        let finalGroup = '';
+        
+        if (actualGroup) {
+          finalGroup = actualGroup;
+        } else {
+          // 그룹 배정이 없는 경우 역할별 기본값
+          finalGroup = u.role === 'admin' ? '관리자' : '미분류';
+        }
+        
+        return {
+          ...u,
+          group: finalGroup
+        };
+      });
 
       setUsers(usersWithGroup);
       setCurrentPage(1); // Reset to first page when filters change
