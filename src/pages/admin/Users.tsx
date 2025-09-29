@@ -285,9 +285,6 @@ const AdminUsers = () => {
           <p className="text-muted-foreground mt-2 text-base">등록된 회원들을 조회하고 효율적으로 관리할 수 있습니다</p>
         </div>
 
-        {/* 요약 대시보드 */}
-        <UserSummaryDashboard />
-
         {/* 검색 및 필터링 영역 */}
         <UserSearchFilter
           filters={filters}
