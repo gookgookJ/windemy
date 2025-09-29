@@ -177,15 +177,16 @@ export const UserListTable = ({
             }`}>
               {selectedUsers.length > 0 ? `${selectedUsers.length}명 선택됨` : '선택된 회원 없음'}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onSelectedUsersChange([])}
-              disabled={selectedUsers.length === 0}
-              className="h-8 text-muted-foreground hover:text-foreground"
-            >
-              선택 해제
-            </Button>
+            {selectedUsers.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onSelectedUsersChange([])}
+                className="h-8 text-muted-foreground hover:text-foreground"
+              >
+                선택 해제
+              </Button>
+            )}
           </div>
           
           {/* 작업 툴바 */}
