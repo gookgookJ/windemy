@@ -18,8 +18,8 @@ const AdminUsers = () => {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [coursePermissionModalOpen, setCoursePermissionModalOpen] = useState(false);
   const [groupManagementModalOpen, setGroupManagementModalOpen] = useState(false);
-  const [couponModalOpen, setCouponModalOpen] = useState(false);
-  const [pointsModalOpen, setPointsModalOpen] = useState(false);
+  // const [couponModalOpen, setCouponModalOpen] = useState(false);
+  // const [pointsModalOpen, setPointsModalOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<UserFilters>({
     searchTerm: '',
@@ -198,13 +198,17 @@ const AdminUsers = () => {
   };
 
   const handleCouponDistribute = (userIds: string[]) => {
-    setSelectedUserIds(userIds);
-    setCouponModalOpen(true);
+    // Temporarily disabled for debugging
+    console.log('Coupon distribution requested for users:', userIds);
+    // setSelectedUserIds(userIds);
+    // setCouponModalOpen(true);
   };
 
   const handlePointsDistribute = (userIds: string[]) => {
-    setSelectedUserIds(userIds);
-    setPointsModalOpen(true);
+    // Temporarily disabled for debugging
+    console.log('Points distribution requested for users:', userIds);
+    // setSelectedUserIds(userIds);
+    // setPointsModalOpen(true);
   };
 
   const handleStatusChange = async (userId: string, newStatus: string) => {
