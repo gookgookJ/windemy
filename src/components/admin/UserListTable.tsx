@@ -74,7 +74,7 @@ export const UserListTable = ({
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedUsers(users.map(user => user.id));
+      setSelectedUsers(paginatedUsers.map(user => user.id));
     } else {
       setSelectedUsers([]);
     }
@@ -216,7 +216,7 @@ export const UserListTable = ({
               <TableRow className="bg-muted/30">
                 <TableHead className="w-12">
                   <Checkbox
-                    checked={selectedUsers.length === users.length && users.length > 0}
+                    checked={selectedUsers.length === paginatedUsers.length && paginatedUsers.length > 0}
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>

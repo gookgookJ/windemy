@@ -103,10 +103,9 @@ export const UserSearchFilter = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">전체 그룹</SelectItem>
-                  <SelectItem value="vip">VIP 고객</SelectItem>
-                  <SelectItem value="new">신규 회원</SelectItem>
-                  <SelectItem value="inactive">장기 미접속</SelectItem>
-                  <SelectItem value="completed">수강 완료자</SelectItem>
+                  <SelectItem value="admin">관리자</SelectItem>
+                  <SelectItem value="instructor">강사</SelectItem>
+                  <SelectItem value="student">학생</SelectItem>
                 </SelectContent>
               </Select>
             </div>

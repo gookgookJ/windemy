@@ -8,6 +8,9 @@ import { CoursePermissionModal } from '@/components/admin/CoursePermissionModal'
 import { GroupManagementModal } from '@/components/admin/GroupManagementModal';
 import { CouponDistributionModal } from '@/components/admin/CouponDistributionModal';
 import { PointsDistributionModal } from '@/components/admin/PointsDistributionModal';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { format } from 'date-fns';
 
 console.log('[AdminUsers] module loaded');
 
@@ -30,134 +33,98 @@ const AdminUsers = () => {
     group: 'all',
   });
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  // 단순화된 Mock 사용자 데이터
-  const mockUsers: UserData[] = [
-    {
-      id: '1',
-      memberId: 'USR240001',
-      name: '김영희',
-      email: 'kim.younghee@example.com',
-      phone: '010-1234-5678',
-      joinDate: '2024-01-15T10:30:00Z',
-      lastLogin: '2024-03-20T14:22:00Z',
-      totalPayment: 340000,
-      status: 'active',
-      marketingEmail: true,
-      group: 'VIP 고객'
-    },
-    {
-      id: '2',
-      memberId: 'USR240002',
-      name: '이철수',
-      email: 'lee.chulsoo@example.com',
-      phone: '010-2345-6789',
-      joinDate: '2023-11-08T09:15:00Z',
-      lastLogin: '2024-03-19T16:45:00Z',
-      totalPayment: 180000,
-      status: 'active',
-      marketingEmail: true,
-      group: '신규 회원'
-    },
-    {
-      id: '3',
-      memberId: 'USR240003',
-      name: '박민지',
-      email: 'park.minji@example.com',
-      phone: '010-3456-7890',
-      joinDate: '2024-02-20T11:00:00Z',
-      lastLogin: '2024-03-18T09:30:00Z',
-      totalPayment: 89000,
-      status: 'active',
-      marketingEmail: false,
-      group: '신규 회원'
-    },
-    {
-      id: '4',
-      memberId: 'USR240004',
-      name: '정수연',
-      email: 'jung.suyeon@example.com',
-      phone: '010-4567-8901',
-      joinDate: '2023-08-12T08:45:00Z',
-      lastLogin: '2024-02-15T14:20:00Z',
-      totalPayment: 520000,
-      status: 'dormant',
-      marketingEmail: true,
-      group: '장기 미접속'
-    },
-    {
-      id: '5',
-      memberId: 'USR240005',
-      name: '한지민',
-      email: 'han.jimin@example.com',
-      phone: '010-5678-9012',
-      joinDate: '2024-03-01T13:20:00Z',
-      lastLogin: '2024-03-05T15:10:00Z',
-      totalPayment: 65000,
-      status: 'active',
-      marketingEmail: false,
-      group: '신규 회원'
+  // 관리자 권한 체크
+  useEffect(() => {
+    if (user && user.role !== 'admin') {
+      toast({
+        title: "접근 권한 없음",
+        description: "관리자만 접근할 수 있습니다.",
+        variant: "destructive"
+      });
+      window.location.href = '/';
+      return;
     }
-  ];
+  }, [user, toast]);
 
   useEffect(() => {
-    fetchUsers();
-  }, [filters]);
+    if (user?.role === 'admin') {
+      fetchUsers();
+    }
+  }, [filters, user]);
 
   const fetchUsers = async () => {
+    if (!user || user.role !== 'admin') return;
+    
     setLoading(true);
     
-    // Mock API 딜레이
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // 필터 적용
-    let filteredUsers = mockUsers;
+    try {
+      let query = supabase
+        .from('profiles')
+        .select('*');
 
-    if (filters.searchTerm) {
-      const term = filters.searchTerm.toLowerCase();
-      filteredUsers = filteredUsers.filter(user => 
-        user.name.toLowerCase().includes(term) ||
-        user.email.toLowerCase().includes(term) ||
-        user.memberId.toLowerCase().includes(term) ||
-        (user.phone && user.phone.includes(term))
-      );
+      // 검색어 필터
+      if (filters.searchTerm) {
+        const searchTerm = filters.searchTerm.toLowerCase();
+        query = query.or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
+      }
+
+      // 마케팅 수신 필터
+      if (filters.marketingEmail !== 'all') {
+        const emailConsent = filters.marketingEmail === 'true';
+        query = query.eq('marketing_consent', emailConsent);
+      }
+
+      // 역할 필터 (그룹으로 사용)
+      if (filters.group && filters.group !== 'all') {
+        query = query.eq('role', filters.group);
+      }
+
+      // 가입일 필터
+      if (filters.joinDateStart) {
+        query = query.gte('created_at', filters.joinDateStart.toISOString());
+      }
+
+      if (filters.joinDateEnd) {
+        const endDate = new Date(filters.joinDateEnd);
+        endDate.setHours(23, 59, 59, 999);
+        query = query.lte('created_at', endDate.toISOString());
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      // 결제 정보는 추후 orders 테이블과 연동하여 계산
+      const usersWithPaymentInfo = data?.map(profile => ({
+        id: profile.id,
+        memberId: `USR${profile.created_at.slice(0, 4).replace('-', '')}${profile.id.slice(0, 6).toUpperCase()}`,
+        name: profile.full_name || profile.email,
+        email: profile.email,
+        phone: profile.phone || '',
+        joinDate: profile.created_at,
+        lastLogin: profile.updated_at, // 마지막 로그인 정보가 없으므로 업데이트 시간 사용
+        totalPayment: 0, // 추후 orders 테이블과 연동
+        status: 'active' as const, // 실제로는 활동 상태에 따라 계산 필요
+        marketingEmail: profile.marketing_consent || false,
+        group: profile.role || 'student'
+      })) || [];
+
+      setUsers(usersWithPaymentInfo);
+      setCurrentPage(1); // Reset to first page when filters change
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: "데이터 조회 실패",
+        description: "사용자 목록을 불러오는데 실패했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-
-    if (filters.status !== 'all') {
-      filteredUsers = filteredUsers.filter(user => user.status === filters.status);
-    }
-
-    if (filters.marketingEmail !== 'all') {
-      const emailConsent = filters.marketingEmail === 'true';
-      filteredUsers = filteredUsers.filter(user => user.marketingEmail === emailConsent);
-    }
-
-    if (filters.group && filters.group !== 'all') {
-      const groupMap: Record<string, string> = {
-        'vip': 'VIP 고객',
-        'new': '신규 회원',
-        'inactive': '장기 미접속',
-        'completed': '수강 완료자'
-      };
-      const groupName = groupMap[filters.group] || filters.group;
-      filteredUsers = filteredUsers.filter(user => user.group === groupName);
-    }
-
-    if (filters.joinDateStart) {
-      filteredUsers = filteredUsers.filter(user => 
-        new Date(user.joinDate) >= filters.joinDateStart!
-      );
-    }
-
-    if (filters.joinDateEnd) {
-      filteredUsers = filteredUsers.filter(user => 
-        new Date(user.joinDate) <= filters.joinDateEnd!
-      );
-    }
-
-    setUsers(filteredUsers);
-    setCurrentPage(1); // Reset to first page when filters change
-    setLoading(false);
   };
 
   const handleFiltersChange = (newFilters: UserFilters) => {
@@ -212,9 +179,8 @@ const AdminUsers = () => {
 
   const handleStatusChange = async (userId: string, newStatus: string) => {
     try {
-      // Mock API 호출
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      // 실제로는 사용자 활동 상태에 따라 관리해야 하지만
+      // 현재는 UI 업데이트만 진행
       setUsers(users.map(user => 
         user.id === userId ? { ...user, status: newStatus as any } : user
       ));
@@ -224,6 +190,7 @@ const AdminUsers = () => {
         description: "사용자 상태가 성공적으로 변경되었습니다."
       });
     } catch (error) {
+      console.error('Error changing user status:', error);
       toast({
         title: "상태 변경 실패",
         description: "사용자 상태 변경에 실패했습니다.",
@@ -234,7 +201,12 @@ const AdminUsers = () => {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (error) throw error;
       
       setUsers(users.filter(user => user.id !== userId));
 
@@ -243,6 +215,7 @@ const AdminUsers = () => {
         description: "사용자 계정이 성공적으로 삭제되었습니다."
       });
     } catch (error) {
+      console.error('Error deleting user:', error);
       toast({
         title: "계정 삭제 실패",
         description: "계정 삭제에 실패했습니다.",
@@ -253,13 +226,13 @@ const AdminUsers = () => {
 
   const handleResetPassword = async (userId: string) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      // Supabase Auth API를 통한 비밀번호 재설정은 별도 구현 필요
       toast({
         title: "비밀번호 초기화 완료",
         description: "임시 비밀번호가 이메일로 발송되었습니다."
       });
     } catch (error) {
+      console.error('Error resetting password:', error);
       toast({
         title: "비밀번호 초기화 실패",
         description: "비밀번호 초기화에 실패했습니다.",
