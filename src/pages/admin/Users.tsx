@@ -6,8 +6,8 @@ import { UserSearchFilter, type UserFilters } from '@/components/admin/UserSearc
 import { UserListTable, type UserData } from '@/components/admin/UserListTable';
 import { CoursePermissionModal } from '@/components/admin/CoursePermissionModal';
 import { GroupManagementModal } from '@/components/admin/GroupManagementModal';
-// import { CouponDistributionModal } from '@/components/admin/CouponDistributionModal';
-// import { PointsDistributionModal } from '@/components/admin/PointsDistributionModal';
+import { CouponDistributionModal } from '@/components/admin/CouponDistributionModal';
+import { PointsDistributionModal } from '@/components/admin/PointsDistributionModal';
 
 console.log('[AdminUsers] module loaded');
 
@@ -18,8 +18,8 @@ const AdminUsers = () => {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [coursePermissionModalOpen, setCoursePermissionModalOpen] = useState(false);
   const [groupManagementModalOpen, setGroupManagementModalOpen] = useState(false);
-  // const [couponModalOpen, setCouponModalOpen] = useState(false);
-  // const [pointsModalOpen, setPointsModalOpen] = useState(false);
+  const [couponModalOpen, setCouponModalOpen] = useState(false);
+  const [pointsModalOpen, setPointsModalOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<UserFilters>({
     searchTerm: '',
@@ -198,17 +198,13 @@ const AdminUsers = () => {
   };
 
   const handleCouponDistribute = (userIds: string[]) => {
-    // Temporarily disabled for debugging
-    console.log('Coupon distribution requested for users:', userIds);
-    // setSelectedUserIds(userIds);
-    // setCouponModalOpen(true);
+    setSelectedUserIds(userIds);
+    setCouponModalOpen(true);
   };
 
   const handlePointsDistribute = (userIds: string[]) => {
-    // Temporarily disabled for debugging
-    console.log('Points distribution requested for users:', userIds);
-    // setSelectedUserIds(userIds);
-    // setPointsModalOpen(true);
+    setSelectedUserIds(userIds);
+    setPointsModalOpen(true);
   };
 
   const handleStatusChange = async (userId: string, newStatus: string) => {
@@ -360,8 +356,6 @@ const AdminUsers = () => {
           }}
         />
 
-{/* CouponDistributionModal temporarily disabled for debugging */}
-{/*
         <CouponDistributionModal
           open={couponModalOpen}
           onClose={() => {
@@ -379,7 +373,6 @@ const AdminUsers = () => {
           }}
           selectedUsers={selectedUserIds}
         />
-*/}
       </div>
     </AdminLayout>
   );
