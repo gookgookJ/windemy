@@ -73,22 +73,23 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
+      <DialogContent className="max-w-5xl h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader className="border-b pb-4 flex-shrink-0">
+          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+            <Settings className="h-5 w-5 text-primary" />
             강의 권한 관리
+            {userId && <span className="text-sm text-muted-foreground ml-2">• 사용자 ID: {userId}</span>}
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="permissions" className="flex-1 flex flex-col">
-          <TabsList className="grid grid-cols-3 mb-6">
-            <TabsTrigger value="permissions">개별 권한 설정</TabsTrigger>
-            <TabsTrigger value="groups">그룹 관리</TabsTrigger>
-            <TabsTrigger value="history">권한 내역</TabsTrigger>
+        <Tabs defaultValue="permissions" className="flex-1 flex flex-col min-h-0">
+          <TabsList className="grid grid-cols-3 mb-4 bg-muted/30 flex-shrink-0">
+            <TabsTrigger value="permissions" className="font-medium data-[state=active]:bg-background">개별 권한 설정</TabsTrigger>
+            <TabsTrigger value="groups" className="font-medium data-[state=active]:bg-background">그룹 관리</TabsTrigger>
+            <TabsTrigger value="history" className="font-medium data-[state=active]:bg-background">권한 내역</TabsTrigger>
           </TabsList>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto pr-2 min-h-0">
             <TabsContent value="permissions" className="space-y-6 mt-0">
               {/* 강의 검색 및 선택 */}
               <Card>
@@ -215,14 +216,52 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
             </TabsContent>
 
             <TabsContent value="groups" className="space-y-6 mt-0">
-              {/* 그룹 생성 */}
+              {/* 그룹 생성 폼 */}
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-base">고객 그룹 관리</CardTitle>
-                  <Button size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    새 그룹 생성
-                  </Button>
+                <CardHeader>
+                  <CardTitle className="text-base">새 그룹 생성</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">그룹명</label>
+                      <Input placeholder="예: 신규 VIP 회원" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">그룹 설명</label>
+                      <Input placeholder="그룹 특징을 간단히 설명하세요" />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">기본 제공 강의</label>
+                    <div className="border rounded-lg p-3 max-h-32 overflow-y-auto">
+                      {mockCourses.map(course => (
+                        <div key={course.id} className="flex items-center space-x-2 py-1">
+                          <Checkbox id={`group-course-${course.id}`} />
+                          <label htmlFor={`group-course-${course.id}`} className="text-sm font-medium">
+                            {course.title}
+                          </label>
+                          <Badge variant="outline" className="text-xs">{course.category}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" size="sm">취소</Button>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      그룹 생성
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 기존 그룹 목록 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">기존 그룹 관리</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -231,21 +270,25 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
                         <TableHead>그룹명</TableHead>
                         <TableHead>회원수</TableHead>
                         <TableHead>포함된 강의</TableHead>
-                        <TableHead>관리</TableHead>
+                        <TableHead>생성일</TableHead>
+                        <TableHead className="text-right">관리</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {mockUserGroups.map(group => (
-                        <TableRow key={group.id}>
+                        <TableRow key={group.id} className="hover:bg-muted/30">
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-muted-foreground" />
+                              <Users className="h-4 w-4 text-primary" />
                               {group.name}
                             </div>
                           </TableCell>
-                          <TableCell>{group.memberCount}명</TableCell>
                           <TableCell>
-                            <div className="flex gap-1">
+                            <span className="font-medium text-primary">{group.memberCount}</span>
+                            <span className="text-muted-foreground">명</span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
                               {group.courses.slice(0, 2).map(courseId => (
                                 <Badge key={courseId} variant="outline" className="text-xs">
                                   {mockCourses.find(c => c.id === courseId)?.title}
@@ -258,10 +301,16 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
                               )}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline">편집</Button>
-                              <Button size="sm" variant="ghost">
+                          <TableCell className="text-sm text-muted-foreground">2024-01-15</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex gap-1 justify-end">
+                              <Button size="sm" variant="outline" className="h-8 px-3">
+                                회원 관리
+                              </Button>
+                              <Button size="sm" variant="outline" className="h-8 px-3">
+                                편집
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive hover:text-destructive">
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>

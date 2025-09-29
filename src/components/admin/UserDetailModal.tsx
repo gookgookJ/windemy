@@ -133,8 +133,8 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col">
-        <DialogHeader className="border-b pb-4">
+      <DialogContent className="max-w-5xl h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="border-b pb-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex flex-col gap-1">
@@ -161,16 +161,13 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
                 <MessageCircle className="h-4 w-4 mr-2" />
                 메시지
               </Button>
-              <Button size="sm" variant="ghost" onClick={onClose} className="h-9 w-9 p-0">
-                <X className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden min-h-0">
           <Tabs defaultValue="profile" className="w-full h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-4 mb-6 bg-muted/30">
+            <TabsList className="grid w-full grid-cols-4 mb-4 bg-muted/30 flex-shrink-0">
               <TabsTrigger value="profile" className="flex items-center gap-2 font-medium data-[state=active]:bg-background">
                 <User className="h-4 w-4" />
                 회원 정보
@@ -189,7 +186,7 @@ export const UserDetailModal = ({ userId, open, onClose }: UserDetailModalProps)
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 overflow-y-auto pr-2">
+            <div className="flex-1 overflow-y-auto pr-2 min-h-0">
               <TabsContent value="profile" className="space-y-6 mt-0">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* 기본 정보 */}
