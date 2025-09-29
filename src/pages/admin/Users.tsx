@@ -474,6 +474,24 @@ const AdminUsers = () => {
           description: "선택된 회원들의 상태 변경 기능은 추후 구현 예정입니다."
         });
         break;
+      case 'role_change':
+        if (userIds.length === 0) {
+          toast({ title: '선택된 사용자 없음', description: '권한을 변경할 사용자를 선택해주세요.' });
+          return;
+        }
+        if (userIds.length > 1) {
+          toast({ title: '한 명만 선택', description: '권한 변경은 한 번에 한 명씩만 가능합니다.' });
+          return;
+        }
+        {
+          const target = users.find(u => u.id === userIds[0]);
+          if (!target) {
+            toast({ title: '사용자 찾을 수 없음', description: '선택한 사용자를 찾을 수 없습니다.', variant: 'destructive' });
+            return;
+          }
+          handleRoleChange(target.id, target.name, target.email, target.role || 'student');
+        }
+        break;
       default:
         toast({
           title: "기능 준비 중",

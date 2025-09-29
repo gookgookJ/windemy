@@ -439,7 +439,7 @@ export const UserListTable = ({
                       <SelectTrigger className="w-[100px] h-8 text-xs">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-50 bg-background">
                         {roles.map((role) => (
                           <SelectItem key={role.value} value={role.value} className="text-xs">
                             <div className="flex items-center gap-2">
