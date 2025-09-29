@@ -6,7 +6,6 @@ import { UserSearchFilter, type UserFilters } from '@/components/admin/UserSearc
 import { UserListTable, type UserData } from '@/components/admin/UserListTable';
 import { CoursePermissionModal } from '@/components/admin/CoursePermissionModal';
 import { GroupManagementModal } from '@/components/admin/GroupManagementModal';
-import { UserDetailModal } from '@/components/admin/UserDetailModal';
 import { CouponDistributionModal } from '@/components/admin/CouponDistributionModal';
 import { PointsDistributionModal } from '@/components/admin/PointsDistributionModal';
 
@@ -173,8 +172,8 @@ const AdminUsers = () => {
   };
 
   const handleUserSelect = (userId: string) => {
-    setSelectedUserId(userId);
-    setDetailModalOpen(true);
+    // Navigate to user detail page instead of opening modal
+    window.location.href = `/admin/users/${userId}`;
   };
 
   const handleBulkAction = async (action: string, userIds: string[]) => {
@@ -329,16 +328,6 @@ const AdminUsers = () => {
           onPointsDistribute={handlePointsDistribute}
           onDeleteUser={handleDeleteUser}
           onResetPassword={handleResetPassword}
-        />
-
-        {/* 사용자 상세보기 모달 */}
-        <UserDetailModal
-          open={detailModalOpen}
-          onClose={() => {
-            setDetailModalOpen(false);
-            setSelectedUserId(null);
-          }}
-          userId={selectedUserId}
         />
 
         {/* Remove UserDetailModal since we're using a separate page now */}
