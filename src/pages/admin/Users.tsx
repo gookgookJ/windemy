@@ -8,6 +8,7 @@ import { CoursePermissionModal } from '@/components/admin/CoursePermissionModal'
 import { GroupManagementModal } from '@/components/admin/GroupManagementModal';
 import { CouponDistributionModal } from '@/components/admin/CouponDistributionModal';
 import { PointsDistributionModal } from '@/components/admin/PointsDistributionModal';
+import { AdminNoteModal } from '@/components/admin/AdminNoteModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
@@ -23,7 +24,9 @@ const AdminUsers = () => {
   const [groupManagementModalOpen, setGroupManagementModalOpen] = useState(false);
   const [couponModalOpen, setCouponModalOpen] = useState(false);
   const [pointsModalOpen, setPointsModalOpen] = useState(false);
+  const [adminNoteModalOpen, setAdminNoteModalOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [filters, setFilters] = useState<UserFilters>({
@@ -225,6 +228,13 @@ const AdminUsers = () => {
     }
   };
 
+  
+  const handleAddNote = (userId: string, userEmail: string) => {
+    setSelectedUserId(userId);
+    setSelectedUserEmail(userEmail);
+    setAdminNoteModalOpen(true);
+  };
+
   const exportToCSV = (userIds: string[]) => {
     const selectedUsers = users.filter(user => userIds.includes(user.id));
     const csvContent = [
@@ -288,6 +298,7 @@ const AdminUsers = () => {
           onPointsDistribute={handlePointsDistribute}
           onDeleteUser={handleDeleteUser}
           onResetPassword={handleResetPassword}
+          onAddNote={handleAddNote}
           currentPage={currentPage}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
@@ -339,6 +350,20 @@ const AdminUsers = () => {
             setSelectedUserIds([]);
           }}
           selectedUsers={selectedUserIds}
+        />
+
+        <AdminNoteModal
+          open={adminNoteModalOpen}
+          onClose={() => {
+            setAdminNoteModalOpen(false);
+            setSelectedUserId(null);
+            setSelectedUserEmail('');
+          }}
+          userId={selectedUserId || ''}
+          userEmail={selectedUserEmail}
+          onNoteSaved={() => {
+            // 필요시 사용자 목록 새로고침 등의 작업 수행
+          }}
         />
       </div>
     </AdminLayout>

@@ -56,6 +56,20 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "activity_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "activity_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       admin_notes: {
@@ -133,6 +147,20 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "announcements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "announcements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       blog_update_history: {
@@ -195,6 +223,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "cart_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -284,6 +326,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupons_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "coupons_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -521,6 +577,20 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "course_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "course_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       course_sections: {
@@ -688,6 +758,20 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "courses_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "courses_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       enrollments: {
@@ -729,6 +813,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "enrollments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -801,6 +899,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hero_slides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "hero_slides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1008,6 +1120,20 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       points_transactions: {
@@ -1053,6 +1179,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "points_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "points_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "points_transactions_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
@@ -1065,6 +1205,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "points_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "points_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1275,6 +1429,20 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "session_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "session_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       support_tickets: {
@@ -1326,11 +1494,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "support_tickets_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "support_tickets_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "support_tickets_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1373,6 +1569,110 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "system_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "system_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      user_coupons: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          coupon_id: string
+          id: string
+          is_used: boolean
+          order_id: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          coupon_id: string
+          id?: string
+          is_used?: boolean
+          order_id?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          coupon_id?: string
+          id?: string
+          is_used?: boolean
+          order_id?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_coupons_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_coupons_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_coupons_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_coupons_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_coupons_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_coupons_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_coupons_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_coupons_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       user_group_memberships: {
@@ -1406,6 +1706,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "user_group_memberships_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_group_memberships_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "user_group_memberships_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
@@ -1418,6 +1732,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_group_memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_group_memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1456,6 +1784,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_groups_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_groups_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1575,6 +1917,63 @@ export type Database = {
       }
     }
     Views: {
+      user_activity_stats: {
+        Row: {
+          action_types: string[] | null
+          active_days: number | null
+          last_activity: string | null
+          total_activities: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "activity_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      user_enrollment_summary: {
+        Row: {
+          completed_courses: number | null
+          email: string | null
+          full_name: string | null
+          last_enrollment_date: string | null
+          last_order_date: string | null
+          total_enrollments: number | null
+          total_orders: number | null
+          total_spent: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      user_group_summary: {
+        Row: {
+          email: string | null
+          full_name: string | null
+          group_colors: string[] | null
+          group_count: number | null
+          group_names: string[] | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       user_points_balance: {
         Row: {
           total_earned: number | null
@@ -1589,6 +1988,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "points_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_enrollment_summary"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "points_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_group_summary"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1665,6 +2078,10 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_user_points_balance: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
       get_user_role_safe: {
         Args: { user_uuid?: string }
         Returns: string
@@ -1679,6 +2096,16 @@ export type Database = {
       }
       log_security_event: {
         Args: { details_param?: Json; event_type_param: string }
+        Returns: undefined
+      }
+      log_user_activity: {
+        Args: {
+          p_action: string
+          p_details?: Json
+          p_entity_id?: string
+          p_entity_type?: string
+          p_user_id: string
+        }
         Returns: undefined
       }
       sanitize_user_input: {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, ArrowUpDown, Download, Settings, Eye, Users2, Gift, Coins } from 'lucide-react';
+import { MoreHorizontal, ArrowUpDown, Download, Settings, Eye, Users2, Gift, Coins, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,6 +35,7 @@ interface UserListTableProps {
   onPointsDistribute: (userIds: string[]) => void;
   onDeleteUser: (userId: string) => void;
   onResetPassword: (userId: string) => void;
+  onAddNote: (userId: string, userEmail: string) => void;
   currentPage: number;
   pageSize: number;
   onPageChange: (page: number) => void;
@@ -61,6 +62,7 @@ export const UserListTable = ({
   onPointsDistribute,
   onDeleteUser,
   onResetPassword,
+  onAddNote,
   currentPage,
   pageSize,
   onPageChange,
@@ -340,6 +342,10 @@ export const UserListTable = ({
                         <DropdownMenuItem onClick={() => onResetPassword(user.id)}>
                           <Settings className="mr-2 h-4 w-4" />
                           비밀번호 초기화
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onAddNote(user.id, user.email)}>
+                          <FileText className="mr-2 h-4 w-4" />
+                          관리자 메모 추가
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
