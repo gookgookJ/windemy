@@ -4,15 +4,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Search, Plus, Calendar as CalendarIcon, Trash2, Settings, Users, Filter, Clock, CheckCircle, BookOpen, Crown, AlertCircle } from 'lucide-react';
-import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import { Search, Settings, BookOpen, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -44,9 +39,6 @@ interface Enrollment {
 export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissionModalProps) => {
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
-  const [selectedGroup, setSelectedGroup] = useState<string>('');
   const [activeTab, setActiveTab] = useState('permissions');
   const [loading, setLoading] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -173,7 +165,7 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl h-[85vh] overflow-hidden flex flex-col bg-background">
+      <DialogContent className="max-w-4xl h-[85vh] overflow-hidden flex flex-col bg-background">
         <DialogHeader className="border-b bg-gradient-to-r from-primary/5 to-primary/10 pb-6 pt-6 px-6 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -200,314 +192,131 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
           </div>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 px-6">
-          <TabsList className="grid grid-cols-3 mb-4 bg-muted/30 flex-shrink-0 h-12">
-            <TabsTrigger value="permissions" className="font-medium data-[state=active]:bg-background h-10 gap-2">
-              <BookOpen className="h-4 w-4" />
-              개별 권한 설정
-            </TabsTrigger>
-            <TabsTrigger value="groups" className="font-medium data-[state=active]:bg-background h-10 gap-2">
-              <Users className="h-4 w-4" />
-              그룹 관리
-            </TabsTrigger>
-            <TabsTrigger value="history" className="font-medium data-[state=active]:bg-background h-10 gap-2">
-              <Clock className="h-4 w-4" />
-              권한 내역
-            </TabsTrigger>
-          </TabsList>
+        <div className="flex-1 overflow-y-auto pr-2 min-h-0 space-y-6 px-6">
+          {/* 강의 검색 및 선택 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">강의 권한 부여</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-3">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="강의명 또는 카테고리로 검색..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
 
-          <div className="flex-1 overflow-y-auto pr-2 min-h-0 space-y-6">
-            <TabsContent value="permissions" className="space-y-6 mt-0">
-              {/* 강의 검색 및 선택 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">강의 권한 부여</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex gap-3">
-                    <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="강의명 또는 카테고리로 검색..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                    <Select value={selectedGroup} onValueChange={setSelectedGroup} disabled>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="그룹 기능 준비중" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="disabled">그룹 기능 준비중</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12"></TableHead>
+                    <TableHead>강의명</TableHead>
+                    <TableHead>카테고리</TableHead>
+                    <TableHead>가격</TableHead>
+                    <TableHead>현재 상태</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCourses.map(course => (
+                    <TableRow key={course.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedCourses.includes(course.id)}
+                          onCheckedChange={(checked) => handleCourseSelect(course.id, checked as boolean)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{course.title}</TableCell>
+                      <TableCell>{course.category?.name || '미분류'}</TableCell>
+                      <TableCell>{course.price.toLocaleString()}원</TableCell>
+                      <TableCell>
+                        <Badge variant={course.hasAccess ? 'default' : 'secondary'}>
+                          {course.hasAccess ? '권한 있음' : '권한 없음'}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12"></TableHead>
-                        <TableHead>강의명</TableHead>
-                        <TableHead>카테고리</TableHead>
-                        <TableHead>가격</TableHead>
-                        <TableHead>현재 상태</TableHead>
+          {/* 권한 부여 액션 */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex justify-between items-center pt-4 border-t bg-muted/20 -mx-6 px-6 py-4">
+                <div className="text-sm text-muted-foreground">
+                  {selectedCourses.length > 0 ? (
+                    <span className="flex items-center gap-2 text-green-600">
+                      <CheckCircle className="h-4 w-4" />
+                      {selectedCourses.length}개 강의 선택됨
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <AlertCircle className="h-4 w-4" />
+                      강의를 선택해주세요
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={onClose}>
+                    취소
+                  </Button>
+                  <Button 
+                    disabled={selectedCourses.length === 0 || loading || !userId}
+                    onClick={handlePermissionGrant}
+                    className="gap-2"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    {loading ? '처리중...' : `권한 부여 (${selectedCourses.length}개)`}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 현재 권한 내역 */}
+          {enrollments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  현재 권한 내역
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>강의명</TableHead>
+                      <TableHead>등록일</TableHead>
+                      <TableHead>상태</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {enrollments.map(enrollment => (
+                      <TableRow key={enrollment.id}>
+                        <TableCell className="font-medium">{enrollment.course?.title}</TableCell>
+                        <TableCell>
+                          {enrollment.enrolled_at ? 
+                            new Date(enrollment.enrolled_at).toLocaleDateString('ko-KR') : '-'
+                          }
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="default">활성</Badge>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredCourses.map(course => (
-                        <TableRow key={course.id}>
-                          <TableCell>
-                            <Checkbox
-                              checked={selectedCourses.includes(course.id)}
-                              onCheckedChange={(checked) => handleCourseSelect(course.id, checked as boolean)}
-                            />
-                          </TableCell>
-                          <TableCell className="font-medium">{course.title}</TableCell>
-                          <TableCell>{course.category?.name || '미분류'}</TableCell>
-                          <TableCell>{course.price.toLocaleString()}원</TableCell>
-                          <TableCell>
-                            <Badge variant={course.hasAccess ? 'default' : 'secondary'}>
-                              {course.hasAccess ? '권한 있음' : '권한 없음'}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-
-              {/* 수강 기간 설정 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">수강 기간 설정</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">시작일</label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {startDate ? format(startDate, 'yyyy-MM-dd', { locale: ko }) : '시작일 선택'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={startDate}
-                            onSelect={setStartDate}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">종료일</label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {endDate ? format(endDate, 'yyyy-MM-dd', { locale: ko }) : '종료일 선택'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={endDate}
-                            onSelect={setEndDate}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center mt-6 pt-4 border-t bg-muted/20 -mx-6 px-6 py-4">
-                    <div className="text-sm text-muted-foreground">
-                      {selectedCourses.length > 0 && startDate && endDate ? (
-                        <span className="flex items-center gap-2 text-green-600">
-                          <CheckCircle className="h-4 w-4" />
-                          {selectedCourses.length}개 강의 • {format(startDate, 'yyyy-MM-dd')} ~ {format(endDate, 'yyyy-MM-dd')}
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-2 text-muted-foreground">
-                          <AlertCircle className="h-4 w-4" />
-                          강의와 기간을 모두 선택해주세요
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex gap-3">
-                      <Button variant="outline" onClick={onClose}>
-                        취소
-                      </Button>
-                      <Button 
-                        disabled={selectedCourses.length === 0 || loading || !userId}
-                        onClick={handlePermissionGrant}
-                        className="gap-2"
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                        {loading ? '처리중...' : `권한 부여 (${selectedCourses.length}개)`}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="groups" className="space-y-6 mt-0">
-              {/* 그룹 생성 폼 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">새 그룹 생성</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">그룹명</label>
-                      <Input placeholder="예: 신규 VIP 회원" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">그룹 설명</label>
-                      <Input placeholder="그룹 특징을 간단히 설명하세요" />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">기본 제공 강의</label>
-                    <div className="border rounded-lg p-3 max-h-32 overflow-y-auto">
-                      {courses.map(course => (
-                        <div key={course.id} className="flex items-center space-x-2 py-1">
-                          <Checkbox id={`group-course-${course.id}`} />
-                          <label htmlFor={`group-course-${course.id}`} className="text-sm font-medium">
-                            {course.title}
-                          </label>
-                          <Badge variant="outline" className="text-xs">{course.category?.name || '미분류'}</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" size="sm">취소</Button>
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      그룹 생성
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* 기존 그룹 목록 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">기존 그룹 관리</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>그룹명</TableHead>
-                        <TableHead>회원수</TableHead>
-                        <TableHead>포함된 강의</TableHead>
-                        <TableHead>생성일</TableHead>
-                        <TableHead className="text-right">관리</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {[].map((group: any) => (
-                        <TableRow key={group.id} className="hover:bg-muted/30">
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-primary" />
-                              {group.name}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className="font-medium text-primary">{group.memberCount}</span>
-                            <span className="text-muted-foreground">명</span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-wrap gap-1">
-                                {group.courses?.slice(0, 2).map((courseId: string) => (
-                                  <Badge key={courseId} variant="outline" className="text-xs">
-                                    {courses.find(c => c.id === courseId)?.title}
-                                  </Badge>
-                                ))}
-                              {group.courses.length > 2 && (
-                                <Badge variant="secondary" className="text-xs">
-                                  +{group.courses.length - 2}개
-                                </Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">2024-01-15</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex gap-1 justify-end">
-                              <Button size="sm" variant="outline" className="h-8 px-3">
-                                회원 관리
-                              </Button>
-                              <Button size="sm" variant="outline" className="h-8 px-3">
-                                편집
-                              </Button>
-                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="history" className="space-y-6 mt-0">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">현재 권한 내역</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>강의명</TableHead>
-                        <TableHead>시작일</TableHead>
-                        <TableHead>종료일</TableHead>
-                        <TableHead>상태</TableHead>
-                        <TableHead>관리</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {enrollments.map(enrollment => (
-                        <TableRow key={enrollment.id}>
-                          <TableCell className="font-medium">{enrollment.course?.title}</TableCell>
-                          <TableCell>{enrollment.enrolled_at ? format(new Date(enrollment.enrolled_at), 'yyyy-MM-dd') : '-'}</TableCell>
-                          <TableCell>무제한</TableCell>
-                          <TableCell>
-                            <Badge variant="default">활성</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" disabled>연장</Button>
-                              <Button size="sm" variant="ghost" disabled>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </div>
-        </Tabs>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
