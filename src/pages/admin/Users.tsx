@@ -37,6 +37,7 @@ const AdminUsers = () => {
     status: 'all',
     marketingEmail: 'all',
     group: 'all',
+    joinDatePeriod: 'all'
   });
   const { toast } = useToast();
   const { user } = useAuth();
@@ -66,20 +67,43 @@ const AdminUsers = () => {
         query = query.eq('marketing_consent', emailConsent);
       }
 
-      // 역할 필터 (그룹으로 사용)
+      // 그룹 필터 - 실제 그룹명으로 필터링하도록 수정 필요
+      // 현재는 임시로 역할 기반 필터링 유지
       if (filters.group && filters.group !== 'all') {
-        query = query.eq('role', filters.group);
+        if (filters.group === 'admin') {
+          query = query.eq('role', 'admin');
+        } else if (filters.group === '미분류') {
+          // 미분류는 나중에 그룹 정보와 대조해서 처리
+        }
+        // 실제 그룹명은 나중에 처리
       }
 
-      // 가입일 필터
-      if (filters.joinDateStart) {
-        query = query.gte('created_at', filters.joinDateStart.toISOString());
-      }
-
-      if (filters.joinDateEnd) {
-        const endDate = new Date(filters.joinDateEnd);
-        endDate.setHours(23, 59, 59, 999);
-        query = query.lte('created_at', endDate.toISOString());
+      // 가입일 기간 필터
+      if (filters.joinDatePeriod && filters.joinDatePeriod !== 'all') {
+        const now = new Date();
+        let startDate: Date;
+        
+        switch (filters.joinDatePeriod) {
+          case '1week':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case '1month':
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          case '3months':
+            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            break;
+          case '6months':
+            startDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+            break;
+          case '1year':
+            startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+            break;
+          default:
+            startDate = new Date(0);
+        }
+        
+        query = query.gte('created_at', startDate.toISOString());
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -139,7 +163,18 @@ const AdminUsers = () => {
         };
       });
 
-      setUsers(usersWithGroup);
+      // 클라이언트 사이드 그룹 필터링 적용
+      let filteredUsers = usersWithGroup;
+      if (filters.group && filters.group !== 'all' && filters.group !== 'admin') {
+        filteredUsers = usersWithGroup.filter(user => {
+          if (filters.group === '미분류') {
+            return user.group === '미분류';
+          }
+          return user.group.includes(filters.group!);
+        });
+      }
+
+      setUsers(filteredUsers);
       setCurrentPage(1); // Reset to first page when filters change
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -163,6 +198,7 @@ const AdminUsers = () => {
       status: 'all',
       marketingEmail: 'all',
       group: 'all',
+      joinDatePeriod: 'all'
     };
     setFilters(defaultFilters);
   };

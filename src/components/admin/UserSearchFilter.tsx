@@ -3,21 +3,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface UserFilters {
   searchTerm: string;
   status: string;
   marketingEmail: string;
   group?: string;
-  joinDateStart?: Date;
-  joinDateEnd?: Date;
+  joinDatePeriod?: string; // 새로운 가입일 기간 필터
 }
 
 interface UserSearchFilterProps {
@@ -32,6 +28,25 @@ export const UserSearchFilter = ({
   onReset
 }: UserSearchFilterProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [availableGroups, setAvailableGroups] = useState<{ id: string; name: string; color: string }[]>([]);
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
+  const fetchGroups = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_groups')
+        .select('id, name, color')
+        .order('name');
+
+      if (error) throw error;
+      setAvailableGroups(data || []);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+    }
+  };
 
   const updateFilter = (key: keyof UserFilters, value: any) => {
     onFiltersChange({
@@ -46,10 +61,18 @@ export const UserSearchFilter = ({
     if (filters.status !== 'all') count++;
     if (filters.marketingEmail !== 'all') count++;
     if (filters.group && filters.group !== 'all') count++;
-    if (filters.joinDateStart) count++;
-    if (filters.joinDateEnd) count++;
+    if (filters.joinDatePeriod && filters.joinDatePeriod !== 'all') count++;
     return count;
   };
+
+  const joinDateOptions = [
+    { value: 'all', label: '전체 기간' },
+    { value: '1week', label: '최근 1주일' },
+    { value: '1month', label: '최근 1개월' },
+    { value: '3months', label: '최근 3개월' },
+    { value: '6months', label: '최근 6개월' },
+    { value: '1year', label: '최근 1년' }
+  ];
 
   return (
     <Card className="shadow-sm">
@@ -112,8 +135,8 @@ export const UserSearchFilter = ({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">전체 상태</SelectItem>
-                      <SelectItem value="active">정상 회원</SelectItem>
-                      <SelectItem value="dormant">휴면 회원</SelectItem>
+                      <SelectItem value="active">정상</SelectItem>
+                      <SelectItem value="dormant">휴면</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -128,8 +151,18 @@ export const UserSearchFilter = ({
                     <SelectContent>
                       <SelectItem value="all">전체 그룹</SelectItem>
                       <SelectItem value="admin">관리자</SelectItem>
-                      <SelectItem value="instructor">강사</SelectItem>
-                      <SelectItem value="student">학생</SelectItem>
+                      <SelectItem value="미분류">미분류</SelectItem>
+                      {availableGroups.map((group) => (
+                        <SelectItem key={group.id} value={group.name}>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: group.color }}
+                            />
+                            {group.name}
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -143,32 +176,27 @@ export const UserSearchFilter = ({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">전체</SelectItem>
-                      <SelectItem value="true">수신 동의</SelectItem>
-                      <SelectItem value="false">수신 거부</SelectItem>
+                      <SelectItem value="true">동의</SelectItem>
+                      <SelectItem value="false">거부</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* 가입일 필터 */}
+                {/* 가입일 기간 필터 */}
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-foreground">가입일 범위</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start bg-background border-border/60 h-10 text-sm focus:border-primary focus:ring-1 focus:ring-primary/20">
-                        <Calendar className="mr-2 h-4 w-4" />
-                        {filters.joinDateStart ? format(filters.joinDateStart, 'yyyy-MM-dd') : "시작일 선택"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <CalendarComponent
-                        mode="single"
-                        selected={filters.joinDateStart}
-                        onSelect={(date) => updateFilter('joinDateStart', date)}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <label className="text-sm font-semibold text-foreground">가입일 기간</label>
+                  <Select value={filters.joinDatePeriod || 'all'} onValueChange={(value) => updateFilter('joinDatePeriod', value)}>
+                    <SelectTrigger className="bg-background border-border/60 h-10 focus:border-primary focus:ring-1 focus:ring-primary/20">
+                      <SelectValue placeholder="기간 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {joinDateOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
