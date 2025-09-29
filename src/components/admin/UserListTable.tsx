@@ -285,7 +285,7 @@ export const UserListTable = ({
                           : 'bg-muted text-muted-foreground border-border'
                       }`}
                     >
-                      {user.marketingEmail ? '수신동의' : '수신거부'}
+                      {user.marketingEmail ? '동의' : '거부'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
