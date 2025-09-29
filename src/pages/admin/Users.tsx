@@ -335,7 +335,8 @@ const AdminUsers = () => {
           setSelectedUserIds([]);
         }}
         selectedUsers={selectedUserIds}
-        onGroupAssigned={(groupId) => {
+        onGroupAssigned={async (groupId) => {
+          await fetchUsers(); // 그룹 배정 후 사용자 목록 새로고침
           setSelectedUserIds([]);
           setGroupManagementModalOpen(false);
         }}

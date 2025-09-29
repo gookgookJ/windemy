@@ -109,7 +109,6 @@ export function GroupManagementModal({
       setGroups([data, ...groups]);
       setNewGroup({ name: '', description: '' });
       
-      // 새로 생성한 그룹에 바로 배정하고 모달 닫기
       if (selectedUsers.length > 0) {
         await handleAssignToGroup(data.id);
       } else {
@@ -117,6 +116,7 @@ export function GroupManagementModal({
           title: "그룹 생성 완료",
           description: `"${data.name}" 그룹이 생성되었습니다.`
         });
+        onClose();
       }
     } catch (error: any) {
       console.error('Error creating group:', error);
@@ -134,6 +134,7 @@ export function GroupManagementModal({
     if (selectedUsers.length === 0) return;
 
     try {
+      setLoading(true);
       const memberships = selectedUsers.map(userId => ({
         user_id: userId,
         group_id: groupId
@@ -149,9 +150,10 @@ export function GroupManagementModal({
       
       toast({
         title: "그룹 배정 완료",
-        description: `${selectedUsers.length}명의 사용자가 "${groupName}" 그룹에 배정되었습니다.`
+        description: `${selectedUsers.length}명이 "${groupName}" 그룹에 배정되었습니다.`
       });
 
+      // 콜백 호출하여 부모 컴포넌트의 데이터 새로고침 유도
       onGroupAssigned?.(groupId);
       onClose(); // 배정 후 모달 자동 닫기
     } catch (error) {
@@ -161,13 +163,15 @@ export function GroupManagementModal({
         description: "사용자를 그룹에 배정하는데 실패했습니다.",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-center">그룹 배정</DialogTitle>
           <p className="text-sm text-muted-foreground text-center mt-1">
@@ -186,13 +190,15 @@ export function GroupManagementModal({
                 <p className="text-muted-foreground mt-2 text-sm">그룹 목록 로딩중...</p>
               </div>
             ) : (
-              <div className="grid gap-2 max-h-48 overflow-y-auto">
+              <div className="border rounded-lg max-h-48 overflow-y-auto">
                 {groups.length > 0 ? (
-                  groups.map(group => (
+                  groups.map((group, index) => (
                     <button
                       key={group.id}
                       onClick={() => handleAssignToGroup(group.id)}
-                      className="flex items-center justify-between p-3 border rounded-lg bg-card hover:bg-accent transition-colors text-left"
+                      className={`flex items-center justify-between w-full p-3 text-left hover:bg-accent transition-colors ${
+                        index !== groups.length - 1 ? 'border-b' : ''
+                      }`}
                     >
                       <div className="flex items-center gap-3">
                         <div 
@@ -213,7 +219,7 @@ export function GroupManagementModal({
                     </button>
                   ))
                 ) : (
-                  <div className="text-center py-4">
+                  <div className="text-center py-8">
                     <p className="text-muted-foreground text-sm">등록된 그룹이 없습니다</p>
                   </div>
                 )}
@@ -232,6 +238,7 @@ export function GroupManagementModal({
                 className="flex-1 h-9"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && newGroup.name.trim()) {
+                    e.preventDefault();
                     handleCreateGroup();
                   }
                 }}
