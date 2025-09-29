@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { Search, Plus, Calendar as CalendarIcon, Trash2, Settings, Users, Filter
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CoursePermissionModalProps {
   open: boolean;
@@ -21,36 +22,24 @@ interface CoursePermissionModalProps {
   userId?: string;
 }
 
-// Mock data
-const mockCourses = [
-  { id: '1', title: '웹 개발 기초', category: '프로그래밍', price: 65000, hasAccess: true },
-  { id: '2', title: 'React 심화 과정', category: '프로그래밍', price: 89000, hasAccess: false },
-  { id: '3', title: 'UI/UX 디자인', category: '디자인', price: 120000, hasAccess: false },
-  { id: '4', title: '데이터 분석', category: '데이터', price: 95000, hasAccess: true },
-];
+interface Course {
+  id: string;
+  title: string;
+  price: number;
+  category?: {
+    name: string;
+  } | null;
+  hasAccess: boolean;
+}
 
-const mockUserGroups = [
-  { id: '1', name: 'VIP 회원', memberCount: 45, courses: ['1', '2', '3'] },
-  { id: '2', name: '프리미엄 회원', memberCount: 120, courses: ['1', '2'] },
-  { id: '3', name: '신규 회원', memberCount: 230, courses: ['1'] },
-];
-
-const mockActivePermissions = [
-  {
-    id: '1',
-    courseTitle: '웹 개발 기초',
-    startDate: '2024-01-15',
-    endDate: '2024-12-31',
-    status: 'active'
-  },
-  {
-    id: '2', 
-    courseTitle: '데이터 분석',
-    startDate: '2024-02-01',
-    endDate: '2024-06-30',
-    status: 'active'
-  }
-];
+interface Enrollment {
+  id: string;
+  course_id: string;
+  enrolled_at: string | null;
+  course: {
+    title: string;
+  };
+}
 
 export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissionModalProps) => {
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
@@ -59,11 +48,78 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
   const [endDate, setEndDate] = useState<Date>();
   const [selectedGroup, setSelectedGroup] = useState<string>('');
   const [activeTab, setActiveTab] = useState('permissions');
+  const [loading, setLoading] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const { toast } = useToast();
 
-  const filteredCourses = mockCourses.filter(course =>
+  useEffect(() => {
+    if (open) {
+      fetchCourses();
+      if (userId) {
+        fetchUserEnrollments();
+      }
+    }
+  }, [open, userId]);
+
+  const fetchCourses = async () => {
+    try {
+      const { data: coursesData } = await supabase
+        .from('courses')
+        .select(`
+          id,
+          title,
+          price,
+          category:categories(name)
+        `)
+        .eq('is_published', true)
+        .order('title');
+
+      if (coursesData) {
+        const coursesWithAccess = coursesData.map(course => ({
+          ...course,
+          hasAccess: false // Will be updated after fetching enrollments
+        }));
+        setCourses(coursesWithAccess);
+      }
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  };
+
+  const fetchUserEnrollments = async () => {
+    if (!userId) return;
+    
+    try {
+      const { data: enrollmentData } = await supabase
+        .from('enrollments')
+        .select(`
+          id,
+          course_id,
+          enrolled_at,
+          course:courses(title)
+        `)
+        .eq('user_id', userId);
+
+      if (enrollmentData) {
+        setEnrollments(enrollmentData);
+        
+        // Update courses to mark which ones user has access to
+        setCourses(prevCourses => 
+          prevCourses.map(course => ({
+            ...course,
+            hasAccess: enrollmentData.some(enrollment => enrollment.course_id === course.id)
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching enrollments:', error);
+    }
+  };
+
+  const filteredCourses = courses.filter(course =>
     course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    course.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (course.category?.name && course.category.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleCourseSelect = (courseId: string, checked: boolean) => {
@@ -74,13 +130,44 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
     }
   };
 
-  const handlePermissionGrant = () => {
-    if (selectedCourses.length > 0 && startDate && endDate) {
-      toast({
-        title: "권한이 부여되었습니다",
-        description: `${selectedCourses.length}개 강의에 대한 권한이 설정되었습니다.`,
-      });
-      onClose();
+  const handlePermissionGrant = async () => {
+    if (selectedCourses.length > 0 && userId) {
+      setLoading(true);
+      try {
+        const enrollmentsToCreate = selectedCourses
+          .filter(courseId => !enrollments.some(e => e.course_id === courseId))
+          .map(courseId => ({
+            user_id: userId,
+            course_id: courseId,
+            enrolled_at: new Date().toISOString()
+          }));
+
+        if (enrollmentsToCreate.length > 0) {
+          const { error } = await supabase
+            .from('enrollments')
+            .insert(enrollmentsToCreate);
+
+          if (error) throw error;
+        }
+
+        toast({
+          title: "권한이 부여되었습니다",
+          description: `${selectedCourses.length}개 강의에 대한 권한이 설정되었습니다.`,
+        });
+        
+        setSelectedCourses([]);
+        await fetchUserEnrollments(); // Refresh enrollments
+        onClose();
+      } catch (error) {
+        console.error('Error granting permissions:', error);
+        toast({
+          title: "권한 부여 실패",
+          description: "권한을 부여하는데 실패했습니다.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -147,16 +234,12 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
                         className="pl-10"
                       />
                     </div>
-                    <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+                    <Select value={selectedGroup} onValueChange={setSelectedGroup} disabled>
                       <SelectTrigger className="w-48">
-                        <SelectValue placeholder="그룹으로 일괄 적용" />
+                        <SelectValue placeholder="그룹 기능 준비중" />
                       </SelectTrigger>
                       <SelectContent>
-                        {mockUserGroups.map(group => (
-                          <SelectItem key={group.id} value={group.id}>
-                            {group.name} ({group.memberCount}명)
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="disabled">그룹 기능 준비중</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -181,7 +264,7 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
                             />
                           </TableCell>
                           <TableCell className="font-medium">{course.title}</TableCell>
-                          <TableCell>{course.category}</TableCell>
+                          <TableCell>{course.category?.name || '미분류'}</TableCell>
                           <TableCell>{course.price.toLocaleString()}원</TableCell>
                           <TableCell>
                             <Badge variant={course.hasAccess ? 'default' : 'secondary'}>
@@ -262,12 +345,12 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
                         취소
                       </Button>
                       <Button 
-                        disabled={selectedCourses.length === 0 || !startDate || !endDate}
+                        disabled={selectedCourses.length === 0 || loading || !userId}
                         onClick={handlePermissionGrant}
                         className="gap-2"
                       >
                         <CheckCircle className="h-4 w-4" />
-                        권한 부여 ({selectedCourses.length}개)
+                        {loading ? '처리중...' : `권한 부여 (${selectedCourses.length}개)`}
                       </Button>
                     </div>
                   </div>
@@ -296,13 +379,13 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
                   <div className="space-y-2">
                     <label className="text-sm font-medium">기본 제공 강의</label>
                     <div className="border rounded-lg p-3 max-h-32 overflow-y-auto">
-                      {mockCourses.map(course => (
+                      {courses.map(course => (
                         <div key={course.id} className="flex items-center space-x-2 py-1">
                           <Checkbox id={`group-course-${course.id}`} />
                           <label htmlFor={`group-course-${course.id}`} className="text-sm font-medium">
                             {course.title}
                           </label>
-                          <Badge variant="outline" className="text-xs">{course.category}</Badge>
+                          <Badge variant="outline" className="text-xs">{course.category?.name || '미분류'}</Badge>
                         </div>
                       ))}
                     </div>
@@ -335,7 +418,7 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {mockUserGroups.map(group => (
+                      {[].map((group: any) => (
                         <TableRow key={group.id} className="hover:bg-muted/30">
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
@@ -349,11 +432,11 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
-                              {group.courses.slice(0, 2).map(courseId => (
-                                <Badge key={courseId} variant="outline" className="text-xs">
-                                  {mockCourses.find(c => c.id === courseId)?.title}
-                                </Badge>
-                              ))}
+                                {group.courses?.slice(0, 2).map((courseId: string) => (
+                                  <Badge key={courseId} variant="outline" className="text-xs">
+                                    {courses.find(c => c.id === courseId)?.title}
+                                  </Badge>
+                                ))}
                               {group.courses.length > 2 && (
                                 <Badge variant="secondary" className="text-xs">
                                   +{group.courses.length - 2}개
@@ -400,18 +483,18 @@ export const CoursePermissionModal = ({ open, onClose, userId }: CoursePermissio
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {mockActivePermissions.map(permission => (
-                        <TableRow key={permission.id}>
-                          <TableCell className="font-medium">{permission.courseTitle}</TableCell>
-                          <TableCell>{permission.startDate}</TableCell>
-                          <TableCell>{permission.endDate}</TableCell>
+                      {enrollments.map(enrollment => (
+                        <TableRow key={enrollment.id}>
+                          <TableCell className="font-medium">{enrollment.course?.title}</TableCell>
+                          <TableCell>{enrollment.enrolled_at ? format(new Date(enrollment.enrolled_at), 'yyyy-MM-dd') : '-'}</TableCell>
+                          <TableCell>무제한</TableCell>
                           <TableCell>
                             <Badge variant="default">활성</Badge>
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              <Button size="sm" variant="outline">연장</Button>
-                              <Button size="sm" variant="ghost">
+                              <Button size="sm" variant="outline" disabled>연장</Button>
+                              <Button size="sm" variant="ghost" disabled>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
