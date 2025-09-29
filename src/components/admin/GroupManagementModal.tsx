@@ -35,14 +35,16 @@ export function GroupManagementModal({
 }: GroupManagementModalProps) {
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [loading, setLoading] = useState(false);
-  const [newGroup, setNewGroup] = useState({
-    name: '',
-    description: ''
-  });
+  const [newGroup, setNewGroup] = useState({ name: '', description: '' });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [assigning, setAssigning] = useState(false);
   const [successName, setSuccessName] = useState<string | null>(null);
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<{ name: string; description: string | null }>({
+    name: '',
+    description: ''
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -50,6 +52,8 @@ export function GroupManagementModal({
       setSearchTerm('');
       setSelectedGroupId(null);
       setSuccessName(null);
+      setEditingGroupId(null);
+      setEditValues({ name: '', description: '' });
       fetchGroups();
     }
   }, [open]);
@@ -205,12 +209,12 @@ export function GroupManagementModal({
               <div className="space-y-3">
                 <Label className="text-sm font-medium">기존 그룹 선택</Label>
                 <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                   <Input
                     placeholder="그룹 검색..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 h-9"
+                    className="pl-10 h-9"
                   />
                 </div>
                 {loading ? (
@@ -223,32 +227,125 @@ export function GroupManagementModal({
                     {filteredGroups.length > 0 ? (
                       filteredGroups.map((group, index) => {
                         const selected = selectedGroupId === group.id;
+                        const isEditing = editingGroupId === group.id;
                         return (
-                          <button
-                            type="button"
+                          <div
                             key={group.id}
-                            onClick={() => setSelectedGroupId(group.id)}
                             className={`flex items-center justify-between w-full p-3 text-left transition-colors ${
                               selected ? 'bg-accent' : 'hover:bg-accent'
                             } ${index !== filteredGroups.length - 1 ? 'border-b' : ''}`}
                           >
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 flex-1">
                               <div
                                 className="w-3 h-3 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: group.color }}
                               />
-                              <div>
-                                <p className="font-medium text-sm">{group.name}</p>
-                                {group.description && (
-                                  <p className="text-xs text-muted-foreground">{group.description}</p>
+                              <div className="flex-1 min-w-0">
+                                {isEditing ? (
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      value={editValues.name}
+                                      onChange={(e) => setEditValues(v => ({ ...v, name: e.target.value }))}
+                                      className="h-8"
+                                    />
+                                    <Input
+                                      placeholder="설명(선택)"
+                                      value={editValues.description ?? ''}
+                                      onChange={(e) => setEditValues(v => ({ ...v, description: e.target.value }))}
+                                      className="h-8"
+                                    />
+                                  </div>
+                                ) : (
+                                  <>
+                                    <p className="font-medium text-sm truncate">{group.name}</p>
+                                    {group.description && (
+                                      <p className="text-xs text-muted-foreground truncate">{group.description}</p>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Users className="w-3 h-3" />
-                              {group.member_count || 0}명
+                            <div className="flex items-center gap-2 ml-3">
+                              {!isEditing ? (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 px-2"
+                                    onClick={() => {
+                                      setEditingGroupId(group.id);
+                                      setEditValues({ name: group.name, description: group.description ?? '' });
+                                    }}
+                                  >
+                                    수정
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 px-2 text-destructive hover:text-destructive"
+                                    onClick={async () => {
+                                      if (!confirm(`"${group.name}" 그룹을 삭제할까요?`)) return;
+                                      const { error } = await supabase.from('user_groups').delete().eq('id', group.id);
+                                      if (error) {
+                                        toast({ title: '삭제 실패', description: '그룹 삭제에 실패했습니다.', variant: 'destructive' });
+                                      } else {
+                                        setGroups(prev => prev.filter(g => g.id !== group.id));
+                                        toast({ title: '삭제 완료', description: '그룹이 삭제되었습니다.' });
+                                      }
+                                    }}
+                                  >
+                                    삭제
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="h-8 px-3"
+                                    onClick={() => {
+                                      setSelectedGroupId(group.id);
+                                    }}
+                                  >
+                                    선택
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="h-8 px-2"
+                                    onClick={async () => {
+                                      if (!editValues.name.trim()) {
+                                        toast({ title: '그룹명 필요', description: '그룹명을 입력하세요.', variant: 'destructive' });
+                                        return;
+                                      }
+                                      const { error } = await supabase
+                                        .from('user_groups')
+                                        .update({ name: editValues.name.trim(), description: (editValues.description ?? '').trim() || null })
+                                        .eq('id', group.id);
+                                      if (error) {
+                                        toast({ title: '수정 실패', description: error.message?.includes('duplicate') ? '이미 존재하는 그룹명입니다.' : '그룹 수정에 실패했습니다.', variant: 'destructive' });
+                                      } else {
+                                        setGroups(prev => prev.map(g => g.id === group.id ? { ...g, name: editValues.name.trim(), description: (editValues.description ?? '').trim() || null } : g));
+                                        setEditingGroupId(null);
+                                        toast({ title: '수정 완료', description: '그룹 정보가 업데이트되었습니다.' });
+                                      }
+                                    }}
+                                  >
+                                    저장
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 px-2"
+                                    onClick={() => {
+                                      setEditingGroupId(null);
+                                    }}
+                                  >
+                                    취소
+                                  </Button>
+                                </>
+                              )}
                             </div>
-                          </button>
+                          </div>
                         );
                       })
                     ) : (

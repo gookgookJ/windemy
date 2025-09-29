@@ -332,13 +332,10 @@ const AdminUsers = () => {
         open={groupManagementModalOpen}
         onClose={() => {
           setGroupManagementModalOpen(false);
-          setSelectedUserIds([]);
         }}
         selectedUsers={selectedUserIds}
         onGroupAssigned={async (groupId) => {
           await fetchUsers(); // 그룹 배정 후 사용자 목록 새로고침
-          setSelectedUserIds([]);
-          setGroupManagementModalOpen(false);
         }}
       />
 
@@ -346,7 +343,6 @@ const AdminUsers = () => {
         open={couponModalOpen}
         onClose={() => {
           setCouponModalOpen(false);
-          setSelectedUserIds([]);
         }}
         selectedUsers={selectedUserIds}
       />
@@ -355,7 +351,6 @@ const AdminUsers = () => {
         open={pointsModalOpen}
         onClose={() => {
           setPointsModalOpen(false);
-          setSelectedUserIds([]);
         }}
         selectedUsers={selectedUserIds}
       />
