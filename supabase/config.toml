@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.manage-instructor]
 verify_jwt = true
+
+[functions.create-test-user]
+verify_jwt = true

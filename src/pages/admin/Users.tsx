@@ -12,6 +12,7 @@ import { GroupAssignmentDropdown } from '@/components/admin/GroupAssignmentDropd
 import { ExportDataDropdown } from '@/components/admin/ExportDataDropdown';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
 import * as XLSX from 'xlsx';
 
 console.log('[AdminUsers] module loaded');
@@ -46,6 +47,43 @@ const AdminUsers = () => {
   });
   const { toast } = useToast();
   const { user } = useAuth();
+
+  const createTestUser = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.functions.invoke('create-test-user', {
+        body: {
+          email: 'test@windly.cc',
+          password: 'test1234567890'
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      toast({
+        title: "성공",
+        description: "테스트 계정이 성공적으로 생성되었습니다.",
+      });
+
+      // 사용자 목록 새로고침
+      fetchUsers();
+    } catch (error) {
+      console.error('테스트 계정 생성 오류:', error);
+      toast({
+        title: "오류",
+        description: "테스트 계정 생성에 실패했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -558,8 +596,19 @@ const AdminUsers = () => {
       <div className="space-y-8 p-6">
         {/* 페이지 헤더 */}
         <div className="border-b border-border/30 pb-6">
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">회원 관리</h1>
-          <p className="text-muted-foreground mt-2 text-base">등록된 회원들을 조회하고 효율적으로 관리할 수 있습니다</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground tracking-tight">회원 관리</h1>
+              <p className="text-muted-foreground mt-2 text-base">등록된 회원들을 조회하고 효율적으로 관리할 수 있습니다</p>
+            </div>
+            <Button
+              onClick={createTestUser}
+              disabled={loading}
+              variant="outline"
+            >
+              {loading ? '생성 중...' : '테스트 계정 생성'}
+            </Button>
+          </div>
         </div>
 
         {/* 검색 및 필터링 영역 */}
