@@ -10,7 +10,8 @@ import {
   Coins, 
   FileText, 
   UserCog, 
-  Plus 
+  Plus,
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -52,6 +53,7 @@ interface UserListTableProps {
   onGroupAssign: (userIds: string[], triggerElement: HTMLElement) => void;
   onGroupCreate: (triggerElement: HTMLElement) => void;
   onExportData: (userIds: string[], triggerElement: HTMLElement) => void;
+  onRoleChange: (userId: string, userName: string, userEmail: string, currentRole: string) => void;
   currentPage: number;
   pageSize: number;
   onPageChange: (page: number) => void;
@@ -84,6 +86,7 @@ export const UserListTable = ({
   onGroupAssign,
   onGroupCreate,
   onExportData,
+  onRoleChange,
   currentPage,
   pageSize,
   onPageChange,
@@ -275,6 +278,16 @@ export const UserListTable = ({
               <Download className="h-4 w-4 mr-1.5" />
               내보내기
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onBulkAction('role_change', selectedUsers)}
+              disabled={selectedUsers.length === 0}
+              className="h-8"
+            >
+              <Shield className="h-4 w-4 mr-1.5" />
+              권한변경
+            </Button>
           </div>
         </div>
       </CardHeader>
@@ -413,6 +426,10 @@ export const UserListTable = ({
                         <DropdownMenuItem onClick={() => onAddNote(user.id, user.email)}>
                           <FileText className="mr-2 h-4 w-4" />
                           관리자 메모 추가
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onRoleChange(user.id, user.name, user.email, user.role || 'student')}>
+                          <Shield className="mr-2 h-4 w-4" />
+                          권한 변경
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 

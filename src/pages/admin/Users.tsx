@@ -10,6 +10,7 @@ import { AdminNoteModal } from '@/components/admin/AdminNoteModal';
 import { GroupCreateDropdown } from '@/components/admin/GroupCreateDropdown';
 import { GroupAssignmentDropdown } from '@/components/admin/GroupAssignmentDropdown';
 import { ExportDataDropdown } from '@/components/admin/ExportDataDropdown';
+import { RoleChangeModal } from '@/components/admin/RoleChangeModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -26,8 +27,15 @@ const AdminUsers = () => {
   const [couponModalOpen, setCouponModalOpen] = useState(false);
   const [pointsModalOpen, setPointsModalOpen] = useState(false);
   const [adminNoteModalOpen, setAdminNoteModalOpen] = useState(false);
+  const [roleChangeModalOpen, setRoleChangeModalOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
+  const [selectedUserForRole, setSelectedUserForRole] = useState<{
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  } | null>(null);
   const [showGroupAssignmentDropdown, setShowGroupAssignmentDropdown] = useState(false);
   const [showGroupCreateDropdown, setShowGroupCreateDropdown] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
@@ -588,6 +596,20 @@ const AdminUsers = () => {
     }
   };
 
+  const handleRoleChange = (userId: string, userName: string, userEmail: string, currentRole: string) => {
+    setSelectedUserForRole({
+      id: userId,
+      name: userName,
+      email: userEmail,
+      role: currentRole
+    });
+    setRoleChangeModalOpen(true);
+  };
+
+  const handleRoleChangeSuccess = () => {
+    fetchUsers(); // 사용자 목록 새로고침
+  };
+
   // Get filtered users for pagination
   const filteredUsers = users;
 
@@ -633,6 +655,7 @@ const AdminUsers = () => {
           onGroupCreate={handleGroupCreate}
           onExportData={handleExportData}
           onAddNote={handleAddNote}
+          onRoleChange={handleRoleChange}
           currentPage={currentPage}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
@@ -727,6 +750,17 @@ const AdminUsers = () => {
           setSelectedUserEmail('');
           fetchUsers();
         }}
+      />
+
+      {/* 권한 변경 모달 */}
+      <RoleChangeModal
+        open={roleChangeModalOpen}
+        onClose={() => {
+          setRoleChangeModalOpen(false);
+          setSelectedUserForRole(null);
+        }}
+        user={selectedUserForRole}
+        onSuccess={handleRoleChangeSuccess}
       />
     </AdminLayout>
   );
