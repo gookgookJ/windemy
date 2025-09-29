@@ -6,11 +6,11 @@ import { UserSearchFilter, type UserFilters } from '@/components/admin/UserSearc
 import { UserListTable, type UserData } from '@/components/admin/UserListTable';
 
 import { CoursePermissionModal } from '@/components/admin/CoursePermissionModal';
-import { GroupManagementModal } from '@/components/admin/GroupManagementModal';
 import { CouponDistributionModal } from '@/components/admin/CouponDistributionModal';
 import { PointsDistributionModal } from '@/components/admin/PointsDistributionModal';
 import { AdminNoteModal } from '@/components/admin/AdminNoteModal';
 import { GroupCreateModal } from '@/components/admin/GroupCreateModal';
+import { GroupAssignmentDropdown } from '@/components/admin/GroupAssignmentDropdown';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
@@ -23,13 +23,14 @@ const AdminUsers = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [coursePermissionModalOpen, setCoursePermissionModalOpen] = useState(false);
-  const [groupManagementModalOpen, setGroupManagementModalOpen] = useState(false);
   const [groupCreateModalOpen, setGroupCreateModalOpen] = useState(false);
   const [couponModalOpen, setCouponModalOpen] = useState(false);
   const [pointsModalOpen, setPointsModalOpen] = useState(false);
   const [adminNoteModalOpen, setAdminNoteModalOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
+  const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
+  const [groupDropdownPosition, setGroupDropdownPosition] = useState({ top: 0, left: 0 });
   
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -169,10 +170,6 @@ const AdminUsers = () => {
         setSelectedUserIds(userIds);
         setCoursePermissionModalOpen(true);
         break;
-      case 'group_management':
-        setSelectedUserIds(userIds);
-        setGroupManagementModalOpen(true);
-        break;
       case 'groupCreate':
         setGroupCreateModalOpen(true);
         break;
@@ -246,6 +243,11 @@ const AdminUsers = () => {
         variant: "destructive"
       });
     }
+  
+  const handleGroupAssign = (userIds: string[], position: { top: number; left: number }) => {
+    setSelectedUserIds(userIds);
+    setGroupDropdownPosition(position);
+    setGroupDropdownOpen(true);
   };
 
   const handleResetPassword = async (userId: string) => {
@@ -331,9 +333,9 @@ const AdminUsers = () => {
           onPointsDistribute={handlePointsDistribute}
           onDeleteUser={handleDeleteUser}
           onResetPassword={handleResetPassword}
+          onGroupAssign={handleGroupAssign}
           onAddNote={handleAddNote}
           currentPage={currentPage}
-          pageSize={pageSize}
           onPageChange={setCurrentPage}
           onPageSizeChange={(newPageSize) => {
             setPageSize(newPageSize);
@@ -355,18 +357,6 @@ const AdminUsers = () => {
         userId={selectedUserIds.length === 1 ? selectedUserIds[0] : undefined}
       />
 
-      {/* 그룹 관리 모달 */}
-      <GroupManagementModal
-        open={groupManagementModalOpen}
-        onClose={() => {
-          setGroupManagementModalOpen(false);
-        }}
-        selectedUsers={selectedUserIds}
-        onGroupAssigned={async (groupId) => {
-          await fetchUsers(); // 그룹 배정 후 사용자 목록 새로고침
-        }}
-      />
-
       {/* 그룹 생성 모달 */}
       <GroupCreateModal
         open={groupCreateModalOpen}
@@ -375,6 +365,21 @@ const AdminUsers = () => {
           // 필요시 그룹 목록 새로고침
         }}
       />
+
+      {/* 그룹 배정 드롭다운 */}
+      {groupDropdownOpen && (
+        <GroupAssignmentDropdown
+          selectedUsers={selectedUserIds}
+          onClose={() => {
+            setGroupDropdownOpen(false);
+            setSelectedUserIds([]);
+          }}
+          onGroupAssigned={async () => {
+            await fetchUsers(); // 그룹 배정 후 사용자 목록 새로고침
+          }}
+          position={groupDropdownPosition}
+        />
+      )}
 
       <CouponDistributionModal
         open={couponModalOpen}

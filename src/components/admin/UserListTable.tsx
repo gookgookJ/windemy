@@ -48,6 +48,7 @@ interface UserListTableProps {
   onDeleteUser: (userId: string) => void;
   onResetPassword: (userId: string) => void;
   onAddNote: (userId: string, userEmail: string) => void;
+  onGroupAssign: (userIds: string[], position: { top: number; left: number }) => void;
   currentPage: number;
   pageSize: number;
   onPageChange: (page: number) => void;
@@ -77,6 +78,7 @@ export const UserListTable = ({
   onDeleteUser,
   onResetPassword,
   onAddNote,
+  onGroupAssign,
   currentPage,
   pageSize,
   onPageChange,
@@ -236,7 +238,13 @@ export const UserListTable = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onBulkAction('group_management', selectedUsers)}
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                onGroupAssign(selectedUsers, { 
+                  top: rect.bottom + window.scrollY, 
+                  left: rect.left + window.scrollX 
+                });
+              }}
               disabled={selectedUsers.length === 0}
               className="h-8"
             >

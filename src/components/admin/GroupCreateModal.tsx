@@ -17,8 +17,7 @@ interface GroupCreateModalProps {
 export function GroupCreateModal({ open, onClose, onGroupCreated }: GroupCreateModalProps) {
   const [loading, setLoading] = useState(false);
   const [newGroup, setNewGroup] = useState({
-    name: '',
-    description: ''
+    name: ''
   });
   const { toast } = useToast();
 
@@ -42,7 +41,6 @@ export function GroupCreateModal({ open, onClose, onGroupCreated }: GroupCreateM
         .from('user_groups')
         .insert([{
           name: newGroup.name.trim(),
-          description: newGroup.description.trim() || null,
           color: randomColor
         }])
         .select()
@@ -50,7 +48,7 @@ export function GroupCreateModal({ open, onClose, onGroupCreated }: GroupCreateM
 
       if (error) throw error;
 
-      setNewGroup({ name: '', description: '' });
+      setNewGroup({ name: '' });
       
       toast({
         title: "그룹 생성 완료",
@@ -98,18 +96,6 @@ export function GroupCreateModal({ open, onClose, onGroupCreated }: GroupCreateM
                   handleCreateGroup();
                 }
               }}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="groupDescription" className="text-sm font-medium">설명 (선택사항)</Label>
-            <Textarea
-              id="groupDescription"
-              value={newGroup.description}
-              onChange={(e) => setNewGroup(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="그룹에 대한 설명을 입력하세요"
-              rows={3}
-              className="mt-1 resize-none"
             />
           </div>
         </div>
