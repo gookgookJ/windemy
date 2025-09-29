@@ -27,10 +27,8 @@ export const UserSummaryDashboard = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (user?.role === 'admin') {
-      fetchStats();
-    }
-  }, [user]);
+    fetchStats();
+  }, []);
 
   const fetchStats = async () => {
     try {

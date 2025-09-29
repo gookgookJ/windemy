@@ -35,28 +35,11 @@ const AdminUsers = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // 관리자 권한 체크
   useEffect(() => {
-    if (user && user.role !== 'admin') {
-      toast({
-        title: "접근 권한 없음",
-        description: "관리자만 접근할 수 있습니다.",
-        variant: "destructive"
-      });
-      window.location.href = '/';
-      return;
-    }
-  }, [user, toast]);
-
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      fetchUsers();
-    }
-  }, [filters, user]);
+    fetchUsers();
+  }, [filters]);
 
   const fetchUsers = async () => {
-    if (!user || user.role !== 'admin') return;
-    
     setLoading(true);
     
     try {
