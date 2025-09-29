@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, ArrowUpDown, Download, Settings, Eye, Users2 } from 'lucide-react';
+import { MoreHorizontal, ArrowUpDown, Download, Settings, Eye, Users2, Gift, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +28,8 @@ interface UserListTableProps {
   onUserSelect: (userId: string) => void;
   onBulkAction: (action: string, userIds: string[]) => void;
   onStatusChange: (userId: string, newStatus: string) => void;
+  onCouponDistribute: (userIds: string[]) => void;
+  onPointsDistribute: (userIds: string[]) => void;
 }
 
 const statusLabels = {
@@ -40,12 +42,14 @@ const statusColors = {
   dormant: 'secondary'
 } as const;
 
-export const UserListTable = ({
-  users,
-  loading,
-  onUserSelect,
-  onBulkAction,
-  onStatusChange
+export const UserListTable = ({ 
+  users, 
+  loading, 
+  onUserSelect, 
+  onBulkAction, 
+  onStatusChange,
+  onCouponDistribute,
+  onPointsDistribute
 }: UserListTableProps) => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<{
@@ -144,18 +148,22 @@ export const UserListTable = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => onCouponDistribute(selectedUsers)}>
+                    <Gift className="mr-2 h-4 w-4" />
+                    쿠폰 지급
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onPointsDistribute(selectedUsers)}>
+                    <Coins className="mr-2 h-4 w-4" />
+                    적립금 지급
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => onBulkAction('export', selectedUsers)}>
                     <Download className="mr-2 h-4 w-4" />
                     Excel 내보내기
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => onBulkAction('group_management', selectedUsers)}>
                     <Users2 className="mr-2 h-4 w-4" />
                     그룹 관리
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onBulkAction('course_permission', selectedUsers)}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    강의 권한 설정
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -175,7 +183,7 @@ export const UserListTable = ({
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
-                <TableHead className="font-semibold text-muted-foreground">그룹/회원 정보</TableHead>
+                <TableHead className="font-semibold text-muted-foreground">회원 정보</TableHead>
                 <TableHead 
                   className="cursor-pointer font-semibold text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => handleSort('joinDate')}
@@ -194,6 +202,7 @@ export const UserListTable = ({
                     <ArrowUpDown className="h-3.5 w-3.5" />
                   </div>
                 </TableHead>
+                <TableHead>그룹</TableHead>
                 <TableHead 
                   className="cursor-pointer text-right font-semibold text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => handleSort('totalPayment')}
@@ -222,10 +231,6 @@ export const UserListTable = ({
                     onClick={() => onUserSelect(user.id)}
                   >
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span className="text-xs text-muted-foreground bg-blue-50 px-2 py-0.5 rounded-md">VIP 고객</span>
-                      </div>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-foreground text-sm">{user.name}</span>
                         <span className="text-xs font-mono text-muted-foreground bg-muted/70 px-2 py-0.5 rounded-md">
@@ -247,6 +252,11 @@ export const UserListTable = ({
                         <span className="text-muted-foreground italic">미접속</span>
                       }
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="text-xs">
+                      VIP 고객
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="font-semibold text-foreground">{formatCurrency(user.totalPayment)}</div>

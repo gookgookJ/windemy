@@ -4,9 +4,10 @@ import { useToast } from '@/hooks/use-toast';
 import { UserSummaryDashboard } from '@/components/admin/UserSummaryDashboard';
 import { UserSearchFilter, type UserFilters } from '@/components/admin/UserSearchFilter';
 import { UserListTable, type UserData } from '@/components/admin/UserListTable';
-import { UserDetailModal } from '@/components/admin/UserDetailModal'; // Remove this import
 import { CoursePermissionModal } from '@/components/admin/CoursePermissionModal';
 import { GroupManagementModal } from '@/components/admin/GroupManagementModal';
+import { CouponDistributionModal } from '@/components/admin/CouponDistributionModal';
+import { PointsDistributionModal } from '@/components/admin/PointsDistributionModal';
 
 export const AdminUsers = () => {
   const [users, setUsers] = useState<UserData[]>([]);
@@ -15,6 +16,8 @@ export const AdminUsers = () => {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [coursePermissionModalOpen, setCoursePermissionModalOpen] = useState(false);
   const [groupManagementModalOpen, setGroupManagementModalOpen] = useState(false);
+  const [couponModalOpen, setCouponModalOpen] = useState(false);
+  const [pointsModalOpen, setPointsModalOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<UserFilters>({
     searchTerm: '',
@@ -168,24 +171,22 @@ export const AdminUsers = () => {
         setSelectedUserIds(userIds);
         setGroupManagementModalOpen(true);
         break;
-      case 'coupon_distribution':
-        toast({
-          title: "쿠폰 지급 준비 중",
-          description: "선택한 회원들에게 쿠폰을 지급하는 기능을 준비 중입니다."
-        });
-        break;
-      case 'points_distribution':
-        toast({
-          title: "적립금 지급 준비 중",
-          description: "선택한 회원들에게 적립금을 지급하는 기능을 준비 중입니다."
-        });
-        break;
       default:
         toast({
           title: "기능 준비 중",
           description: "해당 기능은 추후 구현 예정입니다."
         });
     }
+  };
+
+  const handleCouponDistribute = (userIds: string[]) => {
+    setSelectedUserIds(userIds);
+    setCouponModalOpen(true);
+  };
+
+  const handlePointsDistribute = (userIds: string[]) => {
+    setSelectedUserIds(userIds);
+    setPointsModalOpen(true);
   };
 
   const handleStatusChange = async (userId: string, newStatus: string) => {
@@ -260,8 +261,6 @@ export const AdminUsers = () => {
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onReset={handleResetFilters}
-          onCouponDistribution={() => handleBulkAction('coupon_distribution', selectedUserIds)}
-          onPointsDistribution={() => handleBulkAction('points_distribution', selectedUserIds)}
         />
 
         {/* 사용자 목록 테이블 */}
@@ -271,6 +270,8 @@ export const AdminUsers = () => {
           onUserSelect={handleUserSelect}
           onBulkAction={handleBulkAction}
           onStatusChange={handleStatusChange}
+          onCouponDistribute={handleCouponDistribute}
+          onPointsDistribute={handlePointsDistribute}
         />
 
         {/* Remove UserDetailModal since we're using a separate page now */}
@@ -297,6 +298,24 @@ export const AdminUsers = () => {
             setSelectedUserIds([]);
             setGroupManagementModalOpen(false);
           }}
+        />
+
+        <CouponDistributionModal
+          open={couponModalOpen}
+          onClose={() => {
+            setCouponModalOpen(false);
+            setSelectedUserIds([]);
+          }}
+          selectedUsers={selectedUserIds}
+        />
+
+        <PointsDistributionModal
+          open={pointsModalOpen}
+          onClose={() => {
+            setPointsModalOpen(false);
+            setSelectedUserIds([]);
+          }}
+          selectedUsers={selectedUserIds}
         />
       </div>
     </AdminLayout>

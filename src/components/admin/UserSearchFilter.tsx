@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Filter, RotateCcw, Calendar, Gift, Coins } from 'lucide-react';
+import { Search, Filter, RotateCcw, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,16 +23,12 @@ interface UserSearchFilterProps {
   filters: UserFilters;
   onFiltersChange: (filters: UserFilters) => void;
   onReset: () => void;
-  onCouponDistribution?: () => void;
-  onPointsDistribution?: () => void;
 }
 
 export const UserSearchFilter = ({
   filters,
   onFiltersChange,
-  onReset,
-  onCouponDistribution,
-  onPointsDistribution
+  onReset
 }: UserSearchFilterProps) => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
@@ -84,27 +80,6 @@ export const UserSearchFilter = ({
               )}
             </Button>
             
-            {onCouponDistribution && (
-              <Button
-                variant="outline"
-                onClick={onCouponDistribution}
-                className="h-11 px-4 font-medium"
-              >
-                <Gift className="h-4 w-4 mr-2" />
-                쿠폰 지급
-              </Button>
-            )}
-            
-            {onPointsDistribution && (
-              <Button
-                variant="outline"
-                onClick={onPointsDistribution}
-                className="h-11 px-4 font-medium"
-              >
-                <Coins className="h-4 w-4 mr-2" />
-                적립금 지급
-              </Button>
-            )}
             
             {getActiveFilterCount() > 0 && (
               <Button
