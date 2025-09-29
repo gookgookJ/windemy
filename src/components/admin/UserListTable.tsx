@@ -280,25 +280,25 @@ export const UserListTable = ({
                 </TableHead>
                 <TableHead className="font-semibold text-muted-foreground">회원 정보</TableHead>
                 <TableHead 
-                  className="cursor-pointer font-semibold text-muted-foreground hover:text-foreground transition-colors min-w-[100px]"
+                  className="cursor-pointer font-semibold text-muted-foreground hover:text-foreground transition-colors min-w-[100px] text-center"
                   onClick={() => handleSort('joinDate')}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-center gap-1">
                     가입일
                     <ArrowUpDown className="h-3.5 w-3.5" />
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="cursor-pointer font-semibold text-muted-foreground hover:text-foreground transition-colors min-w-[100px]"
+                  className="cursor-pointer font-semibold text-muted-foreground hover:text-foreground transition-colors min-w-[100px] text-center"
                   onClick={() => handleSort('lastLogin')}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-center gap-1">
                     최근 접속
                     <ArrowUpDown className="h-3.5 w-3.5" />
                   </div>
                 </TableHead>
-                <TableHead className="font-semibold text-muted-foreground min-w-[80px]">그룹</TableHead>
-                <TableHead className="font-semibold text-muted-foreground min-w-[80px]">마케팅 수신</TableHead>
+                <TableHead className="font-semibold text-muted-foreground min-w-[80px] text-center">그룹</TableHead>
+                <TableHead className="font-semibold text-muted-foreground min-w-[80px] text-center">마케팅 수신</TableHead>
                 <TableHead 
                   className="cursor-pointer text-right font-semibold text-muted-foreground hover:text-foreground transition-colors min-w-[120px]"
                   onClick={() => handleSort('totalPayment')}
@@ -308,7 +308,7 @@ export const UserListTable = ({
                     <ArrowUpDown className="h-3.5 w-3.5" />
                   </div>
                 </TableHead>
-                <TableHead className="font-semibold text-muted-foreground min-w-[60px]">상태</TableHead>
+                <TableHead className="font-semibold text-muted-foreground min-w-[60px] text-center">상태</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
