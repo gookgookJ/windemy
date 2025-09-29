@@ -243,11 +243,6 @@ const AdminUsers = () => {
         variant: "destructive"
       });
     }
-  
-  const handleGroupAssign = (userIds: string[], position: { top: number; left: number }) => {
-    setSelectedUserIds(userIds);
-    setGroupDropdownPosition(position);
-    setGroupDropdownOpen(true);
   };
 
   const handleResetPassword = async (userId: string) => {
@@ -271,6 +266,12 @@ const AdminUsers = () => {
     setSelectedUserId(userId);
     setSelectedUserEmail(userEmail);
     setAdminNoteModalOpen(true);
+  };
+  
+  const handleGroupAssign = (userIds: string[], position: { top: number; left: number }) => {
+    setSelectedUserIds(userIds);
+    setGroupDropdownPosition(position);
+    setGroupDropdownOpen(true);
   };
 
   const exportToCSV = (userIds: string[]) => {
@@ -336,6 +337,7 @@ const AdminUsers = () => {
           onGroupAssign={handleGroupAssign}
           onAddNote={handleAddNote}
           currentPage={currentPage}
+          pageSize={pageSize}
           onPageChange={setCurrentPage}
           onPageSizeChange={(newPageSize) => {
             setPageSize(newPageSize);
