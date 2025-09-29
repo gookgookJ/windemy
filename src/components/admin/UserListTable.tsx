@@ -158,12 +158,69 @@ export const UserListTable = ({
   return (
     <Card className="shadow-sm border-border/50">
       <CardHeader className="bg-muted/10 border-b border-border/30">
-        <CardTitle className="text-lg font-semibold text-foreground">
-          회원 목록 
-          <span className="ml-2 text-sm font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
-            총 {totalItems}명
-          </span>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-semibold text-foreground">
+            회원 목록 
+            <span className="ml-2 text-sm font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
+              총 {totalItems}명
+            </span>
+          </CardTitle>
+          
+          {/* Bulk Actions */}
+          {selectedUsers.length > 0 && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground bg-primary/10 text-primary px-3 py-1.5 rounded-md font-medium">
+                {selectedUsers.length}명 선택됨
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onCouponDistribute(selectedUsers)}
+                  className="h-8"
+                >
+                  <Gift className="h-4 w-4 mr-1.5" />
+                  쿠폰 지급
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onPointsDistribute(selectedUsers)}
+                  className="h-8"
+                >
+                  <Coins className="h-4 w-4 mr-1.5" />
+                  포인트 지급
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onBulkAction('group_management', selectedUsers)}
+                  className="h-8"
+                >
+                  <Users2 className="h-4 w-4 mr-1.5" />
+                  그룹 관리
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onBulkAction('export', selectedUsers)}
+                  className="h-8"
+                >
+                  <Download className="h-4 w-4 mr-1.5" />
+                  내보내기
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onSelectedUsersChange([])}
+                  className="h-8 text-muted-foreground hover:text-foreground"
+                >
+                  선택 해제
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </CardHeader>
       
       <CardContent className="p-0">
