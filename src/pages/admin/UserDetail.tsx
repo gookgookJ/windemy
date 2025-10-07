@@ -76,7 +76,7 @@ interface ActivityLog {
   ip_address: unknown;
 }
 
-export const AdminUserDetail = () => {
+const AdminUserDetail = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const [newMemo, setNewMemo] = useState('');
