@@ -675,6 +675,7 @@ export type Database = {
           order_index: number
           section_id: string | null
           title: string
+          video_duration_seconds: number | null
           video_url: string | null
         }
         Insert: {
@@ -685,6 +686,7 @@ export type Database = {
           order_index: number
           section_id?: string | null
           title: string
+          video_duration_seconds?: number | null
           video_url?: string | null
         }
         Update: {
@@ -695,6 +697,7 @@ export type Database = {
           order_index?: number
           section_id?: string | null
           title?: string
+          video_duration_seconds?: number | null
           video_url?: string | null
         }
         Relationships: [

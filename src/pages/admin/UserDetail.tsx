@@ -71,6 +71,7 @@ interface SessionProgress {
   session: {
     title: string;
     order_index: number;
+    video_duration_seconds?: number;
   };
 }
 
@@ -235,6 +236,7 @@ const AdminUserDetail = () => {
                 session:course_sessions(
                   title, 
                   order_index,
+                  video_duration_seconds,
                   section:course_sections(title, order_index)
                 )
               `)
@@ -877,7 +879,9 @@ const AdminUserDetail = () => {
                                           <tr>
                                             <th className="text-left py-2.5 px-4 font-semibold text-foreground w-52">섹션</th>
                                             <th className="text-left py-2.5 px-4 font-semibold text-foreground">세션명</th>
+                                            <th className="text-center py-2.5 px-4 font-semibold text-foreground w-24">영상 길이</th>
                                             <th className="text-center py-2.5 px-4 font-semibold text-foreground w-28">시청 시간</th>
+                                            <th className="text-center py-2.5 px-4 font-semibold text-foreground w-20">시청율</th>
                                             <th className="text-center py-2.5 px-4 font-semibold text-foreground w-24">상태</th>
                                           </tr>
                                         </thead>
@@ -893,8 +897,16 @@ const AdminUserDetail = () => {
                                             })
                                             .map((session, idx) => {
                                               const sectionTitle = (session.session as any)?.section?.title || '-';
-                                              const minutes = Math.floor(session.watched_duration_seconds / 60);
-                                              const seconds = session.watched_duration_seconds % 60;
+                                              const watchedMinutes = Math.floor(session.watched_duration_seconds / 60);
+                                              const watchedSeconds = session.watched_duration_seconds % 60;
+                                              
+                                              const videoDuration = (session.session as any)?.video_duration_seconds || 0;
+                                              const durationMinutes = Math.floor(videoDuration / 60);
+                                              const durationSeconds = videoDuration % 60;
+                                              
+                                              const watchPercentage = videoDuration > 0 
+                                                ? Math.min(Math.round((session.watched_duration_seconds / videoDuration) * 100), 100)
+                                                : 0;
                                               
                                               return (
                                                 <tr key={session.id} className="hover:bg-muted/30 transition-colors">
@@ -908,7 +920,26 @@ const AdminUserDetail = () => {
                                                   </td>
                                                   <td className="py-2.5 px-4 text-center">
                                                     <span className="text-sm text-muted-foreground font-mono">
-                                                      {minutes > 0 ? `${minutes}분 ` : ''}{seconds}초
+                                                      {videoDuration > 0 
+                                                        ? `${durationMinutes > 0 ? `${durationMinutes}분 ` : ''}${durationSeconds}초`
+                                                        : '-'
+                                                      }
+                                                    </span>
+                                                  </td>
+                                                  <td className="py-2.5 px-4 text-center">
+                                                    <span className="text-sm text-muted-foreground font-mono">
+                                                      {watchedMinutes > 0 ? `${watchedMinutes}분 ` : ''}{watchedSeconds}초
+                                                    </span>
+                                                  </td>
+                                                  <td className="py-2.5 px-4 text-center">
+                                                    <span className={`text-sm font-semibold ${
+                                                      watchPercentage >= 80 
+                                                        ? 'text-green-600 dark:text-green-400' 
+                                                        : watchPercentage >= 50 
+                                                        ? 'text-blue-600 dark:text-blue-400'
+                                                        : 'text-muted-foreground'
+                                                    }`}>
+                                                      {videoDuration > 0 ? `${watchPercentage}%` : '-'}
                                                     </span>
                                                   </td>
                                                   <td className="py-2.5 px-4 text-center">
