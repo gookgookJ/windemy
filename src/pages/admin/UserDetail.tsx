@@ -6,7 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, MessageCircle, User, BookOpen, CreditCard, Activity, Plus, Copy, Phone, Mail, Trash2, Reply } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { 
+  ArrowLeft, MessageCircle, User, BookOpen, CreditCard, Activity, 
+  Plus, Copy, Phone, Mail, Trash2, Reply, ChevronDown, ChevronRight, 
+  CheckCircle, Clock, Download 
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -50,7 +55,30 @@ interface Enrollment {
   course: {
     title: string;
     id: string;
+    category?: {
+      name: string;
+    } | null;
   };
+  sessions?: SessionProgress[];
+  downloads?: FileDownload[];
+}
+
+interface SessionProgress {
+  id: string;
+  session_id: string;
+  completed: boolean;
+  watched_duration_seconds: number;
+  session: {
+    title: string;
+    order_index: number;
+  };
+}
+
+interface FileDownload {
+  id: string;
+  file_name: string;
+  downloaded_at: string;
+  session_id: string;
 }
 
 interface Order {
@@ -90,6 +118,7 @@ const AdminUserDetail = () => {
   const [totalPayment, setTotalPayment] = useState(0);
   const [newComment, setNewComment] = useState<{[key: string]: string}>({});
   const [userNumber, setUserNumber] = useState<string>('');
+  const [expandedEnrollment, setExpandedEnrollment] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -184,7 +213,47 @@ const AdminUserDetail = () => {
         .order('enrolled_at', { ascending: false });
 
       if (enrollmentData) {
-        setEnrollments(enrollmentData);
+        // 각 enrollment에 대해 세션별 진도와 다운로드 이력 가져오기
+        const enrichedEnrollments = await Promise.all(
+          enrollmentData.map(async (enrollment) => {
+            // 해당 강의의 세션 ID 목록 가져오기
+            const { data: courseSessions } = await supabase
+              .from('course_sessions')
+              .select('id')
+              .eq('course_id', enrollment.course_id);
+            
+            const sessionIds = courseSessions?.map(s => s.id) || [];
+
+            // 세션별 진도 가져오기
+            const { data: sessionProgress } = await supabase
+              .from('session_progress')
+              .select(`
+                id,
+                session_id,
+                completed,
+                watched_duration_seconds,
+                session:course_sessions(title, order_index)
+              `)
+              .eq('user_id', userId)
+              .in('session_id', sessionIds);
+
+            // 다운로드 이력 가져오기
+            const { data: downloads } = await supabase
+              .from('session_file_downloads')
+              .select('id, file_name, downloaded_at, session_id')
+              .eq('user_id', userId)
+              .in('session_id', sessionIds)
+              .order('downloaded_at', { ascending: false });
+
+            return {
+              ...enrollment,
+              sessions: sessionProgress || [],
+              downloads: downloads || []
+            };
+          })
+        );
+        
+        setEnrollments(enrichedEnrollments);
       }
 
       // Fetch orders
@@ -676,152 +745,207 @@ const AdminUserDetail = () => {
                 <CardHeader>
                   <CardTitle className="text-base font-semibold">수강 내역</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                   {enrollments.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
+                    <div className="text-center py-12 text-muted-foreground px-6">
                       <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
                       <p className="text-sm">수강 내역이 없습니다</p>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="divide-y">
                       {enrollments.map((enrollment) => {
                         const progress = Math.round(enrollment.progress || 0);
                         const isCompleted = !!enrollment.completed_at;
-                        const isInProgress = !isCompleted && progress > 0;
+                        const isExpanded = expandedEnrollment === enrollment.id;
+                        const completedSessions = enrollment.sessions?.filter(s => s.completed).length || 0;
+                        const totalSessions = enrollment.sessions?.length || 0;
                         
                         return (
-                          <div 
-                            key={enrollment.id} 
-                            className="border rounded-lg p-4 hover:border-primary/30 transition-colors"
+                          <Collapsible 
+                            key={enrollment.id}
+                            open={isExpanded}
+                            onOpenChange={() => setExpandedEnrollment(isExpanded ? null : enrollment.id)}
                           >
-                            <div className="flex gap-4">
-                              {/* Thumbnail */}
-                              {(enrollment.course as any)?.thumbnail_url && (
-                                <div className="flex-shrink-0 w-24 h-24 rounded-md overflow-hidden bg-muted">
-                                  <img 
-                                    src={(enrollment.course as any).thumbnail_url} 
-                                    alt={enrollment.course?.title || '강의'}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                              )}
-                              
-                              {/* Content */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between mb-2">
-                                  <div className="flex-1">
-                                    <h3 className="font-semibold text-base mb-1 line-clamp-1">
-                                      {enrollment.course?.title || '강의명 없음'}
-                                    </h3>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <Badge 
-                                        variant={isCompleted ? 'default' : isInProgress ? 'secondary' : 'outline'}
-                                        className="text-xs"
-                                      >
-                                        {isCompleted ? '수료완료' : isInProgress ? '수강중' : '미시작'}
-                                      </Badge>
-                                      {(enrollment.course as any)?.category?.name && (
-                                        <span className="text-xs text-muted-foreground">
-                                          {(enrollment.course as any).category.name}
-                                        </span>
+                            <CollapsibleTrigger asChild>
+                              <div className="px-6 py-4 hover:bg-muted/30 cursor-pointer transition-colors">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-4 flex-1">
+                                    {/* Icon */}
+                                    <div className="flex-shrink-0">
+                                      {isExpanded ? (
+                                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                                      ) : (
+                                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                       )}
                                     </div>
-                                  </div>
-                                  
-                                  {/* Progress Circle - Compact */}
-                                  <div className="flex-shrink-0 ml-4">
-                                    <div className="relative w-14 h-14">
-                                      <svg className="transform -rotate-90 w-14 h-14">
-                                        <circle
-                                          cx="28"
-                                          cy="28"
-                                          r="24"
-                                          stroke="currentColor"
-                                          strokeWidth="4"
-                                          fill="none"
-                                          className="text-muted"
-                                        />
-                                        <circle
-                                          cx="28"
-                                          cy="28"
-                                          r="24"
-                                          stroke="currentColor"
-                                          strokeWidth="4"
-                                          fill="none"
-                                          strokeDasharray={`${2 * Math.PI * 24}`}
-                                          strokeDashoffset={`${2 * Math.PI * 24 * (1 - progress / 100)}`}
-                                          className={`transition-all ${
-                                            isCompleted 
-                                              ? 'text-green-500' 
-                                              : isInProgress 
-                                              ? 'text-primary'
-                                              : 'text-muted-foreground'
-                                          }`}
-                                          strokeLinecap="round"
-                                        />
-                                      </svg>
-                                      <div className="absolute inset-0 flex items-center justify-center">
-                                        <span className="text-xs font-bold">
+
+                                    {/* Title & Category */}
+                                    <div className="flex-1 min-w-0">
+                                      <h3 className="font-semibold text-sm mb-0.5 truncate">
+                                        {enrollment.course?.title || '강의명 없음'}
+                                      </h3>
+                                      {(enrollment.course as any)?.category?.name && (
+                                        <p className="text-xs text-muted-foreground">
+                                          {(enrollment.course as any).category.name}
+                                        </p>
+                                      )}
+                                    </div>
+
+                                    {/* Status */}
+                                    <div className="flex-shrink-0 w-24">
+                                      <Badge 
+                                        variant={isCompleted ? 'default' : progress > 0 ? 'secondary' : 'outline'}
+                                        className={`text-xs ${isCompleted ? 'bg-green-500 hover:bg-green-600' : ''}`}
+                                      >
+                                        {isCompleted ? '수료완료' : progress > 0 ? '수강중' : '미시작'}
+                                      </Badge>
+                                    </div>
+
+                                    {/* Dates */}
+                                    <div className="flex-shrink-0 w-24 text-right">
+                                      <p className="text-xs text-muted-foreground">등록일</p>
+                                      <p className="text-sm font-medium">
+                                        {enrollment.enrolled_at 
+                                          ? format(new Date(enrollment.enrolled_at), 'yy.MM.dd', { locale: ko })
+                                          : '-'
+                                        }
+                                      </p>
+                                    </div>
+
+                                    <div className="flex-shrink-0 w-24 text-right">
+                                      <p className="text-xs text-muted-foreground">수료일</p>
+                                      <p className="text-sm font-medium">
+                                        {enrollment.completed_at 
+                                          ? format(new Date(enrollment.completed_at), 'yy.MM.dd', { locale: ko })
+                                          : '-'
+                                        }
+                                      </p>
+                                    </div>
+
+                                    {/* Sessions */}
+                                    <div className="flex-shrink-0 w-24 text-right">
+                                      <p className="text-xs text-muted-foreground">완료 세션</p>
+                                      <p className="text-sm font-medium">
+                                        {completedSessions} / {totalSessions}
+                                      </p>
+                                    </div>
+
+                                    {/* Progress */}
+                                    <div className="flex-shrink-0 w-32">
+                                      <div className="flex items-center gap-2">
+                                        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                                          <div 
+                                            className={`h-full rounded-full transition-all ${
+                                              isCompleted 
+                                                ? 'bg-green-500' 
+                                                : progress > 0 
+                                                ? 'bg-primary'
+                                                : 'bg-muted-foreground'
+                                            }`}
+                                            style={{ width: `${progress}%` }}
+                                          />
+                                        </div>
+                                        <span className="text-sm font-semibold w-10 text-right">
                                           {progress}%
                                         </span>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
-
-                                {/* Details Grid */}
-                                <div className="grid grid-cols-3 gap-3 mt-3">
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">등록일</p>
-                                    <p className="text-sm font-medium mt-0.5">
-                                      {enrollment.enrolled_at 
-                                        ? format(new Date(enrollment.enrolled_at), 'yy.MM.dd', { locale: ko })
-                                        : '-'
-                                      }
-                                    </p>
-                                  </div>
-                                  
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">수료일</p>
-                                    <p className="text-sm font-medium mt-0.5">
-                                      {enrollment.completed_at 
-                                        ? format(new Date(enrollment.completed_at), 'yy.MM.dd', { locale: ko })
-                                        : '-'
-                                      }
-                                    </p>
-                                  </div>
-
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">학습 기간</p>
-                                    <p className="text-sm font-medium mt-0.5">
-                                      {enrollment.completed_at && enrollment.enrolled_at
-                                        ? `${Math.ceil((new Date(enrollment.completed_at).getTime() - new Date(enrollment.enrolled_at).getTime()) / (1000 * 60 * 60 * 24))}일`
-                                        : enrollment.enrolled_at
-                                        ? `${Math.ceil((new Date().getTime() - new Date(enrollment.enrolled_at).getTime()) / (1000 * 60 * 60 * 24))}일`
-                                        : '-'
-                                      }
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Progress Bar */}
-                                <div className="mt-3">
-                                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                                    <div 
-                                      className={`h-full rounded-full transition-all duration-500 ${
-                                        isCompleted 
-                                          ? 'bg-green-500' 
-                                          : isInProgress 
-                                          ? 'bg-primary'
-                                          : 'bg-muted-foreground'
-                                      }`}
-                                      style={{ width: `${progress}%` }}
-                                    />
-                                  </div>
-                                </div>
                               </div>
-                            </div>
-                          </div>
+                            </CollapsibleTrigger>
+
+                            {/* Expanded Content */}
+                            <CollapsibleContent>
+                              <div className="px-6 pb-4 bg-muted/20">
+                                {/* Session Progress Table */}
+                                {enrollment.sessions && enrollment.sessions.length > 0 && (
+                                  <div className="mb-4">
+                                    <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                                      <BookOpen className="h-4 w-4" />
+                                      세션별 진도
+                                    </h4>
+                                    <div className="border rounded-lg overflow-hidden bg-background">
+                                      <table className="w-full text-sm">
+                                        <thead className="bg-muted/50">
+                                          <tr>
+                                            <th className="text-left py-2 px-3 font-medium text-muted-foreground">순서</th>
+                                            <th className="text-left py-2 px-3 font-medium text-muted-foreground">세션명</th>
+                                            <th className="text-center py-2 px-3 font-medium text-muted-foreground">시청 시간</th>
+                                            <th className="text-center py-2 px-3 font-medium text-muted-foreground">완료 상태</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                          {enrollment.sessions
+                                            .sort((a, b) => ((a.session as any)?.order_index || 0) - ((b.session as any)?.order_index || 0))
+                                            .map((session) => (
+                                              <tr key={session.id} className="hover:bg-muted/30">
+                                                <td className="py-2 px-3 text-muted-foreground">
+                                                  {((session.session as any)?.order_index || 0) + 1}
+                                                </td>
+                                                <td className="py-2 px-3">
+                                                  {(session.session as any)?.title || '-'}
+                                                </td>
+                                                <td className="py-2 px-3 text-center text-muted-foreground">
+                                                  {Math.floor(session.watched_duration_seconds / 60)}분 {session.watched_duration_seconds % 60}초
+                                                </td>
+                                                <td className="py-2 px-3 text-center">
+                                                  {session.completed ? (
+                                                    <CheckCircle className="h-4 w-4 text-green-500 inline" />
+                                                  ) : (
+                                                    <Clock className="h-4 w-4 text-muted-foreground inline" />
+                                                  )}
+                                                </td>
+                                              </tr>
+                                            ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Download History */}
+                                {enrollment.downloads && enrollment.downloads.length > 0 && (
+                                  <div>
+                                    <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                                      <Download className="h-4 w-4" />
+                                      자료 다운로드 이력
+                                    </h4>
+                                    <div className="border rounded-lg overflow-hidden bg-background">
+                                      <table className="w-full text-sm">
+                                        <thead className="bg-muted/50">
+                                          <tr>
+                                            <th className="text-left py-2 px-3 font-medium text-muted-foreground">파일명</th>
+                                            <th className="text-right py-2 px-3 font-medium text-muted-foreground">다운로드 일시</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                          {enrollment.downloads.map((download) => (
+                                            <tr key={download.id} className="hover:bg-muted/30">
+                                              <td className="py-2 px-3 truncate max-w-md">
+                                                {download.file_name}
+                                              </td>
+                                              <td className="py-2 px-3 text-right text-muted-foreground">
+                                                {format(new Date(download.downloaded_at), 'yy.MM.dd HH:mm', { locale: ko })}
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Empty State */}
+                                {(!enrollment.sessions || enrollment.sessions.length === 0) && 
+                                 (!enrollment.downloads || enrollment.downloads.length === 0) && (
+                                  <p className="text-sm text-muted-foreground text-center py-4">
+                                    상세 데이터가 없습니다
+                                  </p>
+                                )}
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
                         );
                       })}
                     </div>
