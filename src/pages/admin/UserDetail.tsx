@@ -862,24 +862,26 @@ const AdminUserDetail = () => {
                             {/* Expanded Content */}
                             <CollapsibleContent>
                               <div className="px-6 pb-4 bg-muted/20">
-                                {/* Session Progress Table */}
+                                 {/* Session Progress Table */}
                                 {enrollment.sessions && enrollment.sessions.length > 0 && (
-                                  <div className="mb-4">
-                                    <h4 className="text-sm font-semibold mb-3 flex items-center gap-2 text-foreground">
-                                      <BookOpen className="h-4 w-4 text-primary" />
+                                  <div className="mb-8">
+                                    <h4 className="text-sm font-semibold mb-4 flex items-center gap-2 text-foreground">
+                                      <div className="flex items-center justify-center w-6 h-6 rounded bg-primary/10">
+                                        <BookOpen className="h-4 w-4 text-primary" />
+                                      </div>
                                       세션별 학습 진도
                                     </h4>
-                                    <div className="border rounded-lg overflow-hidden bg-background shadow-sm">
+                                    <div className="border border-border/50 rounded-xl overflow-hidden bg-background shadow-sm">
                                       <table className="w-full text-sm">
-                                        <thead className="bg-muted">
+                                        <thead className="bg-muted/70">
                                           <tr>
-                                            <th className="text-left py-3 px-4 font-semibold text-foreground w-20">섹션</th>
-                                            <th className="text-left py-3 px-4 font-semibold text-foreground">세션명</th>
-                                            <th className="text-center py-3 px-4 font-semibold text-foreground w-32">시청 시간</th>
-                                            <th className="text-center py-3 px-4 font-semibold text-foreground w-24">상태</th>
+                                            <th className="text-left py-3.5 px-5 font-semibold text-foreground w-52">섹션</th>
+                                            <th className="text-left py-3.5 px-5 font-semibold text-foreground">세션명</th>
+                                            <th className="text-center py-3.5 px-5 font-semibold text-foreground w-32">시청 시간</th>
+                                            <th className="text-center py-3.5 px-5 font-semibold text-foreground w-28">상태</th>
                                           </tr>
                                         </thead>
-                                        <tbody className="divide-y">
+                                        <tbody className="divide-y divide-border/30">
                                           {enrollment.sessions
                                             .sort((a, b) => {
                                               const aSectionOrder = (a.session as any)?.section?.order_index || 0;
@@ -895,30 +897,30 @@ const AdminUserDetail = () => {
                                               const seconds = session.watched_duration_seconds % 60;
                                               
                                               return (
-                                                <tr key={session.id} className="hover:bg-muted/50 transition-colors">
-                                                  <td className="py-3 px-4">
-                                                    <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
+                                                <tr key={session.id} className="hover:bg-muted/30 transition-colors">
+                                                  <td className="py-3.5 px-5">
+                                                    <span className="inline-flex items-center text-xs font-medium text-muted-foreground bg-muted/80 px-3 py-1.5 rounded-md border border-border/30">
                                                       {sectionTitle}
                                                     </span>
                                                   </td>
-                                                  <td className="py-3 px-4">
-                                                    <span className="font-medium">{(session.session as any)?.title || '-'}</span>
+                                                  <td className="py-3.5 px-5">
+                                                    <span className="font-medium text-foreground">{(session.session as any)?.title || '-'}</span>
                                                   </td>
-                                                  <td className="py-3 px-4 text-center">
-                                                    <span className="text-muted-foreground">
+                                                  <td className="py-3.5 px-5 text-center">
+                                                    <span className="text-sm text-muted-foreground font-mono">
                                                       {minutes > 0 ? `${minutes}분 ` : ''}{seconds}초
                                                     </span>
                                                   </td>
-                                                  <td className="py-3 px-4 text-center">
+                                                  <td className="py-3.5 px-5 text-center">
                                                     {session.completed ? (
-                                                      <div className="inline-flex items-center gap-1.5 text-green-600 dark:text-green-400">
-                                                        <CheckCircle className="h-4 w-4" />
+                                                      <div className="inline-flex items-center gap-1.5 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2.5 py-1 rounded-md">
+                                                        <CheckCircle className="h-3.5 w-3.5" />
                                                         <span className="text-xs font-semibold">완료</span>
                                                       </div>
                                                     ) : (
-                                                      <div className="inline-flex items-center gap-1.5 text-muted-foreground">
-                                                        <Clock className="h-4 w-4" />
-                                                        <span className="text-xs">진행중</span>
+                                                      <div className="inline-flex items-center gap-1.5 text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-md">
+                                                        <Clock className="h-3.5 w-3.5" />
+                                                        <span className="text-xs font-medium">진행중</span>
                                                       </div>
                                                     )}
                                                   </td>
@@ -934,28 +936,35 @@ const AdminUserDetail = () => {
                                 {/* Download History */}
                                 {enrollment.downloads && enrollment.downloads.length > 0 && (
                                   <div>
-                                    <h4 className="text-sm font-semibold mb-3 flex items-center gap-2 text-foreground">
-                                      <Download className="h-4 w-4 text-primary" />
-                                      자료 다운로드 이력 ({enrollment.downloads.length}건)
+                                    <h4 className="text-sm font-semibold mb-4 flex items-center gap-2 text-foreground">
+                                      <div className="flex items-center justify-center w-6 h-6 rounded bg-primary/10">
+                                        <Download className="h-4 w-4 text-primary" />
+                                      </div>
+                                      자료 다운로드 이력
+                                      <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-md ml-1">
+                                        {enrollment.downloads.length}건
+                                      </span>
                                     </h4>
-                                    <div className="border rounded-lg overflow-hidden bg-background shadow-sm">
+                                    <div className="border border-border/50 rounded-xl overflow-hidden bg-background shadow-sm">
                                       <table className="w-full text-sm">
-                                        <thead className="bg-muted">
+                                        <thead className="bg-muted/70">
                                           <tr>
-                                            <th className="text-left py-3 px-4 font-semibold text-foreground">파일명</th>
-                                            <th className="text-right py-3 px-4 font-semibold text-foreground w-40">다운로드 일시</th>
+                                            <th className="text-left py-3.5 px-5 font-semibold text-foreground">파일명</th>
+                                            <th className="text-right py-3.5 px-5 font-semibold text-foreground w-48">다운로드 일시</th>
                                           </tr>
                                         </thead>
-                                        <tbody className="divide-y">
+                                        <tbody className="divide-y divide-border/30">
                                           {enrollment.downloads.map((download) => (
-                                            <tr key={download.id} className="hover:bg-muted/50 transition-colors">
-                                              <td className="py-3 px-4">
-                                                <div className="flex items-center gap-2">
-                                                  <Download className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                                  <span className="truncate">{download.file_name}</span>
+                                            <tr key={download.id} className="hover:bg-muted/30 transition-colors">
+                                              <td className="py-3.5 px-5">
+                                                <div className="flex items-center gap-2.5">
+                                                  <div className="flex items-center justify-center w-7 h-7 rounded-md bg-muted/80 flex-shrink-0">
+                                                    <Download className="h-3.5 w-3.5 text-muted-foreground" />
+                                                  </div>
+                                                  <span className="truncate font-medium text-foreground">{download.file_name}</span>
                                                 </div>
                                               </td>
-                                              <td className="py-3 px-4 text-right text-muted-foreground">
+                                              <td className="py-3.5 px-5 text-right text-sm text-muted-foreground font-mono">
                                                 {format(new Date(download.downloaded_at), 'yy.MM.dd HH:mm', { locale: ko })}
                                               </td>
                                             </tr>
