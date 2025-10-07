@@ -173,7 +173,12 @@ const AdminUserDetail = () => {
         .from('enrollments')
         .select(`
           *,
-          course:courses(id, title, thumbnail_url, category_id)
+          course:courses(
+            id, 
+            title, 
+            thumbnail_url,
+            category:categories(name)
+          )
         `)
         .eq('user_id', userId)
         .order('enrolled_at', { ascending: false });
@@ -667,240 +672,162 @@ const AdminUserDetail = () => {
             )}
 
             {activeSection === 'learning' && (
-              <div className="space-y-6">
-                {/* Learning Summary Dashboard */}
-                {enrollments.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base font-semibold">수강 현황 요약</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-4 gap-4">
-                        <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
-                          <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">총 수강 강의</p>
-                          <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{enrollments.length}</p>
-                        </div>
-                        <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900">
-                          <p className="text-xs text-green-600 dark:text-green-400 mb-1">수료 완료</p>
-                          <p className="text-2xl font-bold text-green-700 dark:text-green-300">
-                            {enrollments.filter(e => e.completed_at).length}
-                          </p>
-                        </div>
-                        <div className="p-4 rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900">
-                          <p className="text-xs text-orange-600 dark:text-orange-400 mb-1">수강 중</p>
-                          <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
-                            {enrollments.filter(e => !e.completed_at && (e.progress || 0) > 0).length}
-                          </p>
-                        </div>
-                        <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800">
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">평균 진도율</p>
-                          <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">
-                            {Math.round(enrollments.reduce((sum, e) => sum + (e.progress || 0), 0) / enrollments.length)}%
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Course List */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base font-semibold">강의별 상세 정보</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {enrollments.length === 0 ? (
-                      <div className="text-center py-12 text-muted-foreground">
-                        <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                        <p className="text-sm">수강 내역이 없습니다</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {enrollments.map((enrollment) => {
-                          const progress = Math.round(enrollment.progress || 0);
-                          const isCompleted = !!enrollment.completed_at;
-                          const isInProgress = !isCompleted && progress > 0;
-                          const isNotStarted = !isCompleted && progress === 0;
-                          
-                          return (
-                            <div 
-                              key={enrollment.id} 
-                              className={`border-2 rounded-xl p-5 transition-all hover:shadow-md ${
-                                isCompleted 
-                                  ? 'border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-950/20' 
-                                  : isInProgress 
-                                  ? 'border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20'
-                                  : 'border-gray-200 dark:border-gray-800'
-                              }`}
-                            >
-                              <div className="flex items-start gap-4 mb-4">
-                                {/* Thumbnail */}
-                                {(enrollment.course as any)?.thumbnail_url && (
-                                  <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted">
-                                    <img 
-                                      src={(enrollment.course as any).thumbnail_url} 
-                                      alt={enrollment.course?.title || '강의'}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  </div>
-                                )}
-                                
-                                {/* Title and Status */}
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="font-semibold text-base mb-2 line-clamp-2">
-                                    {enrollment.course?.title || '강의명 없음'}
-                                  </h3>
-                                  <div className="flex items-center gap-2">
-                                    <Badge 
-                                      variant={isCompleted ? 'default' : isInProgress ? 'secondary' : 'outline'}
-                                      className={`text-xs ${
-                                        isCompleted 
-                                          ? 'bg-green-500 hover:bg-green-600' 
-                                          : isInProgress 
-                                          ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                                          : ''
-                                      }`}
-                                    >
-                                      {isCompleted ? '✓ 수료완료' : isInProgress ? '수강중' : '미시작'}
-                                    </Badge>
-                                    {(enrollment.course as any)?.category_id && (
-                                      <Badge variant="outline" className="text-xs">
-                                        {(enrollment.course as any).category_id}
-                                      </Badge>
-                                    )}
-                                  </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base font-semibold">수강 내역</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {enrollments.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">수강 내역이 없습니다</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {enrollments.map((enrollment) => {
+                        const progress = Math.round(enrollment.progress || 0);
+                        const isCompleted = !!enrollment.completed_at;
+                        const isInProgress = !isCompleted && progress > 0;
+                        
+                        return (
+                          <div 
+                            key={enrollment.id} 
+                            className="border rounded-lg p-4 hover:border-primary/30 transition-colors"
+                          >
+                            <div className="flex gap-4">
+                              {/* Thumbnail */}
+                              {(enrollment.course as any)?.thumbnail_url && (
+                                <div className="flex-shrink-0 w-24 h-24 rounded-md overflow-hidden bg-muted">
+                                  <img 
+                                    src={(enrollment.course as any).thumbnail_url} 
+                                    alt={enrollment.course?.title || '강의'}
+                                    className="w-full h-full object-cover"
+                                  />
                                 </div>
-
-                                {/* Progress Circle */}
-                                <div className="flex-shrink-0">
-                                  <div className="relative w-16 h-16">
-                                    <svg className="transform -rotate-90 w-16 h-16">
-                                      <circle
-                                        cx="32"
-                                        cy="32"
-                                        r="28"
-                                        stroke="currentColor"
-                                        strokeWidth="6"
-                                        fill="none"
-                                        className="text-gray-200 dark:text-gray-700"
-                                      />
-                                      <circle
-                                        cx="32"
-                                        cy="32"
-                                        r="28"
-                                        stroke="currentColor"
-                                        strokeWidth="6"
-                                        fill="none"
-                                        strokeDasharray={`${2 * Math.PI * 28}`}
-                                        strokeDashoffset={`${2 * Math.PI * 28 * (1 - progress / 100)}`}
-                                        className={`transition-all ${
-                                          isCompleted 
-                                            ? 'text-green-500' 
-                                            : isInProgress 
-                                            ? 'text-blue-500'
-                                            : 'text-gray-400'
-                                        }`}
-                                        strokeLinecap="round"
-                                      />
-                                    </svg>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                      <span className={`text-sm font-bold ${
-                                        isCompleted 
-                                          ? 'text-green-600 dark:text-green-400' 
-                                          : isInProgress 
-                                          ? 'text-blue-600 dark:text-blue-400'
-                                          : 'text-gray-500'
-                                      }`}>
-                                        {progress}%
-                                      </span>
+                              )}
+                              
+                              {/* Content */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1">
+                                    <h3 className="font-semibold text-base mb-1 line-clamp-1">
+                                      {enrollment.course?.title || '강의명 없음'}
+                                    </h3>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <Badge 
+                                        variant={isCompleted ? 'default' : isInProgress ? 'secondary' : 'outline'}
+                                        className="text-xs"
+                                      >
+                                        {isCompleted ? '수료완료' : isInProgress ? '수강중' : '미시작'}
+                                      </Badge>
+                                      {(enrollment.course as any)?.category?.name && (
+                                        <span className="text-xs text-muted-foreground">
+                                          {(enrollment.course as any).category.name}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Progress Circle - Compact */}
+                                  <div className="flex-shrink-0 ml-4">
+                                    <div className="relative w-14 h-14">
+                                      <svg className="transform -rotate-90 w-14 h-14">
+                                        <circle
+                                          cx="28"
+                                          cy="28"
+                                          r="24"
+                                          stroke="currentColor"
+                                          strokeWidth="4"
+                                          fill="none"
+                                          className="text-muted"
+                                        />
+                                        <circle
+                                          cx="28"
+                                          cy="28"
+                                          r="24"
+                                          stroke="currentColor"
+                                          strokeWidth="4"
+                                          fill="none"
+                                          strokeDasharray={`${2 * Math.PI * 24}`}
+                                          strokeDashoffset={`${2 * Math.PI * 24 * (1 - progress / 100)}`}
+                                          className={`transition-all ${
+                                            isCompleted 
+                                              ? 'text-green-500' 
+                                              : isInProgress 
+                                              ? 'text-primary'
+                                              : 'text-muted-foreground'
+                                          }`}
+                                          strokeLinecap="round"
+                                        />
+                                      </svg>
+                                      <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="text-xs font-bold">
+                                          {progress}%
+                                        </span>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
 
-                              {/* Details Grid */}
-                              <div className="grid grid-cols-4 gap-4 mb-4">
-                                <div className="text-center p-3 rounded-lg bg-background/50">
-                                  <p className="text-xs text-muted-foreground mb-1">등록일</p>
-                                  <p className="text-sm font-medium">
-                                    {enrollment.enrolled_at 
-                                      ? format(new Date(enrollment.enrolled_at), 'yy.MM.dd', { locale: ko })
-                                      : '-'
-                                    }
-                                  </p>
-                                </div>
-                                
-                                <div className="text-center p-3 rounded-lg bg-background/50">
-                                  <p className="text-xs text-muted-foreground mb-1">진도율</p>
-                                  <p className={`text-sm font-bold ${
-                                    progress >= 80 
-                                      ? 'text-green-600 dark:text-green-400' 
-                                      : progress >= 30 
-                                      ? 'text-blue-600 dark:text-blue-400'
-                                      : 'text-gray-500'
-                                  }`}>
-                                    {progress}%
-                                  </p>
-                                </div>
-                                
-                                <div className="text-center p-3 rounded-lg bg-background/50">
-                                  <p className="text-xs text-muted-foreground mb-1">수료일</p>
-                                  <p className="text-sm font-medium">
-                                    {enrollment.completed_at 
-                                      ? format(new Date(enrollment.completed_at), 'yy.MM.dd', { locale: ko })
-                                      : '-'
-                                    }
-                                  </p>
+                                {/* Details Grid */}
+                                <div className="grid grid-cols-3 gap-3 mt-3">
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">등록일</p>
+                                    <p className="text-sm font-medium mt-0.5">
+                                      {enrollment.enrolled_at 
+                                        ? format(new Date(enrollment.enrolled_at), 'yy.MM.dd', { locale: ko })
+                                        : '-'
+                                      }
+                                    </p>
+                                  </div>
+                                  
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">수료일</p>
+                                    <p className="text-sm font-medium mt-0.5">
+                                      {enrollment.completed_at 
+                                        ? format(new Date(enrollment.completed_at), 'yy.MM.dd', { locale: ko })
+                                        : '-'
+                                      }
+                                    </p>
+                                  </div>
+
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">학습 기간</p>
+                                    <p className="text-sm font-medium mt-0.5">
+                                      {enrollment.completed_at && enrollment.enrolled_at
+                                        ? `${Math.ceil((new Date(enrollment.completed_at).getTime() - new Date(enrollment.enrolled_at).getTime()) / (1000 * 60 * 60 * 24))}일`
+                                        : enrollment.enrolled_at
+                                        ? `${Math.ceil((new Date().getTime() - new Date(enrollment.enrolled_at).getTime()) / (1000 * 60 * 60 * 24))}일`
+                                        : '-'
+                                      }
+                                    </p>
+                                  </div>
                                 </div>
 
-                                <div className="text-center p-3 rounded-lg bg-background/50">
-                                  <p className="text-xs text-muted-foreground mb-1">학습 기간</p>
-                                  <p className="text-sm font-medium">
-                                    {enrollment.completed_at && enrollment.enrolled_at
-                                      ? `${Math.ceil((new Date(enrollment.completed_at).getTime() - new Date(enrollment.enrolled_at).getTime()) / (1000 * 60 * 60 * 24))}일`
-                                      : enrollment.enrolled_at
-                                      ? `${Math.ceil((new Date().getTime() - new Date(enrollment.enrolled_at).getTime()) / (1000 * 60 * 60 * 24))}일`
-                                      : '-'
-                                    }
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Progress Bar */}
-                              <div className="space-y-2">
-                                <div className="flex justify-between text-xs">
-                                  <span className="text-muted-foreground font-medium">전체 진행률</span>
-                                  <span className={`font-bold ${
-                                    progress >= 80 
-                                      ? 'text-green-600 dark:text-green-400' 
-                                      : progress >= 30 
-                                      ? 'text-blue-600 dark:text-blue-400'
-                                      : 'text-gray-500'
-                                  }`}>
-                                    {progress}%
-                                  </span>
-                                </div>
-                                <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                  <div 
-                                    className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
-                                      isCompleted 
-                                        ? 'bg-gradient-to-r from-green-500 to-green-600' 
-                                        : isInProgress 
-                                        ? 'bg-gradient-to-r from-blue-500 to-blue-600'
-                                        : 'bg-gray-400'
-                                    }`}
-                                    style={{ width: `${progress}%` }}
-                                  />
+                                {/* Progress Bar */}
+                                <div className="mt-3">
+                                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                    <div 
+                                      className={`h-full rounded-full transition-all duration-500 ${
+                                        isCompleted 
+                                          ? 'bg-green-500' 
+                                          : isInProgress 
+                                          ? 'bg-primary'
+                                          : 'bg-muted-foreground'
+                                      }`}
+                                      style={{ width: `${progress}%` }}
+                                    />
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             )}
 
             {activeSection === 'payment' && (
