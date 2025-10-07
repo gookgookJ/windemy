@@ -388,9 +388,19 @@ const Learn = () => {
       console.log('Validation result:', validation);
 
       if (!validation || !validation.isValid) {
-        const message = validation?.watchedPercentage < 80 
-          ? `시청률이 부족합니다 (현재: ${validation?.watchedPercentage || 0}%, 필요: 80%)`
-          : "완료 조건을 만족하지 않습니다.";
+        let message = "";
+        
+        if (validation) {
+          if (validation.watchedPercentage < 80) {
+            message = `시청률이 부족합니다 (현재: ${validation.watchedPercentage}%, 필요: 80%)`;
+          } else if (validation.suspiciousJumps > 3) {
+            message = `비정상적인 건너뛰기가 감지되었습니다 (${validation.suspiciousJumps}회). 영상을 정상적으로 시청해주세요.`;
+          } else {
+            message = `완료 조건을 만족하지 않습니다. (진도율: ${validation.watchedPercentage}%)`;
+          }
+        } else {
+          message = "검증 중 오류가 발생했습니다.";
+        }
         
         toast({
           title: "완료 조건 미달",

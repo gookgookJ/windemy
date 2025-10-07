@@ -132,15 +132,14 @@ function validateProgress(data: {
   const forwardJumps = seekEvents.filter(event => event.jump_amount > 10).length;
   const suspiciousJumps = seekEvents.filter(event => event.jump_amount > 60).length;
 
-  // 4. 마지막 구간 시청 확인 (마지막 30초 또는 90% 지점)
-  const lastSegmentThreshold = Math.max(videoDuration - 30, videoDuration * 0.9);
+  // 4. 마지막 구간 시청 확인 (마지막 30초 또는 85% 지점 중 작은 값)
+  const lastSegmentThreshold = Math.min(videoDuration - 30, videoDuration * 0.85);
   const hasReachedEnd = watchedRanges.some(range => range.end >= lastSegmentThreshold);
 
-  // 5. 종합 검증
+  // 5. 종합 검증 - 진도율 기반으로 완료 판단
   const isValidProgress =
     watchedPercentage >= 80 &&          // 80% 이상 고유 구간 시청
-    hasReachedEnd &&                    // 마지막 구간 시청 완료
-    suspiciousJumps <= 2;               // 의심스러운 점프 2회 이하
+    suspiciousJumps <= 3;               // 의심스러운 점프 3회 이하
 
   return {
     isValid: isValidProgress,
