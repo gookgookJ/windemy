@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Eye, Edit, MoreHorizontal, CheckCircle, XCircle, Trash2, Plus, RefreshCw } from 'lucide-react';
+import { Search, Filter, Eye, Edit, MoreHorizontal, CheckCircle, XCircle, Trash2, Plus } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface Course {
@@ -31,7 +31,6 @@ export const AdminCourses = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [levelFilter, setLevelFilter] = useState('all');
-  const [syncingCourse, setSyncingCourse] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -144,31 +143,6 @@ export const AdminCourses = () => {
     }
   };
 
-  const syncVideoDurations = async (courseId: string, courseTitle: string) => {
-    setSyncingCourse(courseId);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('sync-video-durations', {
-        body: { course_id: courseId }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "영상 길이 동기화 완료",
-        description: `"${courseTitle}" 강의의 ${data.updated}개 영상 길이가 동기화되었습니다.`
-      });
-    } catch (error) {
-      console.error('Error syncing video durations:', error);
-      toast({
-        title: "동기화 실패",
-        description: "영상 길이를 동기화하는데 실패했습니다.",
-        variant: "destructive"
-      });
-    } finally {
-      setSyncingCourse(null);
-    }
-  };
 
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -356,14 +330,6 @@ export const AdminCourses = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem 
-                              onClick={() => syncVideoDurations(course.id, course.title)}
-                              className="cursor-pointer"
-                              disabled={syncingCourse === course.id}
-                            >
-                              <RefreshCw className={`mr-2 h-4 w-4 ${syncingCourse === course.id ? 'animate-spin' : ''}`} />
-                              영상 길이 동기화
-                            </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => toggleCoursePublication(course.id, course.is_published)}
                               className="cursor-pointer"

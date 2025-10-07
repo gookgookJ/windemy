@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -304,6 +304,47 @@ const AdminUserDetail = () => {
       setLoading(false);
     }
   };
+
+  // 자동 영상 길이 동기화: 수강 내역 탭 진입 시 실행 (1회)
+  const hasAutoSyncedRef = useRef(false);
+  useEffect(() => {
+    if (activeSection !== 'learning') return;
+    if (hasAutoSyncedRef.current) return;
+
+    // 동기화가 필요한 코스 식별 (세션 중 영상 길이가 0 또는 없음)
+    const coursesNeedingSync = Array.from(new Set(
+      (enrollments || [])
+        .filter((e) => (e.sessions || []).some((s) => !((s.session as any)?.video_duration_seconds > 0)))
+        .map((e) => e.course_id)
+        .filter(Boolean) as string[]
+    ));
+
+    if (coursesNeedingSync.length === 0) return;
+
+    hasAutoSyncedRef.current = true;
+
+    (async () => {
+      try {
+        for (const courseId of coursesNeedingSync) {
+          await supabase.functions.invoke('sync-video-durations', {
+            body: { course_id: courseId }
+          });
+          // 약간의 간격으로 호출 (API 과도 호출 방지)
+          await new Promise((r) => setTimeout(r, 350));
+        }
+
+        toast({
+          title: '영상 길이 자동 동기화 완료',
+          description: `${coursesNeedingSync.length}개 강의의 영상 길이를 최신화했어요.`,
+        });
+
+        // 최신 데이터로 새로고침
+        await fetchUserData();
+      } catch (err) {
+        console.error('Auto sync video durations failed:', err);
+      }
+    })();
+  }, [activeSection, enrollments]);
 
   const handleAddMemo = async () => {
     if (newMemo.trim() && userId) {
