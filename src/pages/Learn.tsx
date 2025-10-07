@@ -547,16 +547,30 @@ const Learn = () => {
         .eq('id', sessionData.section_id)
         .maybeSingle();
       
-      // 세션/섹션/강의 레벨의 자료를 모두 조회
-      const { data: mats, error: materialsError } = await supabase
+      // 계층적으로 자료 조회
+      // 1. 현재 세션에 직접 연결된 자료
+      const { data: sessionMaterials } = await supabase
         .from('course_materials')
-        .select('id, title, file_url, file_name, file_size, file_type, order_index')
-        .or(`session_id.eq.${sessionId},section_id.eq.${sessionData.section_id},course_id.eq.${sessionData.course_id}`)
+        .select('id, title, file_url, file_name, file_size, file_type, order_index, session_id, section_id, course_id')
+        .eq('session_id', sessionId)
         .order('order_index');
 
-      if (materialsError) {
-        console.error('Error fetching materials:', materialsError);
-      }
+      // 2. 현재 섹션에 연결된 자료 (session_id가 NULL인 것만)
+      const { data: sectionMaterials } = await supabase
+        .from('course_materials')
+        .select('id, title, file_url, file_name, file_size, file_type, order_index, session_id, section_id, course_id')
+        .eq('section_id', sessionData.section_id)
+        .is('session_id', null)
+        .order('order_index');
+
+      // 3. 전체 강의에 연결된 자료 (session_id와 section_id가 모두 NULL인 것만)
+      const { data: courseMaterials } = await supabase
+        .from('course_materials')
+        .select('id, title, file_url, file_name, file_size, file_type, order_index, session_id, section_id, course_id')
+        .eq('course_id', sessionData.course_id)
+        .is('session_id', null)
+        .is('section_id', null)
+        .order('order_index');
 
       const combined: CourseMaterial[] = [];
 
@@ -585,8 +599,15 @@ const Learn = () => {
         } as CourseMaterial);
       }
 
-      if (mats && mats.length) {
-        combined.push(...(mats as CourseMaterial[]));
+      // 조회한 자료들을 순서대로 추가 (세션 > 섹션 > 강의)
+      if (sessionMaterials && sessionMaterials.length) {
+        combined.push(...(sessionMaterials as CourseMaterial[]));
+      }
+      if (sectionMaterials && sectionMaterials.length) {
+        combined.push(...(sectionMaterials as CourseMaterial[]));
+      }
+      if (courseMaterials && courseMaterials.length) {
+        combined.push(...(courseMaterials as CourseMaterial[]));
       }
 
       // 정렬 (가상 자료가 먼저 오도록)
