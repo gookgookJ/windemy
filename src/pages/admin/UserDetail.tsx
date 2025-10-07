@@ -232,7 +232,11 @@ const AdminUserDetail = () => {
                 session_id,
                 completed,
                 watched_duration_seconds,
-                session:course_sessions(title, order_index)
+                session:course_sessions(
+                  title, 
+                  order_index,
+                  section:course_sections(title, order_index)
+                )
               `)
               .eq('user_id', userId)
               .in('session_id', sessionIds);
@@ -861,43 +865,66 @@ const AdminUserDetail = () => {
                                 {/* Session Progress Table */}
                                 {enrollment.sessions && enrollment.sessions.length > 0 && (
                                   <div className="mb-4">
-                                    <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                                      <BookOpen className="h-4 w-4" />
-                                      세션별 진도
+                                    <h4 className="text-sm font-semibold mb-3 flex items-center gap-2 text-foreground">
+                                      <BookOpen className="h-4 w-4 text-primary" />
+                                      세션별 학습 진도
                                     </h4>
-                                    <div className="border rounded-lg overflow-hidden bg-background">
+                                    <div className="border rounded-lg overflow-hidden bg-background shadow-sm">
                                       <table className="w-full text-sm">
-                                        <thead className="bg-muted/50">
+                                        <thead className="bg-muted">
                                           <tr>
-                                            <th className="text-left py-2 px-3 font-medium text-muted-foreground">순서</th>
-                                            <th className="text-left py-2 px-3 font-medium text-muted-foreground">세션명</th>
-                                            <th className="text-center py-2 px-3 font-medium text-muted-foreground">시청 시간</th>
-                                            <th className="text-center py-2 px-3 font-medium text-muted-foreground">완료 상태</th>
+                                            <th className="text-left py-3 px-4 font-semibold text-foreground w-20">섹션</th>
+                                            <th className="text-left py-3 px-4 font-semibold text-foreground">세션명</th>
+                                            <th className="text-center py-3 px-4 font-semibold text-foreground w-32">시청 시간</th>
+                                            <th className="text-center py-3 px-4 font-semibold text-foreground w-24">상태</th>
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y">
                                           {enrollment.sessions
-                                            .sort((a, b) => ((a.session as any)?.order_index || 0) - ((b.session as any)?.order_index || 0))
-                                            .map((session) => (
-                                              <tr key={session.id} className="hover:bg-muted/30">
-                                                <td className="py-2 px-3 text-muted-foreground">
-                                                  {((session.session as any)?.order_index || 0) + 1}
-                                                </td>
-                                                <td className="py-2 px-3">
-                                                  {(session.session as any)?.title || '-'}
-                                                </td>
-                                                <td className="py-2 px-3 text-center text-muted-foreground">
-                                                  {Math.floor(session.watched_duration_seconds / 60)}분 {session.watched_duration_seconds % 60}초
-                                                </td>
-                                                <td className="py-2 px-3 text-center">
-                                                  {session.completed ? (
-                                                    <CheckCircle className="h-4 w-4 text-green-500 inline" />
-                                                  ) : (
-                                                    <Clock className="h-4 w-4 text-muted-foreground inline" />
-                                                  )}
-                                                </td>
-                                              </tr>
-                                            ))}
+                                            .sort((a, b) => {
+                                              const aSectionOrder = (a.session as any)?.section?.order_index || 0;
+                                              const bSectionOrder = (b.session as any)?.section?.order_index || 0;
+                                              if (aSectionOrder !== bSectionOrder) {
+                                                return aSectionOrder - bSectionOrder;
+                                              }
+                                              return ((a.session as any)?.order_index || 0) - ((b.session as any)?.order_index || 0);
+                                            })
+                                            .map((session, idx) => {
+                                              const sectionTitle = (session.session as any)?.section?.title || '-';
+                                              const minutes = Math.floor(session.watched_duration_seconds / 60);
+                                              const seconds = session.watched_duration_seconds % 60;
+                                              
+                                              return (
+                                                <tr key={session.id} className="hover:bg-muted/50 transition-colors">
+                                                  <td className="py-3 px-4">
+                                                    <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
+                                                      {sectionTitle}
+                                                    </span>
+                                                  </td>
+                                                  <td className="py-3 px-4">
+                                                    <span className="font-medium">{(session.session as any)?.title || '-'}</span>
+                                                  </td>
+                                                  <td className="py-3 px-4 text-center">
+                                                    <span className="text-muted-foreground">
+                                                      {minutes > 0 ? `${minutes}분 ` : ''}{seconds}초
+                                                    </span>
+                                                  </td>
+                                                  <td className="py-3 px-4 text-center">
+                                                    {session.completed ? (
+                                                      <div className="inline-flex items-center gap-1.5 text-green-600 dark:text-green-400">
+                                                        <CheckCircle className="h-4 w-4" />
+                                                        <span className="text-xs font-semibold">완료</span>
+                                                      </div>
+                                                    ) : (
+                                                      <div className="inline-flex items-center gap-1.5 text-muted-foreground">
+                                                        <Clock className="h-4 w-4" />
+                                                        <span className="text-xs">진행중</span>
+                                                      </div>
+                                                    )}
+                                                  </td>
+                                                </tr>
+                                              );
+                                            })}
                                         </tbody>
                                       </table>
                                     </div>
@@ -907,25 +934,28 @@ const AdminUserDetail = () => {
                                 {/* Download History */}
                                 {enrollment.downloads && enrollment.downloads.length > 0 && (
                                   <div>
-                                    <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                                      <Download className="h-4 w-4" />
-                                      자료 다운로드 이력
+                                    <h4 className="text-sm font-semibold mb-3 flex items-center gap-2 text-foreground">
+                                      <Download className="h-4 w-4 text-primary" />
+                                      자료 다운로드 이력 ({enrollment.downloads.length}건)
                                     </h4>
-                                    <div className="border rounded-lg overflow-hidden bg-background">
+                                    <div className="border rounded-lg overflow-hidden bg-background shadow-sm">
                                       <table className="w-full text-sm">
-                                        <thead className="bg-muted/50">
+                                        <thead className="bg-muted">
                                           <tr>
-                                            <th className="text-left py-2 px-3 font-medium text-muted-foreground">파일명</th>
-                                            <th className="text-right py-2 px-3 font-medium text-muted-foreground">다운로드 일시</th>
+                                            <th className="text-left py-3 px-4 font-semibold text-foreground">파일명</th>
+                                            <th className="text-right py-3 px-4 font-semibold text-foreground w-40">다운로드 일시</th>
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y">
                                           {enrollment.downloads.map((download) => (
-                                            <tr key={download.id} className="hover:bg-muted/30">
-                                              <td className="py-2 px-3 truncate max-w-md">
-                                                {download.file_name}
+                                            <tr key={download.id} className="hover:bg-muted/50 transition-colors">
+                                              <td className="py-3 px-4">
+                                                <div className="flex items-center gap-2">
+                                                  <Download className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                                  <span className="truncate">{download.file_name}</span>
+                                                </div>
                                               </td>
-                                              <td className="py-2 px-3 text-right text-muted-foreground">
+                                              <td className="py-3 px-4 text-right text-muted-foreground">
                                                 {format(new Date(download.downloaded_at), 'yy.MM.dd HH:mm', { locale: ko })}
                                               </td>
                                             </tr>
