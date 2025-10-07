@@ -24,25 +24,12 @@ serve(async (req) => {
     
     const { sessionId, userId, actualDuration } = requestBody;
 
-    // 1. 세션 정보 가져오기
-    console.log('Fetching session info for sessionId:', sessionId);
-    const { data: session, error: sessionError } = await supabaseClient
-      .from('course_sessions')
-      .select('duration_minutes')
-      .eq('id', sessionId)
-      .single();
-
-    if (sessionError) {
-      console.error('Session fetch error:', sessionError);
-      throw new Error(`Session fetch failed: ${sessionError.message}`);
+    // actualDuration 검증
+    if (!actualDuration || actualDuration <= 0) {
+      throw new Error('Invalid actualDuration provided');
     }
 
-    if (!session) {
-      console.error('Session not found for id:', sessionId);
-      throw new Error('Session not found');
-    }
-
-    console.log('Session found:', session);
+    console.log('Validating progress for sessionId:', sessionId, 'with duration:', actualDuration);
 
     // 2. 시청 데이터 가져오기 (session_progress 사용)
     const { data: progressData, error: progressError } = await supabaseClient
@@ -62,14 +49,8 @@ serve(async (req) => {
                         : progressData.watched_ranges;
     }
 
-    // 3. 영상 길이 결정
-    let videoDurationSeconds = (session.duration_minutes ?? 0) * 60;
-    const requestedDuration = typeof actualDuration === 'number' ? Math.round(actualDuration) : 0;
-    if (requestedDuration > 0) videoDurationSeconds = requestedDuration;
-    
-    if (videoDurationSeconds <= 0) {
-        throw new Error('Invalid video duration.');
-    }
+    // 3. 영상 길이는 클라이언트에서 전달받은 actualDuration 사용
+    const videoDurationSeconds = Math.round(actualDuration);
 
     // 4. 점프 이벤트 데이터 가져오기
     const { data: seekEvents, error: seekError } = await supabaseClient
