@@ -58,14 +58,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      // profiles 정보 가져오기
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
       
-      if (error) throw error;
-      setProfile(data);
+      if (profileError) throw profileError;
+
+      // user_roles 테이블에서 역할 가져오기
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      if (rolesError) {
+        console.error('Error fetching roles:', rolesError);
+      }
+
+      // 역할 우선순위: admin > instructor > student
+      let userRole = 'student';
+      if (rolesData && rolesData.length > 0) {
+        if (rolesData.some(r => r.role === 'admin')) {
+          userRole = 'admin';
+        } else if (rolesData.some(r => r.role === 'instructor')) {
+          userRole = 'instructor';
+        }
+      }
+
+      // profiles 데이터에 역할 추가 (기존 코드 호환성)
+      setProfile({
+        ...profileData,
+        role: userRole
+      });
     } catch (error) {
       console.error('Error fetching profile:', error);
     }

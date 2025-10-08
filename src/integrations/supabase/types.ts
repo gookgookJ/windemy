@@ -1839,6 +1839,30 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       video_checkpoints: {
         Row: {
           checkpoint_time: number
@@ -2116,13 +2140,64 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_user_activity_stats: {
+        Args: { target_user_id?: string }
+        Returns: {
+          action_types: string[]
+          active_days: number
+          last_activity: string
+          total_activities: number
+          user_id: string
+        }[]
+      }
+      get_user_enrollment_summary: {
+        Args: { target_user_id?: string }
+        Returns: {
+          completed_courses: number
+          email: string
+          full_name: string
+          last_enrollment_date: string
+          last_order_date: string
+          total_enrollments: number
+          total_orders: number
+          total_spent: number
+          user_id: string
+        }[]
+      }
+      get_user_group_summary_safe: {
+        Args: { target_user_id?: string }
+        Returns: {
+          email: string
+          full_name: string
+          group_colors: string[]
+          group_count: number
+          group_names: string[]
+          user_id: string
+        }[]
+      }
       get_user_points_balance: {
         Args: { p_user_id: string }
         Returns: number
       }
+      get_user_points_balance_safe: {
+        Args: { target_user_id?: string }
+        Returns: {
+          total_earned: number
+          total_points: number
+          total_used: number
+          user_id: string
+        }[]
+      }
       get_user_role_safe: {
         Args: { user_uuid?: string }
         Returns: string
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
       }
       is_admin: {
         Args: Record<PropertyKey, never>
@@ -2174,7 +2249,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "instructor" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2301,6 +2376,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "instructor", "student"],
+    },
   },
 } as const

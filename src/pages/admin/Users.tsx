@@ -101,10 +101,10 @@ const AdminUsers = () => {
     setLoading(true);
     
     try {
+      // 1. profiles 테이블에서 기본 사용자 정보 가져오기
       let query = supabase
         .from('profiles')
-        .select('*')
-        .in('role', ['student', 'instructor', 'admin']); // 모든 역할 조회
+        .select('*');
 
       // 검색어 필터
       if (filters.searchTerm) {
@@ -116,17 +116,6 @@ const AdminUsers = () => {
       if (filters.marketingEmail !== 'all') {
         const emailConsent = filters.marketingEmail === 'true';
         query = query.eq('marketing_consent', emailConsent);
-      }
-
-      // 그룹 필터 - 실제 그룹명으로 필터링하도록 수정 필요
-      // 현재는 임시로 역할 기반 필터링 유지
-      if (filters.group && filters.group !== 'all') {
-        if (filters.group === 'admin') {
-          query = query.eq('role', 'admin');
-        } else if (filters.group === '미분류') {
-          // 미분류는 나중에 그룹 정보와 대조해서 처리
-        }
-        // 실제 그룹명은 나중에 처리
       }
 
       // 가입일 기간 필터
@@ -171,16 +160,50 @@ const AdminUsers = () => {
         email: profile.email,
         phone: profile.phone || '',
         joinDate: profile.created_at,
-        lastLogin: profile.updated_at, // 마지막 로그인 정보가 없으므로 업데이트 시간 사용
-        totalPayment: 0, // 추후 orders 테이블과 연동
-        status: 'active' as const, // 실제로는 활동 상태에 따라 계산 필요
+        lastLogin: profile.updated_at,
+        totalPayment: 0,
+        status: 'active' as const,
         marketingEmail: profile.marketing_consent || false,
-        role: profile.role, // 역할 정보 보존
-        group: '' // 초기값은 빈 문자열로 설정
+        role: 'student', // 임시 기본값, 아래에서 user_roles로부터 가져와 덮어씀
+        group: ''
       })) || [];
 
-      // 그룹 요약(view)로부터 사용자별 그룹명 가져와 병합
+      // user_roles 테이블에서 역할 가져오기
       const userIds = baseUsers.map(u => u.id);
+      if (userIds.length > 0) {
+        const { data: rolesData } = await supabase
+          .from('user_roles')
+          .select('user_id, role')
+          .in('user_id', userIds);
+
+        // 역할 맵핑 (각 사용자의 가장 높은 권한 역할 선택)
+        const roleByUserId: Record<string, string> = {};
+        if (rolesData) {
+          (rolesData as any[]).forEach(r => {
+            const userId = r.user_id;
+            const role = r.role;
+            // 우선순위: admin > instructor > student
+            if (!roleByUserId[userId] || 
+                (role === 'admin') ||
+                (role === 'instructor' && roleByUserId[userId] !== 'admin')) {
+              roleByUserId[userId] = role;
+            }
+          });
+        }
+
+        // 역할 병합
+        baseUsers.forEach(u => {
+          u.role = roleByUserId[u.id] || 'student';
+        });
+      }
+
+      // 그룹 필터 적용 (역할 기반)
+      let filteredByRole = baseUsers;
+      if (filters.group === 'admin') {
+        filteredByRole = baseUsers.filter(u => u.role === 'admin');
+      }
+
+      // 그룹 요약(view)로부터 사용자별 그룹명 가져와 병합
       let groupNameByUserId: Record<string, string> = {};
       if (userIds.length > 0) {
         const { data: groupSummary, error: groupSummaryError } = await supabase

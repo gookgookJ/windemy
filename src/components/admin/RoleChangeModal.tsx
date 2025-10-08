@@ -36,14 +36,23 @@ export const RoleChangeModal = ({ open, onClose, user, onSuccess }: RoleChangeMo
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: selectedRole })
-        .eq('id', user.id);
+      // 1. 기존 역할 제거
+      const { error: deleteError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', user.id);
 
-      if (error) {
-        throw error;
-      }
+      if (deleteError) throw deleteError;
+
+      // 2. 새로운 역할 추가
+      const { error: insertError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: user.id,
+          role: selectedRole
+        } as any);
+
+      if (insertError) throw insertError;
 
       toast({
         title: "권한 변경 완료",
