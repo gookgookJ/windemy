@@ -2109,7 +2109,7 @@ export type Database = {
         Returns: string
       }
       get_instructor_public_info: {
-        Args: { instructor_id?: string }
+        Args: { instructor_id: string }
         Returns: {
           created_at: string
           full_name: string
