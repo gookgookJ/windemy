@@ -2079,6 +2079,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      cleanup_old_activity_logs: {
+        Args: { days_to_keep?: number }
+        Returns: number
+      }
       cleanup_old_audit_logs: {
         Args: { days_to_keep?: number }
         Returns: number
@@ -2150,6 +2154,16 @@ export type Database = {
         }[]
       }
       get_user_activity_stats: {
+        Args: { target_user_id?: string }
+        Returns: {
+          action_types: string[]
+          active_days: number
+          last_activity: string
+          total_activities: number
+          user_id: string
+        }[]
+      }
+      get_user_activity_stats_safe: {
         Args: { target_user_id?: string }
         Returns: {
           action_types: string[]
