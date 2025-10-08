@@ -36,7 +36,6 @@ interface Category {
 interface Instructor {
   id: string;
   full_name: string;
-  email: string;
 }
 
 interface CourseOption {
@@ -101,10 +100,9 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
 
   const fetchInstructors = async () => {
     try {
+      // Use public security function to get instructors (no email exposure)
       const { data, error } = await supabase
-        .from('instructors')
-        .select('id, full_name, email')
-        .order('full_name');
+        .rpc('get_instructors_public');
       
       if (error) throw error;
       setInstructors(data || []);
