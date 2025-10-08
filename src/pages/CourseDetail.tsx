@@ -194,7 +194,7 @@ const CourseDetail = () => {
         // Explicitly select fields to ensure type safety and clarity
         supabase.from('course_sections').select(`
             id, title, order_index,
-            course_sessions (id, title, order_index, duration_minutes, is_preview)
+            course_sessions (id, title, order_index, video_duration_seconds, is_free)
         `).eq('course_id', courseId).order('order_index'),
         supabase.from('course_reviews').select(`*, profiles:user_id(full_name)`).eq('course_id', courseId).order('created_at', { ascending: false })
       ]);
@@ -223,8 +223,8 @@ const CourseDetail = () => {
         const lessons: LessonUI[] = sortedSessions.map((session: any): LessonUI => ({
                 id: session.id,
                 title: session.title,
-                durationMinutes: session.duration_minutes || 0,
-                isPreview: session.is_preview
+                durationMinutes: Math.round((session.video_duration_seconds || 0) / 60),
+                isPreview: !!session.is_free
             }));
 
         const totalMinutes = lessons.reduce((total, lesson) => total + lesson.durationMinutes, 0);
@@ -254,9 +254,9 @@ const CourseDetail = () => {
 
   const fetchInstructorInfo = async (instructorId: string) => {
     try {
-      // Use security definer function to bypass RLS safely and fetch public instructor info
-      const { data, error } = await supabase.rpc('get_instructor_public_info', {
-        instructor_id: instructorId,
+      // Use security definer function that targets profiles (course.instructor_id references profiles.id)
+      const { data, error } = await supabase.rpc('get_instructor_safe', {
+        instructor_uuid: instructorId,
       });
 
       if (error) {

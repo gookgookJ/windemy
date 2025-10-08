@@ -157,6 +157,22 @@ const FeaturedCourses = memo(() => {
         coursesData[sectionId] = courses;
       });
 
+      // Fetch public instructor names and override (works for anon users)
+      try {
+        const { data: publicInstructors } = await supabase.rpc('get_instructors_public');
+        const nameById = new Map<string, string>(
+          ((publicInstructors as any[]) || []).map((r: any) => [r.id, r.full_name])
+        );
+        Object.keys(coursesData).forEach((sid) => {
+          coursesData[sid] = (coursesData[sid] || []).map((c: any) => ({
+            ...c,
+            instructor_name: nameById.get(c.instructor_id || '') || c.instructor_name || '강사',
+          }));
+        });
+      } catch (e) {
+        // Ignore and keep existing fallback names
+      }
+
       setSectionCourses(coursesData);
 
     } catch (error) {
