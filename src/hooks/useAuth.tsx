@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }, 0);
         } else {
           setProfile(null);
+          setUserRoles([]);
         }
         setLoading(false);
       }
@@ -77,7 +79,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error fetching roles:', rolesError);
       }
 
-      // 역할 우선순위: admin > instructor > student
+      // 역할 배열을 state에 저장
+      const roles = rolesData?.map(r => r.role) || [];
+      setUserRoles(roles);
+
+      // ⚠️ DEPRECATED: 호환성 코드 제거 예정
+      // 이 코드는 profiles.role 컬럼 삭제 전까지만 유지됩니다.
+      // 모든 코드가 isAdmin/isInstructor 플래그를 사용하도록 마이그레이션 완료 후 제거됩니다.
+      /*
       let userRole = 'student';
       if (rolesData && rolesData.length > 0) {
         if (rolesData.some(r => r.role === 'admin')) {
@@ -86,12 +95,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           userRole = 'instructor';
         }
       }
+      */
 
-      // profiles 데이터에 역할 추가 (기존 코드 호환성)
-      setProfile({
-        ...profileData,
-        role: userRole
-      });
+      // profiles 데이터만 저장 (역할 정보 제외)
+      setProfile(profileData);
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
@@ -116,6 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // 1) 로컬 상태 먼저 초기화 (즉시 UI 반영)
       setProfile(null);
+      setUserRoles([]);
       setUser(null);
       setSession(null);
 
@@ -147,8 +155,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const isAdmin = profile?.role === 'admin';
-  const isInstructor = profile?.role === 'instructor';
+  // user_roles 테이블 기반 역할 체크
+  const isAdmin = userRoles.includes('admin');
+  const isInstructor = userRoles.includes('instructor');
 
   return (
     <AuthContext.Provider

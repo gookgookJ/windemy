@@ -19,7 +19,7 @@ import {
 const UserSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, isAdmin, isInstructor } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
@@ -72,9 +72,7 @@ const UserSidebar = () => {
           </div>
           <h2 className="text-lg md:text-xl font-bold">{profile?.full_name || '사용자'}</h2>
           <p className="text-muted-foreground text-xs md:text-sm">
-            {profile?.role === 'student' ? '학생' : 
-             profile?.role === 'instructor' ? '강사' : 
-             profile?.role === 'admin' ? '관리자' : '사용자'}
+            {isAdmin ? '관리자' : isInstructor ? '강사' : '학생'}
           </p>
         </div>
 

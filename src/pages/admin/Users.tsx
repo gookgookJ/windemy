@@ -262,6 +262,25 @@ const AdminUsers = () => {
       .select('*')
       .in('id', userIds);
 
+    // user_roles 테이블에서 역할 가져오기
+    const { data: rolesData } = await supabase
+      .from('user_roles')
+      .select('user_id, role')
+      .in('user_id', userIds);
+
+    // 역할 매핑 (최고 권한 우선: admin > instructor > student)
+    const roleByUserId: Record<string, string> = {};
+    if (rolesData) {
+      for (const r of rolesData) {
+        const current = roleByUserId[r.user_id];
+        if (!current || 
+            (r.role === 'admin') || 
+            (r.role === 'instructor' && current !== 'admin')) {
+          roleByUserId[r.user_id] = r.role;
+        }
+      }
+    }
+
     // 그룹 정보
     const { data: groupMemberships } = await supabase
       .from('user_group_memberships')
@@ -355,7 +374,7 @@ const AdminUsers = () => {
         full_name: profile.full_name || '',
         email: profile.email || '',
         phone: profile.phone || '',
-        role: profile.role || '',
+        role: roleByUserId[profile.id] || 'student',
         created_at: new Date(profile.created_at).toLocaleDateString('ko-KR'),
         marketing_consent: profile.marketing_consent ? '동의' : '거부',
         

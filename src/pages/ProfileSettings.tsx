@@ -33,7 +33,7 @@ const ProfileSettings = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user, profile, signOut, refreshProfile } = useAuth();
+  const { user, profile, signOut, refreshProfile, isInstructor } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -398,7 +398,7 @@ const ProfileSettings = () => {
                       />
                     </div>
 
-                    {profile?.role === 'instructor' && (
+                    {isInstructor && (
                       <div className="space-y-2">
                         <Label htmlFor="bio">강사 소개</Label>
                         <Textarea
