@@ -188,10 +188,11 @@ const AdminCourseEdit = () => {
 
   const fetchInstructors = async () => {
     try {
-      // Admin page: directly query instructors table
+      // 프로필 테이블에서 'instructor' 역할 사용자 목록을 사용 (courses.instructor_id는 profiles.id를 참조)
       const { data, error } = await supabase
-        .from('instructors')
+        .from('profiles')
         .select('id, full_name, email')
+        .eq('role', 'instructor')
         .order('full_name');
       
       if (error) throw error;

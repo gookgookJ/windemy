@@ -36,6 +36,7 @@ interface Category {
 interface Instructor {
   id: string;
   full_name: string;
+  email: string;
 }
 
 interface CourseOption {
@@ -102,7 +103,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
     try {
       const { data, error } = await supabase
         .from('instructors')
-        .select('id, full_name')
+        .select('id, full_name, email')
         .order('full_name');
       
       if (error) throw error;
