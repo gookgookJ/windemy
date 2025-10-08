@@ -100,9 +100,10 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
 
   const fetchInstructors = async () => {
     try {
-      // Use public security function to get instructors (no email exposure)
       const { data, error } = await supabase
-        .rpc('get_instructors_public');
+        .from('instructors')
+        .select('id, full_name')
+        .order('full_name');
       
       if (error) throw error;
       setInstructors(data || []);
