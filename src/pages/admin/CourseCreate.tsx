@@ -143,11 +143,26 @@ const CourseCreate = () => {
 
   const fetchInstructors = async () => {
     try {
-      // 프로필 테이블에서 'instructor' 역할 사용자 목록을 사용 (courses.instructor_id는 profiles.id를 참조)
+      // user_roles 테이블에서 instructor 역할을 가진 사용자들의 ID 조회
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'instructor');
+      
+      if (roleError) throw roleError;
+
+      const instructorIds = roleData?.map(r => r.user_id) || [];
+
+      if (instructorIds.length === 0) {
+        setInstructors([]);
+        return;
+      }
+
+      // profiles 테이블에서 해당 사용자들의 정보 조회
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email')
-        .eq('role', 'instructor')
+        .in('id', instructorIds)
         .order('full_name');
       
       if (error) throw error;

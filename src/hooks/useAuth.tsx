@@ -83,21 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const roles = rolesData?.map(r => r.role) || [];
       setUserRoles(roles);
 
-      // ⚠️ DEPRECATED: 호환성 코드 제거 예정
-      // 이 코드는 profiles.role 컬럼 삭제 전까지만 유지됩니다.
-      // 모든 코드가 isAdmin/isInstructor 플래그를 사용하도록 마이그레이션 완료 후 제거됩니다.
-      /*
-      let userRole = 'student';
-      if (rolesData && rolesData.length > 0) {
-        if (rolesData.some(r => r.role === 'admin')) {
-          userRole = 'admin';
-        } else if (rolesData.some(r => r.role === 'instructor')) {
-          userRole = 'instructor';
-        }
-      }
-      */
-
-      // profiles 데이터만 저장 (역할 정보 제외)
+      // profiles 데이터만 저장
       setProfile(profileData);
     } catch (error) {
       console.error('Error fetching profile:', error);

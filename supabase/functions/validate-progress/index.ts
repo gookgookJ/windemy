@@ -14,15 +14,57 @@ serve(async (req) => {
   try {
     console.log('Validate progress function called');
     
+    // 🔒 인증 확인: Authorization 헤더에서 JWT 토큰 가져오기
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }), 
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // 인증된 사용자 컨텍스트로 Supabase 클라이언트 생성
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader },
+        },
+      }
     );
+
+    // 🔒 사용자 인증 검증
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      console.error('Authentication failed:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }), 
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     const requestBody = await req.json();
     console.log('Request body:', requestBody);
     
     const { sessionId, userId, actualDuration } = requestBody;
+
+    // 🔒 요청한 userId가 인증된 사용자와 일치하는지 확인
+    if (userId !== user.id) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: User ID mismatch' }), 
+        { 
+          status: 403, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     // actualDuration 검증
     if (!actualDuration || actualDuration <= 0) {

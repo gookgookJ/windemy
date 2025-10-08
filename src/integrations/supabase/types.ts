@@ -1271,7 +1271,6 @@ export type Database = {
           instructor_bio: string | null
           marketing_consent: boolean | null
           phone: string | null
-          role: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1284,7 +1283,6 @@ export type Database = {
           instructor_bio?: string | null
           marketing_consent?: boolean | null
           phone?: string | null
-          role?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1297,7 +1295,6 @@ export type Database = {
           instructor_bio?: string | null
           marketing_consent?: boolean | null
           phone?: string | null
-          role?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -2138,6 +2135,18 @@ export type Database = {
           instructor_avatar_url: string
           instructor_bio: string
           updated_at: string
+        }[]
+      }
+      get_user_activity_logs: {
+        Args: { target_user_id?: string }
+        Returns: {
+          action: string
+          created_at: string
+          details: Json
+          entity_id: string
+          entity_type: string
+          id: string
+          user_id: string
         }[]
       }
       get_user_activity_stats: {

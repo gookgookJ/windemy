@@ -39,15 +39,15 @@ export const UserSummaryDashboard = () => {
         .from('profiles')
         .select('*', { count: 'exact', head: true });
 
-      // 강사 수
+      // 강사 수 (user_roles 테이블 사용)
       const { count: instructors } = await supabase
-        .from('profiles')
+        .from('user_roles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'instructor');
 
-      // 관리자 수
+      // 관리자 수 (user_roles 테이블 사용)
       const { count: admins } = await supabase
-        .from('profiles')
+        .from('user_roles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'admin');
 

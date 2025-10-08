@@ -179,18 +179,30 @@ export const UserListTable = ({
     console.log('권한 변경 시작:', { userId, newRole });
     
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({ role: newRole })
-        .eq('id', userId)
-        .select('*');
+      // user_roles 테이블 업데이트: 기존 역할 삭제 후 새 역할 추가
+      const { error: deleteError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
 
-      if (error) {
-        console.error('Supabase 오류:', error);
-        throw error;
+      if (deleteError) {
+        console.error('기존 역할 삭제 오류:', deleteError);
+        throw deleteError;
       }
 
-      console.log('권한 변경 성공:', data);
+      const { error: insertError } = await supabase
+        .from('user_roles')
+        .insert({ 
+          user_id: userId, 
+          role: newRole 
+        } as any);
+
+      if (insertError) {
+        console.error('새 역할 추가 오류:', insertError);
+        throw insertError;
+      }
+
+      console.log('권한 변경 성공');
 
       toast({
         title: "권한 변경 완료",
