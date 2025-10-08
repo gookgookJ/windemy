@@ -102,7 +102,11 @@ interface ActivityLog {
   created_at: string;
   action: string;
   entity_type: string | null;
-  ip_address: unknown;
+  entity_id: string;
+  details: any;
+  user_id: string;
+  ip_address?: unknown;
+  user_agent?: unknown;
 }
 
 const AdminUserDetail = () => {
@@ -281,13 +285,9 @@ const AdminUserDetail = () => {
         setTotalPayment(total);
       }
 
-      // Fetch activity logs
+      // Fetch activity logs (using security function to exclude IP/user agent)
       const { data: logs } = await supabase
-        .from('activity_logs')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(20);
+        .rpc('get_user_activity_logs', { target_user_id: userId });
 
       if (logs) {
         setActivityLogs(logs);

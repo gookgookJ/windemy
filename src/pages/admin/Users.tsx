@@ -335,12 +335,12 @@ const AdminUsers = () => {
       .in('user_id', userIds)
       .order('created_at', { ascending: false });
 
-    // 활동 로그
-    const { data: activityLogs } = await supabase
-      .from('activity_logs')
-      .select('*')
-      .in('user_id', userIds)
-      .order('created_at', { ascending: false });
+    // 활동 로그 (using security function to exclude sensitive data)
+    const activityLogsPromises = userIds.map(userId =>
+      supabase.rpc('get_user_activity_logs', { target_user_id: userId })
+    );
+    const activityLogsResults = await Promise.all(activityLogsPromises);
+    const activityLogs = activityLogsResults.flatMap(result => result.data || []);
 
     // 지원 티켓
     const { data: supportTickets } = await supabase
@@ -415,7 +415,6 @@ const AdminUsers = () => {
         recent_activity: userActivity.slice(0, 5).map(a => 
           `${new Date(a.created_at).toLocaleDateString('ko-KR')}: ${a.action}`
         ).join(' | '),
-        ip_address: userActivity[0]?.ip_address || '',
         
         // 지원
         support_history: userSupport.map(s => 
@@ -446,7 +445,6 @@ const AdminUsers = () => {
       points_history: '포인트 변동 내역',
       coupon_usage: '쿠폰 사용 내역',
       recent_activity: '최근 활동',
-      ip_address: 'IP 주소',
       support_history: '문의 내역'
     };
 
