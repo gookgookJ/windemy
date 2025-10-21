@@ -134,70 +134,6 @@ export type Database = {
         }
         Relationships: []
       }
-      announcements: {
-        Row: {
-          content: string
-          created_at: string
-          created_by: string | null
-          expires_at: string | null
-          id: string
-          is_published: boolean
-          published_at: string | null
-          target_audience: string
-          title: string
-          type: string
-          updated_at: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          created_by?: string | null
-          expires_at?: string | null
-          id?: string
-          is_published?: boolean
-          published_at?: string | null
-          target_audience?: string
-          title: string
-          type?: string
-          updated_at?: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          created_by?: string | null
-          expires_at?: string | null
-          id?: string
-          is_published?: boolean
-          published_at?: string | null
-          target_audience?: string
-          title?: string
-          type?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "announcements_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "announcements_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "user_enrollment_summary"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "announcements_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "user_group_summary"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
       blog_update_history: {
         Row: {
           created_at: string | null
@@ -224,56 +160,6 @@ export type Database = {
           success?: boolean
         }
         Relationships: []
-      }
-      cart_items: {
-        Row: {
-          course_id: string | null
-          created_at: string | null
-          id: string
-          user_id: string | null
-        }
-        Insert: {
-          course_id?: string | null
-          created_at?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Update: {
-          course_id?: string | null
-          created_at?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cart_items_course_id_fkey"
-            columns: ["course_id"]
-            isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cart_items_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cart_items_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_enrollment_summary"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "cart_items_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_group_summary"
-            referencedColumns: ["user_id"]
-          },
-        ]
       }
       categories: {
         Row: {
@@ -1125,7 +1011,6 @@ export type Database = {
           id: string
           payment_method: string | null
           status: string | null
-          stripe_payment_intent_id: string | null
           total_amount: number
           updated_at: string | null
           user_id: string | null
@@ -1135,7 +1020,6 @@ export type Database = {
           id?: string
           payment_method?: string | null
           status?: string | null
-          stripe_payment_intent_id?: string | null
           total_amount: number
           updated_at?: string | null
           user_id?: string | null
@@ -1145,7 +1029,6 @@ export type Database = {
           id?: string
           payment_method?: string | null
           status?: string | null
-          stripe_payment_intent_id?: string | null
           total_amount?: number
           updated_at?: string | null
           user_id?: string | null
@@ -1474,146 +1357,6 @@ export type Database = {
           {
             foreignKeyName: "session_progress_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_group_summary"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      support_tickets: {
-        Row: {
-          assigned_to: string | null
-          category: string
-          created_at: string
-          description: string
-          id: string
-          priority: string
-          resolved_at: string | null
-          status: string
-          subject: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          assigned_to?: string | null
-          category?: string
-          created_at?: string
-          description: string
-          id?: string
-          priority?: string
-          resolved_at?: string | null
-          status?: string
-          subject: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          assigned_to?: string | null
-          category?: string
-          created_at?: string
-          description?: string
-          id?: string
-          priority?: string
-          resolved_at?: string | null
-          status?: string
-          subject?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "support_tickets_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "support_tickets_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "user_enrollment_summary"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "support_tickets_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "user_group_summary"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "support_tickets_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "support_tickets_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_enrollment_summary"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "support_tickets_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_group_summary"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      system_settings: {
-        Row: {
-          category: string
-          description: string | null
-          id: string
-          is_public: boolean
-          key: string
-          updated_at: string
-          updated_by: string | null
-          value: Json
-        }
-        Insert: {
-          category?: string
-          description?: string | null
-          id?: string
-          is_public?: boolean
-          key: string
-          updated_at?: string
-          updated_by?: string | null
-          value: Json
-        }
-        Update: {
-          category?: string
-          description?: string | null
-          id?: string
-          is_public?: boolean
-          key?: string
-          updated_at?: string
-          updated_by?: string | null
-          value?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "system_settings_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "system_settings_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "user_enrollment_summary"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "system_settings_updated_by_fkey"
-            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "user_group_summary"
             referencedColumns: ["user_id"]

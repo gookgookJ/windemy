@@ -139,28 +139,10 @@ const menuItems = [
     group: 'analytics'
   },
   {
-    title: '고객 지원',
-    url: '/admin/support',
-    icon: MessageSquare,
-    group: 'support'
-  },
-  {
-    title: '공지사항',
-    url: '/admin/announcements',
-    icon: FileText,
-    group: 'support'
-  },
-  {
     title: '쿠폰 관리',
     url: '/admin/coupons',
     icon: DollarSign,
     group: 'marketing'
-  },
-  {
-    title: '설정',
-    url: '/admin/settings',
-    icon: Settings,
-    group: 'system'
   },
   {
     title: '강사 관리',
@@ -186,7 +168,6 @@ const groupLabels = {
   main: '주요 관리',
   content: '콘텐츠 관리',
   analytics: '학습 분석',
-  support: '고객 지원',
   marketing: '마케팅',
   system: '시스템 관리'
 };

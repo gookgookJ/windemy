@@ -57,8 +57,7 @@ export function ExportDataDropdown({
     { key: 'points_history', label: '포인트 변동 내역', description: '포인트 획득/사용 내역', category: 'points' },
     { key: 'coupon_usage', label: '쿠폰 사용 내역', description: '쿠폰 지급/사용 현황', category: 'coupon' },
     { key: 'recent_activity', label: '최근 활동', description: '로그인, 강의 시청 등', category: 'activity' },
-    { key: 'ip_address', label: 'IP 주소', description: '부정 사용 방지', category: 'activity' },
-    { key: 'support_history', label: '문의 내역', description: '고객 지원 이력', category: 'support' }
+    { key: 'ip_address', label: 'IP 주소', description: '부정 사용 방지', category: 'activity' }
   ];
 
   useEffect(() => {

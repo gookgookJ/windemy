@@ -47,11 +47,8 @@ const AdminUsers = React.lazy(() => import("./pages/admin/Users"));
 const AdminCourses = React.lazy(() => import("./pages/admin/Courses"));
 const AdminOrders = React.lazy(() => import("./pages/admin/Orders"));
 const AdminCourseCreate = React.lazy(() => import("./pages/admin/CourseCreate"));
-const AdminAnnouncements = React.lazy(() => import("./pages/admin/Announcements"));
 const AdminCoupons = React.lazy(() => import("./pages/admin/Coupons"));
-const AdminSupport = React.lazy(() => import("./pages/admin/Support"));
 const AdminReports = React.lazy(() => import("./pages/admin/Reports"));
-const AdminSettings = React.lazy(() => import("./pages/admin/Settings"));
 const AdminCourseEdit = React.lazy(() => import("./pages/admin/CourseEdit"));
 const AdminInstructors = React.lazy(() => import("./pages/admin/Instructors"));
 const AdminInstructorProfile = React.lazy(() => import("./pages/admin/InstructorProfile"));
@@ -120,11 +117,8 @@ const App = () => (
                 <Route path="/admin/learning-analytics" element={<AdminLearningAnalytics />} />
                 <Route path="/admin/progress-monitoring" element={<AdminProgressMonitoring />} />
                 <Route path="/admin/orders" element={<AdminOrders />} />
-                <Route path="/admin/announcements" element={<AdminAnnouncements />} />
                 <Route path="/admin/coupons" element={<AdminCoupons />} />
-                <Route path="/admin/support" element={<AdminSupport />} />
                 <Route path="/admin/reports" element={<AdminReports />} />
-                <Route path="/admin/settings" element={<AdminSettings />} />
                 <Route path="/admin/instructors" element={<AdminInstructors />} />
                 <Route path="/admin/instructor-profile/:id" element={<AdminInstructorProfile />} />
                 <Route path="/admin/hero-slides" element={<AdminHeroSlides />} />

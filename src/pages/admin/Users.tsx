@@ -342,12 +342,6 @@ const AdminUsers = () => {
     const activityLogsResults = await Promise.all(activityLogsPromises);
     const activityLogs = activityLogsResults.flatMap(result => result.data || []);
 
-    // 지원 티켓
-    const { data: supportTickets } = await supabase
-      .from('support_tickets')
-      .select('*')
-      .in('user_id', userIds);
-
     // 데이터 조합
     return profiles?.map(profile => {
       const userOrders = orders?.filter(o => o.user_id === profile.id) || [];
@@ -357,7 +351,6 @@ const AdminUsers = () => {
       const userCouponsList = userCoupons?.filter(c => c.user_id === profile.id) || [];
       const userNotes = adminNotes?.filter(n => n.user_id === profile.id) || [];
       const userActivity = activityLogs?.filter(a => a.user_id === profile.id) || [];
-      const userSupport = supportTickets?.filter(s => s.user_id === profile.id) || [];
 
       // 계산된 값들
       const totalPayment = userOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
@@ -414,11 +407,6 @@ const AdminUsers = () => {
         // 활동
         recent_activity: userActivity.slice(0, 5).map(a => 
           `${new Date(a.created_at).toLocaleDateString('ko-KR')}: ${a.action}`
-        ).join(' | '),
-        
-        // 지원
-        support_history: userSupport.map(s => 
-          `${s.subject} (${s.status})`
         ).join(' | ')
       };
     }) || [];
@@ -444,8 +432,7 @@ const AdminUsers = () => {
       points_balance: '현재 보유 포인트',
       points_history: '포인트 변동 내역',
       coupon_usage: '쿠폰 사용 내역',
-      recent_activity: '최근 활동',
-      support_history: '문의 내역'
+      recent_activity: '최근 활동'
     };
 
     // 선택된 필드만 추출
