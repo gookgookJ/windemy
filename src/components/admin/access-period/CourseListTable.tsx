@@ -1,8 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 interface Course {
   id: string;
@@ -19,10 +27,23 @@ interface CourseListTableProps {
 
 export function CourseListTable({ courses, selectedCourseId, onSelectCourse }: CourseListTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const filteredCourses = courses.filter(course =>
     course.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
+  const paginatedCourses = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredCourses.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredCourses, currentPage]);
+
+  // Reset to page 1 when search changes
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   return (
     <div className="space-y-4">
@@ -43,18 +64,18 @@ export function CourseListTable({ courses, selectedCourseId, onSelectCourse }: C
               <TableRow>
                 <TableHead className="w-[60%]">강의명</TableHead>
                 <TableHead className="w-[20%] text-center">수강생</TableHead>
-                <TableHead className="w-[20%] text-center">학습 기간</TableHead>
+                <TableHead className="w-[20%] text-center">기본 학습 기간</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCourses.length === 0 ? (
+              {paginatedCourses.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
                     {searchQuery ? '검색 결과가 없습니다.' : '강의가 없습니다.'}
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredCourses.map((course) => (
+                paginatedCourses.map((course) => (
                   <TableRow
                     key={course.id}
                     className={`cursor-pointer transition-colors ${
@@ -83,9 +104,43 @@ export function CourseListTable({ courses, selectedCourseId, onSelectCourse }: C
         </div>
       </div>
 
-      <p className="text-sm text-muted-foreground text-center">
-        총 {filteredCourses.length}개의 강의
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          총 {filteredCourses.length}개의 강의
+        </p>
+
+        {totalPages > 1 && (
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
+      </div>
     </div>
   );
 }

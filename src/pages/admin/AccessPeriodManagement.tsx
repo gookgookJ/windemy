@@ -28,6 +28,7 @@ interface Enrollment {
   profiles: {
     full_name: string;
     email: string;
+    phone: string | null;
   };
 }
 
@@ -105,7 +106,7 @@ export default function AccessPeriodManagement() {
           enrolled_at,
           expires_at,
           progress,
-          profiles!inner(full_name, email)
+          profiles!inner(full_name, email, phone)
         `)
         .eq('course_id', courseId)
         .order('enrolled_at', { ascending: false });
