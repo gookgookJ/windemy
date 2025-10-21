@@ -161,16 +161,49 @@ export default function AccessPeriodManagement() {
     if (!selectedEnrollment) return;
 
     try {
-      const { error } = await supabase
+      setLoading(true);
+
+      // 1. Delete video watch segments
+      await supabase
+        .from('video_watch_segments')
+        .delete()
+        .eq('user_id', selectedEnrollment.user_id);
+
+      // 2. Delete video seek events
+      await supabase
+        .from('video_seek_events')
+        .delete()
+        .eq('user_id', selectedEnrollment.user_id);
+
+      // 3. Delete video checkpoints
+      await supabase
+        .from('video_checkpoints')
+        .delete()
+        .eq('user_id', selectedEnrollment.user_id);
+
+      // 4. Delete session file downloads
+      await supabase
+        .from('session_file_downloads')
+        .delete()
+        .eq('user_id', selectedEnrollment.user_id);
+
+      // 5. Delete session progress
+      await supabase
+        .from('session_progress')
+        .delete()
+        .eq('user_id', selectedEnrollment.user_id);
+
+      // 6. Delete enrollment
+      const { error: enrollmentError } = await supabase
         .from('enrollments')
         .delete()
         .eq('id', selectedEnrollment.id);
 
-      if (error) throw error;
+      if (enrollmentError) throw enrollmentError;
 
       toast({
         title: "성공",
-        description: "수강 정보가 삭제되었습니다.",
+        description: "수강 정보 및 관련 데이터가 모두 삭제되었습니다.",
       });
 
       setDeleteDialogOpen(false);
@@ -184,6 +217,8 @@ export default function AccessPeriodManagement() {
         description: "수강 삭제에 실패했습니다.",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -198,128 +233,166 @@ export default function AccessPeriodManagement() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div>
+      <div className="space-y-8">
+        <div className="space-y-2">
           <h1 className="text-3xl font-bold">학습 기간 관리</h1>
-          <p className="text-muted-foreground mt-2">강의별 수강생의 학습 기간을 관리합니다</p>
+          <p className="text-muted-foreground">강의별 수강생의 학습 기간을 관리합니다</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>강의 목록</CardTitle>
-            <div className="relative mt-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">강의 선택</h2>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
               <Input
-                placeholder="강의 검색..."
+                placeholder="강의명으로 검색..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="pl-10 h-12 text-base"
               />
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredCourses.map((course) => (
-                <Card
-                  key={course.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedCourse?.id === course.id ? 'ring-2 ring-primary' : ''
-                  }`}
-                  onClick={() => setSelectedCourse(course)}
-                >
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold mb-2">{course.title}</h3>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      <span>{course.total_students}명</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCourses.map((course) => (
+              <Card
+                key={course.id}
+                className={`cursor-pointer transition-all hover:shadow-lg ${
+                  selectedCourse?.id === course.id 
+                    ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
+                    : 'hover:scale-[1.01]'
+                }`}
+                onClick={() => setSelectedCourse(course)}
+              >
+                <CardContent className="p-6 space-y-4">
+                  <h3 className="font-semibold text-lg line-clamp-2 min-h-[3.5rem]">
+                    {course.title}
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Users className="h-4 w-4" />
+                        <span>수강생</span>
+                      </div>
+                      <span className="font-medium">{course.total_students}명</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <Clock className="h-4 w-4" />
-                      <span>
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>학습 기간</span>
+                      </div>
+                      <Badge variant={course.access_duration_days ? 'default' : 'secondary'}>
                         {course.access_duration_days 
                           ? `${course.access_duration_days}일` 
                           : '평생소장'}
-                      </span>
+                      </Badge>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
 
         {selectedCourse && (
           <Card>
-            <CardHeader>
-              <CardTitle>{selectedCourse.title} - 수강생 목록</CardTitle>
+            <CardHeader className="space-y-2">
+              <CardTitle className="text-2xl">{selectedCourse.title}</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                총 {enrollments.length}명의 수강생이 있습니다
+              </p>
             </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>학생명</TableHead>
-                    <TableHead>이메일</TableHead>
-                    <TableHead>결제일</TableHead>
-                    <TableHead>만료일</TableHead>
-                    <TableHead>진도율</TableHead>
-                    <TableHead>상태</TableHead>
-                    <TableHead className="text-right">관리</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {enrollments.map((enrollment) => {
-                    const expired = isExpired(enrollment.expires_at);
-                    const paymentDate = format(parseISO(enrollment.enrolled_at), 'yyyy-MM-dd');
-                    
-                    return (
-                      <TableRow key={enrollment.id}>
-                        <TableCell>{enrollment.profiles.full_name}</TableCell>
-                        <TableCell>{enrollment.profiles.email}</TableCell>
-                        <TableCell>{paymentDate}</TableCell>
-                        <TableCell>
-                          {enrollment.expires_at ? (
-                            <span className={expired ? 'text-destructive' : ''}>
-                              {format(parseISO(enrollment.expires_at), 'yyyy-MM-dd')}
-                            </span>
-                          ) : (
-                            <Badge variant="secondary">평생소장</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>{Math.round(enrollment.progress)}%</TableCell>
-                        <TableCell>
-                          {expired ? (
-                            <Badge variant="destructive">만료</Badge>
-                          ) : (
-                            <Badge variant="default">수강중</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditExpiry(enrollment)}
-                            >
-                              <Calendar className="h-4 w-4 mr-1" />
-                              만료일 변경
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => {
-                                setSelectedEnrollment(enrollment);
-                                setDeleteDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+            <CardContent className="p-6">
+              {enrollments.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>수강생이 없습니다</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[120px]">학생명</TableHead>
+                        <TableHead className="w-[200px]">이메일</TableHead>
+                        <TableHead className="w-[120px]">등록일</TableHead>
+                        <TableHead className="w-[140px]">만료일</TableHead>
+                        <TableHead className="w-[100px]">진도율</TableHead>
+                        <TableHead className="w-[100px]">상태</TableHead>
+                        <TableHead className="text-right w-[200px]">관리</TableHead>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {enrollments.map((enrollment) => {
+                        const expired = isExpired(enrollment.expires_at);
+                        const enrolledDate = format(parseISO(enrollment.enrolled_at), 'yyyy-MM-dd');
+                        
+                        return (
+                          <TableRow key={enrollment.id}>
+                            <TableCell className="font-medium">
+                              {enrollment.profiles.full_name}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {enrollment.profiles.email}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {enrolledDate}
+                            </TableCell>
+                            <TableCell>
+                              {enrollment.expires_at ? (
+                                <span className={`text-sm ${expired ? 'text-destructive font-medium' : ''}`}>
+                                  {format(parseISO(enrollment.expires_at), 'yyyy-MM-dd')}
+                                </span>
+                              ) : (
+                                <Badge variant="secondary" className="font-normal">
+                                  평생소장
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm font-medium">
+                                {Math.round(enrollment.progress)}%
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              {expired ? (
+                                <Badge variant="destructive">만료</Badge>
+                              ) : (
+                                <Badge variant="default" className="bg-green-500">수강중</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEditExpiry(enrollment)}
+                                  className="gap-2"
+                                >
+                                  <Calendar className="h-4 w-4" />
+                                  <span>만료일 변경</span>
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    setSelectedEnrollment(enrollment);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                  className="gap-2"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  <span>삭제</span>
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

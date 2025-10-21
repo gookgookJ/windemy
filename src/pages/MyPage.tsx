@@ -25,6 +25,7 @@ interface EnrollmentWithCourse {
     id: string;
     title: string;
     thumbnail_url: string;
+    thumbnail_path: string;
     instructor: {
       full_name: string;
     };
@@ -121,6 +122,7 @@ const MyPage = () => {
             id,
             title,
             thumbnail_url,
+            thumbnail_path,
             instructor:profiles(full_name)
           )
         `)
@@ -410,7 +412,7 @@ const MyPage = () => {
                           >
                             <div className="aspect-video w-full bg-muted">
                               <img
-                                src={enrollment.course.thumbnail_url || '/placeholder.svg'}
+                                src={enrollment.course.thumbnail_url || enrollment.course.thumbnail_path || '/placeholder.svg'}
                                 alt={enrollment.course.title}
                                 className="w-full h-full object-cover"
                               />
