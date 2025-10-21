@@ -32,6 +32,7 @@ const NotFound = React.lazy(() => import("./pages/NotFound"));
 
 // Lazy load user pages
 const FavoriteCourses = React.lazy(() => import("./pages/FavoriteCourses"));
+const MyRewards = React.lazy(() => import("./pages/MyRewards"));
 
 
 const FAQ = React.lazy(() => import("./pages/FAQ"));
@@ -101,6 +102,7 @@ const App = () => (
                 
                 <Route path="/purchase-history" element={<PurchaseHistory />} />
                 <Route path="/my-page" element={<MyPage />} />
+                <Route path="/my-rewards" element={<MyRewards />} />
                 <Route path="/favorite-courses" element={<FavoriteCourses />} />
                 
                 

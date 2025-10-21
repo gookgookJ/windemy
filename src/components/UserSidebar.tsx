@@ -13,7 +13,8 @@ import {
   Heart,
   MessageCircle,
   HelpCircle,
-  LogOut
+  LogOut,
+  Gift
 } from 'lucide-react';
 
 const UserSidebar = () => {
@@ -33,6 +34,11 @@ const UserSidebar = () => {
       path: '/my-page',
       label: '내 강의실',
       icon: BookOpen,
+    },
+    {
+      path: '/my-rewards',
+      label: '쿠폰 & 포인트',
+      icon: Gift,
     },
     {
       path: '/purchase-history',
