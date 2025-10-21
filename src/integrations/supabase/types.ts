@@ -1965,6 +1965,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_coupon_used_count: {
+        Args: { coupon_id: string }
+        Returns: undefined
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean

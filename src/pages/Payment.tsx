@@ -50,6 +50,7 @@ const Payment = () => {
   const [selectedCouponId, setSelectedCouponId] = useState<string>("");
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [pointsToUse, setPointsToUse] = useState(0);
+  const [availablePoints, setAvailablePoints] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank_transfer'>('card');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -71,6 +72,7 @@ const Payment = () => {
     if (courseId) {
       fetchCourseData();
       fetchAvailableCoupons();
+      fetchUserPoints();
     }
   }, [courseId, user]);
 
@@ -122,18 +124,60 @@ const Payment = () => {
     if (!user) return;
     
     try {
-      // 현재 날짜보다 유효 기간이 남아있고 활성화된 쿠폰들을 가져옴
-      const { data: coupons, error } = await supabase
-        .from('coupons')
-        .select('*')
-        .eq('is_active', true)
-        .gt('valid_until', new Date().toISOString())
-        .lte('valid_from', new Date().toISOString());
+      // 사용자에게 할당된 쿠폰 중 사용하지 않은 것만 가져옴
+      const { data: userCoupons, error } = await supabase
+        .from('user_coupons')
+        .select(`
+          id,
+          coupon_id,
+          coupons (
+            id,
+            code,
+            name,
+            discount_type,
+            discount_value,
+            min_order_amount,
+            max_discount_amount,
+            is_active,
+            valid_from,
+            valid_until
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('is_used', false);
 
       if (error) throw error;
-      setAvailableCoupons(coupons || []);
+
+      // 유효한 쿠폰만 필터링
+      const now = new Date();
+      const validCoupons = (userCoupons || [])
+        .filter(uc => {
+          const coupon = uc.coupons as any;
+          return coupon && 
+                 coupon.is_active && 
+                 new Date(coupon.valid_until) > now && 
+                 new Date(coupon.valid_from) <= now;
+        })
+        .map(uc => uc.coupons as Coupon);
+
+      setAvailableCoupons(validCoupons);
     } catch (error) {
       console.error('Error fetching coupons:', error);
+    }
+  };
+
+  const fetchUserPoints = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .rpc('get_user_points_balance', { p_user_id: user.id });
+
+      if (error) throw error;
+      setAvailablePoints(data || 0);
+    } catch (error) {
+      console.error('Error fetching points:', error);
+      setAvailablePoints(0);
     }
   };
 
@@ -153,73 +197,53 @@ const Payment = () => {
     setProcessing(true);
 
     try {
-      // Check if user already has a completed order for this course
-      const { data: existingOrderItems, error: orderCheckError } = await supabase
-        .from('order_items')
-        .select(`
-          id,
-          order:orders!inner(
-            id,
-            status,
-            user_id
-          )
-        `)
-        .eq('course_id', courseId)
-        .eq('order.user_id', user?.id)
-        .eq('order.status', 'completed');
+      // Call edge function to process payment with validation
+      const { data, error } = await supabase.functions.invoke('process-payment', {
+        body: {
+          courseId,
+          optionId,
+          couponId: selectedCouponId || null,
+          pointsToUse,
+          paymentMethod
+        }
+      });
 
-      if (orderCheckError) {
-        throw orderCheckError;
+      if (error) {
+        console.error('Payment error:', error);
+        throw error;
       }
 
-      if (existingOrderItems && existingOrderItems.length > 0) {
-        toast({
-          title: "이미 구매한 강의",
-          description: "해당 강의는 이미 구매하셨습니다.",
-        });
-        navigate('/my-page');
-        return;
+      if (data.error) {
+        // Handle specific error types
+        if (data.error === 'already_purchased') {
+          toast({
+            title: "이미 구매한 강의",
+            description: data.message,
+          });
+          navigate('/my-page');
+          return;
+        } else if (data.error === 'invalid_coupon') {
+          toast({
+            title: "쿠폰 오류",
+            description: data.message,
+            variant: "destructive"
+          });
+          return;
+        } else if (data.error === 'insufficient_points') {
+          toast({
+            title: "포인트 부족",
+            description: data.message,
+            variant: "destructive"
+          });
+          return;
+        } else {
+          throw new Error(data.message);
+        }
       }
-
-      // 주문 생성
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user?.id,
-          total_amount: totalPrice,
-          status: 'completed', // 임시로 즉시 완료 처리
-          payment_method: totalPrice === 0 ? 'free' : paymentMethod
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // 주문 아이템 생성
-      const { error: orderItemError } = await supabase
-        .from('order_items')
-        .insert({
-          order_id: order.id,
-          course_id: courseId,
-          price: totalPrice
-        });
-
-      if (orderItemError) throw orderItemError;
-
-      // 수강 등록
-      const { error: enrollmentError } = await supabase
-        .from('enrollments')
-        .insert({
-          user_id: user?.id,
-          course_id: courseId,
-          progress: 0
-        });
-        
-      if (enrollmentError) throw enrollmentError;
       
       toast({
         title: "결제 및 수강 등록 완료",
-        description: totalPrice === 0 ? "무료 강의 수강 등록이 완료되었습니다!" : "결제가 완료되어 수강 등록되었습니다!",
+        description: data.message,
       });
       
       navigate('/my-page');
@@ -416,48 +440,43 @@ const Payment = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  포인트 & 적립금
+                  포인트 사용
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* 적립금 */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-base font-medium">적립금</Label>
-                    <span className="text-sm text-muted-foreground">보유: 0원</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Input 
-                      placeholder="사용할 적립금을 입력하세요" 
-                      disabled
-                      className="flex-1"
-                    />
-                    <Button variant="outline" disabled className="px-6">
-                      전액사용
-                    </Button>
-                  </div>
-                </div>
-
-                <Separator />
-
                 {/* 포인트 */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <Label className="text-base font-medium">포인트</Label>
-                    <span className="text-sm text-muted-foreground">보유: 0P</span>
+                    <span className="text-sm text-muted-foreground">보유: {availablePoints.toLocaleString()}P</span>
                   </div>
                   <div className="flex gap-2">
                     <Input 
+                      type="number"
                       placeholder="사용할 포인트를 입력하세요" 
-                      disabled
+                      value={pointsToUse || ''}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value) || 0;
+                        const maxPoints = Math.min(availablePoints, Math.floor((finalPrice - couponDiscount) * 0.5));
+                        setPointsToUse(Math.min(value, maxPoints));
+                      }}
+                      disabled={availablePoints === 0}
                       className="flex-1"
                     />
-                    <Button variant="outline" disabled className="px-6">
+                    <Button 
+                      variant="outline" 
+                      disabled={availablePoints === 0}
+                      className="px-6"
+                      onClick={() => {
+                        const maxPoints = Math.min(availablePoints, Math.floor((finalPrice - couponDiscount) * 0.5));
+                        setPointsToUse(maxPoints);
+                      }}
+                    >
                       전액사용
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    * 결제 금액의 50%까지 사용 가능
+                    * 결제 금액의 50%까지 사용 가능 (최대: {Math.min(availablePoints, Math.floor((finalPrice - couponDiscount) * 0.5)).toLocaleString()}P)
                   </p>
                 </div>
               </CardContent>
@@ -522,13 +541,8 @@ const Payment = () => {
                     </div>
                     
                     <div className="flex justify-between text-muted-foreground">
-                      <span>적립금 사용</span>
-                      <span>-0원</span>
-                    </div>
-                    
-                    <div className="flex justify-between text-muted-foreground">
                       <span>포인트 사용</span>
-                      <span>-0원</span>
+                      <span>-{pointsToUse.toLocaleString()}원</span>
                     </div>
                   </div>
                 </div>
