@@ -200,8 +200,21 @@ export default function AccessPeriodManagement() {
 
             if (remainingError) throw remainingError;
 
-            // If no other items, delete the order too
+            // If no other items, delete related data and the order
             if (!remainingItems || remainingItems.length === 0) {
+              // Delete user_coupons related to this order
+              await supabase
+                .from('user_coupons')
+                .delete()
+                .eq('order_id', item.order_id);
+
+              // Delete points_transactions related to this order
+              await supabase
+                .from('points_transactions')
+                .delete()
+                .eq('order_id', item.order_id);
+
+              // Delete the order
               await supabase
                 .from('orders')
                 .delete()
