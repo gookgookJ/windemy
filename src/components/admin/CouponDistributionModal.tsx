@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,8 @@ import { CalendarIcon, Gift, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CouponDistributionModalProps {
   open: boolean;
@@ -23,47 +25,62 @@ interface ExistingCoupon {
   id: string;
   name: string;
   code: string;
-  discountType: 'percentage' | 'fixed';
-  discountValue: number;
-  validUntil: Date;
-  usageLimit: number;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+  valid_until: string;
+  valid_from: string;
+  is_active: boolean;
+  min_order_amount?: number;
+  max_discount_amount?: number;
 }
 
 export const CouponDistributionModal = ({ open, onClose, selectedUsers }: CouponDistributionModalProps) => {
+  const { user } = useAuth();
   const [selectedCoupon, setSelectedCoupon] = useState<string>('');
+  const [existingCoupons, setExistingCoupons] = useState<ExistingCoupon[]>([]);
+  const [loading, setLoading] = useState(false);
   const [newCouponData, setNewCouponData] = useState({
     name: '',
     code: '',
     discountType: 'percentage' as 'percentage' | 'fixed',
     discountValue: '',
     validUntil: null as Date | null,
+    validFrom: new Date() as Date,
     usageLimit: '',
-    description: ''
+    description: '',
+    minOrderAmount: '',
+    maxDiscountAmount: ''
   });
 
-  // Mock existing coupons - 실제로는 API에서 가져올 데이터
-  const existingCoupons: ExistingCoupon[] = [
-    {
-      id: '1',
-      name: '신규회원 10% 할인',
-      code: 'WELCOME10',
-      discountType: 'percentage',
-      discountValue: 10,
-      validUntil: new Date('2024-12-31'),
-      usageLimit: 1
-    },
-    {
-      id: '2',
-      name: '5000원 할인쿠폰',
-      code: 'SAVE5000',
-      discountType: 'fixed',
-      discountValue: 5000,
-      validUntil: new Date('2024-06-30'),
-      usageLimit: 1
+  // Fetch existing active coupons
+  useEffect(() => {
+    if (open) {
+      fetchExistingCoupons();
     }
-  ];
+  }, [open]);
 
-  const handleDistributeExisting = () => {
+  const fetchExistingCoupons = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('is_active', true)
+        .gte('valid_until', new Date().toISOString())
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setExistingCoupons((data || []) as ExistingCoupon[]);
+    } catch (error) {
+      console.error('Error fetching coupons:', error);
+      toast({
+        title: "쿠폰 목록 조회 실패",
+        description: "쿠폰 목록을 불러오는데 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDistributeExisting = async () => {
     if (!selectedCoupon) {
       toast({
         title: "쿠폰을 선택해주세요",
@@ -72,29 +89,133 @@ export const CouponDistributionModal = ({ open, onClose, selectedUsers }: Coupon
       return;
     }
 
-    // 기존 쿠폰 지급 로직
-    toast({
-      title: "쿠폰이 지급되었습니다",
-      description: `${selectedUsers.length}명에게 쿠폰을 지급했습니다.`
-    });
-    onClose();
-  };
-
-  const handleCreateAndDistribute = () => {
-    if (!newCouponData.name || !newCouponData.code || !newCouponData.discountValue) {
+    if (!user) {
       toast({
-        title: "필수 정보를 입력해주세요",
+        title: "로그인이 필요합니다",
         variant: "destructive"
       });
       return;
     }
 
-    // 새 쿠폰 생성 및 지급 로직
-    toast({
-      title: "쿠폰이 생성되고 지급되었습니다",
-      description: `${selectedUsers.length}명에게 새 쿠폰을 지급했습니다.`
-    });
-    onClose();
+    setLoading(true);
+    try {
+      // user_coupons 테이블에 쿠폰 할당 데이터 삽입
+      const userCouponInserts = selectedUsers.map(userId => ({
+        user_id: userId,
+        coupon_id: selectedCoupon,
+        assigned_by: user.id,
+        is_used: false
+      }));
+
+      const { error } = await supabase
+        .from('user_coupons')
+        .insert(userCouponInserts);
+
+      if (error) throw error;
+
+      toast({
+        title: "쿠폰이 지급되었습니다",
+        description: `${selectedUsers.length}명에게 쿠폰을 지급했습니다.`
+      });
+      onClose();
+    } catch (error) {
+      console.error('Error distributing coupon:', error);
+      toast({
+        title: "쿠폰 지급 실패",
+        description: "쿠폰 지급 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateAndDistribute = async () => {
+    if (!newCouponData.name || !newCouponData.code || !newCouponData.discountValue || !newCouponData.validUntil) {
+      toast({
+        title: "필수 정보를 입력해주세요",
+        description: "쿠폰명, 코드, 할인 값, 유효기간은 필수입니다.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "로그인이 필요합니다",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 1. 새 쿠폰 생성
+      const { data: newCoupon, error: couponError } = await supabase
+        .from('coupons')
+        .insert({
+          name: newCouponData.name,
+          code: newCouponData.code,
+          discount_type: newCouponData.discountType,
+          discount_value: parseFloat(newCouponData.discountValue),
+          valid_from: newCouponData.validFrom.toISOString(),
+          valid_until: newCouponData.validUntil.toISOString(),
+          usage_limit: newCouponData.usageLimit ? parseInt(newCouponData.usageLimit) : null,
+          min_order_amount: newCouponData.minOrderAmount ? parseFloat(newCouponData.minOrderAmount) : null,
+          max_discount_amount: newCouponData.maxDiscountAmount ? parseFloat(newCouponData.maxDiscountAmount) : null,
+          description: newCouponData.description || null,
+          is_active: true,
+          created_by: user.id
+        })
+        .select()
+        .single();
+
+      if (couponError) throw couponError;
+
+      // 2. 생성된 쿠폰을 사용자들에게 할당
+      const userCouponInserts = selectedUsers.map(userId => ({
+        user_id: userId,
+        coupon_id: newCoupon.id,
+        assigned_by: user.id,
+        is_used: false
+      }));
+
+      const { error: assignError } = await supabase
+        .from('user_coupons')
+        .insert(userCouponInserts);
+
+      if (assignError) throw assignError;
+
+      toast({
+        title: "쿠폰이 생성되고 지급되었습니다",
+        description: `${selectedUsers.length}명에게 새 쿠폰을 지급했습니다.`
+      });
+      
+      // Reset form
+      setNewCouponData({
+        name: '',
+        code: '',
+        discountType: 'percentage',
+        discountValue: '',
+        validUntil: null,
+        validFrom: new Date(),
+        usageLimit: '',
+        description: '',
+        minOrderAmount: '',
+        maxDiscountAmount: ''
+      });
+      
+      onClose();
+    } catch (error: any) {
+      console.error('Error creating and distributing coupon:', error);
+      toast({
+        title: "쿠폰 생성 실패",
+        description: error.message || "쿠폰 생성 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -121,16 +242,20 @@ export const CouponDistributionModal = ({ open, onClose, selectedUsers }: Coupon
                   <SelectValue placeholder="쿠폰을 선택하세요" />
                 </SelectTrigger>
                 <SelectContent>
-                  {existingCoupons.map((coupon) => (
-                    <SelectItem key={coupon.id} value={coupon.id}>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{coupon.name}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {coupon.code} | {coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `${coupon.discountValue.toLocaleString()}원`} 할인
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {existingCoupons.length === 0 ? (
+                    <SelectItem value="none" disabled>사용 가능한 쿠폰이 없습니다</SelectItem>
+                  ) : (
+                    existingCoupons.map((coupon) => (
+                      <SelectItem key={coupon.id} value={coupon.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{coupon.name}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {coupon.code} | {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `${coupon.discount_value.toLocaleString()}원`} 할인
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
 
@@ -145,10 +270,15 @@ export const CouponDistributionModal = ({ open, onClose, selectedUsers }: Coupon
                         <div><span className="font-medium">코드:</span> {coupon.code}</div>
                         <div>
                           <span className="font-medium">할인:</span> 
-                          {coupon.discountType === 'percentage' ? ` ${coupon.discountValue}%` : ` ${coupon.discountValue.toLocaleString()}원`}
+                          {coupon.discount_type === 'percentage' ? ` ${coupon.discount_value}%` : ` ${coupon.discount_value.toLocaleString()}원`}
                         </div>
-                        <div><span className="font-medium">유효기간:</span> {format(coupon.validUntil, 'yyyy-MM-dd')}</div>
-                        <div><span className="font-medium">사용 제한:</span> {coupon.usageLimit}회</div>
+                        <div><span className="font-medium">유효기간:</span> {format(new Date(coupon.valid_from), 'yyyy-MM-dd')} ~ {format(new Date(coupon.valid_until), 'yyyy-MM-dd')}</div>
+                        {coupon.min_order_amount && (
+                          <div><span className="font-medium">최소 주문금액:</span> {coupon.min_order_amount.toLocaleString()}원</div>
+                        )}
+                        {coupon.max_discount_amount && (
+                          <div><span className="font-medium">최대 할인금액:</span> {coupon.max_discount_amount.toLocaleString()}원</div>
+                        )}
                       </div>
                     );
                   })()}
@@ -157,11 +287,11 @@ export const CouponDistributionModal = ({ open, onClose, selectedUsers }: Coupon
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button variant="outline" onClick={onClose} className="flex-1">
+              <Button variant="outline" onClick={onClose} className="flex-1" disabled={loading}>
                 취소
               </Button>
-              <Button onClick={handleDistributeExisting} className="flex-1">
-                쿠폰 지급
+              <Button onClick={handleDistributeExisting} className="flex-1" disabled={loading || !selectedCoupon}>
+                {loading ? '지급 중...' : '쿠폰 지급'}
               </Button>
             </div>
           </TabsContent>
@@ -219,7 +349,7 @@ export const CouponDistributionModal = ({ open, onClose, selectedUsers }: Coupon
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>유효기간</Label>
+                <Label>유효기간 *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -236,8 +366,9 @@ export const CouponDistributionModal = ({ open, onClose, selectedUsers }: Coupon
                   <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
-                      selected={newCouponData.validUntil}
-                      onSelect={(date) => setNewCouponData({ ...newCouponData, validUntil: date })}
+                      selected={newCouponData.validUntil || undefined}
+                      onSelect={(date) => setNewCouponData({ ...newCouponData, validUntil: date || null })}
+                      disabled={(date) => date < new Date()}
                       initialFocus
                       className="pointer-events-auto"
                     />
@@ -250,7 +381,31 @@ export const CouponDistributionModal = ({ open, onClose, selectedUsers }: Coupon
                   type="number"
                   value={newCouponData.usageLimit}
                   onChange={(e) => setNewCouponData({ ...newCouponData, usageLimit: e.target.value })}
-                  placeholder="1"
+                  placeholder="제한없음"
+                  min="1"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>최소 주문금액 (원)</Label>
+                <Input
+                  type="number"
+                  value={newCouponData.minOrderAmount}
+                  onChange={(e) => setNewCouponData({ ...newCouponData, minOrderAmount: e.target.value })}
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>최대 할인금액 (원)</Label>
+                <Input
+                  type="number"
+                  value={newCouponData.maxDiscountAmount}
+                  onChange={(e) => setNewCouponData({ ...newCouponData, maxDiscountAmount: e.target.value })}
+                  placeholder="제한없음"
+                  min="0"
                 />
               </div>
             </div>
@@ -266,12 +421,16 @@ export const CouponDistributionModal = ({ open, onClose, selectedUsers }: Coupon
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button variant="outline" onClick={onClose} className="flex-1">
+              <Button variant="outline" onClick={onClose} className="flex-1" disabled={loading}>
                 취소
               </Button>
-              <Button onClick={handleCreateAndDistribute} className="flex-1">
-                <Plus className="mr-2 h-4 w-4" />
-                생성 후 지급
+              <Button onClick={handleCreateAndDistribute} className="flex-1" disabled={loading}>
+                {loading ? '처리 중...' : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    생성 후 지급
+                  </>
+                )}
               </Button>
             </div>
           </TabsContent>
