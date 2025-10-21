@@ -158,42 +158,100 @@ export default function AccessPeriodManagement() {
   };
 
   const handleDeleteEnrollment = async () => {
-    if (!selectedEnrollment) return;
+    if (!selectedEnrollment || !selectedCourse) return;
 
     try {
       setLoading(true);
 
-      // 1. Delete video watch segments
-      await supabase
-        .from('video_watch_segments')
-        .delete()
+      // 1. Get orders for this user
+      const { data: orders, error: ordersError } = await supabase
+        .from('orders')
+        .select('id')
         .eq('user_id', selectedEnrollment.user_id);
 
-      // 2. Delete video seek events
-      await supabase
-        .from('video_seek_events')
-        .delete()
-        .eq('user_id', selectedEnrollment.user_id);
+      if (ordersError) throw ordersError;
 
-      // 3. Delete video checkpoints
-      await supabase
-        .from('video_checkpoints')
-        .delete()
-        .eq('user_id', selectedEnrollment.user_id);
+      // 2. Get and delete order_items related to this course
+      if (orders && orders.length > 0) {
+        const orderIds = orders.map(o => o.id);
+        
+        const { data: orderItems, error: orderItemsError } = await supabase
+          .from('order_items')
+          .select('id, order_id')
+          .eq('course_id', selectedCourse.id)
+          .in('order_id', orderIds);
 
-      // 4. Delete session file downloads
-      await supabase
-        .from('session_file_downloads')
-        .delete()
-        .eq('user_id', selectedEnrollment.user_id);
+        if (orderItemsError) throw orderItemsError;
 
-      // 5. Delete session progress
-      await supabase
-        .from('session_progress')
-        .delete()
-        .eq('user_id', selectedEnrollment.user_id);
+        // Delete order_items and check if we need to delete orders
+        if (orderItems && orderItems.length > 0) {
+          for (const item of orderItems) {
+            // Delete the order item
+            await supabase
+              .from('order_items')
+              .delete()
+              .eq('id', item.id);
 
-      // 6. Delete enrollment
+            // Check if order has any other items
+            const { data: remainingItems, error: remainingError } = await supabase
+              .from('order_items')
+              .select('id')
+              .eq('order_id', item.order_id);
+
+            if (remainingError) throw remainingError;
+
+            // If no other items, delete the order too
+            if (!remainingItems || remainingItems.length === 0) {
+              await supabase
+                .from('orders')
+                .delete()
+                .eq('id', item.order_id);
+            }
+          }
+        }
+      }
+
+      // 3. Delete video-related data for this course
+      const { data: sessions } = await supabase
+        .from('course_sessions')
+        .select('id')
+        .eq('course_id', selectedCourse.id);
+
+      if (sessions && sessions.length > 0) {
+        const sessionIds = sessions.map(s => s.id);
+
+        await supabase
+          .from('video_watch_segments')
+          .delete()
+          .eq('user_id', selectedEnrollment.user_id)
+          .in('session_id', sessionIds);
+
+        await supabase
+          .from('video_seek_events')
+          .delete()
+          .eq('user_id', selectedEnrollment.user_id)
+          .in('session_id', sessionIds);
+
+        await supabase
+          .from('video_checkpoints')
+          .delete()
+          .eq('user_id', selectedEnrollment.user_id)
+          .in('session_id', sessionIds);
+
+        await supabase
+          .from('session_file_downloads')
+          .delete()
+          .eq('user_id', selectedEnrollment.user_id)
+          .in('session_id', sessionIds);
+
+        await supabase
+          .from('session_progress')
+          .delete()
+          .eq('user_id', selectedEnrollment.user_id)
+          .in('session_id', sessionIds);
+      }
+
+      // 4. Delete enrollment
       const { error: enrollmentError } = await supabase
         .from('enrollments')
         .delete()
@@ -203,18 +261,16 @@ export default function AccessPeriodManagement() {
 
       toast({
         title: "성공",
-        description: "수강 정보 및 관련 데이터가 모두 삭제되었습니다.",
+        description: "수강 정보, 주문 내역 및 모든 관련 데이터가 삭제되었습니다.",
       });
 
       setDeleteDialogOpen(false);
-      if (selectedCourse) {
-        fetchEnrollments(selectedCourse.id);
-      }
+      fetchEnrollments(selectedCourse.id);
     } catch (error: any) {
       console.error('Error deleting enrollment:', error);
       toast({
         title: "오류",
-        description: "수강 삭제에 실패했습니다.",
+        description: "수강 삭제에 실패했습니다: " + error.message,
         variant: "destructive"
       });
     } finally {
