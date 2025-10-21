@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Clock, Users, Edit } from 'lucide-react';
+import { Edit, BookOpen } from 'lucide-react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { EnrollmentTable } from '@/components/admin/access-period/EnrollmentTable';
 import { ExpiryEditModal } from '@/components/admin/access-period/ExpiryEditModal';
-import { CourseFilter } from '@/components/admin/access-period/CourseFilter';
+import { CourseListTable } from '@/components/admin/access-period/CourseListTable';
+import { EnrollmentSearchFilter } from '@/components/admin/access-period/EnrollmentSearchFilter';
 
 interface Course {
   id: string;
@@ -37,74 +37,49 @@ export default function AccessPeriodManagement() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [sortBy, setSortBy] = useState('title');
+  const [enrollmentSearchQuery, setEnrollmentSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedEnrollment, setSelectedEnrollment] = useState<Enrollment | null>(null);
   const [selectedEnrollments, setSelectedEnrollments] = useState<string[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkEditMode, setBulkEditMode] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchCourses();
-  }, [selectedCategory, sortBy]);
+  }, []);
 
   useEffect(() => {
     if (selectedCourse) {
       fetchEnrollments(selectedCourse.id);
       setSelectedEnrollments([]);
+      setEnrollmentSearchQuery('');
+      setCurrentPage(1);
     }
   }, [selectedCourse]);
 
   const fetchCourses = async () => {
     setLoading(true);
     try {
-      let query = supabase
+      const { data: coursesData, error } = await supabase
         .from('courses')
         .select(`
           id,
           title,
           access_duration_days,
-          category_id,
-          created_at,
           enrollments(count)
         `)
-        .eq('is_published', true);
-
-      // Apply category filter
-      if (selectedCategory !== 'all') {
-        query = query.eq('category_id', selectedCategory);
-      }
-
-      // Apply sorting
-      switch (sortBy) {
-        case 'title':
-          query = query.order('title');
-          break;
-        case 'recent':
-          query = query.order('created_at', { ascending: false });
-          break;
-        default:
-          query = query.order('title');
-      }
-
-      const { data: coursesData, error } = await query;
+        .eq('is_published', true)
+        .order('title');
 
       if (error) throw error;
 
-      let coursesWithCount = coursesData?.map(course => ({
+      const coursesWithCount = coursesData?.map(course => ({
         ...course,
         total_students: course.enrollments?.[0]?.count || 0
       })) || [];
-
-      // Apply sorting for student count
-      if (sortBy === 'students_desc') {
-        coursesWithCount.sort((a, b) => (b.total_students || 0) - (a.total_students || 0));
-      } else if (sortBy === 'students_asc') {
-        coursesWithCount.sort((a, b) => (a.total_students || 0) - (b.total_students || 0));
-      }
 
       setCourses(coursesWithCount);
     } catch (error: any) {
@@ -364,117 +339,136 @@ export default function AccessPeriodManagement() {
     }
   };
 
-  const filteredCourses = courses.filter(course =>
-    course.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter and paginate enrollments
+  const filteredEnrollments = useMemo(() => {
+    return enrollments.filter(enrollment => {
+      const searchLower = enrollmentSearchQuery.toLowerCase();
+      return (
+        enrollment.profiles.full_name.toLowerCase().includes(searchLower) ||
+        enrollment.profiles.email.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [enrollments, enrollmentSearchQuery]);
+
+  const totalPages = Math.ceil(filteredEnrollments.length / itemsPerPage);
+  const paginatedEnrollments = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredEnrollments.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredEnrollments, currentPage, itemsPerPage]);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [enrollmentSearchQuery]);
 
   return (
     <AdminLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">학습 기간 관리</h1>
           <p className="text-muted-foreground">강의별 수강생의 학습 기간을 관리합니다</p>
         </div>
 
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">강의 선택</h2>
-            <CourseFilter
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              selectedCategory={selectedCategory}
-              onCategoryChange={setSelectedCategory}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-            />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* 좌측: 강의 목록 */}
+          <div className="lg:col-span-5">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  강의 목록
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CourseListTable
+                  courses={courses}
+                  selectedCourseId={selectedCourse?.id || null}
+                  onSelectCourse={setSelectedCourse}
+                />
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCourses.map((course) => (
-              <Card
-                key={course.id}
-                className={`cursor-pointer transition-all hover:shadow-lg ${
-                  selectedCourse?.id === course.id 
-                    ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
-                    : 'hover:scale-[1.01]'
-                }`}
-                onClick={() => setSelectedCourse(course)}
-              >
-                <CardContent className="p-6 space-y-4">
-                  <h3 className="font-semibold text-lg line-clamp-2 min-h-[3.5rem]">
-                    {course.title}
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Users className="h-4 w-4" />
-                        <span>수강생</span>
-                      </div>
-                      <span className="font-medium">{course.total_students}명</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span>학습 기간</span>
-                      </div>
-                      <Badge variant={course.access_duration_days ? 'default' : 'secondary'}>
-                        {course.access_duration_days 
-                          ? `${course.access_duration_days}일` 
-                          : '평생소장'}
-                      </Badge>
-                    </div>
+          {/* 우측: 수강생 목록 */}
+          <div className="lg:col-span-7">{selectedCourse ? (
+
+            <Card>
+              <CardHeader className="space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2 flex-1">
+                    <CardTitle className="text-xl">{selectedCourse.title}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {filteredEnrollments.length > 0 ? (
+                        <>
+                          총 {filteredEnrollments.length}명
+                          {enrollmentSearchQuery && filteredEnrollments.length !== enrollments.length && (
+                            <span> (전체: {enrollments.length}명)</span>
+                          )}
+                          {selectedEnrollments.length > 0 && (
+                            <span className="ml-2 text-primary font-medium">
+                              • {selectedEnrollments.length}명 선택됨
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        '수강생이 없습니다'
+                      )}
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                  {selectedEnrollments.length > 0 && (
+                    <Button onClick={handleBulkEditExpiry} size="sm" className="gap-2 shrink-0">
+                      <Edit className="h-4 w-4" />
+                      <span>일괄 변경</span>
+                    </Button>
+                  )}
+                </div>
+                {enrollments.length > 0 && (
+                  <EnrollmentSearchFilter
+                    searchQuery={enrollmentSearchQuery}
+                    onSearchChange={setEnrollmentSearchQuery}
+                  />
+                )}
+              </CardHeader>
+              <CardContent className="p-6">
+                {filteredEnrollments.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <p>
+                      {enrollmentSearchQuery 
+                        ? '검색 결과가 없습니다.' 
+                        : '수강생이 없습니다'}
+                    </p>
+                  </div>
+                ) : (
+                  <EnrollmentTable
+                    enrollments={paginatedEnrollments}
+                    selectedEnrollments={selectedEnrollments}
+                    onSelectAll={handleSelectAll}
+                    onSelectEnrollment={handleSelectEnrollment}
+                    onEditExpiry={handleEditExpiry}
+                    onDeleteEnrollment={(enrollment) => {
+                      setSelectedEnrollment(enrollment);
+                      setDeleteDialogOpen(true);
+                    }}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-12">
+                <div className="text-center text-muted-foreground space-y-3">
+                  <BookOpen className="h-16 w-16 mx-auto opacity-20" />
+                  <p className="text-lg">좌측에서 강의를 선택하세요</p>
+                  <p className="text-sm">강의를 선택하면 수강생 목록이 표시됩니다</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           </div>
         </div>
-
-        {selectedCourse && (
-          <Card>
-            <CardHeader className="space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <CardTitle className="text-2xl">{selectedCourse.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    총 {enrollments.length}명의 수강생이 있습니다
-                    {selectedEnrollments.length > 0 && (
-                      <span className="ml-2 text-primary font-medium">
-                        ({selectedEnrollments.length}명 선택됨)
-                      </span>
-                    )}
-                  </p>
-                </div>
-                {selectedEnrollments.length > 0 && (
-                  <Button onClick={handleBulkEditExpiry} className="gap-2">
-                    <Edit className="h-4 w-4" />
-                    <span>선택한 수강생 만료일 변경</span>
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              {enrollments.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>수강생이 없습니다</p>
-                </div>
-              ) : (
-                <EnrollmentTable
-                  enrollments={enrollments}
-                  selectedEnrollments={selectedEnrollments}
-                  onSelectAll={handleSelectAll}
-                  onSelectEnrollment={handleSelectEnrollment}
-                  onEditExpiry={handleEditExpiry}
-                  onDeleteEnrollment={(enrollment) => {
-                    setSelectedEnrollment(enrollment);
-                    setDeleteDialogOpen(true);
-                  }}
-                />
-              )}
-            </CardContent>
-          </Card>
-        )}
 
         <ExpiryEditModal
           open={editDialogOpen}

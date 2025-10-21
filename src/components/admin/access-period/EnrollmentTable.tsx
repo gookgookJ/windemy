@@ -1,10 +1,17 @@
-import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { Calendar, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 interface Enrollment {
   id: string;
@@ -25,6 +32,9 @@ interface EnrollmentTableProps {
   onSelectEnrollment: (enrollmentId: string, checked: boolean) => void;
   onEditExpiry: (enrollment: Enrollment) => void;
   onDeleteEnrollment: (enrollment: Enrollment) => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 export function EnrollmentTable({
@@ -33,7 +43,10 @@ export function EnrollmentTable({
   onSelectAll,
   onSelectEnrollment,
   onEditExpiry,
-  onDeleteEnrollment
+  onDeleteEnrollment,
+  currentPage,
+  totalPages,
+  onPageChange
 }: EnrollmentTableProps) {
   const isAllSelected = enrollments.length > 0 && selectedEnrollments.length === enrollments.length;
   const isSomeSelected = selectedEnrollments.length > 0 && selectedEnrollments.length < enrollments.length;
@@ -44,8 +57,9 @@ export function EnrollmentTable({
   };
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
+    <div className="space-y-4">
+      <div className="overflow-x-auto border rounded-lg">
+        <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[50px]">
@@ -138,6 +152,59 @@ export function EnrollmentTable({
           })}
         </TableBody>
       </Table>
+      </div>
+
+      {totalPages > 1 && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              // Show first page, last page, current page, and pages around current
+              const showPage = 
+                page === 1 || 
+                page === totalPages || 
+                (page >= currentPage - 1 && page <= currentPage + 1);
+              
+              if (!showPage) {
+                // Show ellipsis
+                if (page === currentPage - 2 || page === currentPage + 2) {
+                  return (
+                    <PaginationItem key={page}>
+                      <span className="px-2">...</span>
+                    </PaginationItem>
+                  );
+                }
+                return null;
+              }
+
+              return (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => onPageChange(page)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
+
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   );
 }
