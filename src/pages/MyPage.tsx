@@ -17,6 +17,7 @@ interface EnrollmentWithCourse {
   progress: number;
   enrolled_at: string;
   completed_at: string | null;
+  expires_at: string | null;
   total_sessions: number;
   completed_sessions: number;
   real_progress: number;
@@ -115,6 +116,7 @@ const MyPage = () => {
           progress,
           enrolled_at,
           completed_at,
+          expires_at,
           course:courses(
             id,
             title,
@@ -390,21 +392,42 @@ const MyPage = () => {
                           enrollment.course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           enrollment.course.instructor?.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
                         )
-                        .map((enrollment) => (
-                        <Card key={enrollment.id} className="group cursor-pointer hover:shadow-lg transition-all duration-200 overflow-hidden">
-                          <div className="relative" onClick={() => handleCourseClick(enrollment.course.id)}>
+                        .map((enrollment) => {
+                          const isExpired = enrollment.expires_at 
+                            ? new Date(enrollment.expires_at) < new Date()
+                            : false;
+                          
+                          return (
+                        <Card 
+                          key={enrollment.id} 
+                          className={`group cursor-pointer hover:shadow-lg transition-all duration-200 overflow-hidden ${
+                            isExpired ? 'opacity-60 grayscale' : ''
+                          }`}
+                        >
+                          <div 
+                            className="relative" 
+                            onClick={() => !isExpired && handleCourseClick(enrollment.course.id)}
+                          >
                             <div className="aspect-video w-full bg-muted">
                               <img
                                 src={enrollment.course.thumbnail_url || '/placeholder.svg'}
                                 alt={enrollment.course.title}
                                 className="w-full h-full object-cover"
                               />
-                              {/* 재생 버튼 오버레이 */}
-                              <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                <div className="w-8 h-8 md:w-10 md:h-10 bg-white/70 rounded-full flex items-center justify-center group-hover:scale-105 transition-transform">
-                                  <Play className="h-4 w-4 md:h-5 md:w-5 text-gray-700 ml-0.5" fill="currentColor" />
+                              {isExpired && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                  <Badge variant="destructive" className="text-xs">
+                                    수강 기간 만료
+                                  </Badge>
                                 </div>
-                              </div>
+                              )}
+                              {!isExpired && (
+                                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                  <div className="w-8 h-8 md:w-10 md:h-10 bg-white/70 rounded-full flex items-center justify-center group-hover:scale-105 transition-transform">
+                                    <Play className="h-4 w-4 md:h-5 md:w-5 text-gray-700 ml-0.5" fill="currentColor" />
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                           
@@ -438,14 +461,15 @@ const MyPage = () => {
 
                               {/* 액션 버튼 */}
                               <div className="flex justify-center pt-2">
-                                <ReviewModal
-                                  courseId={enrollment.course.id}
-                                  courseTitle={enrollment.course.title}
-                                  existingReview={userReviews[enrollment.course.id] || null}
-                                  onReviewSubmitted={handleReviewSubmitted}
-                                  trigger={
-                                    userReviews[enrollment.course.id] ? (
-                                      <Button 
+                                {!isExpired && (
+                                  <ReviewModal
+                                    courseId={enrollment.course.id}
+                                    courseTitle={enrollment.course.title}
+                                    existingReview={userReviews[enrollment.course.id] || null}
+                                    onReviewSubmitted={handleReviewSubmitted}
+                                    trigger={
+                                      userReviews[enrollment.course.id] ? (
+                                        <Button
                                         variant="outline" 
                                         size="sm"
                                         className="text-xs h-8 hover:bg-primary/10 transition-colors flex items-center gap-1"
@@ -477,12 +501,14 @@ const MyPage = () => {
                                       </Button>
                                     )
                                   }
-                                />
+                                  />
+                                )}
                               </div>
                             </div>
                           </CardContent>
                         </Card>
-                      ))}
+                          );
+                        })}
                     </div>
                     
                     {/* 페이지네이션 */}

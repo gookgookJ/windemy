@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { PlayCircle, CheckCircle, Clock, ArrowLeft, ArrowRight, File, BookOpen, X, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { format, parseISO } from 'date-fns';
 import '@/types/vimeo.d.ts';
 import { VideoProgressTracker } from '@/utils/VideoProgressTracker';
 import { getVimeoVideoInfo, extractVimeoId, isValidVimeoUrl } from '@/utils/vimeoUtils';
@@ -754,6 +755,11 @@ const Learn = () => {
     );
   }
 
+  // Check if enrollment is expired
+  const isEnrollmentExpired = enrollment?.expires_at 
+    ? new Date(enrollment.expires_at) < new Date()
+    : false;
+
   const vimeoId = extractVimeoId(currentSession.video_url);
   const hashParam = extractVimeoHash(currentSession.video_url);
   const currentIndex = getCurrentSessionIndex();
@@ -797,8 +803,23 @@ const Learn = () => {
             {/* 비디오 플레이어 */}
             <Card className="overflow-hidden shadow-lg">
               <CardContent className="p-0">
-                <div className="aspect-video bg-black">
-                  {currentSession.video_url?.includes('vimeo.com') && vimeoId ? (
+                <div className="aspect-video bg-black relative">
+                  {isEnrollmentExpired ? (
+                    <div className="flex items-center justify-center h-full bg-muted/80">
+                      <div className="text-center p-8">
+                        <Clock className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                        <h3 className="text-xl font-bold mb-2">수강 기간이 만료되었습니다</h3>
+                        <p className="text-muted-foreground mb-4">
+                          {enrollment?.expires_at && 
+                            `만료일: ${format(parseISO(enrollment.expires_at), 'yyyy년 MM월 dd일')}`
+                          }
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          수강 기간 연장이 필요한 경우 관리자에게 문의해주세요.
+                        </p>
+                      </div>
+                    </div>
+                  ) : currentSession.video_url?.includes('vimeo.com') && vimeoId ? (
                     <iframe
                       key={currentSession.id}
                       id={`vimeo-player-${currentSession.id}`}

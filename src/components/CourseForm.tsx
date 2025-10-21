@@ -21,6 +21,7 @@ const courseSchema = z.object({
   instructor_id: z.string().min(1, '강사를 선택해주세요'),
   thumbnail_path: z.string().optional(),
   detail_image_path: z.string().optional(),
+  access_duration_days: z.number().nullable().optional(),
 });
 
 interface CourseFormProps {
@@ -60,7 +61,9 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
     detail_image_path: '',
     whatYouWillLearn: [''],
     requirements: [''],
-    course_options: [] as CourseOption[]
+    course_options: [] as CourseOption[],
+    access_duration_days: null as number | null,
+    isLifetimeAccess: true
   });
 
   const form = useForm<z.infer<typeof courseSchema>>({
@@ -73,6 +76,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
       instructor_id: '',
       thumbnail_path: '',
       detail_image_path: '',
+      access_duration_days: null,
     },
   });
 
@@ -132,7 +136,8 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
           category_id: courseData.category_id || '',
           instructor_id: courseData.instructor_id || '',
           thumbnail_path: courseData.thumbnail_path || '',
-          detail_image_path: courseData.detail_image_path || ''
+          detail_image_path: courseData.detail_image_path || '',
+          access_duration_days: courseData.access_duration_days || null
         });
         
         setCourseData({
@@ -145,7 +150,9 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
           detail_image_path: courseData.detail_image_path || '',
           whatYouWillLearn: courseData.what_you_will_learn || [''],
           requirements: courseData.requirements || [''],
-          course_options: []
+          course_options: [],
+          access_duration_days: courseData.access_duration_days || null,
+          isLifetimeAccess: !courseData.access_duration_days
         });
       }
     } catch (error) {
@@ -171,7 +178,8 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
         detail_image_path: values.detail_image_path || null,
         is_published: false,
         course_type: 'VOD',
-        what_you_will_learn: courseData.whatYouWillLearn.filter(item => item.trim() !== '')
+        what_you_will_learn: courseData.whatYouWillLearn.filter(item => item.trim() !== ''),
+        access_duration_days: courseData.isLifetimeAccess ? null : courseData.access_duration_days
       };
 
       let result;
@@ -227,7 +235,8 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
         detail_image_path: values.detail_image_path || null,
         is_published: false,
         course_type: 'VOD',
-        what_you_will_learn: courseData.whatYouWillLearn.filter(item => item.trim() !== '')
+        what_you_will_learn: courseData.whatYouWillLearn.filter(item => item.trim() !== ''),
+        access_duration_days: courseData.isLifetimeAccess ? null : courseData.access_duration_days
       };
 
       let result;
@@ -403,12 +412,55 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
                       <FormMessage />
                     </FormItem>
                   )}
-                />
-              </div>
-            </div>
-          </TabsContent>
+                 />
+               </div>
 
-          <TabsContent value="learning" className="space-y-4">
+               <div className="space-y-4 mt-4">
+                 <Label className="text-base font-medium">수강 기간 설정</Label>
+                 <div className="flex items-center space-x-2">
+                   <input
+                     type="checkbox"
+                     id="lifetime-access"
+                     checked={courseData.isLifetimeAccess}
+                     onChange={(e) => {
+                       setCourseData(prev => ({
+                         ...prev,
+                         isLifetimeAccess: e.target.checked,
+                         access_duration_days: e.target.checked ? null : 30
+                       }));
+                     }}
+                     className="h-4 w-4"
+                   />
+                   <Label htmlFor="lifetime-access" className="cursor-pointer">
+                     평생소장
+                   </Label>
+                 </div>
+                 {!courseData.isLifetimeAccess && (
+                   <div className="mt-2">
+                     <Label>수강 기간 (일)</Label>
+                     <Input
+                       type="number"
+                       min="1"
+                       value={courseData.access_duration_days || 30}
+                       onChange={(e) => {
+                         const days = parseInt(e.target.value, 10) || 30;
+                         setCourseData(prev => ({
+                           ...prev,
+                           access_duration_days: days
+                         }));
+                       }}
+                       placeholder="수강 기간을 입력하세요 (일)"
+                     />
+                     <p className="text-sm text-muted-foreground mt-1">
+                       결제일로부터 {courseData.access_duration_days || 30}일 동안 수강 가능합니다.
+                     </p>
+                   </div>
+                 )}
+               </div>
+             </div>
+           </TabsContent>
+
+           <TabsContent value="learning" className="space-y-4">
             <div>
               <Label className="text-base font-medium">배울 내용</Label>
               <div className="space-y-2 mt-2">

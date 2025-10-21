@@ -60,6 +60,7 @@ const AdminProgressMonitoring = React.lazy(() => import("./pages/admin/ProgressM
 const AdminHeroSlides = React.lazy(() => import("./pages/admin/HeroSlides"));
 const AdminHomepageSections = React.lazy(() => import("./pages/admin/HomepageSections"));
 const AdminHomepageSectionManager = React.lazy(() => import("./pages/admin/HomepageSectionManager"));
+const AdminAccessPeriod = React.lazy(() => import("./pages/admin/AccessPeriodManagement"));
 const AdminUserDetail = React.lazy(() => import("./pages/admin/UserDetail"));
 
 // Optimized loading fallback with critical CSS classes
@@ -116,6 +117,7 @@ const App = () => (
                 <Route path="/admin/course-create" element={<AdminCourseCreate />} />
                 <Route path="/admin/sessions" element={<AdminSessionManagement />} />
                 <Route path="/admin/section-management" element={<AdminSectionManagement />} />
+                <Route path="/admin/access-period" element={<AdminAccessPeriod />} />
                 <Route path="/admin/learning-analytics" element={<AdminLearningAnalytics />} />
                 <Route path="/admin/progress-monitoring" element={<AdminProgressMonitoring />} />
                 <Route path="/admin/orders" element={<AdminOrders />} />

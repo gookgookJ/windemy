@@ -33,7 +33,8 @@ import {
   Zap,
   Crown,
   Monitor,
-  ChevronRight
+  ChevronRight,
+  Clock
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -72,6 +73,12 @@ const menuItems = [
     title: '강의 자료 관리',
     url: '/admin/section-management',
     icon: FileText,
+    group: 'content'
+  },
+  {
+    title: '학습 기간 관리',
+    url: '/admin/access-period',
+    icon: Clock,
     group: 'content'
   },
   {
