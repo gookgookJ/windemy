@@ -77,7 +77,7 @@ export function EnrollmentTable({
               <TableHead className="w-[100px]">등록일</TableHead>
               <TableHead className="w-[140px]">만료일</TableHead>
               <TableHead className="w-[80px]">상태</TableHead>
-              <TableHead className="text-center w-[180px]">관리</TableHead>
+              <TableHead className="text-center w-[180px]"></TableHead>
             </TableRow>
           </TableHeader>
         <TableBody>
@@ -135,7 +135,6 @@ export function EnrollmentTable({
                       >
                         <Calendar className="h-4 w-4" />
                       </Button>
-                      <span className="text-sm text-muted-foreground">관리</span>
                       <Button
                         size="sm"
                         variant="destructive"
@@ -159,7 +158,9 @@ export function EnrollmentTable({
               <PaginationPrevious
                 onClick={() => onPageChange(Math.max(1, currentPage - 1))}
                 className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-              />
+              >
+                이전
+              </PaginationPrevious>
             </PaginationItem>
             
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
@@ -198,7 +199,9 @@ export function EnrollmentTable({
               <PaginationNext
                 onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
                 className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-              />
+              >
+                다음
+              </PaginationNext>
             </PaginationItem>
           </PaginationContent>
         </Pagination>

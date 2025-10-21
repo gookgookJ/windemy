@@ -105,7 +105,7 @@ export function CourseListTable({ courses, selectedCourseId, onSelectCourse }: C
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground whitespace-nowrap">
           총 {filteredCourses.length}개의 강의
         </p>
 
@@ -116,7 +116,9 @@ export function CourseListTable({ courses, selectedCourseId, onSelectCourse }: C
                 <PaginationPrevious
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                />
+                >
+                  이전
+                </PaginationPrevious>
               </PaginationItem>
               
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
@@ -135,7 +137,9 @@ export function CourseListTable({ courses, selectedCourseId, onSelectCourse }: C
                 <PaginationNext
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                />
+                >
+                  다음
+                </PaginationNext>
               </PaginationItem>
             </PaginationContent>
           </Pagination>
