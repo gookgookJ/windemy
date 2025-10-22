@@ -16,8 +16,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import * as XLSX from 'xlsx';
 
-console.log('[AdminUsers] module loaded');
-
 const AdminUsers = () => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
