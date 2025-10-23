@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, BookOpen, ShoppingCart, DollarSign, TrendingUp, Activity, Star, Eye } from 'lucide-react';
+import { Users, BookOpen, DollarSign, TrendingUp, Activity, Star, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { StatsCard } from '@/components/admin/StatsCard';
