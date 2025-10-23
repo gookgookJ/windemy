@@ -20,6 +20,7 @@ type AuthView = 'main' | 'signup' | 'forgot-password' | 'find-id';
 export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalProps) => {
   const [currentView, setCurrentView] = useState<AuthView>('main');
   const [isLoading, setIsLoading] = useState(false);
+  const [signInError, setSignInError] = useState('');
   const [signInData, setSignInData] = useState({ email: '', password: '' });
   const [signUpData, setSignUpData] = useState({ 
     email: '', 
@@ -45,18 +46,17 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setSignInError('');
     
     try {
       const { error } = await signIn(signInData.email, signInData.password);
       
       if (error) {
-        toast({
-          title: "로그인 실패",
-          description: error.message === "Invalid login credentials" 
+        setSignInError(
+          error.message === "Invalid login credentials" 
             ? "이메일 또는 비밀번호가 잘못되었습니다." 
-            : error.message,
-          variant: "destructive"
-        });
+            : error.message
+        );
       } else {
         toast({
           title: "로그인 성공",
@@ -64,13 +64,10 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
         });
         onClose();
         setSignInData({ email: '', password: '' });
+        setSignInError('');
       }
     } catch (error: any) {
-      toast({
-        title: "오류 발생",
-        description: "로그인 중 오류가 발생했습니다.",
-        variant: "destructive"
-      });
+      setSignInError("로그인 중 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -241,6 +238,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
     setForgotPasswordEmail('');
     setFindIdData({ fullName: '', phone: '' });
     setFoundEmail('');
+    setSignInError('');
     onClose();
   };
 
@@ -291,12 +289,20 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
 
                 {/* Email Login Form */}
                 <form onSubmit={handleSignIn} className="space-y-3 sm:space-y-4">{/* Reduced mobile space */}
+                  {signInError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-800 text-center">{signInError}</p>
+                    </div>
+                  )}
                   <div className="space-y-2 sm:space-y-3">{/* Reduced mobile space */}
                     <Input
                       type="email"
                       placeholder="이메일 또는 아이디"
                       value={signInData.email}
-                      onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
+                      onChange={(e) => {
+                        setSignInData({ ...signInData, email: e.target.value });
+                        setSignInError('');
+                      }}
                       className="h-11 border-gray-200 rounded-lg mobile-input touch-target sm:h-12"
                       required
                     />
@@ -306,7 +312,10 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                       type="password"
                       placeholder="비밀번호"
                       value={signInData.password}
-                      onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
+                      onChange={(e) => {
+                        setSignInData({ ...signInData, password: e.target.value });
+                        setSignInError('');
+                      }}
                       className="h-11 border-gray-200 rounded-lg mobile-input touch-target sm:h-12"
                       required
                     />
