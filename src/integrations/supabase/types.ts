@@ -134,6 +134,33 @@ export type Database = {
         }
         Relationships: []
       }
+      best_blog_posts: {
+        Row: {
+          created_at: string
+          id: string
+          order_index: number
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_index: number
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_index?: number
+          title?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       blog_update_history: {
         Row: {
           created_at: string | null

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -129,7 +130,7 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
       }
     }
 
-    // 3) 최후수단: /blog HTML에서 링크 스캔 (CSR일 경우 비어있을 수 있음)
+    // 3) 최후수단: /blog HTML에서 링크 스캔
     if (rawPosts.length < 5) {
       const response = await fetch('https://windly.cc/blog', {
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WindlyBot/1.0)', 'Accept-Language': 'ko,en;q=0.9' }
@@ -207,26 +208,78 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
   }
 }
 
-async function updateInfoBannerData(posts: BlogPost[]) {
+async function saveBlogPostsToDB(posts: BlogPost[]) {
   try {
-    // InfoBanner 컴포넌트 파일 읽기
-    const componentPath = '/src/components/InfoBanner.tsx';
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
-    // 새로운 bestPosts 배열 생성
-    const bestPostsCode = `  const bestPosts = [
-${posts.map(post => `    {
-      title: "${post.title.replace(/"/g, '\\"')}",
-      url: "${post.url}"
-    }`).join(',\n')}
-  ];`;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    console.log('Updated bestPosts data:', bestPostsCode);
+    console.log('Saving blog posts to database...');
     
-    // 실제 파일 업데이트는 클라이언트에서 처리하도록 데이터만 반환
-    return { success: true, posts, bestPostsCode };
+    // 기존 데이터 삭제
+    const { error: deleteError } = await supabase
+      .from('best_blog_posts')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // 모든 데이터 삭제
+    
+    if (deleteError) {
+      console.error('Error deleting old posts:', deleteError);
+    }
+    
+    // 새 데이터 삽입
+    const postsToInsert = posts.map((post, index) => ({
+      title: post.title,
+      url: post.url,
+      order_index: index + 1
+    }));
+    
+    const { data, error } = await supabase
+      .from('best_blog_posts')
+      .insert(postsToInsert)
+      .select();
+    
+    if (error) {
+      console.error('Error inserting blog posts:', error);
+      throw error;
+    }
+    
+    console.log(`Successfully saved ${posts.length} posts to database`);
+    
+    // 로그 기록
+    const { error: logError } = await supabase
+      .from('blog_update_history')
+      .insert({
+        posts_fetched: posts.length,
+        posts_data: posts,
+        success: true
+      });
+    
+    if (logError) {
+      console.error('Error logging blog update:', logError);
+    }
+    
+    return { success: true, data };
   } catch (error) {
-    console.error('Error updating InfoBanner data:', error);
-    return { success: false, error: (error as any)?.message || 'Unknown error' };
+    console.error('Error saving blog posts to DB:', error);
+    
+    // 실패 로그도 기록
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      
+      await supabase
+        .from('blog_update_history')
+        .insert({
+          posts_fetched: 0,
+          posts_data: [],
+          success: false,
+          error_message: (error as any)?.message || 'Unknown error'
+        });
+    } catch {}
+    
+    throw error;
   }
 }
 
@@ -255,15 +308,14 @@ serve(async (req) => {
       )
     }
     
-    // InfoBanner 데이터 업데이트
-    const result = await updateInfoBannerData(posts);
+    // DB에 저장
+    await saveBlogPostsToDB(posts);
     
     return new Response(
       JSON.stringify({
         success: true,
         message: `Successfully updated ${posts.length} blog posts`,
         posts: posts,
-        bestPostsCode: result.bestPostsCode,
         timestamp: new Date().toISOString()
       }),
       { 

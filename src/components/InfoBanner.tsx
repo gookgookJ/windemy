@@ -14,27 +14,29 @@ const InfoBanner = () => {
   const [bestPosts, setBestPosts] = useState<Array<{ title: string; url: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 블로그 포스트 즉시 로드 (하드코딩 제거, 지연 제거)
+  // DB에서 저장된 블로그 포스트 불러오기
   useEffect(() => {
-    const updateBlogPosts = async () => {
+    const loadBlogPosts = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('update-blog-posts');
+        const { data, error } = await supabase
+          .from('best_blog_posts')
+          .select('title, url')
+          .order('order_index', { ascending: true });
         
-        if (data && data.success && data.posts && data.posts.length > 0) {
-          setBestPosts(data.posts);
-          console.log('블로그 포스트가 업데이트되었습니다:', data.posts);
-        } else {
-          console.error('블로그 포스트 업데이트 실패:', error || data?.error);
+        if (error) {
+          console.error('블로그 포스트 로드 실패:', error);
+        } else if (data && data.length > 0) {
+          setBestPosts(data);
+          console.log('블로그 포스트가 로드되었습니다:', data);
         }
       } catch (error) {
-        console.error('블로그 포스트 업데이트 중 오류:', error);
+        console.error('블로그 포스트 로드 중 오류:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    // 즉시 실행 (3초 지연 제거)
-    updateBlogPosts();
+    loadBlogPosts();
   }, []);
 
   const handleSubscribe = () => {
