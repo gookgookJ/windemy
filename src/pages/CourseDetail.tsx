@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Play,
@@ -105,12 +105,16 @@ const CourseDetail = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [instructorInfo, setInstructorInfo] = useState<InstructorInfo | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>('overview');
 
   // Hooks
   const navigate = useNavigate();
   const { id: courseId } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  // Refs for sections
+  const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({});
 
   // --- Effects ---
 
@@ -159,6 +163,36 @@ const CourseDetail = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Intersection Observer for active section tracking
+  useEffect(() => {
+    const observerOptions = {
+      root: null,
+      rootMargin: '-20% 0px -70% 0px',
+      threshold: 0
+    };
+
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    // Observe all sections
+    Object.values(sectionRefs.current).forEach((section) => {
+      if (section) {
+        observer.observe(section);
+      }
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [courseData, groupedSections, courseReviews]); // Re-run when content loads
 
   // --- Data Fetching and Processing (Refactored) ---
 
@@ -494,26 +528,42 @@ const CourseDetail = () => {
                 {/* Responsive Button Styles */}
                 <button
                   onClick={() => scrollToSection('overview')}
-                  className="px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
+                  className={`px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium transition-colors border-r border-border last:border-r-0 ${
+                    activeSection === 'overview' 
+                      ? 'text-primary bg-primary/10 border-b-2 border-b-primary' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
                 >
                   <span className="lg:hidden">소개</span>
                   <span className="hidden lg:inline">강의 안내</span>
                 </button>
                 <button
                   onClick={() => scrollToSection('curriculum')}
-                  className="px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
+                  className={`px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium transition-colors border-r border-border last:border-r-0 ${
+                    activeSection === 'curriculum' 
+                      ? 'text-primary bg-primary/10 border-b-2 border-b-primary' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
                 >
                   커리큘럼
                 </button>
                 <button
                   onClick={() => scrollToSection('instructor')}
-                  className="px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r border-border last:border-r-0"
+                  className={`px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium transition-colors border-r border-border last:border-r-0 ${
+                    activeSection === 'instructor' 
+                      ? 'text-primary bg-primary/10 border-b-2 border-b-primary' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
                 >
                   강사 소개
                 </button>
                 <button
                   onClick={() => scrollToSection('reviews')}
-                  className="px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  className={`px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium transition-colors ${
+                    activeSection === 'reviews' 
+                      ? 'text-primary bg-primary/10 border-b-2 border-b-primary' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
                 >
                   후기
                 </button>
@@ -524,7 +574,7 @@ const CourseDetail = () => {
             <div className="space-y-12 lg:space-y-16">
 
               {/* Course Detail Images */}
-              <div id="overview">
+              <div id="overview" ref={(el) => sectionRefs.current['overview'] = el}>
                 {/* Display detail_image_path if exists */}
                 {courseData.detail_image_path && (
                   <div className="mb-8">
@@ -556,7 +606,7 @@ const CourseDetail = () => {
               </section>
 
               {/* Curriculum (Using Accordion for Accessibility) */}
-              <section id="curriculum">
+              <section id="curriculum" ref={(el) => sectionRefs.current['curriculum'] = el}>
                 <h2 className="text-xl lg:text-2xl font-bold mb-6">커리큘럼</h2>
                 {/* Defaulting the first section to open if available. Using type="single" collapsible. */}
                 <Accordion type="single" collapsible defaultValue={groupedSections.length > 0 ? groupedSections[0].id : undefined} className="space-y-4">
@@ -599,7 +649,7 @@ const CourseDetail = () => {
               </section>
 
               {/* Instructor */}
-              <section id="instructor">
+              <section id="instructor" ref={(el) => sectionRefs.current['instructor'] = el}>
                 <h2 className="text-xl lg:text-2xl font-bold mb-6">강사 소개</h2>
                 <div className="bg-muted/30 rounded-2xl p-6 lg:p-8">
                   <div className="flex items-start gap-4 lg:gap-6">
@@ -633,7 +683,7 @@ const CourseDetail = () => {
                </section>
 
               {/* Reviews */}
-              <section id="reviews">
+              <section id="reviews" ref={(el) => sectionRefs.current['reviews'] = el}>
                 <h2 className="text-xl lg:text-2xl font-bold mb-6">수강생 후기</h2>
                 <div className="space-y-4 lg:space-y-6">
                   {courseReviews.length > 0 ? (
