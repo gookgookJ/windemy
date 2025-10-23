@@ -292,28 +292,73 @@ const CourseDetail = () => {
 
   const fetchInstructorInfo = async (instructorId: string) => {
     try {
-      // 1) Try instructors (public info via SECURITY DEFINER)
-      const { data: pubData, error: pubErr } = await supabase.rpc('get_instructor_public_info', {
+      // 1) 우선 해당 ID로 공개 정보 조회
+      const { data: pubData } = await supabase.rpc('get_instructor_public_info', {
         instructor_id: instructorId,
       });
 
       let row: any = Array.isArray(pubData) && pubData.length > 0 ? pubData[0] : null;
+      const hasMeaningfulData = (r: any) => !!(r && (r.instructor_bio?.trim() || r.instructor_avatar_url?.trim() || r.full_name?.trim()));
 
-      // 2) Fallback to union function that checks profiles as well
-      if (!row) {
-        const { data: safeData, error: safeErr } = await supabase.rpc('get_instructor_safe', {
-          instructor_uuid: instructorId,
-        });
-        if (!safeErr && Array.isArray(safeData) && safeData.length > 0) {
-          row = safeData[0];
+      // 2) 공개 정보가 비어있다면, admin 강사(Instructors) 레코드로 자동 매핑
+      if (!hasMeaningfulData(row)) {
+        // 프로필 정보로 이메일/이름 확보
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email, full_name')
+          .eq('id', instructorId)
+          .maybeSingle();
+
+        let mappedInstructorId: string | null = null;
+
+        // 이메일 기준 매칭
+        if (profile?.email) {
+          const { data: matchByEmail } = await supabase
+            .from('instructors')
+            .select('id')
+            .eq('email', profile.email)
+            .maybeSingle();
+          if (matchByEmail?.id) mappedInstructorId = matchByEmail.id as string;
+        }
+
+        // 이름 기준 보조 매칭
+        if (!mappedInstructorId && profile?.full_name) {
+          const { data: matchByName } = await supabase
+            .from('instructors')
+            .select('id')
+            .eq('full_name', profile.full_name)
+            .order('created_at', { ascending: false })
+            .maybeSingle();
+          if (matchByName?.id) mappedInstructorId = matchByName.id as string;
+        }
+
+        // 매핑된 강사 ID가 있으면 해당 ID로 다시 공개 정보 호출
+        if (mappedInstructorId) {
+          const { data: pubFromMapped } = await supabase.rpc('get_instructor_public_info', {
+            instructor_id: mappedInstructorId,
+          });
+          const mappedRow = Array.isArray(pubFromMapped) && pubFromMapped.length > 0 ? pubFromMapped[0] : null;
+          if (hasMeaningfulData(mappedRow)) {
+            row = mappedRow;
+          }
+        }
+
+        // 3) 여전히 데이터 없으면 안전 조회(get_instructor_safe)로 최후 보완
+        if (!hasMeaningfulData(row)) {
+          const { data: safeData } = await supabase.rpc('get_instructor_safe', {
+            instructor_uuid: instructorId,
+          });
+          if (Array.isArray(safeData) && safeData.length > 0) {
+            row = safeData[0];
+          }
         }
       }
 
       if (row) {
         setInstructorInfo({
-          full_name: row.full_name || '강사',
-          instructor_bio: row.instructor_bio || '',
-          instructor_avatar_url: row.instructor_avatar_url || null,
+          full_name: (row.full_name && row.full_name.trim()) || '강사',
+          instructor_bio: (row.instructor_bio && row.instructor_bio.trim()) || '',
+          instructor_avatar_url: (row.instructor_avatar_url && row.instructor_avatar_url.trim()) || null,
         });
       } else {
         setInstructorInfo({ full_name: '강사', instructor_bio: '', instructor_avatar_url: null });
