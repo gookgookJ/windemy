@@ -112,23 +112,31 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
       });
       
       if (error) {
-        if (error.message.includes("already registered")) {
+        if (error.message.includes("already registered") || error.message.includes("User already registered")) {
           toast({
-            title: "가입 불가",
-            description: "이미 가입된 이메일입니다. 로그인을 시도해보세요.",
+            title: "이미 가입된 이메일입니다",
+            description: "해당 이메일은 이미 사용 중입니다. 로그인하시거나 비밀번호를 잊으셨다면 '비밀번호 찾기'를 이용해주세요.",
+            variant: "destructive",
+            duration: 8000,
+          });
+        } else if (error.message.includes("email") && error.message.includes("invalid")) {
+          toast({
+            title: "유효하지 않은 이메일",
+            description: "올바른 이메일 주소를 입력해주세요.",
             variant: "destructive"
           });
         } else {
           toast({
             title: "회원가입 실패",
-            description: error.message,
+            description: `회원가입 중 오류가 발생했습니다: ${error.message}`,
             variant: "destructive"
           });
         }
       } else {
         toast({
-          title: "회원가입 완료",
-          description: "이메일로 인증 링크를 발송했습니다. 이메일을 확인해주세요."
+          title: "회원가입을 환영합니다! 🎉",
+          description: "가입하신 이메일로 인증 링크를 보내드렸습니다.\n이메일을 확인하고 인증을 완료해주세요. (스팸함도 확인해주세요)",
+          duration: 10000,
         });
         setSignUpData({ email: '', password: '', fullName: '', phone: '', confirmPassword: '' });
         setCurrentView('main');
@@ -163,8 +171,9 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
         });
       } else {
         toast({
-          title: "비밀번호 재설정 이메일 발송",
-          description: "이메일로 비밀번호 재설정 링크를 발송했습니다."
+          title: "비밀번호 재설정 이메일 발송 완료",
+          description: "이메일로 비밀번호 재설정 링크를 보내드렸습니다.\n이메일을 확인하고 새로운 비밀번호를 설정해주세요. (스팸함도 확인해주세요)",
+          duration: 10000,
         });
         setForgotPasswordEmail('');
         setCurrentView('main');
