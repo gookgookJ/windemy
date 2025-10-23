@@ -570,7 +570,7 @@ const CourseDetail = () => {
                 </button>
                 <button
                   onClick={() => scrollToSection('reviews')}
-                  className={`px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium transition-colors ${
+                  className={`px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium transition-colors border-r border-border last:border-r-0 ${
                     activeSection === 'reviews' 
                       ? 'text-primary bg-primary/10 border-b-2 border-b-primary' 
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
