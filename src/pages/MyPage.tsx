@@ -463,48 +463,46 @@ const MyPage = () => {
 
                               {/* 액션 버튼 */}
                               <div className="flex justify-center pt-2">
-                                {!isExpired && (
-                                  <ReviewModal
-                                    courseId={enrollment.course.id}
-                                    courseTitle={enrollment.course.title}
-                                    existingReview={userReviews[enrollment.course.id] || null}
-                                    onReviewSubmitted={handleReviewSubmitted}
-                                    trigger={
-                                      userReviews[enrollment.course.id] ? (
-                                        <Button
-                                        variant="outline" 
-                                        size="sm"
-                                        className="text-xs h-8 hover:bg-primary/10 transition-colors flex items-center gap-1"
-                                      >
-                                        <div className="flex items-center">
-                                          {Array.from({ length: 5 }, (_, i) => (
-                                            <Star
-                                              key={i}
-                                              className={`h-3 w-3 ${
-                                                i < userReviews[enrollment.course.id].rating 
-                                                  ? 'text-yellow-400 fill-yellow-400' 
-                                                  : 'text-gray-300'
-                                              }`}
-                                            />
-                                          ))}
-                                        </div>
-                                        <span className="ml-1">
-                                          {userReviews[enrollment.course.id].rating}점
-                                        </span>
-                                      </Button>
-                                    ) : (
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm"
-                                        className="text-xs h-8 hover:bg-primary/10 transition-colors"
-                                      >
-                                        <MessageSquare className="h-3 w-3 mr-1" />
-                                        수강 후기 작성
-                                      </Button>
-                                    )
-                                  }
-                                  />
-                                )}
+                                <ReviewModal
+                                  courseId={enrollment.course.id}
+                                  courseTitle={enrollment.course.title}
+                                  existingReview={userReviews[enrollment.course.id] || null}
+                                  onReviewSubmitted={handleReviewSubmitted}
+                                  trigger={
+                                    userReviews[enrollment.course.id] ? (
+                                      <Button
+                                      variant="outline" 
+                                      size="sm"
+                                      className="text-xs h-8 hover:bg-primary/10 transition-colors flex items-center gap-1"
+                                    >
+                                      <div className="flex items-center">
+                                        {Array.from({ length: 5 }, (_, i) => (
+                                          <Star
+                                            key={i}
+                                            className={`h-3 w-3 ${
+                                              i < userReviews[enrollment.course.id].rating 
+                                                ? 'text-yellow-400 fill-yellow-400' 
+                                                : 'text-gray-300'
+                                            }`}
+                                          />
+                                        ))}
+                                      </div>
+                                      <span className="ml-1">
+                                        {userReviews[enrollment.course.id].rating}점
+                                      </span>
+                                    </Button>
+                                  ) : (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      className="text-xs h-8 hover:bg-primary/10 transition-colors"
+                                    >
+                                      <MessageSquare className="h-3 w-3 mr-1" />
+                                      수강 후기 작성
+                                    </Button>
+                                  )
+                                }
+                                />
                               </div>
                             </div>
                           </CardContent>
