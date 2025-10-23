@@ -550,12 +550,16 @@ const AdminUsers = () => {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
+      // delete-user edge function 호출로 auth.users 및 모든 관련 데이터 삭제
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId }
+      });
 
       if (error) throw error;
+      
+      if (data?.error) {
+        throw new Error(data.error);
+      }
       
       setUsers(users.filter(user => user.id !== userId));
 
@@ -563,11 +567,11 @@ const AdminUsers = () => {
         title: "계정 삭제 완료",
         description: "사용자 계정이 성공적으로 삭제되었습니다."
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting user:', error);
       toast({
         title: "계정 삭제 실패",
-        description: "계정 삭제에 실패했습니다.",
+        description: error.message || "계정 삭제에 실패했습니다.",
         variant: "destructive"
       });
     }
