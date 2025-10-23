@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, ArrowLeft } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { BookOpen, ArrowLeft, Mail } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +22,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
   const [currentView, setCurrentView] = useState<AuthView>('main');
   const [isLoading, setIsLoading] = useState(false);
   const [signInError, setSignInError] = useState('');
+  const [signUpSuccess, setSignUpSuccess] = useState(false);
   const [signInData, setSignInData] = useState({ email: '', password: '' });
   const [signUpData, setSignUpData] = useState({ 
     email: '', 
@@ -133,13 +135,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
           });
         }
       } else {
-        toast({
-          title: "회원가입을 환영합니다! 🎉",
-          description: "가입하신 이메일로 인증 링크를 보내드렸습니다.\n이메일을 확인하고 인증을 완료해주세요. (스팸함도 확인해주세요)",
-          duration: 10000,
-        });
-        setSignUpData({ email: '', password: '', fullName: '', phone: '', confirmPassword: '' });
-        setCurrentView('main');
+        setSignUpSuccess(true);
       }
     } catch (error: any) {
       toast({
@@ -248,6 +244,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
     setFindIdData({ fullName: '', phone: '' });
     setFoundEmail('');
     setSignInError('');
+    setSignUpSuccess(false);
     onClose();
   };
 
@@ -367,6 +364,14 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
             {/* Sign Up View */}
             {currentView === 'signup' && (
               <form onSubmit={handleSignUp} className="space-y-4">
+                {signUpSuccess && (
+                  <Alert className="bg-green-50 border-green-200">
+                    <Mail className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">
+                      이메일 인증 링크를 발송했습니다. 메일함을 확인해주세요. (스팸함 포함)
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="fullName">이름</Label>
                   <Input
