@@ -31,6 +31,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [findIdData, setFindIdData] = useState({ fullName: '', phone: '' });
   const [foundEmail, setFoundEmail] = useState('');
+  const [signInError, setSignInError] = useState('');
   const { signIn } = useAuth();
   
   // 전화번호 포맷팅 함수
@@ -45,18 +46,16 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setSignInError('');
     
     try {
       const { error } = await signIn(signInData.email, signInData.password);
       
       if (error) {
-        toast({
-          title: "로그인 실패",
-          description: error.message === "Invalid login credentials" 
-            ? "이메일 또는 비밀번호가 잘못되었습니다." 
-            : error.message,
-          variant: "destructive"
-        });
+        const errorMessage = error.message === "Invalid login credentials" 
+          ? "아이디(로그인 전용 아이디 혹은 가입 시 이메일) 또는 비밀번호가 잘못되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요." 
+          : error.message;
+        setSignInError(errorMessage);
       } else {
         toast({
           title: "로그인 성공",
@@ -64,13 +63,10 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
         });
         onClose();
         setSignInData({ email: '', password: '' });
+        setSignInError('');
       }
     } catch (error: any) {
-      toast({
-        title: "오류 발생",
-        description: "로그인 중 오류가 발생했습니다.",
-        variant: "destructive"
-      });
+      setSignInError("로그인 중 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -241,6 +237,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
     setForgotPasswordEmail('');
     setFindIdData({ fullName: '', phone: '' });
     setFoundEmail('');
+    setSignInError('');
     onClose();
   };
 
@@ -306,11 +303,21 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
                       type="password"
                       placeholder="비밀번호"
                       value={signInData.password}
-                      onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
+                      onChange={(e) => {
+                        setSignInData({ ...signInData, password: e.target.value });
+                        setSignInError('');
+                      }}
                       className="h-11 border-gray-200 rounded-lg mobile-input touch-target sm:h-12"
                       required
                     />
                    </div>
+                   
+                   {signInError && (
+                     <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+                       {signInError}
+                     </div>
+                   )}
+                   
                    <Button 
                      type="submit" 
                      className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg mt-3 touch-target sm:h-12 sm:text-base sm:mt-2"
