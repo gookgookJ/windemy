@@ -22,7 +22,7 @@ export type Database = {
           entity_id: string | null
           entity_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_agent: string | null
           user_id: string | null
         }
@@ -33,7 +33,7 @@ export type Database = {
           entity_id?: string | null
           entity_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -44,7 +44,7 @@ export type Database = {
           entity_id?: string | null
           entity_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -1251,7 +1251,7 @@ export type Database = {
           details: Json | null
           event_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_agent: string | null
           user_id: string | null
         }
@@ -1260,7 +1260,7 @@ export type Database = {
           details?: Json | null
           event_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -1269,7 +1269,7 @@ export type Database = {
           details?: Json | null
           event_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -1824,10 +1824,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      check_security: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      check_security: { Args: never; Returns: string }
       cleanup_old_activity_logs: {
         Args: { days_to_keep?: number }
         Returns: number
@@ -1836,14 +1833,8 @@ export type Database = {
         Args: { days_to_keep?: number }
         Returns: number
       }
-      ensure_test_users: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      expire_points: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      ensure_test_users: { Args: never; Returns: string }
+      expire_points: { Args: never; Returns: undefined }
       get_course_enrollment_stats: {
         Args: { course_uuid: string }
         Returns: {
@@ -1853,10 +1844,7 @@ export type Database = {
           total_enrollments: number
         }[]
       }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_current_user_role: { Args: never; Returns: string }
       get_instructor_public_info: {
         Args: { instructor_id: string }
         Returns: {
@@ -1880,7 +1868,7 @@ export type Database = {
         }[]
       }
       get_instructors_public: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           full_name: string
@@ -1947,10 +1935,7 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_user_points_balance: {
-        Args: { p_user_id: string }
-        Returns: number
-      }
+      get_user_points_balance: { Args: { p_user_id: string }; Returns: number }
       get_user_points_balance_safe: {
         Args: { target_user_id?: string }
         Returns: {
@@ -1960,10 +1945,7 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_user_role_safe: {
-        Args: { user_uuid?: string }
-        Returns: string
-      }
+      get_user_role_safe: { Args: { user_uuid?: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1975,14 +1957,8 @@ export type Database = {
         Args: { coupon_id: string }
         Returns: undefined
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_instructor_safe: {
-        Args: { user_uuid?: string }
-        Returns: boolean
-      }
+      is_admin: { Args: never; Returns: boolean }
+      is_instructor_safe: { Args: { user_uuid?: string }; Returns: boolean }
       log_security_event: {
         Args: { details_param?: Json; event_type_param: string }
         Returns: undefined
@@ -1997,20 +1973,11 @@ export type Database = {
         }
         Returns: undefined
       }
-      sanitize_user_input: {
-        Args: { input_text: string }
-        Returns: string
-      }
-      security_comprehensive_check: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      security_quick_check: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      sanitize_user_input: { Args: { input_text: string }; Returns: string }
+      security_comprehensive_check: { Args: never; Returns: string }
+      security_quick_check: { Args: never; Returns: string }
       test_rls_security: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           actual_result: string
           expected_result: string
@@ -2019,10 +1986,7 @@ export type Database = {
           test_name: string
         }[]
       }
-      validate_user_session: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      validate_user_session: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "instructor" | "student"
