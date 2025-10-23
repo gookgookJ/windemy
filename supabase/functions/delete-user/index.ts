@@ -45,13 +45,14 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Check if the requesting user is an admin
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
+    const { data: roles } = await supabaseAdmin
+      .from('user_roles')
       .select('role')
-      .eq('id', user.user.id)
-      .single();
+      .eq('user_id', user.user.id);
 
-    if (profile?.role !== 'admin') {
+    const isAdmin = roles?.some(r => r.role === 'admin');
+    
+    if (!isAdmin) {
       throw new Error('관리자 권한이 필요합니다.');
     }
 
@@ -96,6 +97,13 @@ const handler = async (req: Request): Promise<Response> => {
         'video_checkpoints',
         'activity_logs',
         'support_tickets',
+        'user_roles',
+        'user_coupons',
+        'points_transactions',
+        'admin_notes',
+        'user_group_memberships',
+        'course_favorites',
+        'enrollments',
       ];
       for (const t of simpleUserTables) {
         const { error } = await supabaseAdmin.from(t).delete().eq('user_id', userId);
