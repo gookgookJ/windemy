@@ -292,48 +292,24 @@ const CourseDetail = () => {
 
   const fetchInstructorInfo = async (instructorId: string) => {
     try {
-      // 먼저 instructors 테이블에서 조회 (관리자가 등록한 강사 정보)
-      const { data: instructorData, error: instructorError } = await supabase
-        .from('instructors')
-        .select('full_name, instructor_bio, instructor_avatar_url')
-        .eq('id', instructorId)
-        .single();
-
-      if (!instructorError && instructorData) {
-        setInstructorInfo({
-          full_name: instructorData.full_name,
-          instructor_bio: instructorData.instructor_bio || '',
-          instructor_avatar_url: instructorData.instructor_avatar_url || null,
-        });
-        return;
-      }
-
-      // instructors 테이블에 없으면 profiles 테이블에서 조회 (일반 사용자가 강사인 경우)
-      const { data, error } = await supabase.rpc('get_instructor_safe', {
-        instructor_uuid: instructorId,
+      // RLS-safe: use SECURITY DEFINER function to read public instructor info
+      const { data, error } = await supabase.rpc('get_instructor_public_info', {
+        instructor_id: instructorId,
       });
 
-      if (error) {
-        console.warn('Failed to load instructor info via RPC', error);
-        setInstructorInfo({
-          full_name: '강사',
-          instructor_bio: '강사 정보를 불러올 수 없습니다.',
-          instructor_avatar_url: null,
-        });
-        return;
-      }
+      if (error) throw error;
 
       const row = Array.isArray(data) ? data[0] : null;
       if (row) {
         setInstructorInfo({
           full_name: row.full_name,
-          instructor_bio: row.instructor_bio,
-          instructor_avatar_url: row.instructor_avatar_url,
+          instructor_bio: row.instructor_bio || '',
+          instructor_avatar_url: row.instructor_avatar_url || null,
         });
       } else {
         setInstructorInfo({
           full_name: '강사',
-          instructor_bio: '강사 정보를 불러올 수 없습니다.',
+          instructor_bio: '',
           instructor_avatar_url: null,
         });
       }
@@ -341,7 +317,7 @@ const CourseDetail = () => {
       console.warn('Error during instructor info fetching', e);
       setInstructorInfo({
         full_name: '강사',
-        instructor_bio: '강사 정보를 불러올 수 없습니다.',
+        instructor_bio: '',
         instructor_avatar_url: null,
       });
     }
