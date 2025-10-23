@@ -166,39 +166,37 @@ const CourseDetail = () => {
 
   // Intersection Observer for active section tracking
   useEffect(() => {
-    const observerOptions = {
-      root: null,
-      rootMargin: '-100px 0px -66% 0px', // Top 100px부터 감지, 하단 66%는 무시
-      threshold: 0.1
-    };
-
-    const observerCallback = (entries: IntersectionObserverEntry[]) => {
-      // 현재 보이는 섹션들 중에서 가장 위에 있는 것을 찾기
-      const visibleEntries = entries.filter(entry => entry.isIntersecting);
+    // 스크롤 이벤트로 섹션 감지 (더 정확한 방식)
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      const headerOffset = window.innerWidth < 1024 
+        ? (headerVisible ? 130 : 80) 
+        : 130;
       
-      if (visibleEntries.length > 0) {
-        // boundingClientRect.top이 가장 작은 (화면 상단에 가까운) 섹션 선택
-        const topMostEntry = visibleEntries.reduce((prev, current) => {
-          return current.boundingClientRect.top < prev.boundingClientRect.top ? current : prev;
-        });
-        
-        setActiveSection(topMostEntry.target.id);
+      // 각 섹션의 위치 확인
+      const sections = ['overview', 'curriculum', 'instructor', 'reviews'];
+      
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = sectionRefs.current[sections[i]];
+        if (section) {
+          const sectionTop = section.offsetTop - headerOffset - 10; // 약간의 여유
+          
+          if (scrollPosition >= sectionTop) {
+            setActiveSection(sections[i]);
+            break;
+          }
+        }
       }
     };
 
-    const observer = new IntersectionObserver(observerCallback, observerOptions);
-
-    // Observe all sections
-    Object.values(sectionRefs.current).forEach((section) => {
-      if (section) {
-        observer.observe(section);
-      }
-    });
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    // 초기 실행
+    handleScroll();
 
     return () => {
-      observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
     };
-  }, [courseData, groupedSections, courseReviews]); // Re-run when content loads
+  }, [courseData, groupedSections, courseReviews, headerVisible]); // Re-run when content loads
 
   // --- Data Fetching and Processing (Refactored) ---
 
@@ -381,6 +379,9 @@ const CourseDetail = () => {
 
   // (수정됨) 스크롤 오프셋 조정 - 헤더 상태에 따라 다르게 처리
   const scrollToSection = (sectionId: string) => {
+    // 즉시 활성 섹션 설정
+    setActiveSection(sectionId);
+    
     const element = document.getElementById(sectionId);
     if (element) {
       // 모바일에서 헤더 상태에 따라 오프셋 조정
