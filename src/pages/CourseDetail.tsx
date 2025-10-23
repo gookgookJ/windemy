@@ -169,23 +169,44 @@ const CourseDetail = () => {
     // 스크롤 이벤트로 섹션 감지 (더 정확한 방식)
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
       const headerOffset = window.innerWidth < 1024 
         ? (headerVisible ? 130 : 80) 
         : 130;
       
+      // 페이지 하단 근처인지 확인 (하단 100px 이내)
+      const isNearBottom = scrollPosition + windowHeight >= documentHeight - 100;
+      
       // 각 섹션의 위치 확인
       const sections = ['overview', 'curriculum', 'instructor', 'reviews'];
       
+      // 페이지 하단 근처면 무조건 마지막 섹션(reviews) 활성화
+      if (isNearBottom && sectionRefs.current['reviews']) {
+        setActiveSection('reviews');
+        return;
+      }
+      
+      // 일반적인 경우: 현재 뷰포트에 가장 많이 보이는 섹션 찾기
+      let activeFound = false;
       for (let i = sections.length - 1; i >= 0; i--) {
         const section = sectionRefs.current[sections[i]];
         if (section) {
-          const sectionTop = section.offsetTop - headerOffset - 10; // 약간의 여유
+          const sectionTop = section.offsetTop - headerOffset - 50;
+          const sectionBottom = sectionTop + section.offsetHeight;
           
-          if (scrollPosition >= sectionTop) {
+          // 섹션이 뷰포트 상단을 지나쳤는지 확인
+          if (scrollPosition >= sectionTop - 100) {
             setActiveSection(sections[i]);
+            activeFound = true;
             break;
           }
         }
+      }
+      
+      // 아무것도 못 찾았으면 첫 번째 섹션
+      if (!activeFound) {
+        setActiveSection('overview');
       }
     };
 
