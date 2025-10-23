@@ -11,60 +11,30 @@ const InfoBanner = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
-  const [bestPosts, setBestPosts] = useState([
-    {
-      title: "일본 역직구 시작은 K-뷰티! 큐텐재팬으로ㅣ입점부터 일본 화장품시장 트렌드까지",
-      url: "https://windly.cc/blog/japan-qoo10-kbeauty-trend"
-    },
-    {
-      title: "2026 ver. 마진을 높이는 판매 가격 설정 가이드",
-      url: "https://windly.cc/blog/margin-calculation-pricing"
-    },
-    {
-      title: "무신사 입점 가이드(판매상품, 수수료, 정산)",
-      url: "https://windly.cc/blog/musinsa-onboading-guide"
-    },
-    {
-      title: "일본판 아마존닷컴, 메루카리(mercari) 초보 가이드ㅣ회원가입부터 직구까지",
-      url: "https://windly.cc/blog/mercari-japan-guide"
-    },
-    {
-      title: "쿠팡파트너스 시작가이드ㅣ가입방법, 정산, 주의사",
-      url: "https://windly.cc/blog/kupang-pateuneoseu-sijag-gaideu-gaibbangbeob-jeongsan-juyisahangggaji"
-    }
-  ]);
+  const [bestPosts, setBestPosts] = useState<Array<{ title: string; url: string }>>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // 블로그 포스트 최적화된 업데이트 
+  // 블로그 포스트 즉시 로드 (하드코딩 제거, 지연 제거)
   useEffect(() => {
     const updateBlogPosts = async () => {
-      // 세션 스토리지로 중복 호출 방지
-      const lastUpdate = sessionStorage.getItem('lastBlogUpdate');
-      const now = Date.now();
-      
-      // 5분 이내에 업데이트했다면 스킵
-      if (lastUpdate && now - parseInt(lastUpdate) < 5 * 60 * 1000) {
-        return;
-      }
-
       try {
         const { data, error } = await supabase.functions.invoke('update-blog-posts');
         
         if (data && data.success && data.posts && data.posts.length > 0) {
           setBestPosts(data.posts);
-          sessionStorage.setItem('lastBlogUpdate', now.toString());
           console.log('블로그 포스트가 업데이트되었습니다:', data.posts);
         } else {
           console.error('블로그 포스트 업데이트 실패:', error || data?.error);
         }
       } catch (error) {
         console.error('블로그 포스트 업데이트 중 오류:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    // 페이지 로드 후 3초 지연하여 부드러운 사용자 경험 제공
-    const timer = setTimeout(updateBlogPosts, 3000);
-    
-    return () => clearTimeout(timer);
+    // 즉시 실행 (3초 지연 제거)
+    updateBlogPosts();
   }, []);
 
   const handleSubscribe = () => {
@@ -83,23 +53,40 @@ const InfoBanner = () => {
               <h3 className="text-base sm:text-lg font-bold text-foreground">최신 이커머스 시장 트렌드</h3>
             </div>
             <div className="space-y-2">
-              {bestPosts.map((post, index) => (
-                <div key={index} className="group">
-                  <a 
-                    href={post.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <span className="flex-shrink-0 w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
-                      {index + 1}
-                    </span>
-                    <span className="text-sm text-foreground/80 group-hover:text-primary transition-colors line-clamp-2">
-                      {post.title}
-                    </span>
-                  </a>
+              {isLoading ? (
+                // 로딩 중 스켈레톤
+                Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="flex items-start gap-3 p-2">
+                    <div className="flex-shrink-0 w-5 h-5 bg-muted rounded-full animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-muted rounded animate-pulse w-full" />
+                      <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+                    </div>
+                  </div>
+                ))
+              ) : bestPosts.length > 0 ? (
+                bestPosts.map((post, index) => (
+                  <div key={index} className="group">
+                    <a 
+                      href={post.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <span className="flex-shrink-0 w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                        {index + 1}
+                      </span>
+                      <span className="text-sm text-foreground/80 group-hover:text-primary transition-colors line-clamp-2">
+                        {post.title}
+                      </span>
+                    </a>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-muted-foreground text-center py-4">
+                  블로그 포스트를 불러올 수 없습니다.
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
@@ -191,23 +178,40 @@ const InfoBanner = () => {
                     <h3 className="text-lg font-bold text-foreground">최신 이커머스 시장 트렌드</h3>
                   </div>
                   <div className="space-y-2">
-                    {bestPosts.map((post, index) => (
-                      <div key={index} className="group">
-                        <a 
-                          href={post.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                        >
-                          <span className="flex-shrink-0 w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
-                            {index + 1}
-                          </span>
-                          <span className="text-sm text-foreground/80 group-hover:text-primary transition-colors line-clamp-2">
-                            {post.title}
-                          </span>
-                        </a>
+                    {isLoading ? (
+                      // 로딩 중 스켈레톤
+                      Array.from({ length: 5 }).map((_, index) => (
+                        <div key={index} className="flex items-start gap-3 p-2">
+                          <div className="flex-shrink-0 w-5 h-5 bg-muted rounded-full animate-pulse" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-muted rounded animate-pulse w-full" />
+                            <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+                          </div>
+                        </div>
+                      ))
+                    ) : bestPosts.length > 0 ? (
+                      bestPosts.map((post, index) => (
+                        <div key={index} className="group">
+                          <a 
+                            href={post.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                          >
+                            <span className="flex-shrink-0 w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                              {index + 1}
+                            </span>
+                            <span className="text-sm text-foreground/80 group-hover:text-primary transition-colors line-clamp-2">
+                              {post.title}
+                            </span>
+                          </a>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-muted-foreground text-center py-4">
+                        블로그 포스트를 불러올 수 없습니다.
                       </div>
-                    ))}
+                    )}
                   </div>
                 </CardContent>
               </Card>
