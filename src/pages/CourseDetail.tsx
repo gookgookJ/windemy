@@ -168,16 +168,22 @@ const CourseDetail = () => {
   useEffect(() => {
     const observerOptions = {
       root: null,
-      rootMargin: '-20% 0px -70% 0px',
-      threshold: 0
+      rootMargin: '-100px 0px -66% 0px', // Top 100px부터 감지, 하단 66%는 무시
+      threshold: 0.1
     };
 
     const observerCallback = (entries: IntersectionObserverEntry[]) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setActiveSection(entry.target.id);
-        }
-      });
+      // 현재 보이는 섹션들 중에서 가장 위에 있는 것을 찾기
+      const visibleEntries = entries.filter(entry => entry.isIntersecting);
+      
+      if (visibleEntries.length > 0) {
+        // boundingClientRect.top이 가장 작은 (화면 상단에 가까운) 섹션 선택
+        const topMostEntry = visibleEntries.reduce((prev, current) => {
+          return current.boundingClientRect.top < prev.boundingClientRect.top ? current : prev;
+        });
+        
+        setActiveSection(topMostEntry.target.id);
+      }
     };
 
     const observer = new IntersectionObserver(observerCallback, observerOptions);
