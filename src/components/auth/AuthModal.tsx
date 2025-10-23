@@ -135,7 +135,9 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
           });
         }
       } else {
+        setSignUpData({ email: '', password: '', fullName: '', phone: '', confirmPassword: '' });
         setSignUpSuccess(true);
+        setCurrentView('main');
       }
     } catch (error: any) {
       toast({
@@ -280,6 +282,15 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
             {/* Main Login View */}
             {currentView === 'main' && (
               <>
+                {signUpSuccess && (
+                  <Alert className="bg-green-50 border-green-200 mb-4">
+                    <Mail className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">
+                      <div>이메일 인증 링크를 발송했습니다.</div>
+                      <div className="mt-1">메일함을 확인해주세요. (스팸함 포함)</div>
+                    </AlertDescription>
+                  </Alert>
+                )}
                 {/* Kakao Login Button */}
                 <Button 
                   onClick={handleKakaoLogin}
@@ -364,14 +375,6 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = 'signin' }: AuthModalP
             {/* Sign Up View */}
             {currentView === 'signup' && (
               <form onSubmit={handleSignUp} className="space-y-4">
-                {signUpSuccess && (
-                  <Alert className="bg-green-50 border-green-200">
-                    <Mail className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-green-800">
-                      이메일 인증 링크를 발송했습니다. 메일함을 확인해주세요. (스팸함 포함)
-                    </AlertDescription>
-                  </Alert>
-                )}
                 <div className="space-y-2">
                   <Label htmlFor="fullName">이름</Label>
                   <Input
