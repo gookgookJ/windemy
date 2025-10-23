@@ -63,7 +63,6 @@ const Header = () => {
       href: "/courses",
       icon: GraduationCap,
       submenu: [
-        { name: "전체", href: "/courses" },
         { name: "무료", href: "/courses/free-courses" },
         { name: "VOD", href: "/courses/vod-courses" },
         { name: "프리미엄", href: "/courses/premium-courses" },
@@ -119,12 +118,15 @@ const Header = () => {
                 <div key={item.name} className="relative group">
                   {item.submenu ? (
                     <>
-                      <button className="text-muted-foreground hover:text-primary transition-colors duration-200 font-medium flex items-center gap-1">
+                      <Link 
+                        to={item.href}
+                        className="text-muted-foreground hover:text-primary transition-colors duration-200 font-medium flex items-center gap-1"
+                      >
                         {item.name}
                         <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
-                      </button>
+                      </Link>
                       <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                         <div className="py-2">
                           {item.submenu.map((subItem) => (
