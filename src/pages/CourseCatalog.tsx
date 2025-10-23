@@ -151,6 +151,24 @@ const CourseCatalog = () => {
     }
   };
 
+  // Get category display info based on selection
+  const getCategoryInfo = () => {
+    const category = categories.find(cat => cat.id === selectedCategory);
+    
+    const categoryDescriptions: { [key: string]: string } = {
+      "all": "전문가들의 실무 경험이 담긴 고품질 강의를 만나보세요",
+      "무료": "부담 없이 시작할 수 있는 무료 강의로 새로운 지식을 탐험하세요",
+      "프리미엄": "심도 깊은 학습을 위한 프리미엄 강의로 전문성을 키워보세요",
+      "VOD": "언제 어디서나 원하는 시간에 학습할 수 있는 VOD 강의입니다",
+    };
+
+    const categoryName = category?.name || "전체";
+    const title = selectedCategory === "all" ? "전체 강의" : `${categoryName} 강의`;
+    const description = categoryDescriptions[categoryName] || categoryDescriptions["all"];
+
+    return { title, description };
+  };
+
   const filteredCourses = (() => {
     let filtered = selectedCategory === "all" 
       ? courses 
@@ -174,6 +192,8 @@ const CourseCatalog = () => {
     return filtered;
   })();
 
+  const categoryInfo = getCategoryInfo();
+
   if (loading) {
     return (
       <div className="bg-background">
@@ -195,8 +215,8 @@ const CourseCatalog = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-4">전체 강의</h1>
-          <p className="text-muted-foreground">전문가들의 실무 경험이 담긴 고품질 강의를 만나보세요</p>
+          <h1 className="text-3xl font-bold text-foreground mb-4">{categoryInfo.title}</h1>
+          <p className="text-muted-foreground">{categoryInfo.description}</p>
         </div>
 
         <div className="grid lg:grid-cols-4 gap-8">
