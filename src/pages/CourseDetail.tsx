@@ -292,7 +292,23 @@ const CourseDetail = () => {
 
   const fetchInstructorInfo = async (instructorId: string) => {
     try {
-      // Use security definer function that targets profiles (course.instructor_id references profiles.id)
+      // 먼저 instructors 테이블에서 조회 (관리자가 등록한 강사 정보)
+      const { data: instructorData, error: instructorError } = await supabase
+        .from('instructors')
+        .select('full_name, instructor_bio, instructor_avatar_url')
+        .eq('id', instructorId)
+        .single();
+
+      if (!instructorError && instructorData) {
+        setInstructorInfo({
+          full_name: instructorData.full_name,
+          instructor_bio: instructorData.instructor_bio || '',
+          instructor_avatar_url: instructorData.instructor_avatar_url || null,
+        });
+        return;
+      }
+
+      // instructors 테이블에 없으면 profiles 테이블에서 조회 (일반 사용자가 강사인 경우)
       const { data, error } = await supabase.rpc('get_instructor_safe', {
         instructor_uuid: instructorId,
       });
