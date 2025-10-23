@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Heart } from 'lucide-react';
+import { ArrowLeft, Heart, Eye, HeartOff } from 'lucide-react';
 import Header from '@/components/Header';
 import UserSidebar from '@/components/UserSidebar';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 interface FavoriteCourse {
   id: string;
@@ -28,6 +29,7 @@ const FavoriteCourses = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toggleFavorite } = useFavorites();
 
   useEffect(() => {
     document.title = "관심 강의 | 윈들리아카데미";
@@ -109,6 +111,13 @@ const FavoriteCourses = () => {
     navigate(`/course/${courseId}`);
   };
 
+  const handleRemoveFavorite = async (courseId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await toggleFavorite(courseId);
+    // Refresh favorites list
+    await fetchFavorites();
+  };
+
   if (loading) {
     return (
       <div className="bg-background">
@@ -167,7 +176,7 @@ const FavoriteCourses = () => {
               ) : (
                 <div className="space-y-4">
                   {favorites.map((favorite) => (
-                    <Card key={favorite.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleCourseClick(favorite.course.id)}>
+                    <Card key={favorite.id} className="hover:shadow-lg transition-shadow">
                       <CardContent className="p-4 md:p-6">
                         <div className="flex flex-col gap-4 sm:flex-row sm:gap-4 md:gap-6">
                           <div className="relative flex-shrink-0 w-full sm:w-48 md:w-56">
@@ -185,7 +194,26 @@ const FavoriteCourses = () => {
                               <h3 className="font-bold text-base sm:text-lg line-clamp-2 flex-1">
                                 {favorite.course.title}
                               </h3>
-                              <Heart className="h-5 w-5 text-red-500 fill-red-500 flex-shrink-0" />
+                              <div className="flex gap-2 flex-shrink-0">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleCourseClick(favorite.course.id)}
+                                  className="text-xs"
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  상세보기
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={(e) => handleRemoveFavorite(favorite.course.id, e)}
+                                  className="text-xs"
+                                >
+                                  <HeartOff className="h-3 w-3 mr-1" />
+                                  찜 해제
+                                </Button>
+                              </div>
                             </div>
                             
                             <p className="text-sm md:text-base text-muted-foreground mb-3">
