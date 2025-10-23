@@ -292,34 +292,35 @@ const CourseDetail = () => {
 
   const fetchInstructorInfo = async (instructorId: string) => {
     try {
-      // RLS-safe: use SECURITY DEFINER function to read public instructor info
-      const { data, error } = await supabase.rpc('get_instructor_public_info', {
+      // 1) Try instructors (public info via SECURITY DEFINER)
+      const { data: pubData, error: pubErr } = await supabase.rpc('get_instructor_public_info', {
         instructor_id: instructorId,
       });
 
-      if (error) throw error;
+      let row: any = Array.isArray(pubData) && pubData.length > 0 ? pubData[0] : null;
 
-      const row = Array.isArray(data) ? data[0] : null;
+      // 2) Fallback to union function that checks profiles as well
+      if (!row) {
+        const { data: safeData, error: safeErr } = await supabase.rpc('get_instructor_safe', {
+          instructor_uuid: instructorId,
+        });
+        if (!safeErr && Array.isArray(safeData) && safeData.length > 0) {
+          row = safeData[0];
+        }
+      }
+
       if (row) {
         setInstructorInfo({
-          full_name: row.full_name,
+          full_name: row.full_name || '강사',
           instructor_bio: row.instructor_bio || '',
           instructor_avatar_url: row.instructor_avatar_url || null,
         });
       } else {
-        setInstructorInfo({
-          full_name: '강사',
-          instructor_bio: '',
-          instructor_avatar_url: null,
-        });
+        setInstructorInfo({ full_name: '강사', instructor_bio: '', instructor_avatar_url: null });
       }
     } catch (e) {
       console.warn('Error during instructor info fetching', e);
-      setInstructorInfo({
-        full_name: '강사',
-        instructor_bio: '',
-        instructor_avatar_url: null,
-      });
+      setInstructorInfo({ full_name: '강사', instructor_bio: '', instructor_avatar_url: null });
     }
   };
 
