@@ -152,26 +152,69 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
       console.log('Blog HTML candidates:', candidates.length);
 
       async function enrichFromContext(url: string, startIndex: number) {
-        const searchArea = allContent.substring(startIndex, startIndex + 2000);
+        // 더 넓은 영역 검색 (앞뒤로 확장)
+        const searchStart = Math.max(0, startIndex - 1000);
+        const searchArea = allContent.substring(searchStart, startIndex + 3000);
         let title = '';
         let dateStr = '';
+        
+        // 1. alt 속성에서 제목 찾기
         const altMatch = /alt=["']([^"']+)["']/.exec(searchArea);
-        if (altMatch && altMatch[1].trim().length > 6) title = altMatch[1].trim();
-        if (!title) {
-          const h2Match = /<h2[^>]*>([^<]+)<\/h2>/i.exec(searchArea);
-          if (h2Match) title = h2Match[1].trim();
+        if (altMatch && altMatch[1].trim().length > 6) {
+          title = altMatch[1].trim();
         }
-        const dateDot = /(\d{4}[.]\d{2}[.]\d{2})/.exec(searchArea);
-        if (dateDot) dateStr = dateDot[1];
+        
+        // 2. h1, h2, h3 태그에서 제목 찾기
+        if (!title) {
+          const headingMatch = /<h[123][^>]*>([^<]+)<\/h[123]>/i.exec(searchArea);
+          if (headingMatch) title = headingMatch[1].trim();
+        }
+        
+        // 3. 날짜 찾기 (다양한 형식 지원)
+        // YYYY.MM.DD 형식
+        const dateDot = /(\d{4}[.]\d{1,2}[.]\d{1,2})/.exec(searchArea);
+        if (dateDot) {
+          dateStr = dateDot[1];
+          // 한 자리 월/일을 두 자리로 변환
+          const parts = dateStr.split('.');
+          if (parts.length === 3) {
+            dateStr = `${parts[0]}.${parts[1].padStart(2, '0')}.${parts[2].padStart(2, '0')}`;
+          }
+        }
+        
+        // 4. 제목이 없으면 개별 페이지에서 가져오기
         if (!title) {
           try {
-            const pr = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WindlyBot/1.0)' } });
-            const ph = await pr.text();
-            const ogTitle = /property=["']og:title["'][^>]*content=["']([^"']+)["']/i.exec(ph)
-                         || /<title>([^<]+)<\/title>/i.exec(ph);
-            if (ogTitle) title = ogTitle[1].trim();
-          } catch {}
+            const pr = await fetch(url, { 
+              headers: { 
+                'User-Agent': 'Mozilla/5.0 (compatible; WindlyBot/1.0)',
+                'Accept': 'text/html,application/xhtml+xml'
+              } 
+            });
+            if (pr.ok) {
+              const ph = await pr.text();
+              const ogTitle = /property=["']og:title["'][^>]*content=["']([^"']+)["']/i.exec(ph)
+                           || /<title>([^<]+)<\/title>/i.exec(ph);
+              if (ogTitle) title = ogTitle[1].trim().replace(/\s*\|\s*Windly\s*/i, '');
+              
+              // 개별 페이지에서 날짜도 찾기
+              if (!dateStr) {
+                const pageDateDot = /(\d{4}[.]\d{1,2}[.]\d{1,2})/.exec(ph);
+                if (pageDateDot) {
+                  dateStr = pageDateDot[1];
+                  const parts = dateStr.split('.');
+                  if (parts.length === 3) {
+                    dateStr = `${parts[0]}.${parts[1].padStart(2, '0')}.${parts[2].padStart(2, '0')}`;
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.log(`Failed to fetch individual page ${url}:`, (e as any)?.message);
+          }
         }
+        
+        console.log(`Enriched ${url}: title="${title}", date="${dateStr}"`);
         return { title, dateStr };
       }
 
@@ -184,12 +227,25 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
     }
 
     console.log(`Total raw posts found: ${rawPosts.length}`);
+    rawPosts.forEach((p, i) => {
+      console.log(`  ${i+1}. [${p.date || 'NO DATE'}] ${p.title.substring(0, 50)}`);
+    });
 
     // 정렬 및 상위 5개 반환
     const postsWithDates = rawPosts.filter(p => p.date);
     const postsWithoutDates = rawPosts.filter(p => !p.date);
+    
+    console.log(`Posts with dates: ${postsWithDates.length}, without dates: ${postsWithoutDates.length}`);
+    
     const sorted = postsWithDates
-      .map(p => ({ ...p, ts: Date.parse((p.date as string).replace(/\./g, '-')) }))
+      .map(p => {
+        // YYYY.MM.DD를 YYYY-MM-DD로 변환
+        const dateForParsing = (p.date as string).replace(/\./g, '-');
+        const ts = Date.parse(dateForParsing);
+        console.log(`  Parsing date: ${p.date} -> ${dateForParsing} -> ${ts} (${isNaN(ts) ? 'INVALID' : new Date(ts).toISOString()})`);
+        return { ...p, ts };
+      })
+      .filter(p => !isNaN(p.ts)) // 유효한 날짜만
       .sort((a,b) => b.ts - a.ts)
       .slice(0,5)
       .map(p => ({ title: p.title, url: p.url }));
@@ -200,7 +256,7 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
     }
 
     console.log(`Final sorted posts: ${sorted.length}`);
-    sorted.forEach((p,i) => console.log(`${i+1}. ${p.title}`));
+    sorted.forEach((p,i) => console.log(`  ${i+1}. ${p.title}`));
     return sorted;
   } catch (error) {
     console.error('Error fetching blog posts:', error);
