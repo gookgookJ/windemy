@@ -167,25 +167,6 @@ const SearchResults = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Search Header */}
           <div className="mb-8">
-            <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                <Input
-                  type="text"
-                  placeholder="강의를 검색해보세요"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 pr-4 py-3 text-lg rounded-xl border-2 focus:border-primary"
-                />
-                <Button
-                  type="submit"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-lg"
-                >
-                  검색
-                </Button>
-              </div>
-            </form>
-
             {searchParams.get('q') && (
               <div className="text-center">
                 <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
