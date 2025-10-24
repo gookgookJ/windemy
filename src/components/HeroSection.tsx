@@ -317,7 +317,7 @@ const HeroSection = () => {
         >
           <ChevronRight className="w-4 h-4" />
         </button>
-        <div className="pointer-events-none ml-2 px-2 py-1 bg-black/60 rounded-full text-white text-sm">
+        <div className="pointer-events-none ml-2 px-3 py-1 bg-black/60 rounded-full text-white text-sm min-w-[3rem]">
           <span className="font-semibold">{activeIndex + 1}</span>
           <span className="text-gray-400"> / {slides.length}</span>
         </div>
