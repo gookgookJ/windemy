@@ -215,7 +215,44 @@ async function saveBlogPostsToDB(posts: BlogPost[]) {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    console.log('Saving blog posts to database...');
+    console.log(`Attempting to save ${posts.length} posts to database...`);
+    
+    // 기존 데이터 조회
+    const { data: currentPosts, error: selectError } = await supabase
+      .from('best_blog_posts')
+      .select('*')
+      .order('order_index');
+    
+    if (selectError) {
+      console.error('Error fetching current posts:', selectError);
+    } else {
+      console.log(`Current posts in DB: ${currentPosts?.length || 0}`);
+      currentPosts?.forEach((p, i) => console.log(`  ${i+1}. ${p.title}`));
+    }
+    
+    // 새로운 포스트와 기존 포스트 비교
+    const currentPostsData = (currentPosts || []).map(p => ({ title: p.title, url: p.url }));
+    const newPostsData = posts.map(p => ({ title: p.title, url: p.url }));
+    
+    const postsChanged = JSON.stringify(currentPostsData) !== JSON.stringify(newPostsData);
+    
+    console.log('Posts changed:', postsChanged);
+    
+    if (!postsChanged && currentPosts && currentPosts.length > 0) {
+      console.log('No changes detected, keeping existing posts');
+      
+      // 로그 기록 (변경 없음)
+      await supabase.from('blog_update_history').insert({
+        posts_fetched: posts.length,
+        posts_data: posts,
+        success: true,
+        error_message: 'No changes detected'
+      });
+      
+      return { success: true, message: 'No changes', data: currentPosts };
+    }
+    
+    console.log('Changes detected, updating database...');
     
     // 기존 데이터 삭제
     const { error: deleteError } = await supabase
@@ -225,6 +262,7 @@ async function saveBlogPostsToDB(posts: BlogPost[]) {
     
     if (deleteError) {
       console.error('Error deleting old posts:', deleteError);
+      throw deleteError;
     }
     
     // 새 데이터 삽입
@@ -233,6 +271,8 @@ async function saveBlogPostsToDB(posts: BlogPost[]) {
       url: post.url,
       order_index: index + 1
     }));
+    
+    console.log('Inserting new posts:', postsToInsert.length);
     
     const { data, error } = await supabase
       .from('best_blog_posts')
@@ -245,8 +285,9 @@ async function saveBlogPostsToDB(posts: BlogPost[]) {
     }
     
     console.log(`Successfully saved ${posts.length} posts to database`);
+    data?.forEach((p, i) => console.log(`  ${i+1}. ${p.title}`));
     
-    // 로그 기록
+    // 로그 기록 (성공)
     const { error: logError } = await supabase
       .from('blog_update_history')
       .insert({
@@ -272,12 +313,14 @@ async function saveBlogPostsToDB(posts: BlogPost[]) {
       await supabase
         .from('blog_update_history')
         .insert({
-          posts_fetched: 0,
-          posts_data: [],
+          posts_fetched: posts.length,
+          posts_data: posts,
           success: false,
           error_message: (error as any)?.message || 'Unknown error'
         });
-    } catch {}
+    } catch (logErr) {
+      console.error('Error logging failure:', logErr);
+    }
     
     throw error;
   }
@@ -290,12 +333,32 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting blog posts update...');
+    console.log('========================================');
+    console.log('Starting blog posts update at:', new Date().toISOString());
+    console.log('========================================');
     
     // 블로그 포스트 가져오기
     const posts = await fetchBlogPosts();
     
+    console.log('========================================');
+    console.log('Fetch completed. Posts found:', posts.length);
+    console.log('========================================');
+    
     if (posts.length === 0) {
+      console.log('WARNING: No blog posts found!');
+      
+      // 실패 로그 기록
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      
+      await supabase.from('blog_update_history').insert({
+        posts_fetched: 0,
+        posts_data: [],
+        success: false,
+        error_message: 'No blog posts found from any source'
+      });
+      
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -309,12 +372,16 @@ serve(async (req) => {
     }
     
     // DB에 저장
-    await saveBlogPostsToDB(posts);
+    const result = await saveBlogPostsToDB(posts);
+    
+    console.log('========================================');
+    console.log('Blog posts update completed successfully');
+    console.log('========================================');
     
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Successfully updated ${posts.length} blog posts`,
+        message: result.message || `Successfully updated ${posts.length} blog posts`,
         posts: posts,
         timestamp: new Date().toISOString()
       }),
@@ -323,12 +390,15 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Error in update-blog-posts function:', error);
+    console.error('========================================');
+    console.error('FATAL ERROR in update-blog-posts function:', error);
+    console.error('========================================');
     
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: (error as any)?.message || 'Unknown error' 
+        error: (error as any)?.message || 'Unknown error',
+        stack: (error as any)?.stack
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
