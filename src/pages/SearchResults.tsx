@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Search, Filter, BookOpen, Heart } from 'lucide-react';
+import { Search, Filter, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import FavoriteHeartButton from '@/components/FavoriteHeartButton';
 
 interface Course {
   id: string;
@@ -273,19 +274,10 @@ const SearchResults = () => {
                       />
                       
                       {/* Favorite Heart Button */}
-                      <button
+                      <FavoriteHeartButton
+                        active={isFavorite(course.id)}
                         onClick={handleFavoriteClick}
-                        className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10"
-                        aria-label={isFavorite(course.id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
-                      >
-                        <Heart 
-                          className={`w-4 h-4 transition-all duration-200 ${
-                            isFavorite(course.id) 
-                              ? 'text-red-500 fill-red-500' 
-                              : 'text-gray-400 hover:text-red-400'
-                          }`}
-                        />
-                      </button>
+                      />
 
                       {/* Tags */}
                       <div className="absolute top-3 left-3 flex gap-1">

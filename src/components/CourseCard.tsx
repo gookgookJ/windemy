@@ -1,10 +1,11 @@
-import { Star, Clock, Users, BookOpen, Heart } from "lucide-react";
+import { Star, Clock, Users, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { getOptimizedImageForContext } from "@/utils/imageOptimization";
+import FavoriteHeartButton from "@/components/FavoriteHeartButton";
 
 interface CourseCardProps {
   id: string;
@@ -85,19 +86,10 @@ const CourseCard = ({
           }}
         />
         {/* Favorite Heart Button */}
-        <button
+        <FavoriteHeartButton
+          active={isFavorite(id)}
           onClick={handleFavoriteClick}
-          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10 touch-target"
-          aria-label={isFavorite(id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
-        >
-          <Heart 
-            className={`w-4 h-4 transition-all duration-200 ${
-              isFavorite(id) 
-                ? 'text-red-500 fill-red-500' 
-                : 'text-gray-400 hover:text-red-400'
-            }`}
-          />
-        </button>
+        />
       </div>
 
       <CardContent className="p-4">

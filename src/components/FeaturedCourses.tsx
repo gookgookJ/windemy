@@ -1,12 +1,13 @@
 import { useState, useEffect, memo } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Zap, Heart, Crown, Monitor, BookOpen, Target } from "lucide-react";
+import { ChevronLeft, ChevronRight, Zap, Crown, Monitor, BookOpen, Target } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import InfoBanner from "@/components/InfoBanner";
 import { getOptimizedImageForContext } from "@/utils/imageOptimization";
+import FavoriteHeartButton from "@/components/FavoriteHeartButton";
 
 interface Course {
   id: string;
@@ -340,19 +341,10 @@ const FeaturedCourses = memo(() => {
           />
           
           {/* Favorite Heart Button */}
-          <button
+          <FavoriteHeartButton
+            active={isFavorite(course.id)}
             onClick={handleFavoriteClick}
-            className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 z-10 touch-target"
-            aria-label={isFavorite(course.id) ? "관심 강의에서 제거" : "관심 강의에 추가"}
-          >
-            <Heart 
-              className={`w-4 h-4 transition-all duration-200 ${
-                isFavorite(course.id) 
-                  ? 'text-red-500 fill-red-500' 
-                  : 'text-gray-400 hover:text-red-400'
-              }`}
-            />
-          </button>
+          />
 
           {/* Remove tags from image overlay */}
         </div>
