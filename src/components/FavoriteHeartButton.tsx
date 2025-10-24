@@ -25,8 +25,8 @@ const FavoriteHeartButton: React.FC<FavoriteHeartButtonProps> = ({
       <Heart
         className={`w-4 h-4 sm:w-4 md:w-5 lg:w-5 transition-all duration-200 drop-shadow-sm ${
           active 
-            ? "text-red-500 fill-red-500 stroke-red-500 stroke-[1.25]" 
-            : "text-transparent fill-transparent stroke-gray-400 stroke-[1]"
+            ? "text-red-500 fill-red-500 stroke-red-500 stroke-[1.5]" 
+            : "text-transparent fill-transparent stroke-white stroke-[1.5]"
         }`}
       />
     </button>
