@@ -298,25 +298,29 @@ const HeroSection = () => {
       >
         <button
           onClick={prev}
-          className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
+          className="pointer-events-auto w-7 h-7 md:w-8 md:h-8 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
           aria-label="Previous slide"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-4 h-4" />
         </button>
         <button
           onClick={togglePlay}
-          className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
+          className="pointer-events-auto w-7 h-7 md:w-8 md:h-8 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
           aria-label="Toggle autoplay"
         >
-          {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
         </button>
         <button
           onClick={next}
-          className="pointer-events-auto w-9 h-9 md:w-10 md:h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
+          className="pointer-events-auto w-7 h-7 md:w-8 md:h-8 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
           aria-label="Next slide"
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-4 h-4" />
         </button>
+        <div className="pointer-events-none ml-2 px-2 py-1 bg-black/60 rounded-full text-white text-sm">
+          <span className="font-semibold">{activeIndex + 1}</span>
+          <span className="text-gray-400"> / {slides.length}</span>
+        </div>
       </div>
     </section>
   );
