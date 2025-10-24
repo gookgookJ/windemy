@@ -19,11 +19,11 @@ const FavoriteHeartButton: React.FC<FavoriteHeartButtonProps> = ({
   return (
     <button
       onClick={onClick}
-      className={`absolute top-0 -right-2.5 transition-all duration-200 hover:scale-110 z-10 touch-target ${className}`}
+      className={`absolute top-0 -right-1 sm:-right-1.5 md:-right-2 lg:-right-2.5 transition-all duration-200 hover:scale-110 z-10 touch-target ${className}`}
       aria-label={active ? ariaLabelActive : ariaLabelInactive}
     >
       <Heart
-        className={`w-5 h-5 transition-all duration-200 drop-shadow-sm ${
+        className={`w-4 h-4 sm:w-4 md:w-5 lg:w-5 transition-all duration-200 drop-shadow-sm ${
           active 
             ? "text-red-500 fill-red-500 stroke-red-500 stroke-[1.25]" 
             : "text-transparent fill-transparent stroke-gray-400 stroke-[1]"
