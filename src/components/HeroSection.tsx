@@ -274,6 +274,11 @@ const HeroSection = () => {
                     {s.subtitle}
                   </h3>
                 )}
+                {s.description && (
+                  <p className="text-white/80 text-xs sm:text-sm md:text-base lg:text-lg drop-shadow leading-relaxed line-clamp-2">
+                    {s.description}
+                  </p>
+                )}
               </div>
               
               {isActive && (
