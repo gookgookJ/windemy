@@ -54,11 +54,8 @@ export const FavoritesProvider = ({ children }: FavoritesProviderProps) => {
 
   const toggleFavorite = async (courseId: string) => {
     if (!user) {
-      toast({
-        title: "로그인 필요",
-        description: "관심 강의를 추가하려면 로그인해주세요.",
-        variant: "destructive"
-      });
+      // Dispatch event to show auth modal instead of toast
+      window.dispatchEvent(new CustomEvent('auth-required'));
       return;
     }
 

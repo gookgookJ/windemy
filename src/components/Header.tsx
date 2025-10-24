@@ -54,6 +54,18 @@ const Header = () => {
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isMobile]);
+
+  // Listen for auth-required event from favorites
+  useEffect(() => {
+    const handleAuthRequired = () => {
+      setIsAuthModalOpen(true);
+      setAuthModalTab('signin');
+    };
+
+    window.addEventListener('auth-required', handleAuthRequired);
+
+    return () => window.removeEventListener('auth-required', handleAuthRequired);
+  }, []);
   // ✨ --- 여기까지 ---
 
   const navigationItems = [
