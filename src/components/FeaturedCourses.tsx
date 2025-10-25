@@ -260,7 +260,7 @@ const FeaturedCourses = memo(() => {
             )}
             <Link 
               to={viewAllLink}
-              className="text-sm sm:text-base text-muted-foreground hover:text-foreground transition-colors touch-target"
+              className="flex items-center text-sm sm:text-base text-muted-foreground hover:text-foreground transition-colors touch-target"
             >
               더보기 →
             </Link>
