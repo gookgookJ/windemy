@@ -64,7 +64,7 @@ const CategorySection = memo(() => {
   return (
     <section className="py-12 bg-background">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between gap-1 sm:gap-2">
+        <div className="grid grid-cols-4 sm:grid-cols-4 lg:flex lg:justify-between gap-1 sm:gap-1.5 lg:gap-1">
           {categories.map((category, index) => {
             const content = (
               <div className="flex flex-col items-center group cursor-pointer touch-target flex-1 min-w-0">
