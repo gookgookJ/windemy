@@ -14,56 +14,48 @@ const CategorySection = memo(() => {
     { 
       icon: freeCoursesIcon, 
       label: "무료", 
-      color: "bg-blue-50",
       link: "/courses/free-courses",
       isExternal: false
     },
     { 
       icon: premiumIcon, 
       label: "프리미엄", 
-      color: "bg-purple-50",
       link: "/courses/premium-courses",
       isExternal: false
     },
     { 
       icon: vodIcon, 
       label: "VOD", 
-      color: "bg-red-50",
       link: "/courses/vod-courses",
       isExternal: false
     },
     { 
       icon: chatIcon, 
       label: "1:1문의", 
-      color: "bg-green-50",
       link: "channeltalk",
       isExternal: false
     },
     { 
       icon: announcementIcon, 
       label: "공지사항", 
-      color: "bg-orange-50",
       link: "/announcements",
       isExternal: false
     },
     { 
       icon: blogIcon, 
       label: "블로그", 
-      color: "bg-amber-50",
       link: "https://www.windly.cc/blog",
       isExternal: true
     },
     { 
       icon: couponIcon, 
       label: "내 쿠폰", 
-      color: "bg-pink-50",
       link: "/my-rewards",
       isExternal: false
     },
     { 
       icon: cafeIcon, 
       label: "네이버 카페", 
-      color: "bg-emerald-50",
       link: "https://cafe.naver.com/windly",
       isExternal: true
     },
@@ -72,11 +64,11 @@ const CategorySection = memo(() => {
   return (
     <section className="py-12 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-4 sm:gap-6">
+        <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
           {categories.map((category, index) => {
             const content = (
               <div className="flex flex-col items-center group cursor-pointer touch-target">
-                <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl ${category.color} flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-105 transition-transform duration-200 p-2`}>
+                <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-2xl bg-muted/30 border border-muted-foreground/10 flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-105 transition-transform duration-200 p-3">
                   <img 
                     src={category.icon} 
                     alt={category.label}
