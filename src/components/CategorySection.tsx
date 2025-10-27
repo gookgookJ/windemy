@@ -63,11 +63,11 @@ const CategorySection = memo(() => {
 
   return (
     <section className="py-12 bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between gap-2 sm:gap-3 lg:gap-4">
           {categories.map((category, index) => {
             const content = (
-              <div className="flex flex-col items-center group cursor-pointer touch-target">
+              <div className="flex flex-col items-center group cursor-pointer touch-target flex-1 min-w-0">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-2xl bg-muted/30 border border-muted-foreground/10 flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-105 transition-transform duration-200 p-3">
                   <img 
                     src={category.icon} 
@@ -75,7 +75,7 @@ const CategorySection = memo(() => {
                     className="w-full h-full object-contain"
                   />
                 </div>
-                <span className="text-xs sm:text-sm font-medium text-foreground text-center">
+                <span className="text-xs sm:text-sm font-medium text-foreground text-center whitespace-nowrap">
                   {category.label}
                 </span>
               </div>
