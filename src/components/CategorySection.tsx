@@ -72,7 +72,7 @@ const CategorySection = memo(() => {
                   <img 
                     src={category.icon} 
                     alt={category.label}
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain mix-blend-multiply"
                   />
                 </div>
                 <span className="text-xs sm:text-sm font-medium text-foreground text-center whitespace-nowrap">
