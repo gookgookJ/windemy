@@ -63,7 +63,7 @@ const CategorySection = memo(() => {
 
   return (
     <section className="py-12 bg-background">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-4 sm:grid-cols-4 lg:flex lg:justify-between gap-x-1 gap-y-6 sm:gap-x-1.5 sm:gap-y-6 lg:gap-0.5">
           {categories.map((category, index) => {
             const content = (
