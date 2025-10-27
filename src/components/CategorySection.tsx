@@ -1,10 +1,13 @@
 import { Link } from "react-router-dom";
 import { memo } from "react";
+import giftIcon from "@/assets/icons/gift-icon.png";
+import vodIcon from "@/assets/icons/vod-icon.png";
 
 const CategorySection = memo(() => {
   const categories = [
     { 
-      label: "무료", 
+      label: "무료",
+      icon: giftIcon,
       link: "/courses/free-courses",
       isExternal: false
     },
@@ -14,7 +17,8 @@ const CategorySection = memo(() => {
       isExternal: false
     },
     { 
-      label: "VOD", 
+      label: "VOD",
+      icon: vodIcon,
       link: "/courses/vod-courses",
       isExternal: false
     },
@@ -52,8 +56,16 @@ const CategorySection = memo(() => {
           {categories.map((category, index) => {
             const content = (
               <div className="flex flex-col items-center group cursor-pointer touch-target flex-1 min-w-0">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-[22.5px] bg-[#ECECEC] flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-105 transition-transform duration-200">
-                  <span className="text-2xl">{category.label[0]}</span>
+                <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-[22.5px] bg-[#F7F8F9] flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-105 transition-transform duration-200">
+                  {category.icon ? (
+                    <img 
+                      src={category.icon} 
+                      alt={category.label}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <span className="text-2xl">{category.label[0]}</span>
+                  )}
                 </div>
                 <span className="text-xs sm:text-sm font-medium text-foreground text-center whitespace-nowrap">
                   {category.label}
