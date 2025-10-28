@@ -5,6 +5,7 @@ import vodIcon from "@/assets/icons/vod-icon.png";
 import chatIcon from "@/assets/icons/chat-icon.png";
 import couponIcon from "@/assets/icons/coupon-icon.png";
 import announcementIcon from "@/assets/icons/announcement-icon.png";
+import cafeIcon from "@/assets/icons/cafe-icon.png";
 
 const CategorySection = memo(() => {
   const categories = [
@@ -49,7 +50,8 @@ const CategorySection = memo(() => {
       isExternal: false
     },
     { 
-      label: "네이버 카페", 
+      label: "네이버 카페",
+      icon: cafeIcon,
       link: "https://cafe.naver.com/windly",
       isExternal: true
     },
