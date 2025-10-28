@@ -143,42 +143,14 @@ const CourseCreate = () => {
 
   const fetchInstructors = async () => {
     try {
-      // Fetch from both instructors table and profiles with instructor role
-      const [instructorsResult, rolesResult] = await Promise.all([
-        supabase
-          .from('instructors')
-          .select('id, full_name, email')
-          .order('full_name'),
-        supabase
-          .from('user_roles')
-          .select('user_id')
-          .eq('role', 'instructor')
-      ]);
+      // Fetch from instructors table only (managed in admin instructor page)
+      const { data, error } = await supabase
+        .from('instructors')
+        .select('id, full_name, email')
+        .order('full_name');
       
-      if (instructorsResult.error) throw instructorsResult.error;
-      if (rolesResult.error) throw rolesResult.error;
-
-      const instructorIds = rolesResult.data?.map(r => r.user_id) || [];
-      
-      let profilesData: any[] = [];
-      if (instructorIds.length > 0) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, full_name, email')
-          .in('id', instructorIds)
-          .order('full_name');
-        
-        if (error) throw error;
-        profilesData = data || [];
-      }
-
-      // Combine instructors table and profiles data, deduplicate by id
-      const combined = [...(instructorsResult.data || []), ...profilesData];
-      const uniqueInstructors = Array.from(
-        new Map(combined.map(inst => [inst.id, inst])).values()
-      ).sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
-      
-      setInstructors(uniqueInstructors as any);
+      if (error) throw error;
+      setInstructors((data || []) as any);
     } catch (error: any) {
       toast({
         title: "오류",
