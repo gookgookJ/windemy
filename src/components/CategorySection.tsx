@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { memo } from "react";
 import giftIcon from "@/assets/icons/gift-icon.png";
+import premiumIcon from "@/assets/icons/premium-icon.png";
 import vodIcon from "@/assets/icons/vod-icon.png";
 import chatIcon from "@/assets/icons/chat-icon.png";
 import couponIcon from "@/assets/icons/coupon-icon.png";
@@ -17,7 +18,8 @@ const CategorySection = memo(() => {
       isExternal: false
     },
     { 
-      label: "프리미엄", 
+      label: "프리미엄",
+      icon: premiumIcon,
       link: "/courses/premium-courses",
       isExternal: false
     },
