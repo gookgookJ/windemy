@@ -36,7 +36,7 @@ const CategorySection = memo(() => {
     { 
       label: "공지사항",
       icon: announcementIcon,
-      link: "/announcements",
+      link: "/policies",
       isExternal: false
     },
     { 
@@ -54,7 +54,7 @@ const CategorySection = memo(() => {
     { 
       label: "네이버 카페",
       icon: cafeIcon,
-      link: "https://cafe.naver.com/windly",
+      link: "https://cafe.naver.com/richsellerproject",
       isExternal: true
     },
   ];
