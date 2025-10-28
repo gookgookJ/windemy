@@ -1,5 +1,7 @@
-import { Link } from "react-router-dom";
-import { memo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { memo, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { AuthModal } from "@/components/auth/AuthModal";
 import giftIcon from "@/assets/icons/gift-icon.png";
 import premiumIcon from "@/assets/icons/premium-icon.png";
 import vodIcon from "@/assets/icons/vod-icon.png";
@@ -10,6 +12,10 @@ import cafeIcon from "@/assets/icons/cafe-icon.png";
 import blogIcon from "@/assets/icons/blog-icon.png";
 
 const CategorySection = memo(() => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
   const categories = [
     { 
       label: "무료",
@@ -101,6 +107,24 @@ const CategorySection = memo(() => {
               );
             }
 
+            if (category.link === "/my-rewards") {
+              return (
+                <div
+                  key={index}
+                  className="block cursor-pointer"
+                  onClick={() => {
+                    if (user) {
+                      navigate('/my-rewards');
+                    } else {
+                      setShowAuthModal(true);
+                    }
+                  }}
+                >
+                  {content}
+                </div>
+              );
+            }
+
             return category.isExternal ? (
               <a
                 key={index}
@@ -119,6 +143,10 @@ const CategorySection = memo(() => {
           })}
         </div>
       </div>
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
     </section>
   );
 });
