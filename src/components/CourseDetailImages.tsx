@@ -74,7 +74,6 @@ export const CourseDetailImages: React.FC<CourseDetailImagesProps> = ({ courseId
                   src={image.image_url}
                   alt={image.section_title || image.image_name}
                   className="w-full h-full object-contain object-center"
-                  loading="lazy"
                   onLoad={(e) => {
                     // Set container aspect ratio based on actual image dimensions
                     const img = e.target as HTMLImageElement;
