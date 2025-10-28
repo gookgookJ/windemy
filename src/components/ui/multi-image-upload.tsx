@@ -40,7 +40,12 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
     setUploading(true);
     
     try {
-      const uploadPromises = Array.from(files).map(async (file, index) => {
+      // 파일을 이름 순서대로 정렬
+      const sortedFiles = Array.from(files).sort((a, b) => 
+        a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+      );
+
+      const uploadPromises = sortedFiles.map(async (file, index) => {
         if (file.size > maxSize * 1024 * 1024) {
           throw new Error(`파일 "${file.name}"의 크기가 ${maxSize}MB를 초과합니다.`);
         }
@@ -151,7 +156,9 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
       
       {/* 업로드 영역 */}
       <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+          uploading ? 'cursor-wait' : 'cursor-pointer'
+        } ${
           dragOver
             ? 'border-primary bg-primary/5'
             : 'border-border hover:border-primary/50'
@@ -160,6 +167,7 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => {
+          if (uploading) return;
           const input = document.createElement('input');
           input.type = 'file';
           input.accept = accept;
@@ -171,25 +179,44 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
           input.click();
         }}
       >
-        <div className="space-y-3">
-          <div className="w-12 h-12 mx-auto rounded-full bg-muted flex items-center justify-center">
-            <Upload className="w-6 h-6 text-muted-foreground" />
+        {uploading ? (
+          <div className="space-y-3">
+            <div className="w-12 h-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-primary">
+                업로드 중입니다...
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                잠시만 기다려주세요
+              </p>
+            </div>
           </div>
-          
-          <div>
-            <p className="text-sm font-medium">
-              이미지를 선택하거나 드래그해서 업로드하세요
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {accept} 파일, 최대 {maxSize}MB, 여러 파일 선택 가능
-            </p>
+        ) : (
+          <div className="space-y-3">
+            <div className="w-12 h-12 mx-auto rounded-full bg-muted flex items-center justify-center">
+              <Upload className="w-6 h-6 text-muted-foreground" />
+            </div>
+            
+            <div>
+              <p className="text-sm font-medium">
+                이미지를 선택하거나 드래그해서 업로드하세요
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {accept} 파일, 최대 {maxSize}MB, 여러 파일 선택 가능
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                💡 파일명 순서대로 자동 정렬됩니다
+              </p>
+            </div>
+            
+            <Button variant="outline" size="sm" type="button">
+              <Plus className="w-4 h-4 mr-2" />
+              이미지 추가
+            </Button>
           </div>
-          
-          <Button variant="outline" size="sm" type="button" disabled={uploading}>
-            <Plus className="w-4 h-4 mr-2" />
-            {uploading ? '업로드 중...' : '이미지 추가'}
-          </Button>
-        </div>
+        )}
       </div>
 
       {/* 이미지 목록 */}
