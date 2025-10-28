@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DetailImage {
-  id: string;
+  id?: string;
   image_url: string;
   image_name: string;
   section_title: string;

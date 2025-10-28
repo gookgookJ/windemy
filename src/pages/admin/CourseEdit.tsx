@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { AdminLayout } from "@/layouts/AdminLayout";
+import { MultiImageUpload } from "@/components/ui/multi-image-upload";
 
 const AdminCourseEdit = () => {
   const { id } = useParams<{ id: string }>();
@@ -547,44 +548,10 @@ const AdminCourseEdit = () => {
   };
 
   // 상세 이미지 관리 함수들
-  const addDetailImage = (imageUrl: string, imageName: string) => {
-    const newImage: CourseDetailImage = {
-      image_url: imageUrl,
-      image_name: imageName,
-      section_title: '',
-      order_index: course.detail_images.length
-    };
+  const handleDetailImagesChange = (images: CourseDetailImage[]) => {
     setCourse(prev => ({
       ...prev,
-      detail_images: [...prev.detail_images, newImage]
-    }));
-  };
-
-  const removeDetailImage = (index: number) => {
-    setCourse(prev => ({
-      ...prev,
-      detail_images: prev.detail_images.filter((_, i) => i !== index)
-    }));
-  };
-
-  const onDragEnd = (result: DropResult) => {
-    if (!result.destination) {
-      return;
-    }
-
-    const items = Array.from(course.detail_images);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    // Update order_index for all items
-    const updatedItems = items.map((item, index) => ({
-      ...item,
-      order_index: index
-    }));
-
-    setCourse(prev => ({
-      ...prev,
-      detail_images: updatedItems
+      detail_images: images
     }));
   };
 
@@ -1063,88 +1030,16 @@ const AdminCourseEdit = () => {
             <Card>
               <CardHeader>
                 <CardTitle>상세 페이지 이미지</CardTitle>
-                <CardDescription>강의 상세 페이지에 표시될 이미지들을 업로드하고 순서를 조정해주세요.</CardDescription>
+                <CardDescription>강의 상세 페이지에 표시될 이미지들을 여러 개 한 번에 업로드하고 순서를 조정해주세요.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="border-2 border-dashed border-border rounded-lg p-6 mb-4">
-                  <div className="text-center">
-                    <FileUpload
-                      bucket="course-detail-images"
-                      path="detail-images"
-                      accept="image/*"
-                      maxSize={10 * 1024 * 1024}
-                      onUpload={(url, fileName) => {
-                        addDetailImage(url, fileName);
-                      }}
-                      label=""
-                      description="상세페이지 이미지를 선택하거나 드래그해서 업로드하세요 (최대 10MB)"
-                    />
-                  </div>
-                </div>
-
-                {course.detail_images.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <GripVertical className="w-4 h-4" />
-                      <span>이미지를 드래그해서 순서를 변경할 수 있습니다</span>
-                    </div>
-                    
-                    <DragDropContext onDragEnd={onDragEnd}>
-                      <Droppable droppableId="detail-images">
-                        {(provided) => (
-                          <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
-                            {course.detail_images.map((image, index) => (
-                              <Draggable key={`${image.image_url}-${index}`} draggableId={`${image.image_url}-${index}`} index={index}>
-                                {(provided, snapshot) => (
-                                  <div
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    className={cn(
-                                      "flex items-center gap-4 p-3 bg-card border rounded-lg transition-colors",
-                                      snapshot.isDragging && "shadow-lg bg-accent"
-                                    )}
-                                  >
-                                    <div
-                                      {...provided.dragHandleProps}
-                                      className="flex flex-col items-center justify-center w-12 h-12 bg-muted hover:bg-muted/80 rounded cursor-grab active:cursor-grabbing shrink-0 mt-2 transition-colors group"
-                                      title="드래그해서 순서 변경"
-                                    >
-                                      <GripVertical className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                                      <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors mt-0.5">
-                                        {index + 1}
-                                      </span>
-                                    </div>
-                                    
-                                    <img 
-                                      src={image.image_url} 
-                                      alt={image.image_name}
-                                      className="w-24 h-16 object-cover rounded border shrink-0"
-                                    />
-                                    
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium truncate">{image.image_name}</p>
-                                      <p className="text-xs text-muted-foreground">순서: {index + 1}</p>
-                                    </div>
-                                    
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => removeDetailImage(index)}
-                                      className="shrink-0"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                )}
-                              </Draggable>
-                            ))}
-                            {provided.placeholder}
-                          </div>
-                        )}
-                      </Droppable>
-                    </DragDropContext>
-                  </div>
-                )}
+              <CardContent>
+                <MultiImageUpload
+                  bucket="course-detail-images"
+                  images={course.detail_images}
+                  onImagesChange={handleDetailImagesChange}
+                  maxSize={10 * 1024 * 1024}
+                  accept="image/*"
+                />
               </CardContent>
             </Card>
           </TabsContent>
