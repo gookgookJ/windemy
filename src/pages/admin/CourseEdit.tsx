@@ -1037,7 +1037,6 @@ const AdminCourseEdit = () => {
                   bucket="course-detail-images"
                   images={course.detail_images}
                   onImagesChange={handleDetailImagesChange}
-                  maxSize={10 * 1024 * 1024}
                   accept="image/*"
                 />
               </CardContent>

@@ -1425,7 +1425,6 @@ const CourseCreate = () => {
                     bucket="course-detail-images"
                     images={course.detail_images}
                     onImagesChange={handleDetailImagesChange}
-                    maxSize={10}
                     accept="image/*"
                   />
                 </div>

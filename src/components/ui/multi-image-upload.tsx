@@ -19,7 +19,6 @@ interface MultiImageUploadProps {
   bucket: string;
   images: DetailImage[];
   onImagesChange: (images: DetailImage[]) => void;
-  maxSize?: number; // in MB
   accept?: string;
 }
 
@@ -27,7 +26,6 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
   bucket,
   images,
   onImagesChange,
-  maxSize = 10,
   accept = 'image/*'
 }) => {
   const [uploading, setUploading] = useState(false);
@@ -46,10 +44,6 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
       );
 
       const uploadPromises = sortedFiles.map(async (file, index) => {
-        if (file.size > maxSize * 1024 * 1024) {
-          throw new Error(`파일 "${file.name}"의 크기가 ${maxSize}MB를 초과합니다.`);
-        }
-
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${index}.${fileExt}`;
         const filePath = fileName;
@@ -202,9 +196,6 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
             <div>
               <p className="text-sm font-medium">
                 이미지를 선택하거나 드래그해서 업로드하세요
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {accept} 파일, 최대 {maxSize}MB, 여러 파일 선택 가능
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 💡 파일명 순서대로 자동 정렬됩니다
