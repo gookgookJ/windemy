@@ -67,7 +67,7 @@ export const CourseDetailImages: React.FC<CourseDetailImagesProps> = ({ courseId
             </h3>
           )}
           
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-none">
             <CardContent className="p-0">
               <div className="relative bg-muted" style={{ aspectRatio: 'auto' }}>
                 <img
