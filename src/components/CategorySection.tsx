@@ -4,6 +4,7 @@ import giftIcon from "@/assets/icons/gift-icon.png";
 import vodIcon from "@/assets/icons/vod-icon.png";
 import chatIcon from "@/assets/icons/chat-icon.png";
 import couponIcon from "@/assets/icons/coupon-icon.png";
+import announcementIcon from "@/assets/icons/announcement-icon.png";
 
 const CategorySection = memo(() => {
   const categories = [
@@ -31,7 +32,8 @@ const CategorySection = memo(() => {
       isExternal: false
     },
     { 
-      label: "공지사항", 
+      label: "공지사항",
+      icon: announcementIcon,
       link: "/announcements",
       isExternal: false
     },
