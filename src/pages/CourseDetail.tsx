@@ -54,6 +54,7 @@ interface CourseData {
   total_students: number;
   what_you_will_learn?: string[];
   thumbnail_path?: string;
+  thumbnail_url?: string;
   detail_image_path?: string;
   categories?: {
     name: string;
@@ -231,7 +232,7 @@ const CourseDetail = () => {
         .from('courses')
         .select(`
           id, title, instructor_id, level, rating, total_students,
-          what_you_will_learn, thumbnail_path, detail_image_path,
+          what_you_will_learn, thumbnail_path, thumbnail_url, detail_image_path,
           categories:category_id(name)
         `)
         .eq('id', courseId)
@@ -460,7 +461,7 @@ const CourseDetail = () => {
             {/* Thumbnail Section */}
             <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
               <img
-                src={courseData.thumbnail_path || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
+                src={courseData.thumbnail_url || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
                 alt={courseData.title}
                 // Responsive Sizing: aspect-video on mobile, fixed height on desktop
                 className="w-full aspect-video lg:h-[426px] object-cover"
