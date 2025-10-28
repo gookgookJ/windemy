@@ -11,6 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Plus, Trash2, Upload, FileImage, BookOpen, Video, DollarSign, FileText, Users, Settings, GripVertical, Save, FolderOpen, Calendar, Clock, CheckCircle, ArrowRight } from 'lucide-react';
 import { FileUpload } from "@/components/ui/file-upload";
+import { MultiImageUpload } from "@/components/ui/multi-image-upload";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -810,50 +811,9 @@ const CourseCreate = () => {
     setCourse(prev => ({ ...prev, sections: items }));
   };
 
-  // 상세 이미지 관리 함수들
-  const addDetailImage = (imageUrl: string, imageName: string) => {
-    const newImage: CourseDetailImage = {
-      image_url: imageUrl,
-      image_name: imageName,
-      section_title: '',
-      order_index: course.detail_images.length
-    };
-    setCourse(prev => ({
-      ...prev,
-      detail_images: [...prev.detail_images, newImage]
-    }));
-  };
-
-  const updateDetailImage = (index: number, field: keyof CourseDetailImage, value: any) => {
-    setCourse(prev => ({
-      ...prev,
-      detail_images: prev.detail_images.map((image, i) => 
-        i === index ? { ...image, [field]: value } : image
-      )
-    }));
-  };
-
-  const removeDetailImage = (index: number) => {
-    setCourse(prev => ({
-      ...prev,
-      detail_images: prev.detail_images.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleDetailImageDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-
-    const items = Array.from(course.detail_images);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    // 순서 인덱스 업데이트
-    const updatedItems = items.map((item, index) => ({
-      ...item,
-      order_index: index
-    }));
-
-    setCourse(prev => ({ ...prev, detail_images: updatedItems }));
+  // 상세 이미지 관리 함수
+  const handleDetailImagesChange = (images: CourseDetailImage[]) => {
+    setCourse(prev => ({ ...prev, detail_images: images }));
   };
 
   // 단계 검증
@@ -1453,119 +1413,21 @@ const CourseCreate = () => {
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <Label className="text-base font-medium">상세 페이지 이미지</Label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        강의 상세 페이지에 표시될 이미지들을 업로드하고 순서를 조정하세요.
-                      </p>
-                    </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-medium">상세 페이지 이미지</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {course.detail_images.length}개의 이미지
+                    </p>
                   </div>
-
-                  <div className="border-2 border-dashed border-border rounded-lg p-6 mb-4">
-                    <div className="text-center">
-                      <FileUpload
-                        bucket="course-detail-images"
-                        path="detail-images"
-                        accept="image/*"
-                        maxSize={10}
-                        onUpload={(url, fileName) => {
-                          addDetailImage(url, fileName);
-                        }}
-                        label=""
-                        description="상세페이지 이미지를 선택하거나 드래그해서 업로드하세요 (최대 10MB)"
-                      />
-                    </div>
-                  </div>
-
-                  {course.detail_images.length > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 bg-muted-foreground/50 rounded"></div>
-                          <div className="w-2 h-2 bg-muted-foreground/50 rounded"></div>
-                          <div className="w-2 h-2 bg-muted-foreground/50 rounded"></div>
-                        </div>
-                        <span>이미지를 드래그해서 순서를 변경할 수 있습니다</span>
-                      </div>
-                      
-                      <DragDropContext onDragEnd={handleDetailImageDragEnd}>
-                        <Droppable droppableId="detail-images">
-                          {(provided) => (
-                            <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
-                              {course.detail_images.map((image, index) => (
-                                <Draggable key={index} draggableId={`image-${index}`} index={index}>
-                                  {(provided, snapshot) => (
-                                    <div
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      className={cn(
-                                        "border rounded-lg p-4 bg-card transition-all hover:shadow-md hover:border-primary/30",
-                                        snapshot.isDragging && "shadow-lg rotate-1 scale-105 z-10"
-                                      )}
-                                    >
-                                      <div className="flex items-start gap-4">
-                                        <div 
-                                          {...provided.dragHandleProps}
-                                          className="flex flex-col items-center justify-center w-12 h-12 bg-muted hover:bg-muted/80 rounded cursor-grab active:cursor-grabbing shrink-0 mt-2 transition-colors group"
-                                          title="드래그해서 순서 변경"
-                                        >
-                                          <GripVertical className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                                          <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors mt-0.5">
-                                            {index + 1}
-                                          </span>
-                                        </div>
-                                        
-                                        <div className="w-20 h-20 rounded overflow-hidden border shrink-0">
-                                          <img 
-                                            src={image.image_url} 
-                                            alt={image.image_name}
-                                            className="w-full h-full object-cover"
-                                          />
-                                        </div>
-                                        
-                                        <div className="flex-1 min-w-0">
-                                          <div className="font-medium text-sm mb-1 truncate">
-                                            {image.image_name}
-                                          </div>
-                                          <div className="text-xs text-muted-foreground">
-                                            상세 페이지에 표시됩니다
-                                          </div>
-                                        </div>
-                                        
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => removeDetailImage(index)}
-                                          className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-                                          title="이미지 삭제"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  )}
-                                </Draggable>
-                              ))}
-                              {provided.placeholder}
-                            </div>
-                          )}
-                        </Droppable>
-                      </DragDropContext>
-                    </div>
-                  )}
-
-                  {course.detail_images.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p className="text-sm">
-                        아직 상세 페이지 이미지가 없습니다
-                      </p>
-                      <p className="text-xs mt-1">
-                        위의 업로드 영역을 사용해서 이미지를 추가해보세요
-                      </p>
-                    </div>
-                  )}
+                  
+                  <MultiImageUpload
+                    bucket="course-detail-images"
+                    images={course.detail_images}
+                    onImagesChange={handleDetailImagesChange}
+                    maxSize={10}
+                    accept="image/*"
+                  />
                 </div>
               </CardContent>
             </Card>
