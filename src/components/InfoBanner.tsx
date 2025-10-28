@@ -163,8 +163,9 @@ const InfoBanner = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 중앙 강조 텍스트 */}
         <div className="text-center mb-6">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2 leading-tight">
-            보기만해도 매출 상승하는<br className="sm:hidden" /> 이커머스 사업 꿀팁!
+          <div className="text-white/50 text-xs sm:text-sm mb-2 tracking-[0.3em]">. . . .</div>
+          <h2 className="text-lg sm:text-xl md:text-2xl font-normal text-white mb-2 leading-tight">
+            보기만해도 <span className="font-bold">매출 상승하는</span><br className="sm:hidden" /> 이커머스 사업 꿀팁!
           </h2>
         </div>
         
