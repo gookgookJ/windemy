@@ -58,9 +58,9 @@ export const CourseDetailImages: React.FC<CourseDetailImagesProps> = ({ courseId
   }
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-1">
       {images.map((image) => (
-        <div key={image.id} className="space-y-4">
+        <div key={image.id} className="space-y-2">
           {image.section_title && (
             <h3 className="text-2xl font-semibold text-foreground">
               {image.section_title}
