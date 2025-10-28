@@ -971,6 +971,7 @@ const CourseCreate = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="VOD">VOD</SelectItem>
+                      <SelectItem value="실시간 라이브">실시간 라이브</SelectItem>
                       <SelectItem value="오프라인">오프라인</SelectItem>
                       <SelectItem value="1:1 컨설팅">1:1 컨설팅</SelectItem>
                       <SelectItem value="챌린지·스터디">챌린지·스터디</SelectItem>

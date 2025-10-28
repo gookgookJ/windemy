@@ -123,7 +123,7 @@ const MyPage = () => {
             title,
             thumbnail_url,
             thumbnail_path,
-            instructor:profiles(full_name)
+            instructor:instructors(full_name)
           )
         `)
         .eq('user_id', user.id)
