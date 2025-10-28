@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { memo } from "react";
 import giftIcon from "@/assets/icons/gift-icon.png";
 import vodIcon from "@/assets/icons/vod-icon.png";
+import chatIcon from "@/assets/icons/chat-icon.png";
 
 const CategorySection = memo(() => {
   const categories = [
@@ -23,7 +24,8 @@ const CategorySection = memo(() => {
       isExternal: false
     },
     { 
-      label: "1:1문의", 
+      label: "1:1문의",
+      icon: chatIcon,
       link: "channeltalk",
       isExternal: false
     },
