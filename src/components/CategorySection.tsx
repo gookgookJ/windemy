@@ -6,6 +6,7 @@ import chatIcon from "@/assets/icons/chat-icon.png";
 import couponIcon from "@/assets/icons/coupon-icon.png";
 import announcementIcon from "@/assets/icons/announcement-icon.png";
 import cafeIcon from "@/assets/icons/cafe-icon.png";
+import blogIcon from "@/assets/icons/blog-icon.png";
 
 const CategorySection = memo(() => {
   const categories = [
@@ -39,7 +40,8 @@ const CategorySection = memo(() => {
       isExternal: false
     },
     { 
-      label: "블로그", 
+      label: "블로그",
+      icon: blogIcon,
       link: "https://www.windly.cc/blog",
       isExternal: true
     },
