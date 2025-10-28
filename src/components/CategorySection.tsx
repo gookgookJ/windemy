@@ -3,6 +3,7 @@ import { memo } from "react";
 import giftIcon from "@/assets/icons/gift-icon.png";
 import vodIcon from "@/assets/icons/vod-icon.png";
 import chatIcon from "@/assets/icons/chat-icon.png";
+import couponIcon from "@/assets/icons/coupon-icon.png";
 
 const CategorySection = memo(() => {
   const categories = [
@@ -40,7 +41,8 @@ const CategorySection = memo(() => {
       isExternal: true
     },
     { 
-      label: "내 쿠폰", 
+      label: "내 쿠폰",
+      icon: couponIcon,
       link: "/my-rewards",
       isExternal: false
     },
