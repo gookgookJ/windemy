@@ -143,30 +143,42 @@ const CourseCreate = () => {
 
   const fetchInstructors = async () => {
     try {
-      // user_roles 테이블에서 instructor 역할을 가진 사용자들의 ID 조회
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'instructor');
+      // Fetch from both instructors table and profiles with instructor role
+      const [instructorsResult, rolesResult] = await Promise.all([
+        supabase
+          .from('instructors')
+          .select('id, full_name, email')
+          .order('full_name'),
+        supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'instructor')
+      ]);
       
-      if (roleError) throw roleError;
+      if (instructorsResult.error) throw instructorsResult.error;
+      if (rolesResult.error) throw rolesResult.error;
 
-      const instructorIds = roleData?.map(r => r.user_id) || [];
-
-      if (instructorIds.length === 0) {
-        setInstructors([]);
-        return;
+      const instructorIds = rolesResult.data?.map(r => r.user_id) || [];
+      
+      let profilesData: any[] = [];
+      if (instructorIds.length > 0) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', instructorIds)
+          .order('full_name');
+        
+        if (error) throw error;
+        profilesData = data || [];
       }
 
-      // profiles 테이블에서 해당 사용자들의 정보 조회
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .in('id', instructorIds)
-        .order('full_name');
+      // Combine instructors table and profiles data, deduplicate by id
+      const combined = [...(instructorsResult.data || []), ...profilesData];
+      const uniqueInstructors = Array.from(
+        new Map(combined.map(inst => [inst.id, inst])).values()
+      ).sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
       
-      if (error) throw error;
-      setInstructors((data || []) as any);
+      setInstructors(uniqueInstructors as any);
     } catch (error: any) {
       toast({
         title: "오류",

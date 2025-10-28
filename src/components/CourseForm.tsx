@@ -104,13 +104,28 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
 
   const fetchInstructors = async () => {
     try {
-      const { data, error } = await supabase
-        .from('instructors')
-        .select('id, full_name')
-        .order('full_name');
+      // Fetch from both instructors table and profiles with instructor role
+      const [instructorsResult, profilesResult] = await Promise.all([
+        supabase
+          .from('instructors')
+          .select('id, full_name')
+          .order('full_name'),
+        supabase
+          .from('profiles')
+          .select('id, full_name')
+          .order('full_name')
+      ]);
       
-      if (error) throw error;
-      setInstructors(data || []);
+      if (instructorsResult.error) throw instructorsResult.error;
+      if (profilesResult.error) throw profilesResult.error;
+      
+      // Combine and deduplicate by id
+      const combined = [...(instructorsResult.data || []), ...(profilesResult.data || [])];
+      const uniqueInstructors = Array.from(
+        new Map(combined.map(inst => [inst.id, inst])).values()
+      ).sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+      
+      setInstructors(uniqueInstructors);
     } catch (error) {
       console.error('Error fetching instructors:', error);
     }

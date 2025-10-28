@@ -189,14 +189,28 @@ const AdminCourseEdit = () => {
 
   const fetchInstructors = async () => {
     try {
-      // Admin page: directly query instructors table
-      const { data, error } = await supabase
-        .from('instructors')
-        .select('id, full_name, email')
-        .order('full_name');
+      // Fetch from both instructors table and profiles with instructor role
+      const [instructorsResult, profilesResult] = await Promise.all([
+        supabase
+          .from('instructors')
+          .select('id, full_name, email')
+          .order('full_name'),
+        supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .order('full_name')
+      ]);
       
-      if (error) throw error;
-      setInstructors((data || []) as any);
+      if (instructorsResult.error) throw instructorsResult.error;
+      if (profilesResult.error) throw profilesResult.error;
+      
+      // Combine and deduplicate by id
+      const combined = [...(instructorsResult.data || []), ...(profilesResult.data || [])];
+      const uniqueInstructors = Array.from(
+        new Map(combined.map(inst => [inst.id, inst])).values()
+      ).sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+      
+      setInstructors(uniqueInstructors as any);
     } catch (error: any) {
       toast({
         title: "오류",
