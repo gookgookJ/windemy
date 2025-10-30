@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Upload, X, ArrowUp, ArrowDown, Plus, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Plus, Image as ImageIcon, GripVertical } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -92,22 +93,14 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
     onImagesChange(updatedImages);
   };
 
-  const moveImage = (id: string, direction: 'up' | 'down') => {
-    const currentIndex = images.findIndex(img => img.id === id);
-    if (
-      (direction === 'up' && currentIndex === 0) ||
-      (direction === 'down' && currentIndex === images.length - 1)
-    ) {
-      return;
-    }
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
 
-    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    const reorderedImages = [...images];
-    const [movedItem] = reorderedImages.splice(currentIndex, 1);
-    reorderedImages.splice(newIndex, 0, movedItem);
+    const items = Array.from(images);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
 
-    // 순서 업데이트
-    const updatedImages = reorderedImages.map((img, index) => ({
+    const updatedImages = items.map((img, index) => ({
       ...img,
       order_index: index
     }));
@@ -203,63 +196,68 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
 
       {/* 이미지 목록 */}
       {images.length > 0 && (
-        <div className="space-y-3">
-          {images.map((image, index) => (
-            <Card key={image.id} className="transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-4">
-                  {/* 순서 조정 버튼 */}
-                  <div className="flex flex-col gap-1 mt-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => moveImage(image.id, 'up')}
-                      disabled={index === 0}
-                      className="h-6 w-6 p-0"
-                    >
-                      <ArrowUp className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => moveImage(image.id, 'down')}
-                      disabled={index === images.length - 1}
-                      className="h-6 w-6 p-0"
-                    >
-                      <ArrowDown className="w-3 h-3" />
-                    </Button>
-                  </div>
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="images">
+            {(provided) => (
+              <div 
+                className="space-y-3"
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+              >
+                {images.map((image, index) => (
+                  <Draggable key={image.id} draggableId={image.id!} index={index}>
+                    {(provided, snapshot) => (
+                      <Card 
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={`transition-shadow ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-4">
+                            {/* 드래그 핸들 */}
+                            <div 
+                              {...provided.dragHandleProps}
+                              className="cursor-grab active:cursor-grabbing mt-2 text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              <GripVertical className="w-5 h-5" />
+                            </div>
 
-                  {/* 이미지 미리보기 */}
-                  <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                    <img
-                      src={image.image_url}
-                      alt={image.image_name}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
+                            {/* 이미지 미리보기 */}
+                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                              <img
+                                src={image.image_url}
+                                alt={image.image_name}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
 
-                  {/* 정보 입력 */}
-                  <div className="flex-1">
-                    <Label className="text-xs text-muted-foreground">
-                      파일명: {image.image_name}
-                    </Label>
-                  </div>
+                            {/* 정보 입력 */}
+                            <div className="flex-1">
+                              <Label className="text-xs text-muted-foreground">
+                                파일명: {image.image_name}
+                              </Label>
+                            </div>
 
-                  {/* 삭제 버튼 */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeImage(image.id)}
-                    className="text-destructive hover:text-destructive flex-shrink-0"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                            {/* 삭제 버튼 */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeImage(image.id!)}
+                              className="text-destructive hover:text-destructive flex-shrink-0"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       )}
 
       {images.length === 0 && (
