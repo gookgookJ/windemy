@@ -69,7 +69,6 @@ const CourseCreate = () => {
     level: 'beginner',
     course_type: 'VOD',
     price: 0,
-    what_you_will_learn: [''],
     requirements: [''] as string[],
     sections: [] as CourseSection[],
     course_options: [] as CourseOption[],
@@ -224,7 +223,6 @@ const CourseCreate = () => {
         level: course.level,
         course_type: course.course_type,
         price: course.price,
-        what_you_will_learn: course.what_you_will_learn.filter(item => item.trim()),
         requirements: course.requirements?.filter(item => item.trim()) || [],
         thumbnail_url: course.thumbnail_url,
         thumbnail_path: course.thumbnail_path,
@@ -466,7 +464,6 @@ const CourseCreate = () => {
         level: course.level,
         course_type: course.course_type,
         price: course.price,
-        what_you_will_learn: course.what_you_will_learn.filter(item => item.trim()),
         requirements: course.requirements.filter(item => item.trim()),
         is_published: false, // 예약 발행이므로 일단 비공개로 저장
         thumbnail_url: course.thumbnail_url,
@@ -640,27 +637,6 @@ const CourseCreate = () => {
     localStorage.setItem('draft_course', JSON.stringify(course));
   };
 
-  // 리스트 관리 함수들
-  const addListItem = (field: 'what_you_will_learn') => {
-    setCourse(prev => ({
-      ...prev,
-      [field]: [...prev[field], '']
-    }));
-  };
-
-  const updateListItem = (field: 'what_you_will_learn', index: number, value: string) => {
-    setCourse(prev => ({
-      ...prev,
-      [field]: prev[field].map((item, i) => i === index ? value : item)
-    }));
-  };
-
-  const removeListItem = (field: 'what_you_will_learn', index: number) => {
-    setCourse(prev => ({
-      ...prev,
-      [field]: prev[field].filter((_, i) => i !== index)
-    }));
-  };
 
   // 섹션 관리 함수들
   const addSection = () => {
@@ -822,8 +798,7 @@ const CourseCreate = () => {
       case 1:
         return !!(course.title && course.category_id && course.instructor_id);
       case 2:
-        return course.what_you_will_learn.some(item => item.trim()) && 
-               course.sections.length > 0 && 
+        return course.sections.length > 0 && 
                course.sections.every(s => s.title && s.sessions.length > 0);
       case 3:
         return course.course_options.length > 0 && course.course_options.every(o => o.name && o.price >= 0);
@@ -998,48 +973,6 @@ const CourseCreate = () => {
       case 2:
         return (
           <div className="space-y-6">
-            {/* 이 강의에서 배우는 것들 */}
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  이 강의에서 배우는 것들
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  학습자가 이 강의를 통해 얻을 수 있는 것들을 작성해주세요.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {course.what_you_will_learn.map((item, index) => (
-                    <div key={index} className="flex gap-3">
-                      <Input
-                        value={item}
-                        onChange={(e) => updateListItem('what_you_will_learn', index, e.target.value)}
-                        placeholder="예: 해외구매대행에 대한 A to Z를 학습할 수 있습니다."
-                        className="h-11"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeListItem('what_you_will_learn', index)}
-                        className="h-11 px-3"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    variant="outline"
-                    onClick={() => addListItem('what_you_will_learn')}
-                    className="h-11"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    항목 추가
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* 커리큘럼 구성 */}
             <Card>
               <CardHeader className="space-y-3">
@@ -1470,16 +1403,6 @@ const CourseCreate = () => {
                       <Label className="text-sm font-medium text-muted-foreground">강사</Label>
                       <p className="text-base">{getInstructorName(course.instructor_id)}</p>
                     </div>
-                    {course.what_you_will_learn.filter(item => item.trim()).length > 0 && (
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">학습 목표</Label>
-                        <ul className="list-disc list-inside space-y-1 mt-2 text-sm">
-                          {course.what_you_will_learn.filter(item => item.trim()).map((item, index) => (
-                            <li key={index}>{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
                   </div>
                   <div className="space-y-4">
                     <div>

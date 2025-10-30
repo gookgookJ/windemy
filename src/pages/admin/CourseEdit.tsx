@@ -69,7 +69,6 @@ const AdminCourseEdit = () => {
     instructor_id: '',
     level: 'beginner',
     course_type: 'VOD',
-    price: 0,
     sections: [] as CourseSection[],
     course_options: [] as CourseOption[],
     detail_images: [] as CourseDetailImage[],
@@ -144,7 +143,6 @@ const AdminCourseEdit = () => {
         instructor_id: data.instructor_id || '',
         level: data.level || 'beginner',
         course_type: data.course_type || 'VOD',
-        price: data.price || 0,
         sections: transformedSections,
         course_options: transformedOptions,
         detail_images: transformedImages,
@@ -223,7 +221,6 @@ const AdminCourseEdit = () => {
         instructor_id: course.instructor_id,
         level: course.level,
         course_type: course.course_type,
-        price: course.price,
         thumbnail_url: course.thumbnail_url,
         thumbnail_path: course.thumbnail_path,
         is_published: course.is_published,
@@ -596,29 +593,15 @@ const AdminCourseEdit = () => {
                 <CardDescription>강의의 기본적인 정보를 입력해주세요.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">강의 제목 <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="title"
-                      value={course.title}
-                      onChange={(e) => setCourse(prev => ({ ...prev, title: e.target.value }))}
-                      placeholder="강의 제목을 입력하세요"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="price">기본 가격 (원) <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      value={course.price}
-                      onChange={(e) => setCourse(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
-                      placeholder="0"
-                      min="0"
-                      required
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="title">강의 제목 <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="title"
+                    value={course.title}
+                    onChange={(e) => setCourse(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="강의 제목을 입력하세요"
+                    required
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

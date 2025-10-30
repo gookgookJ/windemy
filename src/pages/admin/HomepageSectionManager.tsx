@@ -608,7 +608,7 @@ const HomepageSectionManager = () => {
           {/* Stats */}
           <div className="mt-6 grid grid-cols-3 gap-4">
             <div className="bg-gray-50 rounded-lg p-4 text-center">
-              <div className="text-sm text-gray-600 mb-1">드래프트 강의</div>
+              <div className="text-sm text-gray-600 mb-1">활성화 된 강의</div>
               <div className="text-2xl font-bold text-gray-900">{selectedCourses.length}</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4 text-center">
@@ -725,9 +725,6 @@ const HomepageSectionManager = () => {
                             <div className="flex-1 min-w-0">
                               <h3 className="font-medium text-sm truncate">{course.course.title}</h3>
                               <p className="text-xs text-gray-600">{course.course.instructor_name}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs font-bold">{course.course.price.toLocaleString()}원</span>
-                              </div>
                             </div>
                             <Button
                               size="sm"
@@ -781,9 +778,6 @@ const HomepageSectionManager = () => {
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium text-sm truncate">{course.title}</h3>
                         <p className="text-xs text-gray-600">{course.instructor_name}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs font-bold">{course.price.toLocaleString()}원</span>
-                        </div>
                       </div>
                       <Button
                         size="sm"
