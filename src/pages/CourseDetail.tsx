@@ -458,12 +458,12 @@ const CourseDetail = () => {
           <div className="w-full lg:max-w-[757px] flex-shrink-0 pb-20 lg:pb-8">
 
             {/* Thumbnail Section */}
-            <div className="relative rounded-xl overflow-hidden shadow-lg mb-6">
+            <div className="relative rounded-xl overflow-hidden shadow-lg mb-6 bg-muted">
               <img
                 src={courseData.thumbnail_url || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png'}
                 alt={courseData.title}
                 // Responsive Sizing: aspect-video on mobile, fixed height on desktop
-                className="w-full aspect-video lg:h-[426px] object-cover"
+                className="w-full aspect-video lg:h-[426px] object-contain"
               />
             </div>
 
