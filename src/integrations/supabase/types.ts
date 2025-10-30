@@ -651,7 +651,6 @@ export type Database = {
           total_students: number | null
           updated_at: string | null
           video_preview_url: string | null
-          what_you_will_learn: string[] | null
         }
         Insert: {
           access_duration_days?: number | null
@@ -673,7 +672,6 @@ export type Database = {
           total_students?: number | null
           updated_at?: string | null
           video_preview_url?: string | null
-          what_you_will_learn?: string[] | null
         }
         Update: {
           access_duration_days?: number | null
@@ -695,7 +693,6 @@ export type Database = {
           total_students?: number | null
           updated_at?: string | null
           video_preview_url?: string | null
-          what_you_will_learn?: string[] | null
         }
         Relationships: [
           {

@@ -70,8 +70,6 @@ const AdminCourseEdit = () => {
     level: 'beginner',
     course_type: 'VOD',
     price: 0,
-    what_you_will_learn: [''],
-    
     sections: [] as CourseSection[],
     course_options: [] as CourseOption[],
     detail_images: [] as CourseDetailImage[],
@@ -147,8 +145,6 @@ const AdminCourseEdit = () => {
         level: data.level || 'beginner',
         course_type: data.course_type || 'VOD',
         price: data.price || 0,
-        what_you_will_learn: data.what_you_will_learn || [''],
-        
         sections: transformedSections,
         course_options: transformedOptions,
         detail_images: transformedImages,
@@ -228,7 +224,6 @@ const AdminCourseEdit = () => {
         level: course.level,
         course_type: course.course_type,
         price: course.price,
-        what_you_will_learn: course.what_you_will_learn.filter(item => item.trim()),
         thumbnail_url: course.thumbnail_url,
         thumbnail_path: course.thumbnail_path,
         is_published: course.is_published,
@@ -387,27 +382,6 @@ const AdminCourseEdit = () => {
     }
   };
 
-  // 리스트 관리 함수들
-  const addListItem = (field: 'what_you_will_learn') => {
-    setCourse(prev => ({
-      ...prev,
-      [field]: [...prev[field], '']
-    }));
-  };
-
-  const updateListItem = (field: 'what_you_will_learn', index: number, value: string) => {
-    setCourse(prev => ({
-      ...prev,
-      [field]: prev[field].map((item, i) => i === index ? value : item)
-    }));
-  };
-
-  const removeListItem = (field: 'what_you_will_learn', index: number) => {
-    setCourse(prev => ({
-      ...prev,
-      [field]: prev[field].filter((_, i) => i !== index)
-    }));
-  };
 
   // 섹션 관리 함수들
   const addSection = () => {
@@ -776,41 +750,6 @@ const AdminCourseEdit = () => {
 
           {/* Learning Content Tab */}
           <TabsContent value="content" className="space-y-6">
-            {/* What You Will Learn */}
-            <Card>
-              <CardHeader>
-                <CardTitle>이 강의에서 배울 내용</CardTitle>
-                <CardDescription>수강생이 이 강의를 통해 얻을 수 있는 지식이나 기술을 입력해주세요.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {course.what_you_will_learn.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input
-                      value={item}
-                      onChange={(e) => updateListItem('what_you_will_learn', index, e.target.value)}
-                      placeholder="배울 내용을 입력하세요"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeListItem('what_you_will_learn', index)}
-                      disabled={course.what_you_will_learn.length <= 1}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  variant="outline"
-                  onClick={() => addListItem('what_you_will_learn')}
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  항목 추가
-                </Button>
-              </CardContent>
-            </Card>
-
 
             {/* Curriculum */}
             <Card>

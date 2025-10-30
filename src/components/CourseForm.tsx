@@ -59,7 +59,6 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
     instructor_id: '',
     thumbnail_path: '',
     detail_image_path: '',
-    whatYouWillLearn: [''],
     requirements: [''],
     course_options: [] as CourseOption[],
     access_duration_days: null as number | null,
@@ -149,7 +148,6 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
           instructor_id: courseData.instructor_id || '',
           thumbnail_path: courseData.thumbnail_path || '',
           detail_image_path: courseData.detail_image_path || '',
-          whatYouWillLearn: courseData.what_you_will_learn || [''],
           requirements: courseData.requirements || [''],
           course_options: [],
           access_duration_days: courseData.access_duration_days || null,
@@ -179,7 +177,6 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
         detail_image_path: values.detail_image_path || null,
         is_published: false,
         course_type: 'VOD',
-        what_you_will_learn: courseData.whatYouWillLearn.filter(item => item.trim() !== ''),
         access_duration_days: courseData.isLifetimeAccess ? null : courseData.access_duration_days
       };
 
@@ -236,7 +233,6 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
         detail_image_path: values.detail_image_path || null,
         is_published: false,
         course_type: 'VOD',
-        what_you_will_learn: courseData.whatYouWillLearn.filter(item => item.trim() !== ''),
         access_duration_days: courseData.isLifetimeAccess ? null : courseData.access_duration_days
       };
 
@@ -274,21 +270,21 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
     }
   };
 
-  const addListItem = (field: 'whatYouWillLearn' | 'requirements') => {
+  const addListItem = (field: 'requirements') => {
     setCourseData(prev => ({
       ...prev,
       [field]: [...prev[field], '']
     }));
   };
 
-  const updateListItem = (field: 'whatYouWillLearn' | 'requirements', index: number, value: string) => {
+  const updateListItem = (field: 'requirements', index: number, value: string) => {
     setCourseData(prev => ({
       ...prev,
       [field]: prev[field].map((item, i) => i === index ? value : item)
     }));
   };
 
-  const removeListItem = (field: 'whatYouWillLearn' | 'requirements', index: number) => {
+  const removeListItem = (field: 'requirements', index: number) => {
     setCourseData(prev => ({
       ...prev,
       [field]: prev[field].filter((_, i) => i !== index)
@@ -462,40 +458,6 @@ export const CourseForm: React.FC<CourseFormProps> = ({ courseId, onSuccess }) =
            </TabsContent>
 
            <TabsContent value="learning" className="space-y-4">
-            <div>
-              <Label className="text-base font-medium">배울 내용</Label>
-              <div className="space-y-2 mt-2">
-                {courseData.whatYouWillLearn.map((item, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={item}
-                      onChange={(e) => updateListItem('whatYouWillLearn', index, e.target.value)}
-                      placeholder="학습자가 배울 내용을 입력하세요"
-                    />
-                    {courseData.whatYouWillLearn.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => removeListItem('whatYouWillLearn', index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => addListItem('whatYouWillLearn')}
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  항목 추가
-                </Button>
-              </div>
-            </div>
-
             <div>
               <Label className="text-base font-medium">수강 요구사항</Label>
               <div className="space-y-2 mt-2">

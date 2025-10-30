@@ -52,7 +52,6 @@ interface CourseData {
   level: string;
   rating: number;
   total_students: number;
-  what_you_will_learn?: string[];
   thumbnail_path?: string;
   thumbnail_url?: string;
   detail_image_path?: string;
@@ -232,7 +231,7 @@ const CourseDetail = () => {
         .from('courses')
         .select(`
           id, title, instructor_id, level, rating, total_students,
-          what_you_will_learn, thumbnail_path, thumbnail_url, detail_image_path,
+          thumbnail_path, thumbnail_url, detail_image_path,
           categories:category_id(name)
         `)
         .eq('id', courseId)
@@ -601,21 +600,6 @@ const CourseDetail = () => {
                 {/* Display additional course detail images */}
                 <CourseDetailImages courseId={courseId!} />
               </div>
-
-              {/* What You'll Learn */}
-              <section>
-                <h2 className="text-xl lg:text-2xl font-bold mb-6">이 강의에서 배우는 것들</h2>
-                <div className="bg-muted/30 rounded-2xl p-6 lg:p-8">
-                  <div className="grid md:grid-cols-2 gap-4 lg:gap-6">
-                    {(courseData.what_you_will_learn || []).map((item, index) => (
-                      <div key={index} className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
-                        <span className="text-foreground text-sm lg:text-base">{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
 
               {/* Curriculum (Using Accordion for Accessibility) */}
               <section id="curriculum" ref={(el) => sectionRefs.current['curriculum'] = el}>
