@@ -11,7 +11,6 @@ interface DetailImage {
   id?: string;
   image_url: string;
   image_name: string;
-  section_title: string;
   order_index: number;
 }
 
@@ -62,7 +61,6 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
           id: crypto.randomUUID(),
           image_url: data.publicUrl,
           image_name: file.name,
-          section_title: '',
           order_index: images.length + index
         };
       });
@@ -91,13 +89,6 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
     const updatedImages = images
       .filter(img => img.id !== id)
       .map((img, index) => ({ ...img, order_index: index }));
-    onImagesChange(updatedImages);
-  };
-
-  const updateSectionTitle = (id: string, title: string) => {
-    const updatedImages = images.map(img => 
-      img.id === id ? { ...img, section_title: title } : img
-    );
     onImagesChange(updatedImages);
   };
 
@@ -249,25 +240,10 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
                   </div>
 
                   {/* 정보 입력 */}
-                  <div className="flex-1 space-y-3">
-                    <div>
-                      <Label className="text-xs text-muted-foreground">
-                        파일명: {image.image_name}
-                      </Label>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor={`section-${image.id}`} className="text-sm">
-                        섹션 제목
-                      </Label>
-                      <Input
-                        id={`section-${image.id}`}
-                        value={image.section_title}
-                        onChange={(e) => updateSectionTitle(image.id, e.target.value)}
-                        placeholder="이 이미지가 설명하는 섹션의 제목을 입력하세요"
-                        className="mt-1"
-                      />
-                    </div>
+                  <div className="flex-1">
+                    <Label className="text-xs text-muted-foreground">
+                      파일명: {image.image_name}
+                    </Label>
                   </div>
 
                   {/* 삭제 버튼 */}
