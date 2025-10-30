@@ -90,11 +90,23 @@ const CourseCatalog = () => {
           ? reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / reviews.length 
           : 0;
 
+        // Get proper thumbnail URL
+        let thumbnailUrl = '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png';
+        if (course.thumbnail_url) {
+          thumbnailUrl = course.thumbnail_url;
+        } else if (course.thumbnail_path) {
+          // Convert storage path to public URL
+          const { data } = supabase.storage
+            .from('course-thumbnails')
+            .getPublicUrl(course.thumbnail_path);
+          thumbnailUrl = data.publicUrl;
+        }
+
         return {
           id: course.id,
           title: course.title,
           instructor: course.profiles?.full_name || 'Unknown',
-          thumbnail: course.thumbnail_path || course.thumbnail_url || '/lovable-uploads/f33f7261-05f8-42bc-8f5d-73dddc791ac5.png',
+          thumbnail: thumbnailUrl,
           price: course.price,
           originalPrice: null, // You can add this to course_options if needed
           rating: averageRating,
