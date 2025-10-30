@@ -244,7 +244,7 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
                     <img
                       src={image.image_url}
                       alt={image.image_name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   </div>
 

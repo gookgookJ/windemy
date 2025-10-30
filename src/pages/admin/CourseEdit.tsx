@@ -921,7 +921,7 @@ const AdminCourseEdit = () => {
                       <img 
                         src={course.thumbnail_url} 
                         alt="썸네일" 
-                        className="w-48 h-32 object-cover rounded-lg border"
+                        className="w-48 h-32 object-contain rounded-lg border bg-muted"
                       />
                       <Button
                         variant="destructive"
