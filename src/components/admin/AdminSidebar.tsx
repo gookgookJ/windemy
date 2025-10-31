@@ -116,6 +116,18 @@ const menuItems = [
     ]
   },
   {
+    title: '공지사항 관리',
+    url: '/admin/announcements',
+    icon: MessageSquare,
+    group: 'content'
+  },
+  {
+    title: '약관 및 정책 관리',
+    url: '/admin/legal-documents',
+    icon: Shield,
+    group: 'content'
+  },
+  {
     title: '주문 관리',
     url: '/admin/orders',
     icon: ShoppingCart,
