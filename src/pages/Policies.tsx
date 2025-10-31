@@ -194,22 +194,41 @@ const AnnouncementsContent = () => {
   );
 };
 
-// FAQ content (static)
+// FAQ content from database
 const FaqContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
-  const faqData = [
-    { category: "강의 수강", items: [ { question: "강의는 언제까지 수강할 수 있나요?", answer: "구매한 강의는 평생 소장하여 언제든지 수강하실 수 있습니다. 단, 일부 라이브 강의나 특별 프로그램은 수강 기간이 제한될 수 있습니다." }, { question: "모바일에서도 강의를 들을 수 있나요?", answer: "네, 모바일 브라우저를 통해 언제 어디서든 강의를 수강하실 수 있습니다. 모바일 앱도 준비 중이니 조금만 기다려주세요." } ] },
-    { category: "결제 및 환불", items: [ { question: "어떤 결제 방법을 지원하나요?", answer: "신용카드, 체크카드, 계좌이체, 카카오페이, 토스페이 등 다양한 결제 방법을 지원합니다." }, { question: "환불 정책이 어떻게 되나요?", answer: "구매 후 7일 이내, 강의 진도율 10% 미만일 경우 100% 환불이 가능합니다. 자세한 환불 정책은 이용약관을 참고해주세요." } ] }
-  ];
+  const { data: faqs, isLoading } = useQuery({
+    queryKey: ['public-faqs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('faqs')
+        .select('*')
+        .eq('is_active', true)
+        .order('category')
+        .order('order_index');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const filteredFaq = faqData.map((cat) => ({
-    ...cat,
-    items: cat.items.filter((faq) =>
-      faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
-    ),
-  })).filter((cat) => cat.items.length > 0);
+  // Group by category
+  const groupedFaqs = faqs?.reduce((acc, faq) => {
+    if (!acc[faq.category]) acc[faq.category] = [];
+    acc[faq.category].push(faq);
+    return acc;
+  }, {} as Record<string, typeof faqs>);
+
+  const filteredCategories = groupedFaqs ? Object.entries(groupedFaqs)
+    .map(([category, items]) => ({
+      category,
+      items: items.filter((faq: any) =>
+        faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    }))
+    .filter((cat) => cat.items.length > 0) : [];
 
   return (
     <Card>
@@ -227,23 +246,29 @@ const FaqContent = () => {
             />
           </div>
         </div>
-        <Accordion type="single" collapsible className="space-y-4">
-          {filteredFaq.map((cat) => (
-            <div key={cat.category} className="space-y-2">
-              <h3 className="font-semibold text-lg mb-2">{cat.category}</h3>
-              {cat.items.map((faq, idx) => (
-                <AccordionItem key={`${cat.category}-${idx}`} value={`${cat.category}-${idx}`}>
-                  <AccordionTrigger className="hover:no-underline">
-                    <span className="text-left font-medium">{faq.question}</span>
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground text-base leading-relaxed">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </div>
-          ))}
-        </Accordion>
+        {isLoading ? (
+          <p className="text-muted-foreground">로딩 중...</p>
+        ) : !filteredCategories || filteredCategories.length === 0 ? (
+          <p className="text-muted-foreground">등록된 FAQ가 없습니다</p>
+        ) : (
+          <Accordion type="single" collapsible className="space-y-4">
+            {filteredCategories.map((cat) => (
+              <div key={cat.category} className="space-y-2">
+                <h3 className="font-semibold text-lg mb-2">{cat.category}</h3>
+                {cat.items.map((faq: any, idx: number) => (
+                  <AccordionItem key={faq.id} value={faq.id}>
+                    <AccordionTrigger className="hover:no-underline">
+                      <span className="text-left font-medium">{faq.question}</span>
+                    </AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground text-base leading-relaxed whitespace-pre-wrap">
+                      {faq.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </div>
+            ))}
+          </Accordion>
+        )}
       </CardContent>
     </Card>
   );

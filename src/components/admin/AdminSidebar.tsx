@@ -119,13 +119,19 @@ const menuItems = [
     title: '공지사항 관리',
     url: '/admin/announcements',
     icon: MessageSquare,
-    group: 'content'
+    group: 'policy'
+  },
+  {
+    title: 'FAQ 관리',
+    url: '/admin/faq-management',
+    icon: MessageSquare,
+    group: 'policy'
   },
   {
     title: '약관 및 정책 관리',
     url: '/admin/legal-documents',
     icon: Shield,
-    group: 'content'
+    group: 'policy'
   },
   {
     title: '주문 관리',
@@ -186,6 +192,7 @@ const menuItems = [
 const groupLabels = {
   main: '주요 관리',
   content: '콘텐츠 관리',
+  policy: '정책 관리',
   analytics: '학습 분석',
   marketing: '마케팅',
   system: '시스템 관리'

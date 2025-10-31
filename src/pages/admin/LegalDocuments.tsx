@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/layouts/AdminLayout";
@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Save, FileText, Shield } from "lucide-react";
+import { Save, FileText, Shield, Eye, Clock } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface LegalDocument {
   id: string;
@@ -26,6 +26,7 @@ interface LegalDocument {
 const LegalDocuments = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"terms" | "privacy">("terms");
+  const [previewDoc, setPreviewDoc] = useState<LegalDocument | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -51,6 +52,21 @@ const LegalDocuments = () => {
   const activePrivacy = documents?.find(
     (doc) => doc.document_type === "privacy" && doc.is_active
   );
+
+  const termsHistory = documents?.filter(doc => doc.document_type === "terms") || [];
+  const privacyHistory = documents?.filter(doc => doc.document_type === "privacy") || [];
+
+  // 현재 활성 문서를 폼에 로드
+  useEffect(() => {
+    const currentDoc = activeTab === "terms" ? activeTerms : activePrivacy;
+    if (currentDoc && !formData.content) {
+      setFormData({
+        title: currentDoc.title,
+        content: currentDoc.content,
+        version: currentDoc.version,
+      });
+    }
+  }, [activeTab, activeTerms, activePrivacy]);
 
   const updateMutation = useMutation({
     mutationFn: async ({
@@ -82,21 +98,29 @@ const LegalDocuments = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["legal-documents"] });
       toast.success("문서가 업데이트되었습니다");
-      setFormData({ title: "", content: "", version: "" });
     },
-    onError: () => {
-      toast.error("문서 업데이트 실패");
-    },
+    onError: () => toast.error("문서 업데이트 실패"),
   });
 
-  const handleLoad = (doc: LegalDocument | undefined) => {
-    if (doc) {
+  const loadCurrentVersion = () => {
+    const currentDoc = activeTab === "terms" ? activeTerms : activePrivacy;
+    if (currentDoc) {
       setFormData({
-        title: doc.title,
-        content: doc.content,
-        version: doc.version,
+        title: currentDoc.title,
+        content: currentDoc.content,
+        version: currentDoc.version,
       });
+      toast.success("현재 버전이 로드되었습니다");
     }
+  };
+
+  const loadVersion = (doc: LegalDocument) => {
+    setFormData({
+      title: doc.title,
+      content: doc.content,
+      version: doc.version,
+    });
+    toast.success("선택한 버전이 로드되었습니다");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -106,8 +130,186 @@ const LegalDocuments = () => {
       return;
     }
 
-    updateMutation.mutate({ type: activeTab, data: formData });
+    // 버전 확인
+    const nextVersion = incrementVersion(formData.version);
+    if (window.confirm(`새 버전 ${nextVersion}으로 저장하시겠습니까?`)) {
+      updateMutation.mutate({ 
+        type: activeTab, 
+        data: { ...formData, version: nextVersion }
+      });
+    }
   };
+
+  const incrementVersion = (version: string): string => {
+    const parts = version.split('.');
+    if (parts.length === 2) {
+      const [major, minor] = parts;
+      return `${major}.${parseInt(minor) + 1}`;
+    }
+    return `${version}.1`;
+  };
+
+  const renderEditor = (currentDoc: LegalDocument | undefined, history: LegalDocument[]) => (
+    <div className="space-y-4">
+      {currentDoc && (
+        <Card className="border-primary">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>현재 활성 버전</CardTitle>
+                <CardDescription>
+                  버전: {currentDoc.version} | 시행일:{" "}
+                  {new Date(currentDoc.effective_date).toLocaleDateString("ko-KR")}
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={() => setPreviewDoc(currentDoc)} variant="outline">
+                  <Eye className="w-4 h-4 mr-2" />
+                  미리보기
+                </Button>
+                <Button onClick={loadCurrentVersion} variant="outline">
+                  <FileText className="w-4 h-4 mr-2" />
+                  불러오기
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>문서 편집</CardTitle>
+          <CardDescription>
+            새 버전을 작성하면 기존 버전은 자동으로 비활성화되며, 버전 히스토리에 보관됩니다
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="title">문서 제목</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="윈들리아카데미 이용약관"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="version">버전</Label>
+                <Input
+                  id="version"
+                  value={formData.version}
+                  onChange={(e) => setFormData({ ...formData, version: e.target.value })}
+                  placeholder="1.0"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  저장 시 자동으로 버전이 증가합니다
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="content">문서 내용</Label>
+              <Textarea
+                id="content"
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                placeholder="문서 내용을 입력하세요"
+                rows={20}
+                className="font-mono text-sm"
+              />
+              <p className="text-sm text-muted-foreground mt-2">
+                💡 팁: 줄바꿈(Enter)과 빈 줄이 그대로 적용됩니다. 표, 목록 등의 구조를 유지하세요.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="submit" disabled={updateMutation.isPending}>
+                <Save className="w-4 h-4 mr-2" />
+                새 버전 저장 및 적용
+              </Button>
+              {formData.content && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setPreviewDoc({
+                    ...formData,
+                    id: "preview",
+                    document_type: activeTab,
+                    effective_date: new Date().toISOString(),
+                    is_active: false,
+                    created_at: new Date().toISOString()
+                  } as LegalDocument)}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  미리보기
+                </Button>
+              )}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {history.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>버전 히스토리</CardTitle>
+            <CardDescription>
+              과거 버전을 확인하고 불러올 수 있습니다
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {history.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">
+                        버전 {doc.version}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(doc.effective_date).toLocaleDateString("ko-KR")} 시행
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {doc.is_active && (
+                      <span className="px-2 py-1 text-xs rounded bg-primary text-primary-foreground">
+                        현재 활성
+                      </span>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setPreviewDoc(doc)}
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      보기
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => loadVersion(doc)}
+                    >
+                      <FileText className="w-3 h-3 mr-1" />
+                      불러오기
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
 
   return (
     <AdminLayout>
@@ -115,7 +317,7 @@ const LegalDocuments = () => {
         <div>
           <h1 className="text-3xl font-bold">약관 및 정책 관리</h1>
           <p className="text-muted-foreground">
-            이용약관 및 개인정보처리방침을 관리합니다
+            이용약관 및 개인정보처리방침을 관리하고 버전을 추적합니다
           </p>
         </div>
 
@@ -132,176 +334,33 @@ const LegalDocuments = () => {
           </TabsList>
 
           <TabsContent value="terms" className="space-y-4">
-            {activeTerms && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>현재 활성 버전</CardTitle>
-                  <CardDescription>
-                    버전: {activeTerms.version} | 시행일:{" "}
-                    {new Date(activeTerms.effective_date).toLocaleDateString("ko-KR")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => handleLoad(activeTerms)} variant="outline">
-                    현재 버전 불러오기
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card>
-              <CardHeader>
-                <CardTitle>이용약관 업데이트</CardTitle>
-                <CardDescription>
-                  새 버전의 이용약관을 작성하면 기존 버전은 자동으로 비활성화됩니다
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="terms-title">제목</Label>
-                    <Input
-                      id="terms-title"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="윈들리아카데미 이용약관"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="terms-version">버전</Label>
-                    <Input
-                      id="terms-version"
-                      value={formData.version}
-                      onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                      placeholder="1.0"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="terms-content">내용</Label>
-                    <Textarea
-                      id="terms-content"
-                      value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      placeholder="이용약관 내용을 입력하세요"
-                      rows={20}
-                    />
-                  </div>
-
-                  <Button type="submit" disabled={updateMutation.isPending}>
-                    <Save className="w-4 h-4 mr-2" />
-                    새 버전 적용
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+            {renderEditor(activeTerms, termsHistory)}
           </TabsContent>
 
           <TabsContent value="privacy" className="space-y-4">
-            {activePrivacy && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>현재 활성 버전</CardTitle>
-                  <CardDescription>
-                    버전: {activePrivacy.version} | 시행일:{" "}
-                    {new Date(activePrivacy.effective_date).toLocaleDateString("ko-KR")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => handleLoad(activePrivacy)} variant="outline">
-                    현재 버전 불러오기
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card>
-              <CardHeader>
-                <CardTitle>개인정보처리방침 업데이트</CardTitle>
-                <CardDescription>
-                  새 버전의 개인정보처리방침을 작성하면 기존 버전은 자동으로 비활성화됩니다
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="privacy-title">제목</Label>
-                    <Input
-                      id="privacy-title"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="개인정보 처리방침"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="privacy-version">버전</Label>
-                    <Input
-                      id="privacy-version"
-                      value={formData.version}
-                      onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                      placeholder="1.0"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="privacy-content">내용</Label>
-                    <Textarea
-                      id="privacy-content"
-                      value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      placeholder="개인정보처리방침 내용을 입력하세요"
-                      rows={20}
-                    />
-                  </div>
-
-                  <Button type="submit" disabled={updateMutation.isPending}>
-                    <Save className="w-4 h-4 mr-2" />
-                    새 버전 적용
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+            {renderEditor(activePrivacy, privacyHistory)}
           </TabsContent>
         </Tabs>
-
-        {!isLoading && documents && (
-          <Card>
-            <CardHeader>
-              <CardTitle>버전 히스토리</CardTitle>
-              <CardDescription>
-                모든 문서 버전의 히스토리를 확인할 수 있습니다
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {documents.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {doc.document_type === "terms" ? "이용약관" : "개인정보처리방침"} v
-                        {doc.version}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(doc.effective_date).toLocaleDateString("ko-KR")}
-                      </p>
-                    </div>
-                    {doc.is_active && (
-                      <span className="px-2 py-1 text-xs rounded bg-primary text-primary-foreground">
-                        현재 활성
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
+
+      {/* 미리보기 Dialog */}
+      <Dialog open={!!previewDoc} onOpenChange={() => setPreviewDoc(null)}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              {previewDoc?.title} (버전 {previewDoc?.version})
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <div className="text-sm text-muted-foreground mb-4">
+              {previewDoc && new Date(previewDoc.effective_date).toLocaleDateString('ko-KR')} 시행
+            </div>
+            <div className="whitespace-pre-wrap leading-relaxed text-sm">
+              {previewDoc?.content}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };
