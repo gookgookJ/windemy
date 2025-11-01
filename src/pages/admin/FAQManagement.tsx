@@ -8,12 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Save, X, MoveUp, MoveDown, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, Save, ArrowLeft, GripVertical } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface FAQ {
   id: string;
@@ -29,8 +27,7 @@ const FAQManagement = () => {
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [previewFaq, setPreviewFaq] = useState<FAQ | null>(null);
-  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
     category: "",
     question: "",
@@ -53,10 +50,11 @@ const FAQManagement = () => {
     },
   });
 
-  const categories = Array.from(new Set(faqs?.map(f => f.category) || []));
-  const filteredFaqs = activeCategory === "all" 
-    ? faqs 
-    : faqs?.filter(f => f.category === activeCategory);
+  const groupedFaqs = faqs?.reduce((acc, faq) => {
+    if (!acc[faq.category]) acc[faq.category] = [];
+    acc[faq.category].push(faq);
+    return acc;
+  }, {} as Record<string, FAQ[]>);
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -79,7 +77,6 @@ const FAQManagement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-faqs"] });
       toast.success("FAQ가 수정되었습니다");
-      setEditingId(null);
       resetForm();
     },
     onError: () => toast.error("FAQ 수정 실패"),
@@ -98,28 +95,15 @@ const FAQManagement = () => {
     onError: () => toast.error("FAQ 삭제 실패"),
   });
 
-  const reorderMutation = useMutation({
-    mutationFn: async ({ id, newOrder }: { id: string; newOrder: number }) => {
-      const { error } = await supabase
-        .from("faqs")
-        .update({ order_index: newOrder })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-faqs"] });
-      toast.success("순서가 변경되었습니다");
-    },
-    onError: () => toast.error("순서 변경 실패"),
-  });
-
   const resetForm = () => {
     setFormData({ category: "", question: "", answer: "", order_index: 0, is_active: true });
     setEditingId(null);
+    setIsCreating(false);
   };
 
   const handleEdit = (faq: FAQ) => {
     setEditingId(faq.id);
+    setIsCreating(true);
     setFormData({
       category: faq.category,
       question: faq.question,
@@ -143,45 +127,26 @@ const FAQManagement = () => {
     }
   };
 
-  const handleReorder = (faq: FAQ, direction: "up" | "down") => {
-    const sameCategoryFaqs = faqs?.filter(f => f.category === faq.category).sort((a, b) => a.order_index - b.order_index) || [];
-    const currentIndex = sameCategoryFaqs.findIndex(f => f.id === faq.id);
-    
-    if (direction === "up" && currentIndex > 0) {
-      const prevFaq = sameCategoryFaqs[currentIndex - 1];
-      reorderMutation.mutate({ id: faq.id, newOrder: prevFaq.order_index });
-      reorderMutation.mutate({ id: prevFaq.id, newOrder: faq.order_index });
-    } else if (direction === "down" && currentIndex < sameCategoryFaqs.length - 1) {
-      const nextFaq = sameCategoryFaqs[currentIndex + 1];
-      reorderMutation.mutate({ id: faq.id, newOrder: nextFaq.order_index });
-      reorderMutation.mutate({ id: nextFaq.id, newOrder: faq.order_index });
-    }
-  };
+  if (isCreating) {
+    return (
+      <AdminLayout>
+        <div className="space-y-8">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={resetForm}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-2xl md:text-3xl font-bold">{editingId ? "FAQ 수정" : "새 FAQ 추가"}</h1>
+          </div>
 
-  return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">FAQ 관리</h1>
-          <p className="text-muted-foreground">자주 묻는 질문을 카테고리별로 관리합니다</p>
-        </div>
-
-        <Tabs defaultValue="manage">
-          <TabsList>
-            <TabsTrigger value="manage">FAQ 관리</TabsTrigger>
-            <TabsTrigger value="create">새 FAQ 추가</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="create" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>{editingId ? "FAQ 수정" : "새 FAQ 추가"}</CardTitle>
-                <CardDescription>
-                  사용자가 자주 묻는 질문과 답변을 작성하세요
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit}>
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* 편집 영역 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>FAQ 작성</CardTitle>
+                  <CardDescription>질문과 답변을 입력하세요</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="category">카테고리</Label>
@@ -189,12 +154,12 @@ const FAQManagement = () => {
                         id="category"
                         value={formData.category}
                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        placeholder="예: 강의 수강, 결제 및 환불"
+                        placeholder="예: 강의 수강"
                       />
                     </div>
 
                     <div>
-                      <Label htmlFor="order">순서</Label>
+                      <Label htmlFor="order">순서 (낮을수록 먼저 표시)</Label>
                       <Input
                         id="order"
                         type="number"
@@ -213,6 +178,7 @@ const FAQManagement = () => {
                       value={formData.question}
                       onChange={(e) => setFormData({ ...formData, question: e.target.value })}
                       placeholder="예: 강의는 언제까지 수강할 수 있나요?"
+                      className="text-base"
                     />
                   </div>
 
@@ -222,12 +188,12 @@ const FAQManagement = () => {
                       id="answer"
                       value={formData.answer}
                       onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
-                      placeholder="자세한 답변을 입력하세요"
-                      rows={6}
+                      placeholder="자세한 답변을 입력하세요.&#10;&#10;Enter 키로 줄바꿈하면 단락이 구분됩니다."
+                      rows={15}
                     />
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 pt-2">
                     <Switch
                       id="is_active"
                       checked={formData.is_active}
@@ -235,133 +201,149 @@ const FAQManagement = () => {
                         setFormData({ ...formData, is_active: checked })
                       }
                     />
-                    <Label htmlFor="is_active">활성화</Label>
+                    <Label htmlFor="is_active">
+                      {formData.is_active ? "활성화됨 (사용자에게 표시)" : "비활성화됨 (숨김)"}
+                    </Label>
                   </div>
+                </CardContent>
+              </Card>
 
-                  <div className="flex gap-2">
-                    <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                      <Save className="w-4 h-4 mr-2" />
-                      {editingId ? "수정" : "추가"}
-                    </Button>
-                    {editingId && (
-                      <Button type="button" variant="outline" onClick={resetForm}>
-                        <X className="w-4 h-4 mr-2" />
-                        취소
-                      </Button>
+              {/* 미리보기 영역 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>실시간 미리보기</CardTitle>
+                  <CardDescription>사용자에게 보여질 모습입니다</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="border rounded-lg p-5 min-h-[500px] bg-muted/20">
+                    {formData.question || formData.answer ? (
+                      <Accordion type="single" collapsible defaultValue="preview">
+                        <AccordionItem value="preview">
+                          <AccordionTrigger className="hover:no-underline">
+                            <div className="text-left">
+                              <div className="text-xs text-muted-foreground mb-1">{formData.category || "카테고리"}</div>
+                              <span className="font-medium">{formData.question || "질문을 입력하세요"}</span>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="text-muted-foreground text-base leading-relaxed whitespace-pre-wrap pt-4">
+                            {formData.answer || "답변을 입력하세요"}
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    ) : (
+                      <p className="text-muted-foreground text-center py-12">
+                        왼쪽에서 내용을 입력하면 여기에 미리보기가 표시됩니다
+                      </p>
                     )}
                   </div>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                </CardContent>
+              </Card>
+            </div>
 
-          <TabsContent value="manage" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>FAQ 목록</CardTitle>
-                  <Select value={activeCategory} onValueChange={setActiveCategory}>
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="카테고리 선택" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">전체</SelectItem>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <p>로딩 중...</p>
-                ) : !filteredFaqs || filteredFaqs.length === 0 ? (
-                  <p className="text-muted-foreground">등록된 FAQ가 없습니다</p>
-                ) : (
-                  <div className="space-y-4">
-                    {filteredFaqs.map((faq) => (
-                      <Card key={faq.id} className={!faq.is_active ? "opacity-50" : ""}>
-                        <CardHeader>
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <div className="text-sm text-muted-foreground mb-1">
-                                {faq.category} • 순서: {faq.order_index}
+            <div className="flex gap-3 mt-6">
+              <Button type="submit" size="lg" disabled={createMutation.isPending || updateMutation.isPending}>
+                <Save className="w-4 h-4 mr-2" />
+                {editingId ? "수정 완료" : "FAQ 추가"}
+              </Button>
+              <Button type="button" variant="outline" size="lg" onClick={resetForm}>
+                취소
+              </Button>
+            </div>
+          </form>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  return (
+    <AdminLayout>
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl md:text-3xl font-bold">FAQ 관리</h1>
+          <Button onClick={() => setIsCreating(true)} size="lg">
+            <Plus className="w-4 h-4 mr-2" />
+            새 FAQ 추가
+          </Button>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>등록된 FAQ</CardTitle>
+            <CardDescription>총 {faqs?.length || 0}개의 FAQ (카테고리별로 그룹화됨)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <p className="text-center py-8 text-muted-foreground">로딩 중...</p>
+            ) : !faqs || faqs.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-4">등록된 FAQ가 없습니다</p>
+                <Button onClick={() => setIsCreating(true)} variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  첫 FAQ 작성하기
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {Object.entries(groupedFaqs || {}).map(([category, items]) => (
+                  <div key={category}>
+                    <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                      <span>{category}</span>
+                      <span className="text-sm text-muted-foreground">({items.length}개)</span>
+                    </h3>
+                    <div className="space-y-2">
+                      {items.map((faq) => (
+                        <Card key={faq.id} className={!faq.is_active ? "opacity-60 bg-muted/30" : ""}>
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <GripVertical className="w-5 h-5 text-muted-foreground mt-1 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded">
+                                        순서 {faq.order_index}
+                                      </span>
+                                      {!faq.is_active && (
+                                        <span className="text-xs px-2 py-0.5 bg-muted rounded">비활성</span>
+                                      )}
+                                    </div>
+                                    <h4 className="font-medium mb-1">{faq.question}</h4>
+                                    <p className="text-sm text-muted-foreground line-clamp-2">
+                                      {faq.answer}
+                                    </p>
+                                  </div>
+                                  <div className="flex gap-1 flex-shrink-0">
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() => handleEdit(faq)}
+                                      title="수정"
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() => setDeletingId(faq.id)}
+                                      title="삭제"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
                               </div>
-                              <CardTitle className="text-lg">{faq.question}</CardTitle>
-                              <CardDescription className="mt-2">
-                                {faq.answer.substring(0, 100)}
-                                {faq.answer.length > 100 && "..."}
-                              </CardDescription>
                             </div>
-                            <div className="flex gap-1">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => setPreviewFaq(faq)}
-                                title="미리보기"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => handleReorder(faq, "up")}
-                                title="위로"
-                              >
-                                <MoveUp className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => handleReorder(faq, "down")}
-                                title="아래로"
-                              >
-                                <MoveDown className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => handleEdit(faq)}
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => setDeletingId(faq.id)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </CardHeader>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
-
-      {/* 미리보기 Dialog */}
-      <Dialog open={!!previewFaq} onOpenChange={() => setPreviewFaq(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{previewFaq?.question}</DialogTitle>
-          </DialogHeader>
-          <div className="mt-4">
-            <p className="text-sm text-muted-foreground mb-2">
-              카테고리: {previewFaq?.category}
-            </p>
-            <p className="whitespace-pre-wrap leading-relaxed">{previewFaq?.answer}</p>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* 삭제 확인 Dialog */}
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
