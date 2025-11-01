@@ -13,114 +13,44 @@ import Footer from '@/components/Footer';
 const FormattedContent = ({ content }: { content: string }) => {
   if (!content) return null;
   
-  const sections = content.split('\n\n');
+  const lines = content.split('\n');
   
   return (
     <div className="space-y-4">
-      {sections.map((section, index) => {
-        if (section.includes('|') && section.split('|').length > 2) {
-          const lines = section.split('\n');
-          const tableLines = lines.filter(line => 
-            line.includes('|') && 
-            !line.includes(':---') && 
-            !line.includes(':-') &&
-            line.trim() !== ''
-          );
-          
-          if (tableLines.length > 0) {
-            return (
-              <div key={index} className="overflow-x-auto my-6">
-                <table className="min-w-full border-collapse border border-border rounded-lg">
-                  <tbody>
-                    {tableLines.map((line, lineIndex) => {
-                      const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell);
-                      return (
-                        <tr key={lineIndex}>
-                          {cells.map((cell, cellIndex) => (
-                            <td key={cellIndex} className="border border-border px-4 py-3 bg-muted/30">
-                              <span className="text-base">{cell}</span>
-                            </td>
-                          ))}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            );
-          }
-        }
+      {lines.map((line, index) => {
+        const trimmedLine = line.trim();
         
-        if (section.match(/^\s*[0-9]+\./m)) {
-          const lines = section.split('\n');
+        if (!trimmedLine) return null;
+        
+        // 제N장 패턴 (예: 제1장 총칙)
+        if (trimmedLine.match(/^제\d+장/)) {
           return (
-            <div key={index} className="space-y-3">
-              {lines.map((line, lineIndex) => {
-                if (line.match(/^\s*[0-9]+\./)) {
-                  const number = line.match(/^\s*([0-9]+)\./)?.[1];
-                  const content = line.replace(/^\s*[0-9]+\.\s*/, '');
-                  return (
-                    <p key={lineIndex} className="leading-relaxed text-base">
-                      {number}. {formatInlineContent(content)}
-                    </p>
-                  );
-                } else if (line.trim()) {
-                  return (
-                    <p key={lineIndex} className="leading-relaxed text-base">
-                      {formatInlineContent(line)}
-                    </p>
-                  );
-                }
-                return null;
-              })}
-            </div>
+            <h2 key={index} className="text-xl font-bold mt-8 mb-4">
+              {trimmedLine}
+            </h2>
           );
         }
         
-        if (section.match(/^\s*[-•]/m)) {
-          const lines = section.split('\n');
+        // 제N조 패턴 (예: 제1조 (목적))
+        if (trimmedLine.match(/^제\d+조/)) {
           return (
-            <div key={index} className="space-y-2">
-              {lines.map((line, lineIndex) => {
-                if (line.match(/^\s*[-•]/)) {
-                  return (
-                    <p key={lineIndex} className="leading-relaxed text-base">
-                      • {formatInlineContent(line.replace(/^\s*[-•]\s*/, ''))}
-                    </p>
-                  );
-                } else if (line.trim()) {
-                  return (
-                    <p key={lineIndex} className="leading-relaxed text-base">
-                      {formatInlineContent(line)}
-                    </p>
-                  );
-                }
-                return null;
-              })}
-            </div>
+            <h3 key={index} className="text-lg font-bold mt-6 mb-3">
+              {trimmedLine}
+            </h3>
           );
         }
         
+        // 일반 텍스트
         return (
-          <div key={index} className="space-y-3">
-            {section.split('\n').map((line, lineIndex) => (
-              line.trim() ? (
-                <p key={lineIndex} className="leading-relaxed text-base">
-                  {formatInlineContent(line)}
-                </p>
-              ) : null
-            ))}
-          </div>
+          <p key={index} className="leading-relaxed text-base">
+            {trimmedLine}
+          </p>
         );
       })}
     </div>
   );
 };
 
-const formatInlineContent = (text: string) => {
-  if (!text) return text;
-  return text.replace(/\*\*(.*?)\*\*/g, '$1');
-};
 
 // Announcements content from database
 const AnnouncementsContent = () => {
@@ -294,9 +224,6 @@ const PolicyContent = ({ type, title }: { type: 'terms' | 'privacy'; title: stri
   return (
     <Card>
       <CardContent className="p-6 md:p-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-4 text-foreground">
-          {document?.title || title}
-        </h1>
         {document && (
           <div className="text-sm text-muted-foreground mb-8">
             버전: {document.version} | 시행일: {new Date(document.effective_date).toLocaleDateString('ko-KR')}
@@ -307,7 +234,7 @@ const PolicyContent = ({ type, title }: { type: 'terms' | 'privacy'; title: stri
         ) : !document ? (
           <p className="text-muted-foreground">문서를 찾을 수 없습니다</p>
         ) : (
-          <div className="text-muted-foreground leading-relaxed">
+          <div className="text-foreground leading-relaxed">
             <FormattedContent content={document.content} />
           </div>
         )}
