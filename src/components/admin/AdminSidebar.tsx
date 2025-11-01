@@ -168,6 +168,24 @@ const menuItems = [
     url: '/admin/logs',
     icon: FileText,
     group: 'system'
+  },
+  {
+    title: '공지사항 관리',
+    url: '/admin/announcements',
+    icon: MessageSquare,
+    group: 'content'
+  },
+  {
+    title: 'FAQ 관리',
+    url: '/admin/faq-management',
+    icon: FileText,
+    group: 'content'
+  },
+  {
+    title: '약관 및 정책 관리',
+    url: '/admin/legal-documents',
+    icon: Shield,
+    group: 'content'
   }
 ];
 
