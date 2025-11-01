@@ -224,6 +224,9 @@ const PolicyContent = ({ type, title }: { type: 'terms' | 'privacy'; title: stri
   return (
     <Card>
       <CardContent className="p-6 md:p-8">
+        <h1 className="text-2xl md:text-3xl font-bold mb-4 text-foreground">
+          {document?.title || title}
+        </h1>
         {document && (
           <div className="text-sm text-muted-foreground mb-8">
             버전: {document.version} | 시행일: {new Date(document.effective_date).toLocaleDateString('ko-KR')}
