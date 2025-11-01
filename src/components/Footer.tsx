@@ -6,16 +6,11 @@ const Footer = () => {
   return (
     <footer className="bg-slate-950 text-white border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 sm:gap-8 lg:gap-12">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12">
           {/* 첫 번째 컬럼 - 서비스 정보 */}
           <div className="space-y-3 sm:space-y-4">
             <h3 className="font-medium text-white text-sm sm:text-base mb-4 sm:mb-6">서비스</h3>
             <ul className="space-y-2 sm:space-y-3">
-              <li>
-                <Link to="/policies" className="text-slate-400 hover:text-white transition-colors duration-200 text-xs sm:text-sm">
-                  공지사항
-                </Link>
-              </li>
               <li>
                 <Link to="/instructor-apply" className="text-slate-400 hover:text-white transition-colors duration-200 text-xs sm:text-sm">
                   강사 지원하기
@@ -32,24 +27,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* 두 번째 컬럼 - 개인정보&이용약관 */}
-          <div className="space-y-3 sm:space-y-4">
-            <h3 className="font-medium text-white text-sm sm:text-base mb-4 sm:mb-6">개인정보&이용약관</h3>
-            <ul className="space-y-2 sm:space-y-3">
-              <li>
-                <Link to="/policies" className="text-slate-400 hover:text-white transition-colors duration-200 text-xs sm:text-sm">
-                  개인정보처리방침
-                </Link>
-              </li>
-              <li>
-                <Link to="/policies" className="text-slate-400 hover:text-white transition-colors duration-200 text-xs sm:text-sm">
-                  서비스 이용약관
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* 세 번째 컬럼 - 소셜 미디어 */}
+          {/* 두 번째 컬럼 - 소셜 미디어 */}
           <div className="space-y-3 sm:space-y-4 col-span-2 sm:col-span-1">
             <h3 className="font-medium text-white text-sm sm:text-base mb-4 sm:mb-6">소셜 미디어</h3>
             <ul className="space-y-2 sm:space-y-3">

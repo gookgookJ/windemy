@@ -7,7 +7,6 @@ import premiumIcon from "@/assets/icons/premium-icon.png";
 import vodIcon from "@/assets/icons/vod-icon.png";
 import chatIcon from "@/assets/icons/chat-icon.png";
 import couponIcon from "@/assets/icons/coupon-icon.png";
-import announcementIcon from "@/assets/icons/announcement-icon.png";
 import cafeIcon from "@/assets/icons/cafe-icon.png";
 import blogIcon from "@/assets/icons/blog-icon.png";
 
@@ -39,12 +38,6 @@ const CategorySection = memo(() => {
       label: "1:1문의",
       icon: chatIcon,
       link: "channeltalk",
-      isExternal: false
-    },
-    { 
-      label: "공지사항",
-      icon: announcementIcon,
-      link: "/policies",
       isExternal: false
     },
     { 

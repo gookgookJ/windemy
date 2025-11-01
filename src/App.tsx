@@ -39,7 +39,6 @@ const FAQ = React.lazy(() => import("./pages/FAQ"));
 const ProfileSettings = React.lazy(() => import("./pages/ProfileSettings"));
 const About = React.lazy(() => import("./pages/About"));
 const InstructorApply = React.lazy(() => import("./pages/InstructorApply"));
-const Policies = React.lazy(() => import("./pages/Policies"));
 const SecurityTest = React.lazy(() => import("./pages/SecurityTest"));
 
 // Lazy load admin pages (heaviest components)
@@ -62,9 +61,6 @@ const AdminHomepageSections = React.lazy(() => import("./pages/admin/HomepageSec
 const AdminHomepageSectionManager = React.lazy(() => import("./pages/admin/HomepageSectionManager"));
 const AdminAccessPeriod = React.lazy(() => import("./pages/admin/AccessPeriodManagement"));
 const AdminUserDetail = React.lazy(() => import("./pages/admin/UserDetail"));
-const AdminAnnouncements = React.lazy(() => import("./pages/admin/Announcements"));
-const AdminLegalDocuments = React.lazy(() => import("./pages/admin/LegalDocuments"));
-const AdminFAQManagement = React.lazy(() => import("./pages/admin/FAQManagement"));
 
 // Optimized loading fallback with critical CSS classes
 const PageLoading = () => (
@@ -95,7 +91,6 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/instructor-apply" element={<InstructorApply />} />
-                <Route path="/policies" element={<Policies />} />
                 <Route path="/search" element={<SearchResults />} />
                 <Route path="/courses" element={<CourseCatalog />} />
                 <Route path="/courses/:category" element={<CategoryCourses />} />
@@ -131,9 +126,6 @@ const App = () => (
                 <Route path="/admin/hero-slides" element={<AdminHeroSlides />} />
                 <Route path="/admin/homepage-sections" element={<AdminHomepageSections />} />
                 <Route path="/admin/homepage-sections/:sectionType" element={<AdminHomepageSectionManager />} />
-                <Route path="/admin/announcements" element={<AdminAnnouncements />} />
-                <Route path="/admin/legal-documents" element={<AdminLegalDocuments />} />
-                <Route path="/admin/faq-management" element={<AdminFAQManagement />} />
                 <Route path="/security-test" element={<SecurityTest />} />
                 <Route path="/learn/:courseId" element={<Learn />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
