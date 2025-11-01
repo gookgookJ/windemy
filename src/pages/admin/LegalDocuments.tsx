@@ -144,19 +144,14 @@ const LegalDocuments = () => {
   if (isEditing) {
     return (
       <AdminLayout>
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
+        <div className="space-y-8">
+          <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => setIsEditing(false)}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold">
-                {activeTab === "terms" ? "이용약관" : "개인정보처리방침"} 수정
-              </h1>
-              <p className="text-muted-foreground">
-                새 버전을 작성하면 기존 버전은 자동으로 비활성화됩니다
-              </p>
-            </div>
+            <h1 className="text-2xl md:text-3xl font-bold">
+              {activeTab === "terms" ? "이용약관" : "개인정보처리방침"} 수정
+            </h1>
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -204,15 +199,6 @@ const LegalDocuments = () => {
                       rows={25}
                       className="font-mono text-sm"
                     />
-                    <div className="mt-3 p-3 bg-muted/50 rounded-lg">
-                      <p className="text-sm font-semibold mb-2">💡 작성 가이드</p>
-                      <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• Enter 두번으로 단락을 구분하세요</li>
-                        <li>• 제목은 <strong>**굵게**</strong> 표시할 수 있습니다</li>
-                        <li>• <strong>-</strong> 기호로 목록을 만들 수 있습니다</li>
-                        <li>• 표는 <strong>|</strong> 기호로 구분하세요</li>
-                      </ul>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -221,7 +207,6 @@ const LegalDocuments = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>실시간 미리보기</CardTitle>
-                  <CardDescription>사용자에게 보여질 모습입니다</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="border rounded-lg p-6 min-h-[600px] bg-muted/20 overflow-y-auto max-h-[600px]">
@@ -262,13 +247,8 @@ const LegalDocuments = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">약관 및 정책 관리</h1>
-          <p className="text-muted-foreground">
-            이용약관 및 개인정보처리방침을 관리하고 버전을 추적합니다
-          </p>
-        </div>
+      <div className="space-y-8">
+        <h1 className="text-2xl md:text-3xl font-bold">약관 및 정책 관리</h1>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "terms" | "privacy")}>
           <TabsList className="grid w-full grid-cols-2">
@@ -294,9 +274,14 @@ const LegalDocuments = () => {
                         {new Date(currentDoc.effective_date).toLocaleDateString("ko-KR")}
                       </CardDescription>
                     </div>
-                    <Button onClick={() => setIsEditing(true)} size="lg">
-                      새 버전 작성
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button onClick={() => setIsEditing(true)} size="lg">
+                        새 버전 작성
+                      </Button>
+                      <Button variant="outline" onClick={() => currentDoc && loadVersion(currentDoc)} size="lg">
+                        현재 버전 불러오기
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -370,9 +355,14 @@ const LegalDocuments = () => {
                         {new Date(currentDoc.effective_date).toLocaleDateString("ko-KR")}
                       </CardDescription>
                     </div>
-                    <Button onClick={() => setIsEditing(true)} size="lg">
-                      새 버전 작성
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button onClick={() => setIsEditing(true)} size="lg">
+                        새 버전 작성
+                      </Button>
+                      <Button variant="outline" onClick={() => currentDoc && loadVersion(currentDoc)} size="lg">
+                        현재 버전 불러오기
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>

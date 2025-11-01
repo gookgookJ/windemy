@@ -130,15 +130,12 @@ const FAQManagement = () => {
   if (isCreating) {
     return (
       <AdminLayout>
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
+        <div className="space-y-8">
+          <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={resetForm}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold">{editingId ? "FAQ 수정" : "새 FAQ 추가"}</h1>
-              <p className="text-muted-foreground">자주 묻는 질문과 답변을 작성하세요</p>
-            </div>
+            <h1 className="text-2xl md:text-3xl font-bold">{editingId ? "FAQ 수정" : "새 FAQ 추가"}</h1>
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -194,14 +191,6 @@ const FAQManagement = () => {
                       placeholder="자세한 답변을 입력하세요.&#10;&#10;Enter 키로 줄바꿈하면 단락이 구분됩니다."
                       rows={15}
                     />
-                    <div className="mt-3 p-3 bg-muted/50 rounded-lg">
-                      <p className="text-sm font-semibold mb-2">💡 작성 가이드</p>
-                      <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• 간결하고 명확하게 작성하세요</li>
-                        <li>• Enter 두번으로 단락을 구분하세요</li>
-                        <li>• 필요시 예시를 포함하세요</li>
-                      </ul>
-                    </div>
                   </div>
 
                   <div className="flex items-center space-x-2 pt-2">
@@ -268,12 +257,9 @@ const FAQManagement = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">FAQ 관리</h1>
-            <p className="text-muted-foreground">자주 묻는 질문을 카테고리별로 관리합니다</p>
-          </div>
+          <h1 className="text-2xl md:text-3xl font-bold">FAQ 관리</h1>
           <Button onClick={() => setIsCreating(true)} size="lg">
             <Plus className="w-4 h-4 mr-2" />
             새 FAQ 추가

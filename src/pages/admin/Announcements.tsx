@@ -120,15 +120,12 @@ const Announcements = () => {
   if (isCreating) {
     return (
       <AdminLayout>
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
+        <div className="space-y-8">
+          <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={resetForm}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold">{editingId ? "공지사항 수정" : "새 공지사항 작성"}</h1>
-              <p className="text-muted-foreground">사용자에게 전달할 중요한 내용을 작성하세요</p>
-            </div>
+            <h1 className="text-2xl md:text-3xl font-bold">{editingId ? "공지사항 수정" : "새 공지사항 작성"}</h1>
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -161,14 +158,6 @@ const Announcements = () => {
                       rows={20}
                       className="font-mono"
                     />
-                    <div className="mt-3 p-3 bg-muted/50 rounded-lg">
-                      <p className="text-sm font-semibold mb-2">💡 작성 가이드</p>
-                      <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• <strong>Enter 한번</strong>: 줄바꿈</li>
-                        <li>• <strong>Enter 두번</strong>: 단락 구분</li>
-                        <li>• <strong>- 기호</strong>: 목록 만들기</li>
-                      </ul>
-                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 pt-2">
@@ -246,12 +235,9 @@ const Announcements = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">공지사항 관리</h1>
-            <p className="text-muted-foreground">사용자에게 표시될 공지사항을 관리합니다</p>
-          </div>
+          <h1 className="text-2xl md:text-3xl font-bold">공지사항 관리</h1>
           <Button onClick={() => setIsCreating(true)} size="lg">
             <Plus className="w-4 h-4 mr-2" />
             새 공지사항 작성
