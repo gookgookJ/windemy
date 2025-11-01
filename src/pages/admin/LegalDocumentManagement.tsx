@@ -6,11 +6,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { FileText, Plus, Trash2, Edit, Eye, EyeOff } from 'lucide-react';
+import { FileText, Plus, Trash2, Edit, Eye, EyeOff, Database } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { defaultTermsData, defaultPrivacyData } from '@/data/policyData';
 
 interface LegalDocument {
   id: string;
@@ -161,6 +162,34 @@ const LegalDocumentManagement = () => {
     setIsDialogOpen(true);
   };
 
+  const migrateDefaultData = async () => {
+    const dataToMigrate = activeTab === 'terms' ? defaultTermsData : defaultPrivacyData;
+    const typeName = activeTab === 'terms' ? '이용약관' : '개인정보처리방침';
+    
+    if (!confirm(`기본 ${typeName} 데이터를 DB에 추가하시겠습니까?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('legal_documents')
+        .insert(dataToMigrate.map(item => ({
+          document_type: activeTab,
+          title: item.title,
+          content: item.content,
+          section_id: item.section_id,
+          order_index: item.order_index,
+          is_published: true,
+          version: '1.0'
+        })));
+
+      if (error) throw error;
+      toast.success(`기본 ${typeName} 데이터가 추가되었습니다.`);
+      fetchDocuments();
+    } catch (error) {
+      console.error('Error migrating data:', error);
+      toast.error('데이터 마이그레이션에 실패했습니다.');
+    }
+  };
+
   const termsDocuments = documents.filter(doc => doc.document_type === 'terms');
   const privacyDocuments = documents.filter(doc => doc.document_type === 'privacy');
 
@@ -239,8 +268,13 @@ const LegalDocumentManagement = () => {
           <FileText className="h-6 w-6" />
           <h1 className="text-3xl font-bold">약관 및 정책 관리</h1>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={migrateDefaultData}>
+            <Database className="h-4 w-4 mr-2" />
+            기본 데이터 추가
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
             <Button onClick={openCreateDialog}>
               <Plus className="h-4 w-4 mr-2" />
               문서 등록
@@ -338,6 +372,7 @@ const LegalDocumentManagement = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

@@ -10,6 +10,7 @@ import UserSidebar from '@/components/UserSidebar';
 import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { defaultFaqs } from '@/data/policyData';
 
 interface FAQ {
   id: string;
@@ -47,10 +48,13 @@ const FAQ = () => {
         .order('order_index');
 
       if (error) throw error;
-      setFaqs(data || []);
+      
+      // DB에 데이터가 없으면 기본 데이터 사용
+      setFaqs(data && data.length > 0 ? data : defaultFaqs as any);
     } catch (error) {
       console.error('Error fetching FAQs:', error);
-      toast.error('FAQ를 불러오는데 실패했습니다.');
+      // 에러 발생시 기본 데이터 사용
+      setFaqs(defaultFaqs as any);
     } finally {
       setLoading(false);
     }

@@ -6,9 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Bell, Plus, Trash2, Edit, Eye, EyeOff } from 'lucide-react';
+import { Bell, Plus, Trash2, Edit, Eye, EyeOff, Database } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { defaultAnnouncements } from '@/data/policyData';
 
 interface Announcement {
   id: string;
@@ -140,6 +141,27 @@ const AnnouncementManagement = () => {
     setIsDialogOpen(true);
   };
 
+  const migrateDefaultData = async () => {
+    if (!confirm('기본 공지사항 데이터를 DB에 추가하시겠습니까?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .insert(defaultAnnouncements.map(item => ({
+          title: item.title,
+          content: item.content,
+          is_published: true
+        })));
+
+      if (error) throw error;
+      toast.success('기본 데이터가 추가되었습니다.');
+      fetchAnnouncements();
+    } catch (error) {
+      console.error('Error migrating data:', error);
+      toast.error('데이터 마이그레이션에 실패했습니다.');
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">로딩 중...</div>;
   }
@@ -151,8 +173,13 @@ const AnnouncementManagement = () => {
           <Bell className="h-6 w-6" />
           <h1 className="text-3xl font-bold">공지사항 관리</h1>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={migrateDefaultData}>
+            <Database className="h-4 w-4 mr-2" />
+            기본 데이터 추가
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
             <Button onClick={openCreateDialog}>
               <Plus className="h-4 w-4 mr-2" />
               공지사항 등록
@@ -205,6 +232,7 @@ const AnnouncementManagement = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-4">

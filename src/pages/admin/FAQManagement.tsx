@@ -6,10 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { HelpCircle, Plus, Trash2, Edit, Eye, EyeOff } from 'lucide-react';
+import { HelpCircle, Plus, Trash2, Edit, Eye, EyeOff, Database } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { defaultFaqs } from '@/data/policyData';
 
 interface FAQ {
   id: string;
@@ -158,6 +159,29 @@ const FAQManagement = () => {
     setIsDialogOpen(true);
   };
 
+  const migrateDefaultData = async () => {
+    if (!confirm('기본 FAQ 데이터를 DB에 추가하시겠습니까?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('faqs')
+        .insert(defaultFaqs.map(item => ({
+          category: item.category,
+          question: item.question,
+          answer: item.answer,
+          order_index: item.order_index,
+          is_published: true
+        })));
+
+      if (error) throw error;
+      toast.success('기본 데이터가 추가되었습니다.');
+      fetchFaqs();
+    } catch (error) {
+      console.error('Error migrating data:', error);
+      toast.error('데이터 마이그레이션에 실패했습니다.');
+    }
+  };
+
   const filteredFaqs = selectedCategory === '전체' 
     ? faqs 
     : faqs.filter(faq => faq.category === selectedCategory);
@@ -182,6 +206,10 @@ const FAQManagement = () => {
           <h1 className="text-3xl font-bold">FAQ 관리</h1>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={migrateDefaultData}>
+            <Database className="h-4 w-4 mr-2" />
+            기본 데이터 추가
+          </Button>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="카테고리 선택" />

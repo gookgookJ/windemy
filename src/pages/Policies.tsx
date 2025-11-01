@@ -8,6 +8,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { defaultAnnouncements, defaultFaqs, defaultTermsData, defaultPrivacyData } from '@/data/policyData';
 
 interface Announcement {
   id: string;
@@ -133,17 +134,27 @@ const PoliciesPage = () => {
       if (faqsRes.error) throw faqsRes.error;
       if (legalDocsRes.error) throw legalDocsRes.error;
 
-      setAnnouncements(announcementsRes.data || []);
-      setFaqs(faqsRes.data || []);
+      // DB 데이터와 기본 데이터 병합
+      const dbAnnouncements = announcementsRes.data || [];
+      const dbFaqs = faqsRes.data || [];
+      const dbLegalDocs = legalDocsRes.data || [];
       
-      const terms = legalDocsRes.data?.filter(doc => doc.document_type === 'terms') || [];
-      const privacy = legalDocsRes.data?.filter(doc => doc.document_type === 'privacy') || [];
+      // DB에 데이터가 없으면 기본 데이터 사용
+      setAnnouncements(dbAnnouncements.length > 0 ? dbAnnouncements : defaultAnnouncements as any);
+      setFaqs(dbFaqs.length > 0 ? dbFaqs : defaultFaqs as any);
       
-      setTermsDocuments(terms);
-      setPrivacyDocuments(privacy);
+      const terms = dbLegalDocs.filter(doc => doc.document_type === 'terms');
+      const privacy = dbLegalDocs.filter(doc => doc.document_type === 'privacy');
+      
+      setTermsDocuments(terms.length > 0 ? terms : defaultTermsData as any);
+      setPrivacyDocuments(privacy.length > 0 ? privacy : defaultPrivacyData as any);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('데이터를 불러오는데 실패했습니다.');
+      // 에러 발생시 기본 데이터 사용
+      setAnnouncements(defaultAnnouncements as any);
+      setFaqs(defaultFaqs as any);
+      setTermsDocuments(defaultTermsData as any);
+      setPrivacyDocuments(defaultPrivacyData as any);
     } finally {
       setLoading(false);
     }
