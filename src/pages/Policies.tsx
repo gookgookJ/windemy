@@ -13,95 +13,113 @@ import Footer from '@/components/Footer';
 const FormattedContent = ({ content }: { content: string }) => {
   if (!content) return null;
   
-  const lines = content.split('\n');
+  const sections = content.split('\n\n');
   
   return (
-    <div className="space-y-6">
-      {lines.map((line, index) => {
-        const trimmedLine = line.trim();
-        if (!trimmedLine) return <div key={index} className="h-2" />;
+    <div className="space-y-4">
+      {sections.map((section, index) => {
+        if (section.includes('|') && section.split('|').length > 2) {
+          const lines = section.split('\n');
+          const tableLines = lines.filter(line => 
+            line.includes('|') && 
+            !line.includes(':---') && 
+            !line.includes(':-') &&
+            line.trim() !== ''
+          );
+          
+          if (tableLines.length > 0) {
+            return (
+              <div key={index} className="overflow-x-auto my-6">
+                <table className="min-w-full border-collapse border border-border rounded-lg">
+                  <tbody>
+                    {tableLines.map((line, lineIndex) => {
+                      const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell);
+                      return (
+                        <tr key={lineIndex}>
+                          {cells.map((cell, cellIndex) => (
+                            <td key={cellIndex} className="border border-border px-4 py-3 bg-muted/30">
+                              <span className="text-base">{cell}</span>
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          }
+        }
         
-        // Main title (e.g., "서비스 이용약관")
-        if (index === 0 || (trimmedLine.includes('약관') && !trimmedLine.startsWith('제'))) {
+        if (section.match(/^\s*[0-9]+\./m)) {
+          const lines = section.split('\n');
           return (
-            <h2 key={index} className="text-3xl font-bold mt-8 mb-6 text-foreground">
-              {trimmedLine}
-            </h2>
+            <div key={index} className="space-y-3">
+              {lines.map((line, lineIndex) => {
+                if (line.match(/^\s*[0-9]+\./)) {
+                  const number = line.match(/^\s*([0-9]+)\./)?.[1];
+                  const content = line.replace(/^\s*[0-9]+\.\s*/, '');
+                  return (
+                    <p key={lineIndex} className="leading-relaxed text-base">
+                      {number}. {formatInlineContent(content)}
+                    </p>
+                  );
+                } else if (line.trim()) {
+                  return (
+                    <p key={lineIndex} className="leading-relaxed text-base">
+                      {formatInlineContent(line)}
+                    </p>
+                  );
+                }
+                return null;
+              })}
+            </div>
           );
         }
         
-        // Chapter title (e.g., "제1장 총칙")
-        if (trimmedLine.match(/^제\d+장/)) {
+        if (section.match(/^\s*[-•]/m)) {
+          const lines = section.split('\n');
           return (
-            <h3 key={index} className="text-2xl font-bold mt-8 mb-4 text-foreground">
-              {trimmedLine}
-            </h3>
+            <div key={index} className="space-y-2">
+              {lines.map((line, lineIndex) => {
+                if (line.match(/^\s*[-•]/)) {
+                  return (
+                    <p key={lineIndex} className="leading-relaxed text-base">
+                      • {formatInlineContent(line.replace(/^\s*[-•]\s*/, ''))}
+                    </p>
+                  );
+                } else if (line.trim()) {
+                  return (
+                    <p key={lineIndex} className="leading-relaxed text-base">
+                      {formatInlineContent(line)}
+                    </p>
+                  );
+                }
+                return null;
+              })}
+            </div>
           );
         }
         
-        // Article title (e.g., "제1조 (목적)")
-        if (trimmedLine.match(/^제\d+조/)) {
-          return (
-            <h4 key={index} className="text-xl font-semibold mt-6 mb-3 text-foreground">
-              {trimmedLine}
-            </h4>
-          );
-        }
-        
-        // Roman numeral paragraphs (①, ②, ③)
-        if (trimmedLine.match(/^[①②③④⑤⑥⑦⑧⑨⑩]/)) {
-          return (
-            <p key={index} className="leading-relaxed text-base text-foreground ml-2 mb-3">
-              {trimmedLine}
-            </p>
-          );
-        }
-        
-        // Numbered list (1., 2., 3., etc.)
-        if (trimmedLine.match(/^\d+\.\s/)) {
-          return (
-            <p key={index} className="leading-relaxed text-base text-foreground ml-4 mb-2">
-              {trimmedLine}
-            </p>
-          );
-        }
-        
-        // Sub-items (가., 나., 다., etc.)
-        if (trimmedLine.match(/^[가-힣]\.\s/)) {
-          return (
-            <p key={index} className="leading-relaxed text-base text-foreground ml-8 mb-2">
-              {trimmedLine}
-            </p>
-          );
-        }
-        
-        // Bullet points (•)
-        if (trimmedLine.startsWith('•')) {
-          return (
-            <p key={index} className="leading-relaxed text-base text-foreground ml-6 mb-2">
-              {trimmedLine}
-            </p>
-          );
-        }
-        
-        // Date information (공고일자, 시행일자)
-        if (trimmedLine.includes('일자:')) {
-          return (
-            <p key={index} className="text-sm text-muted-foreground mt-6 italic">
-              {trimmedLine}
-            </p>
-          );
-        }
-        
-        // Regular paragraph
         return (
-          <p key={index} className="leading-relaxed text-base text-foreground mb-3">
-            {trimmedLine}
-          </p>
+          <div key={index} className="space-y-3">
+            {section.split('\n').map((line, lineIndex) => (
+              line.trim() ? (
+                <p key={lineIndex} className="leading-relaxed text-base">
+                  {formatInlineContent(line)}
+                </p>
+              ) : null
+            ))}
+          </div>
         );
       })}
     </div>
   );
+};
+
+const formatInlineContent = (text: string) => {
+  if (!text) return text;
+  return text.replace(/\*\*(.*?)\*\*/g, '$1');
 };
 
 // Announcements content from database
