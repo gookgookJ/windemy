@@ -134,36 +134,6 @@ export type Database = {
         }
         Relationships: []
       }
-      announcements: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          is_active: boolean
-          priority: number
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          priority?: number
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          priority?: number
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       best_blog_posts: {
         Row: {
           created_at: string
@@ -800,39 +770,6 @@ export type Database = {
           },
         ]
       }
-      faqs: {
-        Row: {
-          answer: string
-          category: string
-          created_at: string
-          id: string
-          is_active: boolean
-          order_index: number
-          question: string
-          updated_at: string
-        }
-        Insert: {
-          answer: string
-          category: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          order_index?: number
-          question: string
-          updated_at?: string
-        }
-        Update: {
-          answer?: string
-          category?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          order_index?: number
-          question?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       hero_slides: {
         Row: {
           background_color: string | null
@@ -1042,45 +979,6 @@ export type Database = {
           instructor_avatar_url?: string | null
           instructor_bio?: string | null
           updated_at?: string
-        }
-        Relationships: []
-      }
-      legal_documents: {
-        Row: {
-          content: string
-          created_at: string
-          created_by: string | null
-          document_type: string
-          effective_date: string
-          id: string
-          is_active: boolean
-          title: string
-          updated_at: string
-          version: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          created_by?: string | null
-          document_type: string
-          effective_date?: string
-          id?: string
-          is_active?: boolean
-          title: string
-          updated_at?: string
-          version: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          created_by?: string | null
-          document_type?: string
-          effective_date?: string
-          id?: string
-          is_active?: boolean
-          title?: string
-          updated_at?: string
-          version?: string
         }
         Relationships: []
       }
