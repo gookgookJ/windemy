@@ -34,7 +34,10 @@ import {
   Crown,
   Monitor,
   ChevronRight,
-  Clock
+  Clock,
+  Megaphone,
+  HelpCircle,
+  ScrollText
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -118,20 +121,20 @@ const menuItems = [
   {
     title: '공지사항 관리',
     url: '/admin/announcements',
-    icon: MessageSquare,
-    group: 'content'
+    icon: Megaphone,
+    group: 'policy'
   },
   {
     title: 'FAQ 관리',
     url: '/admin/faqs',
-    icon: FileText,
-    group: 'content'
+    icon: HelpCircle,
+    group: 'policy'
   },
   {
     title: '정책 문서 관리',
     url: '/admin/policies',
-    icon: Shield,
-    group: 'content'
+    icon: ScrollText,
+    group: 'policy'
   },
   {
     title: '주문 관리',
@@ -192,6 +195,7 @@ const menuItems = [
 const groupLabels = {
   main: '주요 관리',
   content: '콘텐츠 관리',
+  policy: '정책 관리',
   analytics: '학습 분석',
   marketing: '마케팅',
   system: '시스템 관리'
