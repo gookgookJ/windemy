@@ -10,9 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Edit, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Edit, Trash2, GripVertical, FolderPlus } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
 interface FAQ {
   id: string;
@@ -30,7 +32,10 @@ export default function FAQManagement() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<FAQ | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [isNewCategory, setIsNewCategory] = useState(false);
   const [formData, setFormData] = useState({
     category: '',
     question: '',
@@ -130,6 +135,48 @@ export default function FAQManagement() {
       is_active: true,
     });
     setEditingItem(null);
+    setIsNewCategory(false);
+  };
+
+  const handleDragEnd = async (result: DropResult, category: string) => {
+    if (!result.destination) return;
+
+    const items = groupedFaqs[category];
+    const reorderedItems = Array.from(items);
+    const [movedItem] = reorderedItems.splice(result.source.index, 1);
+    reorderedItems.splice(result.destination.index, 0, movedItem);
+
+    // Update order_index for all items in this category
+    try {
+      const updates = reorderedItems.map((item, index) => 
+        supabase
+          .from('faqs')
+          .update({ order_index: index })
+          .eq('id', item.id)
+      );
+      await Promise.all(updates);
+      fetchFAQs();
+      toast.success('순서가 변경되었습니다.');
+    } catch (error) {
+      console.error('Error updating order:', error);
+      toast.error('순서 변경에 실패했습니다.');
+    }
+  };
+
+  const handleCreateCategory = () => {
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleSaveNewCategory = () => {
+    if (!newCategoryName.trim()) {
+      toast.error('카테고리 이름을 입력해주세요.');
+      return;
+    }
+    setFormData({ ...formData, category: newCategoryName });
+    setIsNewCategory(false);
+    setNewCategoryName('');
+    setIsCategoryModalOpen(false);
+    setIsModalOpen(true);
   };
 
   // Group FAQs by category
@@ -141,15 +188,24 @@ export default function FAQManagement() {
     return acc;
   }, {} as Record<string, FAQ[]>);
 
+  // Get existing categories for dropdown
+  const existingCategories = Array.from(new Set(faqs.map(f => f.category)));
+
   return (
     <AdminLayout>
       <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">FAQ 관리</h1>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          신규 FAQ
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleCreateCategory}>
+            <FolderPlus className="h-4 w-4 mr-2" />
+            신규 카테고리
+          </Button>
+          <Button onClick={() => setIsModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            신규 FAQ
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -162,39 +218,53 @@ export default function FAQManagement() {
                 <CardTitle>{category} ({items.length})</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12"></TableHead>
-                      <TableHead>질문</TableHead>
-                      <TableHead>상태</TableHead>
-                      <TableHead className="text-right">작업</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {items.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
-                        </TableCell>
-                        <TableCell className="font-medium">{item.question}</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs ${item.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                            {item.is_active ? '활성' : '비활성'}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right space-x-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="destructive" size="sm" onClick={() => handleDelete(item.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
+                <DragDropContext onDragEnd={(result) => handleDragEnd(result, category)}>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12"></TableHead>
+                        <TableHead>질문</TableHead>
+                        <TableHead>상태</TableHead>
+                        <TableHead className="text-right">작업</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <Droppable droppableId={category}>
+                      {(provided) => (
+                        <TableBody ref={provided.innerRef} {...provided.droppableProps}>
+                          {items.map((item, index) => (
+                            <Draggable key={item.id} draggableId={item.id} index={index}>
+                              {(provided) => (
+                                <TableRow 
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                >
+                                  <TableCell {...provided.dragHandleProps}>
+                                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
+                                  </TableCell>
+                                  <TableCell className="font-medium">{item.question}</TableCell>
+                                  <TableCell>
+                                    <span className={`px-2 py-1 rounded-full text-xs ${item.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                      {item.is_active ? '활성' : '비활성'}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="text-right space-x-2">
+                                    <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="destructive" size="sm" onClick={() => handleDelete(item.id)}>
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </TableBody>
+                      )}
+                    </Droppable>
+                  </Table>
+                </DragDropContext>
               </CardContent>
             </Card>
           ))}
@@ -209,13 +279,40 @@ export default function FAQManagement() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="category">카테고리</Label>
-              <Input
-                id="category"
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                placeholder="예: 강의 수강, 결제 및 환불"
-                required
-              />
+              {isNewCategory ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    placeholder="새 카테고리 이름 입력"
+                    required
+                  />
+                  <Button type="button" variant="outline" onClick={() => setIsNewCategory(false)}>
+                    기존 선택
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="카테고리 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {existingCategories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" variant="outline" onClick={() => setIsNewCategory(true)}>
+                    신규
+                  </Button>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="question">질문</Label>
@@ -253,6 +350,33 @@ export default function FAQManagement() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>새 카테고리 생성</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="newCategory">카테고리 이름</Label>
+              <Input
+                id="newCategory"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="예: 강의 수강, 결제 및 환불"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => { setIsCategoryModalOpen(false); setNewCategoryName(''); }}>
+                취소
+              </Button>
+              <Button onClick={handleSaveNewCategory}>
+                생성하고 FAQ 추가
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
       </div>
