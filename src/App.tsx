@@ -62,6 +62,9 @@ const AdminHomepageSections = React.lazy(() => import("./pages/admin/HomepageSec
 const AdminHomepageSectionManager = React.lazy(() => import("./pages/admin/HomepageSectionManager"));
 const AdminAccessPeriod = React.lazy(() => import("./pages/admin/AccessPeriodManagement"));
 const AdminUserDetail = React.lazy(() => import("./pages/admin/UserDetail"));
+const AdminAnnouncements = React.lazy(() => import("./pages/admin/AnnouncementManagement"));
+const AdminFAQs = React.lazy(() => import("./pages/admin/FAQManagement"));
+const AdminPolicies = React.lazy(() => import("./pages/admin/PolicyManagement"));
 
 // Optimized loading fallback with critical CSS classes
 const PageLoading = () => (
@@ -128,6 +131,9 @@ const App = () => (
                 <Route path="/admin/hero-slides" element={<AdminHeroSlides />} />
                 <Route path="/admin/homepage-sections" element={<AdminHomepageSections />} />
                 <Route path="/admin/homepage-sections/:sectionType" element={<AdminHomepageSectionManager />} />
+                <Route path="/admin/announcements" element={<AdminAnnouncements />} />
+                <Route path="/admin/faqs" element={<AdminFAQs />} />
+                <Route path="/admin/policies" element={<AdminPolicies />} />
                 <Route path="/security-test" element={<SecurityTest />} />
                 <Route path="/learn/:courseId" element={<Learn />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

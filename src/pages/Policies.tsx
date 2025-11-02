@@ -1,6 +1,4 @@
-// src/pages/Policies.jsx
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
@@ -8,18 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Bell, HelpCircle, FileText, Shield, Search, Calendar } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-// Formatted content component to handle markdown-like formatting
 const FormattedContent = ({ content }: { content: string }) => {
   if (!content) return null;
   
-  // Split content by double newlines to identify paragraphs and sections
   const sections = content.split('\n\n');
   
   return (
     <div className="space-y-4">
       {sections.map((section, index) => {
-        // Handle tables (content with | characters)
         if (section.includes('|') && section.split('|').length > 2) {
           const lines = section.split('\n');
           const tableLines = lines.filter(line => 
@@ -53,7 +50,6 @@ const FormattedContent = ({ content }: { content: string }) => {
           }
         }
         
-        // Handle numbered lists - no indentation, simple numbers
         if (section.match(/^\s*[0-9]+\./m)) {
           const lines = section.split('\n');
           return (
@@ -80,7 +76,6 @@ const FormattedContent = ({ content }: { content: string }) => {
           );
         }
         
-        // Handle bulleted lists - no indentation, simple bullets
         if (section.match(/^\s*[-•]/m)) {
           const lines = section.split('\n');
           return (
@@ -105,7 +100,6 @@ const FormattedContent = ({ content }: { content: string }) => {
           );
         }
         
-        // Regular paragraphs
         return (
           <div key={index} className="space-y-3">
             {section.split('\n').map((line, lineIndex) => (
@@ -122,117 +116,112 @@ const FormattedContent = ({ content }: { content: string }) => {
   );
 };
 
-// Helper function to format inline content - very limited bold formatting
 const formatInlineContent = (text: string) => {
   if (!text) return text;
-  
-  // Remove all bold formatting - return plain text
   return text.replace(/\*\*(.*?)\*\*/g, '$1');
 };
 
-// --- 데이터 ---
+// Data types
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  published_date: string;
+  order_index: number;
+}
 
-// 오늘 날짜를 YYYY년 MM월 DD일 형식으로 생성
-const today = new Date();
-const formattedDate = `${today.getFullYear()}년 ${String(today.getMonth() + 1).padStart(2, '0')}월 ${String(today.getDate()).padStart(2, '0')}일`;
+interface FAQ {
+  id: string;
+  category: string;
+  question: string;
+  answer: string;
+  order_index: number;
+}
 
-const announcements = [
-  { 
-    id: 1, 
-    date: formattedDate, 
-    title: "윈들리아카데미에 오신 것을 환영합니다", 
-    content: `안녕하세요, 윈들리아카데미에 오신 것을 환영합니다!
-윈들리아카데미는 이커머스 사업의 성공을 위한 실전 노하우와 전략을 제공하는 교육 플랫폼입니다.
+interface PolicyDocument {
+  id: string;
+  document_type: 'terms' | 'privacy';
+  section_id: string;
+  title: string;
+  content: string;
+  order_index: number;
+}
 
-- 이커머스 사업과 관련해서 궁금했던 부분들
-- 매출 상승을 위한 실전 전략
-- AI 활용 전략 및 자동화 기법
-- 성공적인 온라인 비즈니스 운영 방법
-
-윈들리아카데미는 여러분의 사업 성장을 위해 검증된 노하우와 
-실전 경험을 바탕으로 한 교육 콘텐츠를 제공합니다.` 
-  },
-];
-
-const faqData = [
-  { category: "강의 수강", items: [ { question: "강의는 언제까지 수강할 수 있나요?", answer: "구매한 강의는 평생 소장하여 언제든지 수강하실 수 있습니다. 단, 일부 라이브 강의나 특별 프로그램은 수강 기간이 제한될 수 있습니다." }, { question: "모바일에서도 강의를 들을 수 있나요?", answer: "네, 모바일 브라우저를 통해 언제 어디서든 강의를 수강하실 수 있습니다. 모바일 앱도 준비 중이니 조금만 기다려주세요." } ] },
-  { category: "결제 및 환불", items: [ { question: "어떤 결제 방법을 지원하나요?", answer: "신용카드, 체크카드, 계좌이체, 카카오페이, 토스페이 등 다양한 결제 방법을 지원합니다." }, { question: "환불 정책이 어떻게 되나요?", answer: "구매 후 7일 이내, 강의 진도율 10% 미만일 경우 100% 환불이 가능합니다. 자세한 환불 정책은 이용약관을 참고해주세요." } ] }
-];
-
-// --- [업데이트] 이용약관 데이터 ---
-const termsData = [
-    { id: "terms-intro", title: "제1장 총칙", content: "" },
-    { id: "terms-1", title: "제1조 (목적)", content: "이 약관은 (주) 어베어(이하 '회사')이 운영하는 윈들리아카데미(Windly Academy) 및 관련 플랫폼(이하 '서비스')에서 제공하는 교육 콘텐츠 및 제반 서비스의 이용과 관련하여 회사와 이용자의 권리, 의무 및 책임사항 등을 규정함을 목적으로 합니다." },
-    { id: "terms-2", title: "제2조 (정의)", content: "이 약관에서 사용하는 용어의 정의는 다음과 같습니다.\n1. '서비스': 회사가 이용자에게 온라인 동영상 강의(VOD), 실시간 라이브 강의, 오프라인 교육, 1:1 코칭/컨설팅, 전자책, 기타 교육 자료 등(이하 '콘텐츠')을 제공하는 제반 서비스를 의미합니다.\n2. '회원': 회사와 이용계약을 체결하고 회사가 제공하는 서비스를 계속적으로 이용할 수 있는 자를 말합니다.\n3. '유료 서비스': 회원이 회사에 일정 금액을 지불하고 이용하는 콘텐츠 및 서비스를 의미합니다.\n4. '수강 기간': 회원이 유료 서비스를 이용할 수 있도록 허용된 기간을 의미합니다." },
-    { id: "terms-3", title: "제3조 (약관 등의 명시와 설명 및 개정)", content: "① 회사는 이 약관의 내용을 이용자가 쉽게 알 수 있도록 서비스 초기 화면에 게시합니다.\n② 회사는 「전자상거래 등에서의 소비자보호에 관한 법률」, 「약관의 규제에 관한 법률」 등 관련 법을 위배하지 않는 범위에서 이 약관을 개정할 수 있습니다.\n③ 회사가 약관을 개정할 경우에는 적용일자 7일 이전부터 공지합니다. 다만, 이용자에게 불리하게 약관내용을 변경하는 경우에는 최소한 30일 이상의 사전 유예기간을 두고 공지합니다." },
-    { id: "terms-chapter2", title: "제2장 회원가입 및 관리", content: "" },
-    { id: "terms-4", title: "제4조 (회원가입 및 이용계약 체결)", content: "① 이용자는 회사가 정한 가입 양식에 따라 회원정보를 기입한 후 이 약관에 동의함으로써 회원가입을 신청합니다.\n② 회사는 다음 각 호에 해당하는 신청에 대하여는 승낙을 하지 않거나 사후에 이용계약을 해지할 수 있습니다.\n   1. 가입신청자가 이 약관에 의하여 이전에 회원자격을 상실한 적이 있는 경우\n   2. 등록 내용에 허위, 기재누락, 오기가 있거나 타인의 명의를 이용한 경우\n   3. 만 14세 미만의 아동인 경우\n   4. 기타 회사의 정책에 위배되거나 서비스 제공이 곤란하다고 판단되는 경우" },
-    { id: "terms-5", title: "제5조 (회원 정보의 관리)", content: "① 회원은 개인정보관리화면을 통하여 언제든지 본인의 개인정보를 열람하고 수정할 수 있습니다.\n② 회원은 회원가입신청 시 기재한 사항이 변경되었을 경우 이를 회사에 알려야 하며, 변경사항을 알리지 않아 발생한 불이익에 대하여 회사는 책임지지 않습니다." },
-    { id: "terms-chapter3", title: "제3장 서비스 이용", content: "" },
-    { id: "terms-6", title: "제6조 (서비스의 제공)", content: "① 회사는 회원에게 다음과 같은 서비스를 제공합니다.\n   1. 온라인 동영상 강의(VOD)\n   2. 실시간 라이브 강의\n   3. 오프라인 교육 및 세미나\n   4. 1:1 코칭 또는 컨설팅\n   5. 전자책, PDF 등 자료 제공\n   6. 기타 회사가 정하는 업무\n② 회사는 컴퓨터 등 정보통신설비의 보수점검·교체 및 고장, 통신의 두절 등의 사유가 발생한 경우에는 서비스의 제공을 일시적으로 중단할 수 있습니다." },
-    { id: "terms-7", title: "제7조 (유료 서비스 이용 및 결제)", content: "① 회원은 회사가 제공하는 결제수단(토스페이먼츠 등)을 통해 유료 서비스 이용 요금을 결제하여야 합니다.\n② 이용계약은 회원이 이용요금을 결제하고, 회사가 결제 확인 및 수강 승인을 완료한 시점에 성립합니다." },
-    { id: "terms-8", title: "제8조 (수강 기간 및 이용 조건)", content: "① 온라인 동영상 강의(VOD)의 기본 수강 기간은 결제일로부터 6개월로 합니다. 단, 개별 콘텐츠의 특성에 따라 수강 기간이 다르게 설정될 수 있으며, 이 경우 구매 페이지에 별도로 고지합니다.\n② 오프라인 교육, 실시간 라이브 강의는 지정된 일시 및 장소에서 제공됩니다.\n③ 회원은 제공받은 강의 자료(교안, 템플릿 등)를 본인의 학습 목적으로만 사용하여야 합니다." },
-    { id: "terms-chapter4", title: "제4장 의무와 책임, 지식재산권", content: "" },
-    { id: "terms-9", title: "제9조 (회사의 의무)", content: "① 회사는 법령과 이 약관이 정하는 바에 따라 지속적이고, 안정적으로 서비스를 제공하기 위하여 최선을 다하여야 합니다.\n② 회사는 회원이 안전하게 서비스를 이용할 수 있도록 보안 시스템을 갖추어야 하며, 개인정보처리방침을 공시하고 준수합니다." },
-    { id: "terms-10", title: "제10조 (회원의 의무 및 이용 제한)", content: "① 회원의 아이디와 비밀번호에 관한 관리책임은 회원에게 있습니다.\n② 회원은 관계 법령, 이 약관의 규정, 이용안내 및 서비스와 관련하여 공지한 주의사항 등을 준수하여야 하며, 다음 행위를 하여서는 안 됩니다.\n   1. 신청 또는 변경 시 허위내용의 등록\n   2. 타인의 정보도용\n   3. 회사 및 기타 제3자의 명예를 손상시키거나 업무를 방해하는 행위\n   4. 기타 불법적이거나 부당한 행위" },
-    { id: "terms-11", title: "제11조 (지식재산권 보호 및 계정 공유 금지)", content: "① 회사가 제공하는 모든 콘텐츠(강의 영상, 교안, 템플릿, 전자책 등)에 대한 저작권 및 지식 재산권은 회사 또는 해당 콘텐츠를 제공한 강사에게 있습니다.\n② 회원은 회사의 사전 승인 없이 콘텐츠를 복제, 녹화, 배포, 전송, 출판, 방송하거나 2차적 저작물로 가공할 수 없으며, 제3자에게 양도, 대여, 판매할 수 없습니다.\n③ 회원은 하나의 계정(ID)을 본인만 사용하여야 하며, 타인과 공유하여 서비스를 이용해서는 안 됩니다 (계정 공유 금지).\n④ 회원이 본 조를 위반한 사실(무단 복제, 배포, 2차 가공, 계정 공유 등)이 확인될 경우, 회사는 즉시 해당 회원의 서비스 이용을 정지하고 이용계약을 해지할 수 있습니다. 이 경우 유료서비스 이용료는 환불되지 않으며, 회사는 이로 인해 발생한 손해에 대해 민형사상의 법적 책임을 물을 수 있습니다." },
-    { id: "terms-chapter5", title: "제5장 청약철회 및 환불", content: "" },
-    { id: "terms-12", title: "제12조 (청약철회 등)", content: "① 회사와 유료 서비스 이용에 관한 계약을 체결한 회원은 「전자상거래 등에서의 소비자보호에 관한 법률」에 따라 계약 체결일로부터 7일 이내에는 청약의 철회를 할 수 있습니다.\n② 단, 다음 각 호의 어느 하나에 해당하는 경우에는 청약철회 등이 제한됩니다.\n   1. 회원이 콘텐츠를 사용 또는 일부 소비하여 그 가치가 현저히 낮아진 경우 (예: 온라인 강의 수강 시작)\n   2. 복제가 가능한 재화 등의 포장을 훼손한 경우 (예: 전자책, 강의 자료 다운로드)" },
-    { id: "terms-13", title: "제13조 (환불 규정)", content: "회사는 회원이 유료 서비스 이용 계약을 해지하거나 청약철회를 하는 경우, 다음의 환불 규정에 따라 환불을 진행합니다. 환불 금액은 할인 등이 적용된 실 결제액을 기준으로 산정됩니다.\n\n**1. 온라인 동영상 강의(VOD)**\n가. 결제일로부터 7일 이내이며, 콘텐츠를 전혀 이용하지 않은 경우(강의 시청 기록 없음, 자료 다운로드 이력 없음): 전액 환불\n나. 콘텐츠 이용을 시작하였거나 결제일로부터 7일이 경과한 경우, 아래 기준(수강 기간 기준)에 따라 환불합니다.\n   - 총 수강 기간의 1/3 경과 전: 실 결제액의 2/3 환불\n   - 총 수강 기간의 1/2 경과 전: 실 결제액의 1/2 환불\n   - 총 수강 기간의 1/2 경과 후: 환불 불가\n다. 단, 강의 진도율이 50%를 초과한 경우, 남은 수강 기간과 관계없이 환불이 불가할 수 있습니다.\n라. 강의 자료(교안, 템플릿 등)를 다운로드 받은 경우, 콘텐츠를 이용한 것으로 간주하여 위 기준에 따라 처리됩니다.\n\n**2. 오프라인 교육 및 세미나 (기수제 등)**\n가. 수강 시작일은 개강일 기준으로 산정되며, 환불 금액 산정은 회원의 출석 여부와 관계없이 실제 수업이 진행된 회차를 기준으로 합니다.\n나. 강의 시작 1일 전까지 통보 시: 전액 환불\n다. 강의 개강 후 (총 수업 회차를 기준으로 산정):\n   - 총 수업 회차의 1/3 경과 전: 수강료의 2/3 환불\n   - 총 수업 회차의 1/2 경과 전: 수강료의 1/2 환불\n   - 총 수업 회차의 1/2 경과 후: 환불 불가\n라. 기수제 오프라인 교육의 특성상 단순 변심에 의한 당일 환불은 불가할 수 있습니다.\n\n**3. 실시간 라이브 강의**\n가. 강의 시작 1일 전까지 통보 시: 전액 환불\n나. 다회차로 구성된 경우, 오프라인 교육 규정(제13조 2항)에 준하여 환불합니다.\n다. 1회성 강의의 경우 강의 시작 당일 취소 또는 불참 시 환불이 불가합니다.\n\n**4. 1:1 코칭 및 컨설팅**\n가. 서비스 시작 전: 전액 환불\n나. 서비스 시작 후: 총 계약 금액에서 이미 진행된 세션 횟수(또는 시간)에 비례하는 금액 및 위약금(총 계약 금액의 10% 이내)을 공제한 후 환불합니다.\n\n**5. 전자책, PDF 등 자료 제공형 콘텐츠**\n가. 콘텐츠의 특성상 다운로드 또는 열람이 시작된 이후에는 복제가 가능하므로 환불이 불가합니다.\n\n**6. 특별 프로모션 (예: 목표 달성 시 전액 환불 보장형 강의)**\n특별한 조건이 부여된 프로모션 상품의 경우, 별도의 환불 규정이 우선 적용됩니다. '목표 매출 미달성 시 전액 환불 보장형' 프로모션은 아래 조건을 **모두 충족**한 회원에 한해 적용되며, 이는 결제 시 동의한 사항으로 간주됩니다.\n가. 강의 100% 출석 (지각 및 조퇴 포함 시 미충족 처리)\n나. 모든 과제 및 미션 100% 제출 (기한 내 미제출 시 환불 대상 제외)\n다. 수강 종료 후, 매주 사업 활동 인증자료 제출 (사업 활동은 강의에서 제안된 방식에 기반하여 실행)\n라. 본 보장형 환불은 실제 활동 기반의 성실한 참여를 전제로 합니다." },
-    { id: "terms-chapter6", title: "제6장 기타", content: "" },
-    { id: "terms-14", title: "제14조 (면책 조항 및 책임 제한)", content: "① 회사는 천재지변 또는 이에 준하는 불가항력으로 인하여 서비스를 제공할 수 없는 경우에는 서비스 제공에 관한 책임이 면제됩니다.\n② 회사는 회원의 귀책사유로 인한 서비스 이용의 장애에 대하여는 책임을 지지 않습니다.\n③ **(교육 내용에 대한 면책)** 회사가 제공하는 교육 콘텐츠는 이커머스 운영에 대한 정보 제공 및 역량 강화를 목적으로 하며, 특정 수준의 매출이나 사업 성과를 보장하지 않습니다.\n④ 회원은 강의 내용을 기반으로 한 사업 운영 및 투자 결정에 대한 책임이 전적으로 본인에게 있음을 인지하며, 그 결과(매출 증감, 손익 등)에 대해 회사는 책임을 지지 않습니다." },
-    { id: "terms-15", title: "제15조 (준거법 및 재판관할)", content: "① 회사와 회원 간 제기된 소송은 대한민국법을 준거법으로 합니다.\n② 회사와 회원 간 발생한 분쟁에 관한 소송은 민사소송법상의 관할법원(또는 회사 소재지 관할 법원)에 제소합니다." },
-    { id: "terms-date", title: "", content: `- 공고일자: ${formattedDate}\n- 시행일자: ${formattedDate}` }
-];
-
-
-// --- [업데이트] 개인정보처리방침 데이터 ---
-const privacyData = [
-    { id: "privacy-intro", title: "", content: "(주) 어베어 (이하 '회사')은 윈들리아카데미 서비스(이하 '서비스') 이용자의 개인정보보호를 매우 중요시하며, 「개인정보 보호법」 등 관련 법령을 준수하고 있습니다. 회사는 본 개인정보처리방침을 통하여 이용자가 제공하는 개인정보가 어떠한 용도와 방식으로 이용되고 있으며, 개인정보보호를 위해 어떠한 조치가 취해지고 있는지 알려드립니다." },
-    { id: "privacy-1", title: "제1조 (개인정보의 수집 항목 및 이용 목적)", content: "회사는 회원가입, 원활한 고객 상담, 교육 서비스 제공을 위해 아래와 같은 개인정보를 수집하고 있습니다.\n\n1. **회원가입 및 서비스 이용**\n   - **필수 항목:** 이름, 이메일 주소(ID), 휴대전화번호, 비밀번호\n   - **이용 목적:** 회원 식별 및 가입 의사 확인, 만 14세 미만 아동 가입 제한, 서비스 이용 및 강의 수강료 결제, 고객 문의 응대(채널톡 등), 공지사항 전달\n\n2. **교육 서비스 제공 및 학습 관리**\n   - **수집 항목:** 강의 진도율, 학습 이력, 결제 내역\n   - **이용 목적:** 강의 콘텐츠 제공(VOD, 라이브, 오프라인, 코칭 등), 학습 진도 관리 및 독려, 맞춤형 강의 추천\n\n3. **마케팅 및 광고에의 활용 (선택 동의 시)**\n   - **수집 항목:** 이름, 이메일 주소, 휴대전화번호, 서비스 이용 기록\n   - **이용 목적:** 신규 강의 및 이벤트 정보 안내(SMS, 이메일, 알림톡 등), 프로모션 제공\n\n4. **서비스 이용과정에서 자동 생성 정보**\n   - **수집 항목:** 서비스 이용 기록, 접속 로그, 쿠키, 접속 IP 정보, 기기 정보(OS 버전 등)\n   - **이용 목적:** 서비스 이용 통계 분석, 서비스 품질 개선, 부정 이용 방지" },
-    { id: "privacy-2", title: "제2조 (개인정보의 보유 및 이용 기간)", content: "회사는 법령에 따른 개인정보 보유·이용 기간 또는 이용자로부터 개인정보를 수집 시에 동의 받은 개인정보 보유·이용 기간 내에서 개인정보를 처리·보유합니다.\n1. **회원 정보:** 원칙적으로 회원 탈퇴 시 지체없이 파기합니다.\n2. 단, 관계 법령의 규정에 따라 보존할 필요가 있는 경우 회사는 해당 법령에서 정한 기간 동안 정보를 보관합니다.\n   - 계약 또는 청약철회 등에 관한 기록: 5년 (전자상거래 등에서의 소비자보호에 관한 법률)\n   - 대금결제 및 재화 등의 공급에 관한 기록: 5년 (전자상거래 등에서의 소비자보호에 관한 법률)\n   - 소비자의 불만 또는 분쟁처리에 관한 기록: 3년 (전자상거래 등에서의 소비자보호에 관한 법률)\n   - 웹사이트 방문기록(통신사실확인자료): 3개월 (통신비밀보호법)" },
-    { id: "privacy-3", title: "제3조 (개인정보의 제3자 제공)", content: "회사는 이용자의 개인정보를 제1조에서 명시한 범위 내에서만 처리하며, 이용자의 동의, 법률의 특별한 규정 등 「개인정보 보호법」 제17조 및 제18조에 해당하는 경우에만 개인정보를 제3자에게 제공합니다. 회사는 현재 개인정보를 제3자에게 제공하고 있지 않습니다." },
-    { id: "privacy-4", title: "제4조 (개인정보 처리의 위탁)", content: "① 회사는 원활한 서비스 제공을 위하여 다음과 같이 개인정보 처리 업무를 외부 전문 업체에 위탁하고 있습니다.\n\n| 수탁업체 | 위탁업무 내용 |\n| :--- | :--- |\n| (주)비바리퍼블리카 (토스페이먼츠) | 강의 수강료 결제 처리 및 정산 |\n| (주)채널코퍼레이션 (채널톡) | 고객 상담 및 문의 응대 시스템 제공 |\n| (주)카카오 | 카카오톡 알림톡(정보성/광고성 메시지) 발송 |\n| 클라우드 서버 업체 | 서비스 제공을 위한 서버 운영 및 데이터 보관 |\n\n② 회사는 위탁계약 체결 시 위탁업무 수행목적 외 개인정보 처리금지, 기술적·관리적 보호조치, 재위탁 제한, 수탁자에 대한 관리·감독, 손해배상 등 책임에 관한 사항을 계약서 등 문서에 명시하고, 수탁자가 개인정보를 안전하게 처리하는지를 감독하고 있습니다." },
-    { id: "privacy-5", title: "제5조 (개인정보의 파기 절차 및 방법)", content: "① 회사는 개인정보 보유 기간의 경과, 처리 목적 달성 등 개인정보가 불필요하게 되었을 때에는 지체없이 해당 개인정보를 파기합니다.\n② 법령에 따라 보존해야 하는 경우에는 해당 개인정보를 별도의 데이터베이스(DB)로 옮기거나 보관장소를 달리하여 보존합니다.\n③ 전자적 파일 형태는 기록을 재생할 수 없도록 기술적인 방법을 이용하여 삭제하며, 종이 문서는 분쇄기로 분쇄하거나 소각하여 파기합니다." },
-    { id: "privacy-6", title: "제6조 (이용자의 권리·의무 및 행사방법)", content: "① 이용자는 회사에 대해 언제든지 개인정보 열람·정정·삭제·처리정지 요구 등의 권리를 행사할 수 있습니다.\n② 제1항에 따른 권리 행사는 회사에 대해 서면, 전화, 전자우편 등을 통하여 하실 수 있으며, 회사는 이에 대해 지체없이 조치하겠습니다.\n③ 회사는 만 14세 미만 아동의 회원가입을 받지 않으며 개인정보를 수집하지 않습니다." },
-    { id: "privacy-7", title: "제7조 (개인정보의 안전성 확보 조치)", content: "회사는 개인정보의 안전성 확보를 위해 다음과 같은 관리적, 기술적, 물리적 조치를 취하고 있습니다. (내부관리계획 수립·시행, 접근권한 관리, 개인정보의 암호화, 보안프로그램 설치 등)" },
-    { id: "privacy-8", title: "제8조 (개인정보 자동 수집 장치의 설치·운영 및 거부에 관한 사항)", content: "① 회사는 이용자에게 개별적인 맞춤 서비스를 제공하기 위해 이용 정보를 저장하고 수시로 불러오는 '쿠키(cookie)'를 사용합니다.\n② 이용자는 웹 브라우저의 옵션 설정(예: 웹 브라우저 상단의 도구 > 인터넷 옵션 > 개인정보 메뉴)을 통해 쿠키 저장을 거부할 수 있습니다. 단, 쿠키 저장을 거부할 경우 맞춤형 서비스 이용에 어려움이 발생할 수 있습니다." },
-    { id: "privacy-9", title: "제9조 (개인정보 보호책임자)", content: "회사는 개인정보 처리에 관한 업무를 총괄해서 책임지고, 개인정보 처리와 관련한 이용자의 불만처리 및 피해구제 등을 위하여 아래와 같이 개인정보 보호책임자를 지정하고 있습니다.\n\n- **개인정보 보호책임자**\n  - 성명: 김승현\n  - 직책: 대표\n  - 이메일: support@windly.cc" },
-    { id: "privacy-10", title: "제10조 (권익침해 구제방법)", content: "회원은 아래의 기관에 대해 개인정보 침해에 대한 피해구제, 상담 등을 문의하실 수 있습니다. 아래의 기관은 회사와는 별개의 기관으로서, 회사의 자체적인 개인정보 불만처리, 피해구제 결과에 만족하지 못하시거나 보다 자세한 도움이 필요하시면 문의하여 주시기 바랍니다.\n\n- **개인정보분쟁조정위원회:** www.kopico.go.kr, 1833-6972\n- **개인정보침해신고센터:** privacy.kisa.or.kr, 118\n- **대검찰청:** www.spo.go.kr, 1301\n- **경찰청:** ecrm.police.go.kr, 182" },
-    { id: "privacy-11", title: "제11조 (개인정보처리방침의 변경)", content: `본 개인정보처리방침은 시행일로부터 적용되며, 법령 및 방침에 따른 변경내용의 추가, 삭제 및 정정이 있는 경우에는 변경사항의 시행 7일 전부터 공지사항을 통하여 고지할 것입니다.\n\n- 공고일자: ${formattedDate}\n- 시행일자: ${formattedDate}` }
-];
-
-// --- 콘텐츠 렌더링 컴포넌트들 ---
-
+// Content components
 const AnnouncementsContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const filteredAnnouncements = announcements.filter(ann => ann.title.toLowerCase().includes(searchTerm.toLowerCase()));
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('announcements')
+          .select('*')
+          .eq('is_active', true)
+          .order('order_index', { ascending: true });
+
+        if (error) throw error;
+        setAnnouncements(data || []);
+      } catch (error) {
+        console.error('Error fetching announcements:', error);
+        toast.error('공지사항을 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnnouncements();
+  }, []);
+
+  const filteredAnnouncements = announcements.filter(ann => 
+    ann.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return <div className="text-center py-12">로딩 중...</div>;
+  }
 
   return (
     <div className="space-y-6">
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="공지사항 검색..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 h-12 text-base" />
+        <Input 
+          placeholder="공지사항 검색..." 
+          value={searchTerm} 
+          onChange={(e) => setSearchTerm(e.target.value)} 
+          className="pl-10 h-12 text-base" 
+        />
       </div>
       <Card>
         <CardContent className="p-0">
           {filteredAnnouncements.length > 0 ? (
             <Accordion type="single" collapsible className="w-full">
               {filteredAnnouncements.map((item) => (
-                <AccordionItem value={item.id.toString()} key={item.id}>
+                <AccordionItem value={item.id} key={item.id}>
                   <AccordionTrigger className="px-4 md:px-6 py-4 text-left hover:bg-muted/50">
                     <div className="flex-1 space-y-1.5">
-                      <p className="text-xs md:text-sm text-muted-foreground flex items-center gap-2"><Calendar className="h-3.5 w-3.5" />{item.date}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground flex items-center gap-2">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {new Date(item.published_date).toLocaleDateString('ko-KR')}
+                      </p>
                       <h3 className="font-semibold text-base md:text-lg">{item.title}</h3>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-4 md:px-6 pt-2 pb-6">
-                    <div className="prose prose-sm md:prose-base max-w-none whitespace-pre-line text-muted-foreground leading-relaxed dark:prose-invert">{item.content}</div>
+                    <div className="prose prose-sm md:prose-base max-w-none whitespace-pre-line text-muted-foreground leading-relaxed dark:prose-invert">
+                      {item.content}
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
-          ) : ( <div className="text-center py-24 text-muted-foreground"><p>검색 결과가 없습니다.</p></div> )}
+          ) : (
+            <div className="text-center py-24 text-muted-foreground">
+              <p>검색 결과가 없습니다.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -240,18 +229,60 @@ const AnnouncementsContent = () => {
 };
 
 const FaqContent = () => {
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFAQs = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('faqs')
+          .select('*')
+          .eq('is_active', true)
+          .order('order_index', { ascending: true });
+
+        if (error) throw error;
+        setFaqs(data || []);
+      } catch (error) {
+        console.error('Error fetching FAQs:', error);
+        toast.error('FAQ를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFAQs();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center py-12">로딩 중...</div>;
+  }
+
+  // Group FAQs by category
+  const groupedFaqs = faqs.reduce((acc, faq) => {
+    if (!acc[faq.category]) {
+      acc[faq.category] = [];
+    }
+    acc[faq.category].push(faq);
+    return acc;
+  }, {} as Record<string, FAQ[]>);
+
   return (
     <div className="space-y-10">
-      {faqData.map((category) => (
-        <section key={category.category}>
-          <h3 className="text-lg md:text-xl font-bold mb-4">{category.category}</h3>
+      {Object.entries(groupedFaqs).map(([category, items]) => (
+        <section key={category}>
+          <h3 className="text-lg md:text-xl font-bold mb-4">{category}</h3>
           <Card>
             <CardContent className="p-0">
               <Accordion type="single" collapsible>
-                {category.items.map((item, index) => (
-                  <AccordionItem value={`item-${index}`} key={index}>
-                    <AccordionTrigger className="px-4 md:px-6 text-left font-semibold text-base hover:bg-muted/50">{item.question}</AccordionTrigger>
-                    <AccordionContent className="px-4 md:px-6 pb-5 text-sm md:text-base text-muted-foreground leading-relaxed">{item.answer}</AccordionContent>
+                {items.map((item, index) => (
+                  <AccordionItem value={`item-${item.id}`} key={item.id}>
+                    <AccordionTrigger className="px-4 md:px-6 text-left font-semibold text-base hover:bg-muted/50">
+                      {item.question}
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 md:px-6 pb-5 text-sm md:text-base text-muted-foreground leading-relaxed">
+                      {item.answer}
+                    </AccordionContent>
                   </AccordionItem>
                 ))}
               </Accordion>
@@ -263,33 +294,65 @@ const FaqContent = () => {
   );
 };
 
-const PolicyContent = ({ title, data }) => {
+const PolicyContent = ({ title, documentType }: { title: string; documentType: 'terms' | 'privacy' }) => {
+  const [policyData, setPolicyData] = useState<PolicyDocument[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPolicyData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('policy_documents')
+          .select('*')
+          .eq('document_type', documentType)
+          .eq('is_active', true)
+          .order('order_index', { ascending: true });
+
+        if (error) throw error;
+        setPolicyData((data || []) as PolicyDocument[]);
+      } catch (error) {
+        console.error('Error fetching policy data:', error);
+        toast.error('정책 문서를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPolicyData();
+  }, [documentType]);
+
+  if (loading) {
+    return <div className="text-center py-12">로딩 중...</div>;
+  }
+
   return (
-      <Card>
-          <CardContent className="p-6 md:p-8">
-              <h1 className="text-2xl md:text-3xl font-bold mb-8 text-foreground">{title}</h1>
-              <div className="space-y-8">
-                  {data.map((item) => (
-                      <section key={item.id} className="space-y-4">
-                          {item.title && (
-                              <h3 className={`font-bold text-foreground ${
-                                item.title.includes('장') ? 'text-2xl' : 'text-lg'
-                              }`}>
-                                  {item.title}
-                              </h3>
-                          )}
-                          <div className="text-muted-foreground leading-relaxed">
-                              <FormattedContent content={item.content} />
-                          </div>
-                      </section>
-                  ))}
-              </div>
-          </CardContent>
-      </Card>
+    <Card>
+      <CardContent className="p-6 md:p-8">
+        <h1 className="text-2xl md:text-3xl font-bold mb-8 text-foreground">{title}</h1>
+        <div className="space-y-8">
+          {policyData.map((item) => (
+            <section key={item.id} className="space-y-4">
+              {item.title && (
+                <h3 className={`font-bold text-foreground ${
+                  item.title.includes('장') ? 'text-2xl' : 'text-lg'
+                }`}>
+                  {item.title}
+                </h3>
+              )}
+              {item.content && (
+                <div className="text-muted-foreground leading-relaxed">
+                  <FormattedContent content={item.content} />
+                </div>
+              )}
+            </section>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
-// --- 메인 페이지 컴포넌트 ---
+// Main page component
 const PoliciesPage = () => {
   const [activeTab, setActiveTab] = useState('announcements');
   const navItems = [
@@ -303,8 +366,8 @@ const PoliciesPage = () => {
     switch (activeTab) {
       case 'announcements': return <AnnouncementsContent />;
       case 'faq': return <FaqContent />;
-      case 'terms': return <PolicyContent title="서비스 이용약관" data={termsData} />;
-      case 'privacy': return <PolicyContent title="개인정보처리방침" data={privacyData} />;
+      case 'terms': return <PolicyContent title="서비스 이용약관" documentType="terms" />;
+      case 'privacy': return <PolicyContent title="개인정보처리방침" documentType="privacy" />;
       default: return null;
     }
   };
